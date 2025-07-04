@@ -96,9 +96,9 @@ const Auth = () => {
   return (
     <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <Card className="shadow-xl border-0 bg-card/95 backdrop-blur-sm">
+        <Card className="signin-card card-entrance border-0 bg-card/95">
           <CardHeader className="text-center pb-2">
-            <CardTitle className="text-3xl font-bold text-primary mb-1">
+            <CardTitle className="text-3xl font-bold gradient-text mb-1">
               {isSignUp ? 'Create Account' : 'Sign In'}
             </CardTitle>
             <CardDescription className="text-muted-foreground text-base">
