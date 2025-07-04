@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -786,11 +787,11 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={onBack}
+                asChild
                 className="flex-1 h-11"
                 disabled={isSubmitting || isCheckingEmail}
               >
-                Back to Sign In
+                <Link to="/auth">Back to Sign In</Link>
               </Button>
               
               <Button
