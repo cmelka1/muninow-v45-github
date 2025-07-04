@@ -92,7 +92,7 @@ const BillsTable = () => {
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-muted/50">
               <TableRow>
                 <TableHead className="hidden sm:table-cell">Due Date</TableHead>
                 <TableHead>Vendor</TableHead>
