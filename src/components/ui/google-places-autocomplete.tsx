@@ -64,7 +64,7 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
           formattedAddress: place.formatted_address || ''
         };
 
-        // Parse address components (excluding country)
+        // Parse address components
         place.address_components.forEach((component: any) => {
           const types = component.types;
           
@@ -78,11 +78,10 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
             addressComponents.administrativeAreaLevel1 = component.short_name;
           } else if (types.includes('postal_code')) {
             addressComponents.postalCode = component.long_name;
+          } else if (types.includes('country')) {
+            addressComponents.country = component.long_name;
           }
-          // Note: Deliberately not processing 'country' type to exclude USA
         });
-
-        console.log('Raw address components:', addressComponents);
 
         // Build street address only (no city, state, country)
         let streetAddress = '';
@@ -94,20 +93,7 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
           streetAddress = addressComponents.streetNumber;
         }
 
-        console.log('Built street address:', streetAddress);
-
-        // Use setTimeout to override Google's auto-fill behavior
-        setTimeout(() => {
-          console.log('Overriding Google auto-fill with street address:', streetAddress);
-          setInputValue(streetAddress);
-          onChange?.(streetAddress);
-          
-          // Force the input field to show only the street address
-          if (inputRef.current) {
-            inputRef.current.value = streetAddress;
-          }
-        }, 0);
-
+        setInputValue(streetAddress);
         onAddressSelect(addressComponents);
       });
     }
