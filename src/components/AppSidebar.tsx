@@ -113,7 +113,7 @@ export function AppSidebar() {
 
       {/* User Profile Section */}
       <SidebarFooter className="p-4 border-t border-border mt-auto">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col space-y-3">
           <div className="flex items-center space-x-3">
             <Avatar className="h-9 w-9">
               <AvatarFallback className="text-sm font-medium bg-muted">
@@ -135,11 +135,10 @@ export function AppSidebar() {
           <Button
             onClick={handleLogout}
             variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 p-2 flex-shrink-0"
+            className="justify-start text-red-500 hover:text-red-600 hover:bg-red-50 p-2 h-auto"
           >
-            <LogOut className="h-4 w-4" />
-            <span className="sr-only">Log out</span>
+            <LogOut className="h-4 w-4 mr-2" />
+            <span className="text-sm">Log Out</span>
           </Button>
         </div>
       </SidebarFooter>
