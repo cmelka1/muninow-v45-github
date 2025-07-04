@@ -77,37 +77,36 @@ export function AppSidebar() {
       <SidebarContent className="px-4">
         <SidebarGroup>
           <div className="mb-6">
-            <h2 className="text-xs font-medium text-muted-foreground/60 uppercase tracking-wide mb-3 px-3">
+            <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-4 pl-4">
               MAIN MENU
             </h2>
-            <SidebarGroupContent>
-              <SidebarMenu className="space-y-2">
+            <nav role="navigation" aria-label="Main navigation">
+              <ul className="space-y-2">
                 {navigationItems.map((item) => {
                   const isActive = location.pathname === item.url;
                   const Icon = item.icon;
                   
                   return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={isActive}>
-                        <NavLink
-                          to={item.url}
-                          className={({ isActive }) => 
-                            `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                              isActive 
-                                ? 'bg-primary text-primary-foreground shadow-sm' 
-                                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                            }`
-                          }
-                        >
-                          <Icon className="h-5 w-5 flex-shrink-0" />
-                          <span>{item.title}</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    <li key={item.title}>
+                      <NavLink
+                        to={item.url}
+                        className={({ isActive }) => 
+                          `flex items-center gap-3 px-4 py-2 rounded-md text-sm min-h-[40px] transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                            isActive 
+                              ? 'bg-primary/5 text-primary font-medium' 
+                              : 'text-gray-600 hover:bg-primary/5 hover:text-primary'
+                          }`
+                        }
+                        aria-current={isActive ? "page" : undefined}
+                      >
+                        <Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                        <span className="leading-tight">{item.title}</span>
+                      </NavLink>
+                    </li>
                   );
                 })}
-              </SidebarMenu>
-            </SidebarGroupContent>
+              </ul>
+            </nav>
           </div>
         </SidebarGroup>
       </SidebarContent>
