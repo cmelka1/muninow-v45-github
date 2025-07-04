@@ -62,9 +62,9 @@ const PaymentHistory = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-100">
+      <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <SidebarInset className="flex-1">
+        <SidebarInset className="flex-1 bg-gray-100">
           <div className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
             <div className="mb-6 md:mb-8">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Payment History</h1>

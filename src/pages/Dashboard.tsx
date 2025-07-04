@@ -35,7 +35,7 @@ const Dashboard = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <SidebarInset className="flex-1">
+        <SidebarInset className="flex-1 bg-gray-100">
           {/* Main Dashboard Content */}
           <div className="p-8">
             <div className="mb-8">
