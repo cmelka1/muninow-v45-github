@@ -225,9 +225,6 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
                   placeholder="your.email@example.com"
                   className="h-11"
                 />
-                <p className="text-sm text-muted-foreground">
-                  Code will be sent to {maskEmail(customEmail)}
-                </p>
               </div>
             )}
 
