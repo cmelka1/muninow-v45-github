@@ -733,12 +733,8 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
               />
             </div>
 
-            {/* Legal Agreement Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-foreground border-b pb-2">
-                Legal Agreement
-              </h3>
-              
+            {/* Terms and Notifications */}
+            <div className="space-y-3">
               <FormField
                 control={form.control}
                 name="termsAccepted"
@@ -751,8 +747,8 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel className="cursor-pointer">
-                        I accept the Terms and Conditions *
+                      <FormLabel className="cursor-pointer text-sm">
+                        I agree to the terms of service and privacy policy
                       </FormLabel>
                       <FormMessage />
                     </div>
@@ -772,8 +768,8 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel className="cursor-pointer">
-                        I consent to receiving marketing communications *
+                      <FormLabel className="cursor-pointer text-sm">
+                        I agree to receive notifications and messages from MuniNow
                       </FormLabel>
                       <FormMessage />
                     </div>
