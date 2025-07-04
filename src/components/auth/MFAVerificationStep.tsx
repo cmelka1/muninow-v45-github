@@ -155,6 +155,17 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
     return phone;
   };
 
+  const formatPhoneInput = (value: string) => {
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length <= 3) {
+      return cleaned;
+    } else if (cleaned.length <= 6) {
+      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
+    } else {
+      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
+    }
+  };
+
   const maskEmail = (email: string) => {
     const [local, domain] = email.split('@');
     const maskedLocal = local.length > 2 
@@ -226,7 +237,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
                 <Input
                   id="phone"
                   value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  onChange={(e) => setPhoneNumber(formatPhoneInput(e.target.value))}
                   placeholder="(555) 123-4567"
                   className="h-11"
                 />
