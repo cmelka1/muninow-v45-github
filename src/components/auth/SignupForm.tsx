@@ -14,6 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { GooglePlacesAutocomplete } from '@/components/ui/google-places-autocomplete';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -232,6 +233,28 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
     } finally {
       setIsCheckingEmail(false);
     }
+  };
+
+  // Handle address selection from Google Places Autocomplete
+  const handleAddressSelect = (addressComponents: any) => {
+    console.log('Address selected:', addressComponents);
+    
+    // Distribute to proper form fields using setValue
+    if (addressComponents.streetAddress) {
+      form.setValue('streetAddress', addressComponents.streetAddress);
+    }
+    if (addressComponents.city) {
+      form.setValue('city', addressComponents.city);
+    }
+    if (addressComponents.state) {
+      form.setValue('state', addressComponents.state);
+    }
+    if (addressComponents.zipCode) {
+      form.setValue('zipCode', addressComponents.zipCode);
+    }
+    
+    // Trigger validation for updated fields
+    form.trigger(['streetAddress', 'city', 'state', 'zipCode']);
   };
 
   const onSubmit = async (data: SignupFormValues) => {
@@ -520,10 +543,12 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                   <FormItem>
                     <FormLabel>Street Address *</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Enter your street address"
+                      <GooglePlacesAutocomplete
+                        placeholder="Start typing your address..."
+                        onAddressSelect={handleAddressSelect}
                         className="h-11"
+                        value={field.value}
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />
@@ -605,13 +630,20 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>State *</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Enter your state"
-                          className="h-11"
-                        />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-11">
+                            <SelectValue placeholder="Select your state" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {US_STATES.map((state) => (
+                            <SelectItem key={state.value} value={state.value}>
+                              {state.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
