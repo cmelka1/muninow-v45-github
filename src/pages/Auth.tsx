@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ForgotPasswordDialog } from '@/components/auth/ForgotPasswordDialog';
+import { SignupForm } from '@/components/auth/SignupForm';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -16,6 +17,7 @@ const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [showSignupForm, setShowSignupForm] = useState(false);
   const navigate = useNavigate();
   
   const { 
@@ -51,6 +53,24 @@ const Auth = () => {
   const handleForgotPassword = () => {
     setForgotPasswordOpen(true);
   };
+
+  const handleCreateAccount = () => {
+    setShowSignupForm(true);
+  };
+
+  const handleBackToSignIn = () => {
+    setShowSignupForm(false);
+    setIsSignUp(false);
+  };
+
+  // Show comprehensive signup form
+  if (showSignupForm) {
+    return (
+      <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
+        <SignupForm onBack={handleBackToSignIn} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
@@ -171,7 +191,7 @@ const Auth = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setIsSignUp(true)}
+                    onClick={handleCreateAccount}
                     className="w-full group hover:bg-primary/5 transition-colors"
                   >
                     Create Account
