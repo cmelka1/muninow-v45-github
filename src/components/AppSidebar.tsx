@@ -73,7 +73,8 @@ export function AppSidebar() {
           <img 
             src={logoUrl} 
             alt="MuniNow" 
-            className="h-12 w-auto"
+            className="h-10 w-auto object-contain"
+            style={{ imageRendering: 'crisp-edges' }}
           />
         </NavLink>
       </SidebarHeader>
