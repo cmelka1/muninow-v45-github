@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Mail, MessageSquare, Shield, Check, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -29,6 +30,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
   const [resendCooldown, setResendCooldown] = useState(0);
   const [verificationSent, setVerificationSent] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState(formData?.mobileNumber || '');
+  const [customEmail, setCustomEmail] = useState(formData?.email || '');
 
   // Cooldown timer
   useEffect(() => {
@@ -41,7 +43,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
   const sendVerificationCode = async () => {
     setIsSending(true);
     try {
-      const identifier = verificationType === 'email' ? formData.email : phoneNumber;
+      const identifier = verificationType === 'email' ? customEmail : phoneNumber;
       
       const { data } = await supabase.functions.invoke('send-verification', {
         body: {
@@ -87,7 +89,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
 
     setIsVerifying(true);
     try {
-      const identifier = verificationType === 'email' ? formData.email : phoneNumber;
+      const identifier = verificationType === 'email' ? customEmail : phoneNumber;
       
       const { data } = await supabase.functions.invoke('send-verification', {
         body: {
@@ -186,75 +188,54 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
 
         <div className="space-y-4">
           <Label className="text-base font-medium">Verification Method</Label>
+          
+          <Tabs value={verificationType} onValueChange={(value) => setVerificationType(value as VerificationType)}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="email" className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email
+              </TabsTrigger>
+              <TabsTrigger value="sms" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Text
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
           <div className="space-y-3">
-            <div 
-              className={`flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer ${
-                verificationType === 'email' ? 'border-primary bg-primary/5' : 'border-border'
-              }`}
-              onClick={() => setVerificationType('email')}
-            >
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                verificationType === 'email' ? 'border-primary' : 'border-muted-foreground'
-              }`}>
-                {verificationType === 'email' && (
-                  <div className="w-2 h-2 rounded-full bg-primary" />
-                )}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center space-x-2">
-                  <Mail className="h-4 w-4 text-primary" />
-                  <Label className="font-medium cursor-pointer">
-                    Email Verification
-                  </Label>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Send code to {maskEmail(formData.email)}
+            {verificationType === 'email' && (
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={customEmail}
+                  onChange={(e) => setCustomEmail(e.target.value)}
+                  placeholder="your.email@example.com"
+                  className="h-11"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Code will be sent to {maskEmail(customEmail)}
                 </p>
               </div>
-            </div>
+            )}
 
-            <div 
-              className={`flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer ${
-                verificationType === 'sms' ? 'border-primary bg-primary/5' : 'border-border'
-              }`}
-              onClick={() => setVerificationType('sms')}
-            >
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                verificationType === 'sms' ? 'border-primary' : 'border-muted-foreground'
-              }`}>
-                {verificationType === 'sms' && (
-                  <div className="w-2 h-2 rounded-full bg-primary" />
-                )}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center space-x-2">
-                  <MessageSquare className="h-4 w-4 text-primary" />
-                  <Label className="font-medium cursor-pointer">
-                    SMS Verification
-                  </Label>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Send code to {maskPhone(phoneNumber)}
+            {verificationType === 'sms' && (
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="(555) 123-4567"
+                  className="h-11"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Code will be sent to {maskPhone(phoneNumber)} • Standard messaging rates may apply
                 </p>
               </div>
-            </div>
+            )}
           </div>
-
-          {verificationType === 'sms' && (
-            <div className="space-y-2">
-              <Label htmlFor="phone">Confirm Phone Number</Label>
-              <Input
-                id="phone"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="(555) 123-4567"
-                className="h-11"
-              />
-              <p className="text-sm text-muted-foreground">
-                Standard messaging rates may apply
-              </p>
-            </div>
-          )}
         </div>
 
         <div className="flex gap-4">
@@ -270,7 +251,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
           <Button
             onClick={sendVerificationCode}
             className="flex-1"
-            disabled={isSending || (verificationType === 'sms' && !phoneNumber)}
+            disabled={isSending || (verificationType === 'sms' && !phoneNumber) || (verificationType === 'email' && !customEmail)}
           >
             {isSending ? (
               <>
@@ -302,7 +283,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
         <p className="text-muted-foreground">
           We've sent a 6-digit code to{' '}
           {verificationType === 'email' 
-            ? maskEmail(formData.email)
+            ? maskEmail(customEmail)
             : maskPhone(phoneNumber)
           }
         </p>
