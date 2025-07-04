@@ -77,7 +77,7 @@ export function AppSidebar() {
       <SidebarContent className="px-4">
         <SidebarGroup>
           <div className="mb-6">
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+            <h2 className="text-xs font-medium text-muted-foreground/60 uppercase tracking-wide mb-3 px-3">
               MAIN MENU
             </h2>
             <SidebarGroupContent>
