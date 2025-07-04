@@ -532,22 +532,13 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                         value={field.value}
                         onChange={field.onChange}
                         onAddressSelect={(components: AddressComponents) => {
-                          console.log('Address components received:', components);
                           const standardized = GoogleMapsService.standardizeAddress(components);
-                          console.log('Standardized address:', standardized);
                           
-                          // Auto-populate form fields
-                          form.setValue('streetAddress', standardized.streetAddress);
-                          form.setValue('city', standardized.city);
-                          form.setValue('state', standardized.state);
-                          form.setValue('zipCode', standardized.zipCode);
-                          
-                          console.log('Form values set - checking current values:', {
-                            streetAddress: form.getValues('streetAddress'),
-                            city: form.getValues('city'),
-                            state: form.getValues('state'),
-                            zipCode: form.getValues('zipCode')
-                          });
+                          // Auto-populate form fields with trigger to ensure validation
+                          form.setValue('streetAddress', standardized.streetAddress, { shouldValidate: true });
+                          form.setValue('city', standardized.city, { shouldValidate: true });
+                          form.setValue('state', standardized.state, { shouldValidate: true });
+                          form.setValue('zipCode', standardized.zipCode, { shouldValidate: true });
                           
                           setAddressSelected(true);
                           

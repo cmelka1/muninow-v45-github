@@ -83,7 +83,17 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
           }
         });
 
-        setInputValue(addressComponents.formattedAddress);
+        // Build street address only (no city, state, country)
+        let streetAddress = '';
+        if (addressComponents.streetNumber && addressComponents.route) {
+          streetAddress = `${addressComponents.streetNumber} ${addressComponents.route}`;
+        } else if (addressComponents.route) {
+          streetAddress = addressComponents.route;
+        } else if (addressComponents.streetNumber) {
+          streetAddress = addressComponents.streetNumber;
+        }
+
+        setInputValue(streetAddress);
         onAddressSelect(addressComponents);
       });
     }
