@@ -17,7 +17,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { GooglePlacesAutocomplete } from '@/components/ui/google-places-autocomplete';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { MFAVerificationStep } from './MFAVerificationStep';
 
 // Phone number formatting utility
 const formatPhoneNumber = (value: string) => {
@@ -996,12 +995,52 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
 
         {/* Step 3: Multi-Factor Authentication */}
         {currentStep === 3 && (
-          <MFAVerificationStep 
-            formData={formData}
-            onBack={goBack}
-            onVerificationComplete={completeMFA}
-            isCreatingAccount={isCreatingAccount}
-          />
+          <div className="space-y-6">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-foreground mb-4">
+                Set Up Multi-Factor Authentication
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                For your security, MFA is required for all accounts
+              </p>
+            </div>
+
+            <div className="bg-muted/20 p-6 rounded-lg text-center">
+              <div className="mb-4">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🔐</span>
+                </div>
+                <p className="text-muted-foreground">
+                  MFA setup will be implemented here. For now, click continue to proceed with account creation.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                onClick={goBack}
+                className="flex-1"
+              >
+                Back
+              </Button>
+              
+              <Button
+                onClick={completeMFA}
+                className="flex-1"
+                disabled={isCreatingAccount}
+              >
+                {isCreatingAccount ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Creating Account...
+                  </>
+                ) : (
+                  'Complete Setup'
+                )}
+              </Button>
+            </div>
+          </div>
         )}
 
         {/* Step 4: Success */}

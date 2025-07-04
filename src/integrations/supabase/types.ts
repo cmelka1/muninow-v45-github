@@ -1078,42 +1078,6 @@ export type Database = {
         }
         Relationships: []
       }
-      verification_codes: {
-        Row: {
-          attempt_count: number
-          code_hash: string
-          created_at: string
-          expires_at: string
-          id: string
-          status: string
-          updated_at: string
-          user_identifier: string
-          verification_type: string
-        }
-        Insert: {
-          attempt_count?: number
-          code_hash: string
-          created_at?: string
-          expires_at: string
-          id?: string
-          status?: string
-          updated_at?: string
-          user_identifier: string
-          verification_type: string
-        }
-        Update: {
-          attempt_count?: number
-          code_hash?: string
-          created_at?: string
-          expires_at?: string
-          id?: string
-          status?: string
-          updated_at?: string
-          user_identifier?: string
-          verification_type?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
