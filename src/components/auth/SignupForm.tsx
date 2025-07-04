@@ -12,12 +12,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { GooglePlacesAutocomplete, type AddressComponents } from '@/components/ui/google-places-autocomplete';
-import { GoogleMapsService } from '@/services/googleMapsService';
 
 // Phone number formatting utility
 const formatPhoneNumber = (value: string) => {
@@ -171,7 +169,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-  const [addressSelected, setAddressSelected] = useState(false);
   const { signUp, isSubmitting } = useAuth();
 
   const form = useForm<SignupFormValues>({
@@ -521,34 +518,11 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                 name="streetAddress"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      Street Address *
-                      {addressSelected && (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      )}
-                    </FormLabel>
+                    <FormLabel>Street Address *</FormLabel>
                     <FormControl>
-                      <GooglePlacesAutocomplete
-                        value={field.value}
-                        onChange={field.onChange}
-                        onAddressSelect={(components: AddressComponents) => {
-                          const standardized = GoogleMapsService.standardizeAddress(components);
-                          
-                          // Auto-populate form fields with trigger to ensure validation
-                          form.setValue('streetAddress', standardized.streetAddress, { shouldValidate: true });
-                          form.setValue('city', standardized.city, { shouldValidate: true });
-                          form.setValue('state', standardized.state, { shouldValidate: true });
-                          form.setValue('zipCode', standardized.zipCode, { shouldValidate: true });
-                          
-                          setAddressSelected(true);
-                          
-                          // Show success message
-                          toast({
-                            title: "Address Selected",
-                            description: "Your address has been automatically filled in."
-                          });
-                        }}
-                        placeholder="Start typing your address..."
+                      <Input
+                        {...field}
+                        placeholder="Enter your street address"
                         className="h-11"
                       />
                     </FormControl>
