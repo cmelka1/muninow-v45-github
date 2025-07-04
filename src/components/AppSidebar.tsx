@@ -68,7 +68,7 @@ export function AppSidebar() {
           <img 
             src={muniNowLogo} 
             alt="MuniNow" 
-            className="h-8 w-auto hover:opacity-80 transition-opacity"
+            className="h-10 w-auto hover:opacity-80 transition-opacity"
           />
         </NavLink>
       </SidebarHeader>
