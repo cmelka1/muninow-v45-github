@@ -154,8 +154,8 @@ const BillsFilter: React.FC<BillsFilterProps> = ({ filters, onFiltersChange }) =
             </Select>
           </div>
 
-          {/* Amount - Hidden on small screens (Priority 3) */}
-          <div className="hidden lg:block space-y-2">
+          {/* Amount - Hidden on mobile (Priority 3) */}
+          <div className="hidden sm:block space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Amount</label>
             <Select value={filters.amountRange || 'all'} onValueChange={(value) => updateFilter('amountRange', value)}>
               <SelectTrigger className="h-9">
