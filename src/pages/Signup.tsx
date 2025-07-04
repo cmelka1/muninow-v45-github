@@ -15,7 +15,7 @@ const Signup = () => {
   }, [user, navigate]);
 
   const handleBackToSignIn = () => {
-    navigate('/auth');
+    navigate('/signin');
   };
 
   return (

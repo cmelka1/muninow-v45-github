@@ -791,7 +791,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                 className="flex-1 h-11"
                 disabled={isSubmitting || isCheckingEmail}
               >
-                <Link to="/auth">Back to Sign In</Link>
+                <Link to="/signin">Back to Sign In</Link>
               </Button>
               
               <Button
