@@ -1,13 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import BillsTable from '@/components/BillsTable';
+import BillsFilter, { BillFilters } from '@/components/BillsFilter';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, profile, isLoading } = useAuth();
+  const [filters, setFilters] = useState<BillFilters>({});
 
   // Redirect unauthenticated users
   useEffect(() => {
@@ -44,7 +46,8 @@ const Dashboard = () => {
               </h1>
             </div>
 
-            <BillsTable />
+            <BillsFilter filters={filters} onFiltersChange={setFilters} />
+            <BillsTable filters={filters} />
           </div>
         </SidebarInset>
       </div>

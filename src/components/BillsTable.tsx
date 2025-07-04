@@ -16,14 +16,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMunicipalBills } from '@/hooks/useMunicipalBills';
 
-const BillsTable = () => {
+interface BillFilters {
+  vendor?: string;
+  category?: string;
+  paymentStatus?: string;
+  dueDateRange?: string;
+  amountRange?: string;
+}
+
+interface BillsTableProps {
+  filters?: BillFilters;
+}
+
+const BillsTable: React.FC<BillsTableProps> = ({ filters = {} }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   
   const { data: billsData, isLoading, error } = useMunicipalBills({ 
     page: currentPage, 
-    pageSize 
+    pageSize,
+    filters
   });
+
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
 
   const bills = billsData?.data || [];
   const totalCount = billsData?.count || 0;
