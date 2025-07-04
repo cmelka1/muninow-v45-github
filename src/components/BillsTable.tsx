@@ -99,7 +99,7 @@ const BillsTable = () => {
                 <TableHead className="hidden md:table-cell">Category</TableHead>
                 <TableHead className="hidden lg:table-cell">Status</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="w-[120px]">Pay</TableHead>
+                <TableHead className="w-[120px] text-center">Pay</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -124,7 +124,7 @@ const BillsTable = () => {
                   <TableCell className="text-right font-medium">
                     {formatAmount(Number(bill.amount_due))}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <Button size="sm" className="w-full">
                       Pay
                     </Button>
