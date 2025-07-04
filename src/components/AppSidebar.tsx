@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Home, Clock, Users, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import muniNowLogo from '@/assets/muninow-logo.png';
+import muniNowLogo from '@/assets/muninow-logo-full.png';
 
 const navigationItems = [
   {
@@ -68,7 +68,7 @@ export function AppSidebar() {
           <img 
             src={muniNowLogo} 
             alt="MuniNow" 
-            className="h-10 w-auto hover:opacity-80 transition-opacity"
+            className="h-12 w-auto hover:opacity-80 transition-opacity"
           />
         </NavLink>
       </SidebarHeader>
