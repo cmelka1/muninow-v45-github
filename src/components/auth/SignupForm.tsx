@@ -968,11 +968,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                 </div>
               )}
 
-              {addressStatus === 'available' && (
-                <div className="mt-4 text-blue-700 dark:text-blue-300 font-medium">
-                  ✅ Address is available
-                </div>
-              )}
             </div>
 
             <div className="flex gap-4">
