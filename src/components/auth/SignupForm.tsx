@@ -312,7 +312,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
   const getPasswordStrengthColor = () => {
     if (passwordStrength < 40) return 'bg-destructive';
     if (passwordStrength < 80) return 'bg-amber-500';
-    return 'bg-primary';
+    return 'bg-green-500';
   };
 
   const getPasswordStrengthText = () => {
