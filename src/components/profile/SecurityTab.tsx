@@ -285,61 +285,6 @@ export const SecurityTab = () => {
         </CardContent>
       </Card>
 
-      {/* Account Security */}
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-slate-800">
-            Account Security
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-slate-700 font-medium">Last Sign In</Label>
-              <div className="mt-1 text-sm text-slate-600">
-                {user?.last_sign_in_at 
-                  ? new Date(user.last_sign_in_at).toLocaleString()
-                  : 'N/A'
-                }
-              </div>
-            </div>
-            <div>
-              <Label className="text-slate-700 font-medium">Account Status</Label>
-              <div className="mt-1">
-                <Badge variant="default" className="bg-green-100 text-green-800">
-                  Active
-                </Badge>
-              </div>
-            </div>
-          </div>
-          
-          <div className="pt-4 border-t border-slate-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-slate-800">Email Verification</h4>
-                <p className="text-sm text-slate-600">
-                  Your email address is verified
-                </p>
-              </div>
-              <Badge variant="default" className="bg-green-100 text-green-800">
-                Verified
-              </Badge>
-            </div>
-          </div>
-
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-start space-x-3">
-              <Shield className="h-5 w-5 text-green-600 mt-0.5" />
-              <div>
-                <h4 className="font-medium text-green-900">Account Security Status</h4>
-                <p className="text-sm text-green-700 mt-1">
-                  Your account is secure. All security features are properly configured.
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
