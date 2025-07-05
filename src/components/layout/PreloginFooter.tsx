@@ -1,17 +1,23 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Building, House, Facebook, Twitter, Linkedin } from 'lucide-react';
+import { Facebook, Twitter, Linkedin } from 'lucide-react';
 
 export const PreloginFooter = () => {
   const currentYear = new Date().getFullYear();
 
   const Logo = () => (
-    <div className="flex items-center space-x-2">
-      <div className="flex items-center">
-        <Building className="h-6 w-6 text-primary" />
-        <House className="h-6 w-6 text-primary -ml-1" />
-      </div>
-      <span className="text-xl font-bold text-primary">MuniNow</span>
+    <div className="flex items-center">
+      <img 
+        src="https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/muninow-logo/MuniNow_Logo_Exploration_Blue.png"
+        alt="MuniNow Logo"
+        className="h-8 w-auto"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.style.display = 'none';
+          target.nextElementSibling!.textContent = 'MuniNow';
+        }}
+      />
+      <span className="text-xl font-bold text-primary ml-2" style={{ display: 'none' }}></span>
     </div>
   );
 
