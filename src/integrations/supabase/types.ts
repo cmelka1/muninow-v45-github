@@ -256,6 +256,7 @@ export type Database = {
           last_name: string | null
           manual_municipality_override: string | null
           municipality_id: string | null
+          municipality_name: string | null
           municipality_routing_status: string | null
           notifications: Json
           paid_at: string | null
@@ -304,6 +305,7 @@ export type Database = {
           last_name?: string | null
           manual_municipality_override?: string | null
           municipality_id?: string | null
+          municipality_name?: string | null
           municipality_routing_status?: string | null
           notifications: Json
           paid_at?: string | null
@@ -352,6 +354,7 @@ export type Database = {
           last_name?: string | null
           manual_municipality_override?: string | null
           municipality_id?: string | null
+          municipality_name?: string | null
           municipality_routing_status?: string | null
           notifications?: Json
           paid_at?: string | null
@@ -717,6 +720,7 @@ export type Database = {
           finix_transfer_id: string
           fraud_session_id: string | null
           id: string
+          instrument_type: string | null
           merchant_name: string | null
           metadata: Json | null
           method_name: string | null
@@ -761,6 +765,7 @@ export type Database = {
           finix_transfer_id: string
           fraud_session_id?: string | null
           id?: string
+          instrument_type?: string | null
           merchant_name?: string | null
           metadata?: Json | null
           method_name?: string | null
@@ -805,6 +810,7 @@ export type Database = {
           finix_transfer_id?: string
           fraud_session_id?: string | null
           id?: string
+          instrument_type?: string | null
           merchant_name?: string | null
           metadata?: Json | null
           method_name?: string | null
