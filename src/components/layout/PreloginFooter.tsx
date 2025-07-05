@@ -24,7 +24,7 @@ export const PreloginFooter = () => {
     { 
       name: 'Facebook', 
       imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/social-media-logos/Facebook_Logo_Primary.png',
-      href: 'https://www.facebook.com/people/MuniNow/61577405370617/#' 
+      href: 'https://www.facebook.com/61577405370617' 
     },
     { 
       name: 'X', 
@@ -34,7 +34,7 @@ export const PreloginFooter = () => {
     { 
       name: 'LinkedIn', 
       imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/social-media-logos/LinkedIn_logo_initials.png',
-      href: 'https://www.linkedin.com/company/muninow' 
+      href: 'https://www.linkedin.com/company/muninow/' 
     },
   ];
 
@@ -53,6 +53,8 @@ export const PreloginFooter = () => {
                 <a
                   key={social.name}
                   href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-muted-foreground hover:text-primary transition-colors"
                   aria-label={social.name}
                 >
