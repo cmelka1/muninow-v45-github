@@ -216,20 +216,28 @@ const SuperAdminCustomers = () => {
 
   const onSubmit = async (data: FinixSellerFormData) => {
     try {
-      console.log('Finix Seller Identity Payload:', JSON.stringify(data, null, 2));
+      console.log('Submitting Finix Seller Identity:', JSON.stringify(data, null, 2));
       
-      toast({
-        title: "Seller Identity Created",
-        description: "Finix seller identity payload generated successfully. Check console for details.",
+      const { data: response, error } = await supabase.functions.invoke('create-finix-seller', {
+        body: data
       });
 
-      // TODO: Integrate with Finix API endpoint
-      // const response = await fetch('/api/finix/identities', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(data)
-      // });
+      if (error) {
+        throw new Error(error.message || 'Failed to create Finix seller identity');
+      }
 
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      console.log('Finix Seller Identity Created:', JSON.stringify(response, null, 2));
+      
+      toast({
+        title: "Seller Identity Created Successfully",
+        description: `Finix Identity ID: ${response.finix_response.id}`,
+      });
+
+      // Reset form after successful creation
       form.reset();
     } catch (error) {
       console.error('Seller identity creation error:', error);
