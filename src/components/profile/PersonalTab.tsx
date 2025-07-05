@@ -268,8 +268,8 @@ export const PersonalTab = () => {
                 value={formData.streetAddress}
                 onChange={(value) => setFormData({...formData, streetAddress: value})}
                 onAddressSelect={handleAddressSelect}
-                placeholder="Enter your street address"
-                className="w-full"
+                placeholder="Start typing your address..."
+                className="w-full h-11"
               />
             ) : (
               <div className="relative">
