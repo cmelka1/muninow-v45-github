@@ -32,7 +32,7 @@ const PrivacyPolicy: React.FC = () => {
           </h1>
           
           <div className="prose prose-slate max-w-none">
-            <p className="text-muted-foreground mb-8">Last Updated: December 5, 2024</p>
+            <p className="text-muted-foreground mb-8">Last Updated: July 5, 2025</p>
 
             <PrivacyPolicySection title="1. Introduction">
               <p className="mb-4">
