@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { formatPhoneForDisplay, normalizePhoneInput } from '@/lib/phoneUtils';
 import * as z from 'zod';
 
 interface AddressComponents {
@@ -269,7 +270,16 @@ export const PersonalTab = () => {
                     <FormItem>
                       <FormLabel className="text-slate-700 font-medium">Phone Number</FormLabel>
                       <FormControl>
-                        <Input {...field} disabled={!isEditing} type="tel" />
+                        <Input 
+                          {...field} 
+                          disabled={!isEditing} 
+                          type="tel"
+                          value={field.value ? formatPhoneForDisplay(field.value) : ''}
+                          onChange={(e) => {
+                            const formatted = normalizePhoneInput(e.target.value);
+                            field.onChange(formatted);
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
