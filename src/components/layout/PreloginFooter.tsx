@@ -28,12 +28,12 @@ export const PreloginFooter = () => {
     },
     { 
       name: 'X', 
-      imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/social-media-logos/X Logo.png',
+      imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/social-media-logos/X-logo-black.png',
       href: '#' 
     },
     { 
       name: 'LinkedIn', 
-      imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/social-media-logos/LinkedIn Logo.png',
+      imageUrl: 'https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/social-media-logos/LinkedIn_logo_initials.png',
       href: '#' 
     },
   ];
