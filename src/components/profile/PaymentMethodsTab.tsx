@@ -95,6 +95,41 @@ export const PaymentMethodsTab = () => {
     }
   };
 
+  const handleDeleteAllPaymentMethods = async () => {
+    if (!confirm('Are you sure you want to delete ALL payment methods? This action cannot be undone.')) return;
+
+    try {
+      const deletePromises = paymentMethods.map(method => 
+        supabase.rpc('delete_payment_method', { p_id: method.id })
+      );
+
+      const results = await Promise.allSettled(deletePromises);
+      const failures = results.filter(result => result.status === 'rejected').length;
+
+      if (failures > 0) {
+        toast({
+          title: "Partial success",
+          description: `${paymentMethods.length - failures} payment methods deleted. ${failures} failed to delete.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "All payment methods deleted",
+          description: "All payment methods have been deleted successfully.",
+        });
+      }
+
+      loadPaymentMethods();
+    } catch (error) {
+      console.error('Error deleting all payment methods:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete payment methods. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getCardIcon = (methodType: string, cardBrand?: string) => {
     if (methodType === 'ach') {
       return <Building className="h-5 w-5 text-primary" />;
@@ -128,10 +163,22 @@ export const PaymentMethodsTab = () => {
               <CreditCard className="h-5 w-5 text-primary" />
               Payment Methods
             </CardTitle>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Payment Method
-            </Button>
+            <div className="flex items-center gap-2">
+              {paymentMethods.length > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteAllPaymentMethods}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Remove All
+                </Button>
+              )}
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Payment Method
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
