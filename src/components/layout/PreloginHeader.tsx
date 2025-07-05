@@ -31,12 +31,22 @@ export const PreloginHeader = () => {
   };
 
   const Logo = ({ className = "" }: { className?: string }) => (
-    <Link to="/" className={`flex items-center space-x-2 hover:opacity-80 transition-opacity ${className}`}>
+    <Link to="/" className={`flex items-center hover:opacity-80 transition-opacity ${className}`}>
       <img 
-        src="https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/muninow-logo/logo.png"
+        src="/lovable-uploads/14cad4bc-45c5-4b44-b3d1-8cc9dbe1995c.png"
         alt="MuniNow Logo"
         className="h-8 w-auto"
+        onError={(e) => {
+          console.error('Logo failed to load:', e);
+          // Fallback to text if image fails
+          e.currentTarget.style.display = 'none';
+          const sibling = e.currentTarget.nextElementSibling as HTMLElement;
+          if (sibling) {
+            sibling.style.display = 'block';
+          }
+        }}
       />
+      <span className="text-xl font-bold text-primary hidden">MuniNow</span>
     </Link>
   );
 

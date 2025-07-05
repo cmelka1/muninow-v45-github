@@ -8,10 +8,20 @@ export const PreloginFooter = () => {
   const Logo = () => (
     <div className="flex items-center">
       <img 
-        src="https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/muninow-logo/logo.png"
+        src="/lovable-uploads/14cad4bc-45c5-4b44-b3d1-8cc9dbe1995c.png"
         alt="MuniNow Logo"
         className="h-8 w-auto"
+        onError={(e) => {
+          console.error('Footer logo failed to load:', e);
+          // Fallback to text if image fails
+          e.currentTarget.style.display = 'none';
+          const sibling = e.currentTarget.nextElementSibling as HTMLElement;
+          if (sibling) {
+            sibling.style.display = 'block';
+          }
+        }}
       />
+      <span className="text-xl font-bold text-primary hidden">MuniNow</span>
     </div>
   );
 
