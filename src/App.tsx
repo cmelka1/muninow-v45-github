@@ -19,6 +19,7 @@ import Residents from "./pages/Residents";
 import About from "./pages/About";
 import ContactUs from "./pages/ContactUs";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<ContactUs />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

@@ -79,6 +79,12 @@ export const getPageMetadata = (page: string): SEOMetadata => {
       description: "Contact MuniNow for questions about our municipal payment platform. Reach out for support, partnerships, or to learn more about our services.",
       keywords: "contact muninow, municipal payment support, customer service, partnerships, get in touch",
       canonical: "https://muninow.com/contact"
+    },
+    terms: {
+      title: "Terms of Service - MuniNow",
+      description: "Read MuniNow's Terms of Service covering payment processing, user responsibilities, compliance, and legal provisions for our municipal payment platform.",
+      keywords: "terms of service, user agreement, payment terms, legal terms, municipal payment terms, service agreement",
+      canonical: "https://muninow.com/terms"
     }
   };
 
