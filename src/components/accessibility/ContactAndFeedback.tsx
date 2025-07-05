@@ -16,9 +16,6 @@ const ContactAndFeedback: React.FC = () => {
           <h3 className="text-lg font-semibold mb-2">Contact Methods</h3>
           <ul className="list-disc pl-5 space-y-1">
             <li><strong>Email:</strong> <a href="mailto:contact@muninow.com" className="text-primary hover:underline">contact@muninow.com</a></li>
-            <li><strong>Phone:</strong> <a href="tel:+16303906636" className="text-primary hover:underline">+1 (630) 390-6636</a></li>
-            <li><strong>TTY/TDD:</strong> <a href="tel:711" className="text-primary hover:underline">711 (Relay Service)</a></li>
-            <li><strong>Mail:</strong> MuniNow Accessibility Team, 123 Tech Plaza, Suite 400, Boston, MA 02110</li>
           </ul>
         </div>
         
