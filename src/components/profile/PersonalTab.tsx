@@ -23,13 +23,28 @@ interface AddressComponents {
   zipCode: string;
 }
 
+// Address 2 Types (same as signup form)
+const ADDRESS_2_TYPES = [
+  'Apartment',
+  'Suite',
+  'Floor',
+  'Building',
+  'Room',
+  'Unit',
+  'Department',
+  'Lot',
+  'Basement',
+  'Penthouse'
+];
+
 // Form validation schema
 const profileSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   phone: z.string().optional(),
   streetAddress: z.string().optional(),
-  address2: z.string().optional(),
+  address2Type: z.string().optional(),
+  address2Value: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
   zipCode: z.string().optional(),
@@ -44,6 +59,22 @@ export const PersonalTab = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Parse address2 from existing apt_number
+  const parseAptNumber = (aptNumber: string | null) => {
+    if (!aptNumber) return { type: '', value: '' };
+    
+    const parts = aptNumber.split(' ');
+    if (parts.length >= 2) {
+      return {
+        type: parts[0],
+        value: parts.slice(1).join(' ')
+      };
+    }
+    return { type: '', value: aptNumber };
+  };
+
+  const existingApt = parseAptNumber((profile as any)?.apt_number || null);
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -51,7 +82,8 @@ export const PersonalTab = () => {
       lastName: profile?.last_name || '',
       phone: profile?.phone || '',
       streetAddress: profile?.street_address || '',
-      address2: (profile as any)?.apt_number || '',
+      address2Type: existingApt.type || '',
+      address2Value: existingApt.value || '',
       city: profile?.city || '',
       state: profile?.state || '',
       zipCode: profile?.zip_code || '',
@@ -62,12 +94,14 @@ export const PersonalTab = () => {
   // Update form when profile changes
   useEffect(() => {
     if (profile) {
+      const existingApt = parseAptNumber((profile as any).apt_number);
       form.reset({
         firstName: profile.first_name || '',
         lastName: profile.last_name || '',
         phone: profile.phone || '',
         streetAddress: profile.street_address || '',
-        address2: (profile as any).apt_number || '',
+        address2Type: existingApt.type || '',
+        address2Value: existingApt.value || '',
         city: profile.city || '',
         state: profile.state || '',
         zipCode: profile.zip_code || '',
@@ -114,7 +148,9 @@ export const PersonalTab = () => {
           last_name: data.lastName,
           phone: data.phone,
           street_address: data.streetAddress,
-          apt_number: data.address2 || null,
+          apt_number: data.address2Type && data.address2Value 
+            ? `${data.address2Type} ${data.address2Value.toUpperCase()}`
+            : null,
           city: data.city,
           state: data.state,
           zip_code: data.zipCode,
@@ -276,23 +312,58 @@ export const PersonalTab = () => {
                 )}
               />
               
-              <FormField
-                control={form.control}
-                name="address2"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-slate-700 font-medium">Address 2 (Optional)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        disabled={!isEditing} 
-                        placeholder="e.g., Apt 4B, Suite 12A"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-2">
+                <Label className="text-slate-700 font-medium">Address 2 (Optional)</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="address2Type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-slate-600 text-sm">Type</FormLabel>
+                        <FormControl>
+                          {isEditing ? (
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <SelectTrigger className="h-11">
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {ADDRESS_2_TYPES.map((type) => (
+                                  <SelectItem key={type} value={type}>
+                                    {type}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                           ) : (
+                             <Input {...field} disabled={true} />
+                           )}
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="address2Value"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-slate-600 text-sm">Value</FormLabel>
+                         <FormControl>
+                           <Input
+                             {...field}
+                             disabled={!isEditing}
+                             placeholder="e.g., 4B, 12A"
+                             maxLength={5}
+                             onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                           />
+                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
