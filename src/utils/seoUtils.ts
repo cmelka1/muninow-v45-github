@@ -91,6 +91,12 @@ export const getPageMetadata = (page: string): SEOMetadata => {
       description: "Learn about MuniNow's use of cookies, your privacy choices, and how we protect your data. Manage your cookie preferences and understand our compliance with GDPR and CCPA.",
       keywords: "cookies policy, privacy choices, GDPR compliance, CCPA compliance, data protection, cookie preferences, web tracking",
       canonical: "https://muninow.com/cookies"
+    },
+    accessibility: {
+      title: "Accessibility Statement - MuniNow",
+      description: "MuniNow's commitment to digital accessibility, WCAG 2.2 compliance, and inclusive design for all users. Learn about our accessibility features, compliance standards, and feedback options.",
+      keywords: "accessibility statement, WCAG 2.2, ADA compliance, Section 508, assistive technology, inclusive design, digital accessibility, screen reader support",
+      canonical: "https://muninow.com/accessibility"
     }
   };
 
