@@ -140,7 +140,7 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {} }) => {
                 <TableHead className="hidden sm:table-cell">Due Date</TableHead>
                 <TableHead>Vendor</TableHead>
                 <TableHead className="hidden md:table-cell">Category</TableHead>
-                <TableHead className="hidden lg:table-cell">Status</TableHead>
+                <TableHead className="hidden lg:table-cell text-center">Status</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
                 <TableHead className="w-[120px] text-center">Pay</TableHead>
               </TableRow>
@@ -161,7 +161,7 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {} }) => {
                       {bill.category}
                     </span>
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell py-2">
+                  <TableCell className="hidden lg:table-cell py-2 text-center">
                     {getStatusBadge(bill.payment_status || 'unpaid')}
                   </TableCell>
                   <TableCell className="text-right font-medium py-2">
