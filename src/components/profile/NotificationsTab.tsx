@@ -3,22 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, Mail, Smartphone, FileText, AlertTriangle, DollarSign, Wrench } from 'lucide-react';
+import { Bell, Mail, Smartphone, FileText, AlertTriangle, DollarSign, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface NotificationPreferences {
   email: {
     billPosting: boolean;
-    pastDue: boolean;
-    delinquency: boolean;
-    serviceInterruptions: boolean;
     paymentConfirmations: boolean;
   };
   sms: {
     billPosting: boolean;
-    pastDue: boolean;
-    delinquency: boolean;
-    serviceInterruptions: boolean;
     paymentConfirmations: boolean;
   };
   paperlessBilling: boolean;
@@ -27,16 +22,10 @@ interface NotificationPreferences {
 const initialPreferences: NotificationPreferences = {
   email: {
     billPosting: true,
-    pastDue: true,
-    delinquency: true,
-    serviceInterruptions: true,
     paymentConfirmations: true,
   },
   sms: {
     billPosting: false,
-    pastDue: true,
-    delinquency: true,
-    serviceInterruptions: true,
     paymentConfirmations: false,
   },
   paperlessBilling: false,
@@ -47,6 +36,47 @@ export const NotificationsTab = () => {
   const { toast } = useToast();
   const [preferences, setPreferences] = useState<NotificationPreferences>(initialPreferences);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
+
+  // Load user preferences on mount
+  useEffect(() => {
+    const loadPreferences = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('user_notification_preferences')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error loading preferences:', error);
+          return;
+        }
+
+        if (data) {
+          setPreferences({
+            email: {
+              billPosting: data.email_bill_posting,
+              paymentConfirmations: data.email_payment_confirmation,
+            },
+            sms: {
+              billPosting: data.sms_bill_posting,
+              paymentConfirmations: data.sms_payment_confirmation,
+            },
+            paperlessBilling: false, // This could be stored separately if needed
+          });
+        }
+      } catch (error) {
+        console.error('Error loading preferences:', error);
+      } finally {
+        setIsLoadingPreferences(false);
+      }
+    };
+
+    loadPreferences();
+  }, [user?.id]);
 
   const handlePreferenceChange = (
     type: 'email' | 'sms',
@@ -70,10 +100,28 @@ export const NotificationsTab = () => {
   };
 
   const savePreferences = async () => {
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to save preferences.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Simulate API call - replace with actual implementation
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { error } = await supabase
+        .from('user_notification_preferences')
+        .upsert({
+          user_id: user.id,
+          email_bill_posting: preferences.email.billPosting,
+          sms_bill_posting: preferences.sms.billPosting,
+          email_payment_confirmation: preferences.email.paymentConfirmations,
+          sms_payment_confirmation: preferences.sms.paymentConfirmations,
+        });
+
+      if (error) throw error;
       
       toast({
         title: "Preferences saved",
@@ -96,33 +144,35 @@ export const NotificationsTab = () => {
       key: 'billPosting' as const,
       icon: FileText,
       title: 'Bill Posting',
-      description: 'Get notified when new bills are posted to your account'
+      description: 'Get notified when new bills are posted to your account',
+      userControlled: true,
     },
     {
-      key: 'pastDue' as const,
+      key: 'billNotice' as const,
       icon: AlertTriangle,
-      title: 'Past Due Notices',
-      description: 'Receive alerts when bills become past due'
-    },
-    {
-      key: 'delinquency' as const,
-      icon: AlertTriangle,
-      title: 'Delinquency Notices',
-      description: 'Important notices about overdue accounts'
-    },
-    {
-      key: 'serviceInterruptions' as const,
-      icon: Wrench,
-      title: 'Service Interruptions',
-      description: 'Updates about planned or emergency service disruptions'
+      title: 'Bill Notice',
+      description: 'Past due notices, delinquency notices, and service turn-off warnings',
+      userControlled: false,
     },
     {
       key: 'paymentConfirmations' as const,
       icon: DollarSign,
       title: 'Payment Confirmations',
-      description: 'Confirmations when payments are processed'
+      description: 'Confirmations when payments are processed',
+      userControlled: true,
     }
   ];
+
+  if (isLoadingPreferences) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-slate-600">Loading your notification preferences...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -148,27 +198,46 @@ export const NotificationsTab = () => {
                     <p className="text-sm text-slate-600 mb-3">{category.description}</p>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                        <div className="flex items-center space-x-2">
-                          <Mail className="h-4 w-4 text-slate-500" />
-                          <Label className="text-sm font-medium">Email</Label>
+                      {category.userControlled ? (
+                        <>
+                          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <Mail className="h-4 w-4 text-slate-500" />
+                              <Label className="text-sm font-medium">Email</Label>
+                            </div>
+                            <Switch
+                              checked={preferences.email[category.key as keyof NotificationPreferences['email']]}
+                              onCheckedChange={(value) => handlePreferenceChange('email', category.key as keyof NotificationPreferences['email'], value)}
+                            />
+                          </div>
+                          
+                          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <Smartphone className="h-4 w-4 text-slate-500" />
+                              <Label className="text-sm font-medium">SMS</Label>
+                            </div>
+                            <Switch
+                              checked={preferences.sms[category.key as keyof NotificationPreferences['sms']]}
+                              onCheckedChange={(value) => handlePreferenceChange('sms', category.key as keyof NotificationPreferences['sms'], value)}
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="col-span-full">
+                          <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <Shield className="h-4 w-4 text-amber-600" />
+                              <Label className="text-sm font-medium text-amber-900">Municipality Controlled</Label>
+                            </div>
+                            <div className="text-xs text-amber-700 bg-amber-100 px-2 py-1 rounded">
+                              Always Enabled
+                            </div>
+                          </div>
+                          <p className="text-xs text-amber-600 mt-2">
+                            These notifications are controlled by your municipality and will always be sent for account security and compliance.
+                          </p>
                         </div>
-                        <Switch
-                          checked={preferences.email[category.key]}
-                          onCheckedChange={(value) => handlePreferenceChange('email', category.key, value)}
-                        />
-                      </div>
-                      
-                      <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                        <div className="flex items-center space-x-2">
-                          <Smartphone className="h-4 w-4 text-slate-500" />
-                          <Label className="text-sm font-medium">SMS</Label>
-                        </div>
-                        <Switch
-                          checked={preferences.sms[category.key]}
-                          onCheckedChange={(value) => handlePreferenceChange('sms', category.key, value)}
-                        />
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
