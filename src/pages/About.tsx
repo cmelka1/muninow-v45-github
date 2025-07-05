@@ -71,9 +71,9 @@ const About: React.FC = () => {
     >
       <div className="min-h-screen flex flex-col">
         <main className="flex-1">
-          <section className="bg-gradient-to-b from-primary/10 to-background py-16 md:py-24">
+          <section className="bg-gradient-to-b from-primary/10 to-background py-12 md:py-16">
             <div className="container mx-auto px-4 text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">About MuniNow</h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">About MuniNow</h1>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
                 Simplifying Municipal Operations
               </p>
@@ -81,7 +81,7 @@ const About: React.FC = () => {
           </section>
 
           {/* About Content */}
-          <section className="py-16 px-4">
+          <section className="py-8 px-4">
             <div className="container mx-auto max-w-4xl">
               <div className="space-y-6 text-muted-foreground">
                 <p className="text-lg">
