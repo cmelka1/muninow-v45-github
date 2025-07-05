@@ -165,24 +165,11 @@ export const PaymentMethodsTab = () => {
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-slate-600">
-                            {method.method_name}
-                          </p>
                           {method.method_type === 'card' && method.expires_at && (
                             <p className="text-sm text-slate-500">
                               Expires {new Date(method.expires_at).toLocaleDateString()}
                             </p>
                           )}
-                          <div className="mt-1 flex items-center space-x-2">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
-                              {method.account_type === 'business' ? 'Business' : 'Personal'}
-                            </span>
-                            {method.method_type === 'card' && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                {method.card_brand?.toUpperCase()}
-                              </span>
-                            )}
-                          </div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
