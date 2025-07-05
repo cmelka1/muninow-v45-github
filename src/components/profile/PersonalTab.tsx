@@ -320,7 +320,6 @@ export const PersonalTab = () => {
                     name="address2Type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-600 text-sm">Type</FormLabel>
                         <FormControl>
                           {isEditing ? (
                             <Select value={field.value} onValueChange={field.onChange}>
@@ -343,13 +342,12 @@ export const PersonalTab = () => {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="address2Value"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-slate-600 text-sm">Value</FormLabel>
-                         <FormControl>
+                   <FormField
+                     control={form.control}
+                     name="address2Value"
+                     render={({ field }) => (
+                       <FormItem>
+                          <FormControl>
                            <Input
                              {...field}
                              disabled={!isEditing}
