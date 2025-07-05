@@ -307,37 +307,36 @@ export const VehiclesTab = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
               {vehicles.map((vehicle) => (
                 <Card key={vehicle.id} className="border-slate-200">
                   <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className="bg-primary/10 p-2 rounded-lg">
-                          <Car className="h-5 w-5 text-primary" />
-                        </div>
+                        <Car className="h-8 w-8 text-primary" />
                         <div>
-                          <h4 className="font-semibold text-slate-800">
-                            {vehicle.year} {vehicle.make} {vehicle.model}
-                          </h4>
-                          <p className="text-sm text-slate-600">{vehicle.color}</p>
-                          <p className="text-sm text-slate-600 font-mono">
-                            {vehicle.license_plate} • {vehicle.state}
-                          </p>
-                          <div className="mt-1">
+                          <div className="flex items-center space-x-2">
+                            <h4 className="font-semibold text-slate-800">
+                              {vehicle.year} {vehicle.make} {vehicle.model}
+                            </h4>
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
                               {vehicle.vehicle_type === 'business' ? 'Business' : 'Personal'}
                             </span>
                           </div>
+                          <p className="text-sm text-slate-600">{vehicle.color}</p>
+                          <p className="text-sm text-slate-500 font-mono">
+                            {vehicle.license_plate} • {vehicle.state}
+                          </p>
                         </div>
                       </div>
-                      <div className="flex space-x-1">
+                      <div className="flex items-center space-x-2">
                         <Button
                           size="sm"
-                          variant="ghost"
+                          variant="outline"
                           onClick={() => handleEditVehicle(vehicle)}
                         >
-                          <Edit2 className="h-4 w-4" />
+                          <Edit2 className="h-4 w-4 mr-2" />
+                          Edit
                         </Button>
                         <Button
                           size="sm"
