@@ -1,9 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Shield, Building2, House, BarChart3, Clock, CheckCircle2, RefreshCcw, CreditCard } from 'lucide-react';
 import { Feature } from '@/types';
-import { Link } from 'react-router-dom';
 
 interface FeatureCardProps {
   feature: Feature;
@@ -56,13 +54,6 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature }) => {
             </div>
           ))}
         </div>
-        <Link 
-          to="/contact-us" 
-          className="text-primary hover:text-primary/80 font-medium text-sm transition-colors"
-          aria-label={`Learn more about ${feature.title}`}
-        >
-          Learn more →
-        </Link>
       </CardContent>
     </Card>
   );
