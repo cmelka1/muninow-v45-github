@@ -1,88 +1,49 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import React, { useEffect } from 'react';
 import { PreloginHeader } from '@/components/layout/PreloginHeader';
 import { PreloginFooter } from '@/components/layout/PreloginFooter';
+import LazyLoadingWrapper from '@/components/shared/LazyLoadingWrapper';
+import { useResponsiveNavigation } from '@/hooks/useResponsiveNavigation';
+
+// Lazy load heavy components
+const HeroSection = React.lazy(() => import('@/components/home/HeroSection'));
+const HowItWorksSection = React.lazy(() => import('@/components/home/HowItWorksSection'));
+const FeaturesSection = React.lazy(() => import('@/components/home/FeaturesSection'));
+const CTASection = React.lazy(() => import('@/components/home/CTASection'));
 
 const Index = () => {
+  const { isMobile } = useResponsiveNavigation();
+
+  // Initialize performance optimizations
+  useEffect(() => {
+    // Preload critical route chunks
+    import('@/pages/Auth');
+    import('@/pages/Signup');
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
+    <div className="flex flex-col min-h-screen">
       <PreloginHeader />
 
-      {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
-        <div className="text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Municipal Payment
-            <span className="block text-blue-600">Made Simple</span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Pay your municipal bills quickly and securely online. Access your account, 
-            view bills, and make payments from anywhere, anytime.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/signup">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 px-8 py-3 text-lg">
-                Get Started
-              </Button>
-            </Link>
-            <Link to="/signin">
-              <Button variant="outline" size="lg" className="px-8 py-3 text-lg">
-                Login
-              </Button>
-            </Link>
-          </div>
-        </div>
+      <main>
+        {/* Hero Section - Critical above-the-fold content */}
+        <LazyLoadingWrapper fallback={<div className="h-96 gradient-bg animate-pulse" />}>
+          <HeroSection isMobile={isMobile} />
+        </LazyLoadingWrapper>
 
-        {/* Features Section */}
-        <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <Card className="text-center">
-            <CardContent className="p-6">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Secure Payments</h3>
-              <p className="text-gray-600">
-                Your payment information is protected with bank-level security and encryption.
-              </p>
-            </CardContent>
-          </Card>
+        {/* Lazy loaded sections for better performance */}
+        <LazyLoadingWrapper fallback={<div className="h-96 bg-background animate-pulse" />}>
+          <HowItWorksSection isMobile={isMobile} />
+        </LazyLoadingWrapper>
 
-          <Card className="text-center">
-            <CardContent className="p-6">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">View Bills Online</h3>
-              <p className="text-gray-600">
-                Access all your municipal bills in one place with detailed payment history.
-              </p>
-            </CardContent>
-          </Card>
+        <LazyLoadingWrapper fallback={<div className="h-96 bg-muted/30 animate-pulse" />}>
+          <FeaturesSection isMobile={isMobile} />
+        </LazyLoadingWrapper>
 
-          <Card className="text-center">
-            <CardContent className="p-6">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">24/7 Access</h3>
-              <p className="text-gray-600">
-                Make payments and manage your account anytime, from any device.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+        <LazyLoadingWrapper fallback={<div className="h-64 bg-primary/90 animate-pulse" />}>
+          <CTASection />
+        </LazyLoadingWrapper>
+      </main>
 
       <PreloginFooter />
     </div>
