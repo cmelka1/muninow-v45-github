@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, Mail, Smartphone, FileText, AlertTriangle, DollarSign, Shield } from 'lucide-react';
+import { Bell, Mail, Smartphone, FileText, AlertTriangle, DollarSign, Shield, Edit2, Save, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -35,8 +36,10 @@ export const NotificationsTab = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [preferences, setPreferences] = useState<NotificationPreferences>(initialPreferences);
+  const [originalPreferences, setOriginalPreferences] = useState<NotificationPreferences>(initialPreferences);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Load user preferences on mount
   useEffect(() => {
@@ -56,7 +59,7 @@ export const NotificationsTab = () => {
         }
 
         if (data) {
-          setPreferences({
+          const loadedPreferences = {
             email: {
               billPosting: data.email_bill_posting,
               paymentConfirmations: data.email_payment_confirmation,
@@ -66,7 +69,9 @@ export const NotificationsTab = () => {
               paymentConfirmations: data.sms_payment_confirmation,
             },
             paperlessBilling: false, // This could be stored separately if needed
-          });
+          };
+          setPreferences(loadedPreferences);
+          setOriginalPreferences(loadedPreferences);
         }
       } catch (error) {
         console.error('Error loading preferences:', error);
@@ -99,6 +104,11 @@ export const NotificationsTab = () => {
     }));
   };
 
+  const handleCancel = () => {
+    setPreferences(originalPreferences);
+    setIsEditing(false);
+  };
+
   const savePreferences = async () => {
     if (!user?.id) {
       toast({
@@ -123,10 +133,12 @@ export const NotificationsTab = () => {
 
       if (error) throw error;
       
+      setOriginalPreferences(preferences);
       toast({
         title: "Preferences saved",
         description: "Your notification preferences have been updated successfully.",
       });
+      setIsEditing(false);
     } catch (error) {
       console.error('Error saving preferences:', error);
       toast({
@@ -179,10 +191,33 @@ export const NotificationsTab = () => {
       {/* Notification Preferences */}
       <Card className="border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-            <Bell className="h-5 w-5 text-primary" />
-            Notification Preferences
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+              <Bell className="h-5 w-5 text-primary" />
+              Notification Preferences
+            </CardTitle>
+            {!isEditing ? (
+              <Button type="button" onClick={() => setIsEditing(true)} variant="outline">
+                <Edit2 className="h-4 w-4 mr-2" />
+                Edit Preferences
+              </Button>
+            ) : (
+              <div className="flex space-x-2">
+                <Button type="button" onClick={savePreferences} size="sm" disabled={isLoading}>
+                  {isLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  Save Changes
+                </Button>
+                <Button type="button" onClick={handleCancel} variant="outline" size="sm" disabled={isLoading}>
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {notificationCategories.map((category) => {
@@ -208,6 +243,7 @@ export const NotificationsTab = () => {
                             <Switch
                               checked={preferences.email[category.key as keyof NotificationPreferences['email']]}
                               onCheckedChange={(value) => handlePreferenceChange('email', category.key as keyof NotificationPreferences['email'], value)}
+                              disabled={!isEditing}
                             />
                           </div>
                           
@@ -219,6 +255,7 @@ export const NotificationsTab = () => {
                             <Switch
                               checked={preferences.sms[category.key as keyof NotificationPreferences['sms']]}
                               onCheckedChange={(value) => handlePreferenceChange('sms', category.key as keyof NotificationPreferences['sms'], value)}
+                              disabled={!isEditing}
                             />
                           </div>
                         </>
@@ -266,6 +303,7 @@ export const NotificationsTab = () => {
             <Switch
               checked={preferences.paperlessBilling}
               onCheckedChange={handlePaperlessChange}
+              disabled={!isEditing}
             />
           </div>
           
@@ -284,20 +322,6 @@ export const NotificationsTab = () => {
           )}
         </CardContent>
       </Card>
-
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <button
-          onClick={savePreferences}
-          disabled={isLoading}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
-        >
-          {isLoading && (
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
-          )}
-          Save Preferences
-        </button>
-      </div>
     </div>
   );
 };
