@@ -1,5 +1,20 @@
 import { SEOMetadata } from '@/types';
 
+export const generateFAQStructuredData = (faqs: Array<{question: string, answer: string}>) => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer
+      }
+    }))
+  };
+};
+
 export const getPageMetadata = (page: string): SEOMetadata => {
   const metadata: Record<string, SEOMetadata> = {
     home: {
@@ -19,6 +34,12 @@ export const getPageMetadata = (page: string): SEOMetadata => {
       description: "Comprehensive platform for municipalities to modernize payment processes, reduce administrative overhead, and improve resident satisfaction with automated billing and reconciliation.",
       keywords: "municipal bill collection, municipal payment processing, government billing software, municipal administration, automated billing, payment reconciliation",
       canonical: "https://muninow.com/municipalities"
+    },
+    residents: {
+      title: "MuniNow for Residents - Easy Municipal Bill Pay",
+      description: "Residents can pay all municipal bills in one place. View water, electric, gas, tax, and other city bills on a single dashboard. Set up autopay and never miss a payment.",
+      keywords: "resident bill pay, municipal bills for residents, city bill payment, water bill pay, electric bill pay, property tax payment",
+      canonical: "https://muninow.com/residents"
     }
   };
 

@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
 import Features from "./pages/Features";
 import Municipalities from "./pages/Municipalities";
+import Residents from "./pages/Residents";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/features" element={<Features />} />
             <Route path="/municipalities" element={<Municipalities />} />
+            <Route path="/residents" element={<Residents />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
