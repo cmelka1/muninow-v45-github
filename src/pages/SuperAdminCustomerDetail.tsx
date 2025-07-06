@@ -129,8 +129,8 @@ const SuperAdminCustomerDetail = () => {
           </div>
         </div>
 
-        {/* Three Tiles Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Four Tiles Grid (2x2) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Tile 1: Entity Profile */}
           <Card>
             <CardHeader className="pb-4">
@@ -297,6 +297,48 @@ const SuperAdminCustomerDetail = () => {
                         </TableRow>
                       ))
                     )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tile 4: Merchant Accounts */}
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center text-lg font-medium">
+                  <Building2 className="h-5 w-5 mr-2" />
+                  Merchant Accounts
+                </CardTitle>
+                <Button 
+                  size="sm"
+                  onClick={() => navigate(`/superadmin/customers/${customerId}/add-merchant-account`)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New Merchant Account
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-muted/50">
+                    <TableRow>
+                      <TableHead>Account Name</TableHead>
+                      <TableHead className="hidden sm:table-cell">Account Type</TableHead>
+                      <TableHead className="hidden sm:table-cell">Status</TableHead>
+                      <TableHead className="text-right">Created</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell colSpan={4} className="py-8 text-center">
+                        <span className="text-muted-foreground">
+                          No merchant accounts found. Click "Add New Merchant Account" to get started.
+                        </span>
+                      </TableCell>
+                    </TableRow>
                   </TableBody>
                 </Table>
               </div>
