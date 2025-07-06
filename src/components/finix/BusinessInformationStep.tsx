@@ -19,14 +19,6 @@ interface BusinessInformationStepProps {
 }
 
 export function BusinessInformationStep({ form }: BusinessInformationStepProps) {
-  const businessType = form.watch('businessInformation.businessType');
-  
-  // Auto-set ownership type to PUBLIC when GOVERNMENT_AGENCY is selected
-  useEffect(() => {
-    if (businessType === 'GOVERNMENT_AGENCY') {
-      form.setValue('businessInformation.ownershipType', 'PUBLIC');
-    }
-  }, [businessType, form]);
 
   return (
     <div className="space-y-6">

@@ -38,7 +38,7 @@ export function FinixSellerOnboardingForm() {
         businessWebsite: '',
         businessDescription: '',
         incorporationDate: '',
-        ownershipType: 'PRIVATE',
+        ownershipType: 'PUBLIC',
         businessAddress: {
           line1: '',
           line2: '',
