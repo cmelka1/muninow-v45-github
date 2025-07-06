@@ -28,7 +28,7 @@ export const businessInformationSchema = z.object({
   businessType: BusinessTypeEnum,
   businessName: z.string().min(1, "Business name is required"),
   doingBusinessAs: z.string().min(1, "Doing Business As is required"),
-  businessTaxId: z.string().min(9, "Valid tax ID is required"),
+  businessTaxId: z.string().min(9, "Business tax ID must be exactly 9 digits").max(9, "Business tax ID must be exactly 9 digits"),
   businessPhone: z.string().min(10, "Valid phone number is required"),
   businessWebsite: z.string().url("Valid website URL is required"),
   businessDescription: z.string().min(2, "Business description is required"),
@@ -64,8 +64,8 @@ export const ownerInformationSchema = z.object({
     .optional()
     .or(z.literal("")),
   personalTaxId: z.string()
-    .min(4, "Last 4 digits of SSN required")
-    .max(4, "Only last 4 digits")
+    .min(9, "Personal tax ID must be 9 digits")
+    .max(9, "Personal tax ID must be 9 digits")
     .optional()
     .or(z.literal("")),
   ownershipPercentage: z.number()

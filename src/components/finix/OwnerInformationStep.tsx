@@ -207,14 +207,14 @@ export function OwnerInformationStep({ form, isGovernmentAgency }: OwnerInformat
                 name="ownerInformation.personalTaxId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Personal Tax ID (Last 4 of SSN) *</FormLabel>
+                    <FormLabel>Personal Tax ID (SSN) *</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Last 4 digits"
-                        maxLength={4}
+                        placeholder="9 digits"
+                        maxLength={9}
                         {...field}
                         onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                          const value = e.target.value.replace(/\D/g, '').slice(0, 9);
                           field.onChange(value);
                         }}
                       />

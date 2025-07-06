@@ -109,10 +109,11 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
                 <FormLabel>Entity Tax ID (EIN/SSN) *</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Enter tax ID" 
+                    placeholder="Enter tax ID (9 digits)" 
+                    maxLength={9}
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '');
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 9);
                       field.onChange(value);
                     }}
                   />
