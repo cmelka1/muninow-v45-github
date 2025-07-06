@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { 
   FormField, 
@@ -92,9 +92,9 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
             name="businessInformation.doingBusinessAs"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Doing Business As (DBA)</FormLabel>
+                <FormLabel>Doing Business As (DBA) *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter DBA name (optional)" {...field} />
+                  <Input placeholder="Enter DBA name" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -148,7 +148,7 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
             name="businessInformation.businessWebsite"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Business Website</FormLabel>
+                <FormLabel>Business Website *</FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="https://example.com" 

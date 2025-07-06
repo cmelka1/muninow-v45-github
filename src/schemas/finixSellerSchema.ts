@@ -27,10 +27,10 @@ export const RefundPolicyEnum = z.enum([
 export const businessInformationSchema = z.object({
   businessType: BusinessTypeEnum,
   businessName: z.string().min(1, "Business name is required"),
-  doingBusinessAs: z.string().optional(),
+  doingBusinessAs: z.string().min(1, "Doing Business As is required"),
   businessTaxId: z.string().min(9, "Valid tax ID is required"),
   businessPhone: z.string().min(10, "Valid phone number is required"),
-  businessWebsite: z.string().url().optional().or(z.literal("")),
+  businessWebsite: z.string().url("Valid website URL is required"),
   businessDescription: z.string().min(10, "Business description is required"),
   incorporationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
   ownershipType: OwnershipTypeEnum,
