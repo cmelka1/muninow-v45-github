@@ -25,6 +25,11 @@ const navigationItems = [
     url: '/superadmin/customers'
   },
   {
+    title: 'Finix Onboarding',
+    icon: Users,
+    url: '/superadmin/finix-onboarding'
+  },
+  {
     title: 'Profile',
     icon: User,
     url: '/superadmin/profile'
