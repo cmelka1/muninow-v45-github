@@ -205,7 +205,10 @@ const SuperAdminCustomerDetail = () => {
                   <CreditCard className="h-5 w-5 mr-2" />
                   Merchant Accounts
                 </CardTitle>
-                <Button size="sm">
+                <Button 
+                  size="sm"
+                  onClick={() => navigate(`/superadmin/customers/${customerId}/add-merchant-account`)}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Merchant Account
                 </Button>

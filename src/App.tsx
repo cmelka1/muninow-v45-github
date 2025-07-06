@@ -28,6 +28,7 @@ import NotFound from "./pages/NotFound";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperAdminCustomers from "./pages/SuperAdminCustomers";
 import SuperAdminCustomerDetail from "./pages/SuperAdminCustomerDetail";
+import SuperAdminMerchantAccountForm from "./pages/SuperAdminMerchantAccountForm";
 import SuperAdminFinixOnboarding from "./pages/SuperAdminFinixOnboarding";
 import SuperAdminFinixOnboardingSuccess from "./pages/SuperAdminFinixOnboardingSuccess";
 import SuperAdminProfile from "./pages/SuperAdminProfile";
@@ -75,6 +76,11 @@ const App = () => (
                 <Route path="/superadmin/customers/:customerId" element={
                   <ProtectedRoute requiredRole="superAdmin">
                     <SuperAdminCustomerDetail />
+                  </ProtectedRoute>
+                } />
+                <Route path="/superadmin/customers/:customerId/add-merchant-account" element={
+                  <ProtectedRoute requiredRole="superAdmin">
+                    <SuperAdminMerchantAccountForm />
                   </ProtectedRoute>
                 } />
                 <Route path="/superadmin/finix-onboarding" element={
