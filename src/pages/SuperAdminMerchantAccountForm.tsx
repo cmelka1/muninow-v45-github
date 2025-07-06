@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useCustomerDetail } from '@/hooks/useCustomerDetail';
 import {
   Breadcrumb,
@@ -23,7 +23,6 @@ import { merchantAccountSchema, MerchantAccountFormData } from '@/schemas/mercha
 const SuperAdminMerchantAccountForm = () => {
   const { customerId } = useParams<{ customerId: string }>();
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1);
   const { data: customer, isLoading, error } = useCustomerDetail(customerId!);
 
   const form = useForm<MerchantAccountFormData>({
@@ -43,12 +42,11 @@ const SuperAdminMerchantAccountForm = () => {
     navigate(`/superadmin/customers/${customerId}`);
   };
 
-  const handleNextStep = async () => {
+  const handleSubmit = async () => {
     const isValid = await form.trigger('bankAccount');
     if (isValid) {
-      // For now, just show completion message since Step 2 is not implemented yet
       console.log('Bank Account Data:', form.getValues('bankAccount'));
-      alert('Step 1 completed! Step 2 (Merchant Approval) will be implemented next.');
+      alert('Bank account submitted for approval!');
     }
   };
 
@@ -98,7 +96,7 @@ const SuperAdminMerchantAccountForm = () => {
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>Add Merchant Account</BreadcrumbPage>
+                <BreadcrumbPage>Add Bank Account</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
@@ -106,10 +104,10 @@ const SuperAdminMerchantAccountForm = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                Add Merchant Account
+                Add Bank Account
               </h1>
               <p className="text-gray-600 mt-1">
-                Set up payment processing for {getCustomerName()}
+                Set up bank account for {getCustomerName()}
               </p>
             </div>
             <Button onClick={handleGoBack} variant="outline">
@@ -118,41 +116,6 @@ const SuperAdminMerchantAccountForm = () => {
             </Button>
           </div>
         </div>
-
-        {/* Progress Indicator */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  currentStep === 1 ? 'bg-primary text-primary-foreground' : 'bg-gray-200 text-gray-600'
-                }`}>
-                  1
-                </div>
-                <span className={`text-sm font-medium ${
-                  currentStep === 1 ? 'text-gray-900' : 'text-gray-500'
-                }`}>
-                  Bank Account Setup
-                </span>
-              </div>
-              
-              <div className="flex-1 mx-4 h-px bg-gray-200" />
-              
-              <div className="flex items-center space-x-4">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  currentStep === 2 ? 'bg-primary text-primary-foreground' : 'bg-gray-200 text-gray-600'
-                }`}>
-                  2
-                </div>
-                <span className={`text-sm font-medium ${
-                  currentStep === 2 ? 'text-gray-900' : 'text-gray-500'
-                }`}>
-                  Merchant Approval
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Form Content */}
         {isLoading ? (
@@ -170,25 +133,10 @@ const SuperAdminMerchantAccountForm = () => {
         ) : (
           <Form {...form}>
             <form className="space-y-6">
-              {currentStep === 1 && (
-                <BankAccountStep 
-                  businessName={customer?.business_name || ''}
-                  finixIdentityId={customer?.finix_identity_id || ''}
-                />
-              )}
-              
-              {currentStep === 2 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Merchant Approval</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600">
-                      Step 2 (Merchant Approval) will be implemented next.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              <BankAccountStep 
+                businessName={customer?.business_name || ''}
+                finixIdentityId={customer?.finix_identity_id || ''}
+              />
 
               {/* Form Actions */}
               <div className="flex justify-between">
@@ -203,17 +151,9 @@ const SuperAdminMerchantAccountForm = () => {
                 
                 <Button
                   type="button"
-                  onClick={handleNextStep}
-                  disabled={currentStep === 2}
+                  onClick={handleSubmit}
                 >
-                  {currentStep === 1 ? (
-                    <>
-                      Next: Merchant Approval
-                      <ChevronRight className="h-4 w-4 ml-2" />
-                    </>
-                  ) : (
-                    'Complete Setup'
-                  )}
+                  Submit for Approval
                 </Button>
               </div>
             </form>
