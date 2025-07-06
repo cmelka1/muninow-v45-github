@@ -130,12 +130,41 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
                 <FormLabel>Entity Phone *</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Enter phone number" 
+                    placeholder="(xxx) xxx-xxxx" 
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '');
-                      field.onChange(value);
+                      // Strip all non-digits
+                      const digits = e.target.value.replace(/\D/g, '');
+                      
+                      // Format the phone number
+                      let formatted = digits;
+                      if (digits.length >= 6) {
+                        formatted = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+                      } else if (digits.length >= 3) {
+                        formatted = `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+                      } else if (digits.length > 0) {
+                        formatted = `(${digits}`;
+                      }
+                      
+                      // Update the input display with formatted value
+                      e.target.value = formatted;
+                      
+                      // Store only digits in form state
+                      field.onChange(digits);
                     }}
+                    value={(() => {
+                      const digits = field.value || '';
+                      if (digits.length >= 10) {
+                        return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+                      } else if (digits.length >= 6) {
+                        return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+                      } else if (digits.length >= 3) {
+                        return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+                      } else if (digits.length > 0) {
+                        return `(${digits}`;
+                      }
+                      return digits;
+                    })()}
                   />
                 </FormControl>
                 <FormMessage />
