@@ -128,7 +128,7 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
       }
     };
 
-    // Add CSS styles for Google Places autocomplete dropdown
+    // Add CSS styles for Google Places autocomplete dropdown with enhanced z-index and event handling
     const addGooglePlacesStyles = () => {
       const existingStyle = document.getElementById('google-places-styles');
       if (existingStyle) return;
@@ -137,12 +137,17 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
       style.id = 'google-places-styles';
       style.textContent = `
         .pac-container {
-          z-index: 9999 !important;
+          z-index: 99999 !important;
+          position: fixed !important;
           background: white !important;
           border: 1px solid hsl(var(--border)) !important;
           border-radius: 8px !important;
           box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
           margin-top: 4px !important;
+          pointer-events: auto !important;
+          -webkit-transform: translateZ(0) !important;
+          transform: translateZ(0) !important;
+          isolation: isolate !important;
         }
         .pac-item {
           padding: 8px 12px !important;
@@ -150,6 +155,9 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
           cursor: pointer !important;
           font-size: 14px !important;
           line-height: 1.4 !important;
+          pointer-events: auto !important;
+          position: relative !important;
+          z-index: 99999 !important;
         }
         .pac-item:hover {
           background-color: hsl(var(--accent)) !important;
@@ -164,17 +172,45 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
           font-weight: 600 !important;
           color: hsl(var(--foreground)) !important;
         }
+        /* Ensure dropdown is above any modal or dialog content */
+        [data-radix-popper-content-wrapper] .pac-container,
+        [data-radix-dialog-content] .pac-container {
+          z-index: 99999 !important;
+          position: fixed !important;
+        }
       `;
       document.head.appendChild(style);
     };
 
+    // Add event delegation to ensure clicks work on Google Places items  
+    const addClickEventHandling = () => {
+      const handleGooglePlacesClick = (e: Event) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('.pac-item') || target.classList.contains('pac-item')) {
+          // Ensure the click event is not prevented
+          e.stopPropagation();
+          // Allow the Google Places autocomplete to handle the click
+          return true;
+        }
+      };
+
+      // Add click event listener to document to catch Google Places clicks
+      document.addEventListener('click', handleGooglePlacesClick, { capture: true });
+      
+      return () => {
+        document.removeEventListener('click', handleGooglePlacesClick, { capture: true });
+      };
+    };
+
     initializeAutocomplete();
     addGooglePlacesStyles();
+    const cleanupClickHandling = addClickEventHandling();
 
     return () => {
       if (autocompleteRef.current) {
         window.google?.maps?.event?.clearInstanceListeners(autocompleteRef.current);
       }
+      cleanupClickHandling();
     };
   }, []);
 
