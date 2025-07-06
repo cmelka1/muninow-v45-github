@@ -132,7 +132,7 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                   <Input 
                     type="number"
                     min="0"
-                    max="10000"
+                    max="9999"
                     placeholder="0"
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     {...field}
@@ -155,7 +155,7 @@ export function ProcessingInformationStep({ form }: ProcessingInformationStepPro
                   <Input 
                     type="number"
                     min="0"
-                    max="10000"
+                    max="9999"
                     placeholder="0"
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     {...field}
