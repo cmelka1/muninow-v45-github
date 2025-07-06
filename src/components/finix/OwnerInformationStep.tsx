@@ -236,6 +236,7 @@ export function OwnerInformationStep({ form, isGovernmentAgency }: OwnerInformat
                         min="0"
                         max="100"
                         placeholder="Enter percentage"
+                        className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                         {...field}
                         onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                       />
