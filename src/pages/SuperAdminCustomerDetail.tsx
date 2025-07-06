@@ -250,7 +250,6 @@ const SuperAdminCustomerDetail = () => {
                     <TableRow>
                       <TableHead>Account Name</TableHead>
                       <TableHead className="hidden sm:table-cell">Account Number</TableHead>
-                      <TableHead className="hidden md:table-cell text-center">Status</TableHead>
                       <TableHead className="text-right">Created</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -264,9 +263,6 @@ const SuperAdminCustomerDetail = () => {
                           <TableCell className="hidden sm:table-cell py-2">
                             <Skeleton className="h-4 w-24" />
                           </TableCell>
-                          <TableCell className="hidden md:table-cell py-2 text-center">
-                            <Skeleton className="h-4 w-16" />
-                          </TableCell>
                           <TableCell className="text-right py-2">
                             <Skeleton className="h-4 w-20" />
                           </TableCell>
@@ -274,7 +270,7 @@ const SuperAdminCustomerDetail = () => {
                       ))
                     ) : paymentMethods.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="py-8 text-center">
+                        <TableCell colSpan={3} className="py-8 text-center">
                           <span className="text-muted-foreground">
                             No payment methods found. Click "Add New Payment Method" to get started.
                           </span>
@@ -292,9 +288,6 @@ const SuperAdminCustomerDetail = () => {
                             <span className="font-mono text-sm truncate block max-w-[150px]" title={method.masked_account_number || 'N/A'}>
                               {method.masked_account_number || 'N/A'}
                             </span>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell py-2 text-center">
-                            {getStatusBadge(method.status || 'pending')}
                           </TableCell>
                           <TableCell className="text-right py-2">
                             <span className="text-sm">
