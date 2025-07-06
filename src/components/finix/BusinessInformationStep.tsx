@@ -47,21 +47,11 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="INDIVIDUAL_SOLE_PROPRIETORSHIP">
-                      Individual / Sole Proprietor
-                    </SelectItem>
-                    <SelectItem value="LIMITED_LIABILITY_COMPANY">
-                      Limited Liability Company (LLC)
-                    </SelectItem>
-                    <SelectItem value="CORPORATION">
-                      Corporation
-                    </SelectItem>
-                    <SelectItem value="TAX_EXEMPT_ORGANIZATION">
-                      Tax Exempt Organization
-                    </SelectItem>
-                    <SelectItem value="GOVERNMENT_AGENCY">
-                      Government Agency
-                    </SelectItem>
+                    <SelectItem value="INDIVIDUAL_SOLE_PROPRIETORSHIP">Individual / Sole Proprietor</SelectItem>
+                    <SelectItem value="LIMITED_LIABILITY_COMPANY">Limited Liability Company (LLC)</SelectItem>
+                    <SelectItem value="CORPORATION">Corporation</SelectItem>
+                    <SelectItem value="TAX_EXEMPT_ORGANIZATION">Tax Exempt Organization</SelectItem>
+                    <SelectItem value="GOVERNMENT_AGENCY">Government Agency</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
