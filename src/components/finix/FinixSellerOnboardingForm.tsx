@@ -17,9 +17,9 @@ import { ProcessingInformationStep } from './ProcessingInformationStep';
 import { useToast } from '@/hooks/use-toast';
 
 const STEPS = [
-  { id: 1, title: "Business Information", description: "Tell us about your business" },
-  { id: 2, title: "Owner Information", description: "Principal owner details" },
-  { id: 3, title: "Processing Information", description: "Payment processing details & consent" }
+  { id: 1, title: "Business Information" },
+  { id: 2, title: "Owner Information" },
+  { id: 3, title: "Processing Information" }
 ];
 
 export function FinixSellerOnboardingForm() {
@@ -227,7 +227,6 @@ export function FinixSellerOnboardingForm() {
                   </div>
                   <div className="text-center">
                     <div className="font-medium">{step.title}</div>
-                    <div className="text-xs">{step.description}</div>
                   </div>
                 </div>
               ))}
