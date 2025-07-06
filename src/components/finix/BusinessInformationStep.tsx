@@ -133,24 +133,64 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
                     placeholder="(xxx) xxx-xxxx" 
                     {...field}
                     onChange={(e) => {
-                      // Strip all non-digits
-                      const digits = e.target.value.replace(/\D/g, '');
+                      const input = e.target.value;
+                      const cursorPosition = e.target.selectionStart;
                       
-                      // Format the phone number
-                      let formatted = digits;
-                      if (digits.length >= 6) {
+                      // Strip all non-digits to get clean number
+                      const digits = input.replace(/\D/g, '');
+                      
+                      // Store only digits in form state
+                      field.onChange(digits);
+                      
+                      // Format for display
+                      let formatted = '';
+                      if (digits.length >= 10) {
                         formatted = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+                      } else if (digits.length >= 6) {
+                        formatted = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
                       } else if (digits.length >= 3) {
                         formatted = `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
                       } else if (digits.length > 0) {
                         formatted = `(${digits}`;
+                      } else {
+                        formatted = '';
                       }
                       
-                      // Update the input display with formatted value
+                      // Update input value
                       e.target.value = formatted;
-                      
-                      // Store only digits in form state
-                      field.onChange(digits);
+                    }}
+                    onKeyDown={(e) => {
+                      // Allow backspace to work naturally
+                      if (e.key === 'Backspace') {
+                        const input = e.target as HTMLInputElement;
+                        const cursorPosition = input.selectionStart;
+                        const currentValue = input.value;
+                        
+                        // If cursor is after a formatting character, move it back
+                        if (cursorPosition && cursorPosition > 0) {
+                          const charBefore = currentValue[cursorPosition - 1];
+                          if (charBefore === ')' || charBefore === ' ' || charBefore === '-') {
+                            e.preventDefault();
+                            const digits = currentValue.replace(/\D/g, '');
+                            const newDigits = digits.slice(0, -1);
+                            field.onChange(newDigits);
+                            
+                            // Format new value
+                            let formatted = '';
+                            if (newDigits.length >= 10) {
+                              formatted = `(${newDigits.slice(0, 3)}) ${newDigits.slice(3, 6)}-${newDigits.slice(6, 10)}`;
+                            } else if (newDigits.length >= 6) {
+                              formatted = `(${newDigits.slice(0, 3)}) ${newDigits.slice(3, 6)}-${newDigits.slice(6)}`;
+                            } else if (newDigits.length >= 3) {
+                              formatted = `(${newDigits.slice(0, 3)}) ${newDigits.slice(3)}`;
+                            } else if (newDigits.length > 0) {
+                              formatted = `(${newDigits}`;
+                            }
+                            
+                            input.value = formatted;
+                          }
+                        }
+                      }
                     }}
                     value={(() => {
                       const digits = field.value || '';
@@ -163,7 +203,7 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
                       } else if (digits.length > 0) {
                         return `(${digits}`;
                       }
-                      return digits;
+                      return '';
                     })()}
                   />
                 </FormControl>
