@@ -50,7 +50,7 @@ const bankSchema = z.object({
   accountNickname: z.string().optional(),
   routingNumber: z.string().length(9, 'Routing number must be 9 digits'),
   accountNumber: z.string().min(4, 'Account number is required'),
-  accountType: z.enum(['checking', 'savings']),
+  accountType: z.enum(['personal_checking', 'personal_savings', 'business_checking', 'business_savings']),
   useProfileAddress: z.boolean(),
   streetAddress: z.string().min(1, 'Street address is required'),
   city: z.string().min(1, 'City is required'),
@@ -475,8 +475,10 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="checking">Checking</SelectItem>
-                          <SelectItem value="savings">Savings</SelectItem>
+                          <SelectItem value="personal_checking">Personal Checking</SelectItem>
+                          <SelectItem value="personal_savings">Personal Savings</SelectItem>
+                          <SelectItem value="business_checking">Business Checking</SelectItem>
+                          <SelectItem value="business_savings">Business Savings</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
