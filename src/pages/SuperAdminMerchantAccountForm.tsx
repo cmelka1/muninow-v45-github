@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { supabase } from '@/integrations/supabase/client';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,9 +45,36 @@ const SuperAdminMerchantAccountForm = () => {
 
   const handleSubmit = async () => {
     const isValid = await form.trigger('bankAccount');
-    if (isValid) {
-      console.log('Bank Account Data:', form.getValues('bankAccount'));
-      alert('Bank account submitted for approval!');
+    if (!isValid) return;
+
+    try {
+      const bankAccountData = form.getValues('bankAccount');
+      console.log('🔄 Submitting bank account data:', bankAccountData);
+
+      const { data, error } = await supabase.functions.invoke('create-finix-customer-payment-instrument', {
+        body: {
+          customerId,
+          bankAccount: bankAccountData
+        }
+      });
+
+      if (error) {
+        console.error('❌ Error creating payment instrument:', error);
+        alert(`Error: ${error.message || 'Failed to create payment instrument'}`);
+        return;
+      }
+
+      if (data?.success) {
+        console.log('✅ Payment instrument created successfully:', data);
+        alert(`Payment instrument created successfully! ID: ${data.paymentInstrumentId}`);
+        navigate(`/superadmin/customers/${customerId}`);
+      } else {
+        console.error('❌ Unexpected response:', data);
+        alert('Unexpected error occurred. Please try again.');
+      }
+    } catch (error) {
+      console.error('❌ Submission error:', error);
+      alert('An error occurred while submitting. Please try again.');
     }
   };
 

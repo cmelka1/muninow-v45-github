@@ -1,0 +1,33 @@
+export interface CustomerPaymentMethod {
+  id: string;
+  customer_id: string;
+  finix_payment_instrument_id: string;
+  finix_application_id?: string;
+  finix_identity_id?: string;
+  enabled: boolean;
+  instrument_type: string;
+  account_type?: string;
+  bank_code?: string;
+  masked_account_number?: string;
+  account_holder_name?: string;
+  bank_account_validation_check?: string;
+  currency: string;
+  country: string;
+  fingerprint?: string;
+  disabled_code?: string;
+  disabled_message?: string;
+  institution_number?: string;
+  transit_number?: string;
+  third_party?: string;
+  third_party_token?: string;
+  created_via: string;
+  tags: Record<string, any>;
+  links: Record<string, any>;
+  raw_finix_response?: Record<string, any>;
+  account_nickname?: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  finix_created_at?: string;
+  finix_updated_at?: string;
+}

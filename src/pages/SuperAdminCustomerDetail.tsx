@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/table';
 import { ArrowLeft, Building2, User, CreditCard, Plus } from 'lucide-react';
 import { useCustomerDetail } from '@/hooks/useCustomerDetail';
+import { useCustomerPaymentMethods } from '@/hooks/useCustomerPaymentMethods';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -27,6 +28,7 @@ const SuperAdminCustomerDetail = () => {
   const { customerId } = useParams<{ customerId: string }>();
   const navigate = useNavigate();
   const { data: customer, isLoading, error } = useCustomerDetail(customerId!);
+  const { data: paymentMethods, isLoading: isLoadingPaymentMethods } = useCustomerPaymentMethods(customerId!);
 
   const handleGoBack = () => {
     navigate('/superadmin/customers');
@@ -224,13 +226,52 @@ const SuperAdminCustomerDetail = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={3} className="py-8 text-center">
-                       <span className="text-muted-foreground">
-                         No payment methods found. Click "Add New Payment Method" to get started.
-                       </span>
-                    </TableCell>
-                  </TableRow>
+                  {isLoadingPaymentMethods ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="py-8 text-center">
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-3/4 mx-auto" />
+                          <Skeleton className="h-4 w-1/2 mx-auto" />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : paymentMethods && paymentMethods.length > 0 ? (
+                    paymentMethods.map((method) => (
+                      <TableRow key={method.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{method.instrument_type === 'BANK_ACCOUNT' ? 'Bank Account' : method.instrument_type}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {method.account_type} • {method.masked_account_number}
+                            </p>
+                            {method.account_nickname && (
+                              <p className="text-xs text-muted-foreground italic">{method.account_nickname}</p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            method.status === 'active' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {method.status}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(method.created_at).toLocaleDateString()}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={3} className="py-8 text-center">
+                        <span className="text-muted-foreground">
+                          No payment methods found. Click "Add New Payment Method" to get started.
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
