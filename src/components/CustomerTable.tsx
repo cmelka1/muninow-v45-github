@@ -71,35 +71,14 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ searchQuery = '' }) => {
     );
   }
 
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Customers</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-destructive">Error loading customers. Please try again.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!customers || customers.length === 0) {
-    const message = searchQuery 
+  // Always show table structure, even with no data or errors
+  const hasError = !!error;
+  const hasData = customers && customers.length > 0;
+  const message = hasError 
+    ? `Error loading customers: ${error?.message || 'Please try again.'}`
+    : searchQuery 
       ? 'No customers found matching your search.'
       : 'No customers found.';
-    
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Customers</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">{message}</p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card>
@@ -116,20 +95,30 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ searchQuery = '' }) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {customers.map((customer) => (
-                <TableRow key={customer.id} className="h-12">
-                  <TableCell className="py-2">
-                    <span className="truncate block max-w-[300px]" title={getCustomerName(customer)}>
-                      {getCustomerName(customer)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-2">
-                    <span className="text-muted-foreground">
-                      Coming Soon
+              {hasData ? (
+                customers.map((customer) => (
+                  <TableRow key={customer.id} className="h-12">
+                    <TableCell className="py-2">
+                      <span className="truncate block max-w-[300px]" title={getCustomerName(customer)}>
+                        {getCustomerName(customer)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-2">
+                      <span className="text-muted-foreground">
+                        Coming Soon
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={2} className="py-8 text-center">
+                    <span className={hasError ? "text-destructive" : "text-muted-foreground"}>
+                      {message}
                     </span>
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </div>
