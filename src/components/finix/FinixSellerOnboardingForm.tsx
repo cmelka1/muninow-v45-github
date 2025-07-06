@@ -15,6 +15,7 @@ import { BusinessInformationStep } from './BusinessInformationStep';
 import { OwnerInformationStep } from './OwnerInformationStep';
 import { ProcessingInformationStep } from './ProcessingInformationStep';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const STEPS = [
   { id: 1, title: "Entity Information" },
@@ -164,21 +165,33 @@ export function FinixSellerOnboardingForm() {
         }
       };
 
-      console.log('Finix Seller Form Data:', finalData);
-      
-      toast({
-        title: "Form Submitted Successfully",
-        description: "Your seller application has been submitted for review.",
+      // Submit to Finix via edge function
+      const { data: result, error } = await supabase.functions.invoke('submit-finix-seller', {
+        body: finalData
       });
 
-      // TODO: Submit to edge function
-      // await submitToFinix(finalData);
+      if (error) {
+        throw error;
+      }
+
+      if (!result.success) {
+        throw new Error(result.error || 'Submission failed');
+      }
+
+      console.log('Finix Submission Result:', result);
+      
+      toast({
+        title: "Application Submitted Successfully!",
+        description: `Your seller application has been submitted to Finix. Seller ID: ${result.sellerId}`,
+      });
+
+      // Optionally redirect or show success details
       
     } catch (error) {
       console.error('Form submission error:', error);
       toast({
         title: "Submission Error",
-        description: "There was an error submitting your application. Please try again.",
+        description: error.message || "There was an error submitting your application. Please try again.",
         variant: "destructive"
       });
     }

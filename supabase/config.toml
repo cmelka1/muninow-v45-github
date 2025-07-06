@@ -1,1 +1,10 @@
 project_id = "qcuiuubbaozcmejzvxje"
+
+[functions.send-contact-email]
+verify_jwt = false
+
+[functions.send-verification]
+verify_jwt = false
+
+[functions.submit-finix-seller]
+verify_jwt = true
