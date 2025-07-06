@@ -128,7 +128,48 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
       }
     };
 
+    // Add CSS styles for Google Places autocomplete dropdown
+    const addGooglePlacesStyles = () => {
+      const existingStyle = document.getElementById('google-places-styles');
+      if (existingStyle) return;
+
+      const style = document.createElement('style');
+      style.id = 'google-places-styles';
+      style.textContent = `
+        .pac-container {
+          z-index: 9999 !important;
+          background: white !important;
+          border: 1px solid hsl(var(--border)) !important;
+          border-radius: 8px !important;
+          box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+          margin-top: 4px !important;
+        }
+        .pac-item {
+          padding: 8px 12px !important;
+          border-bottom: 1px solid hsl(var(--border)) !important;
+          cursor: pointer !important;
+          font-size: 14px !important;
+          line-height: 1.4 !important;
+        }
+        .pac-item:hover {
+          background-color: hsl(var(--accent)) !important;
+        }
+        .pac-item-selected {
+          background-color: hsl(var(--accent)) !important;
+        }
+        .pac-item:last-child {
+          border-bottom: none !important;
+        }
+        .pac-matched {
+          font-weight: 600 !important;
+          color: hsl(var(--foreground)) !important;
+        }
+      `;
+      document.head.appendChild(style);
+    };
+
     initializeAutocomplete();
+    addGooglePlacesStyles();
 
     return () => {
       if (autocompleteRef.current) {
@@ -189,7 +230,7 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
       <Input
         ref={inputRef}
         placeholder={isLoading ? "Loading address suggestions..." : placeholder}
-        className={`${className} ${isLoading ? 'pr-10' : ''}`}
+        className={`${className} ${isLoading ? 'pr-10' : ''} google-places-input`}
         disabled={isLoading}
         value={value}
         onChange={handleInputChange}
