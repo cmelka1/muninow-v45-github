@@ -31,7 +31,7 @@ export function FinixSellerOnboardingForm() {
     resolver: zodResolver(finixSellerSchema),
     defaultValues: {
       businessInformation: {
-        businessType: 'LIMITED_LIABILITY_COMPANY',
+        businessType: 'GOVERNMENT_AGENCY',
         businessName: '',
         doingBusinessAs: '',
         businessTaxId: '',
