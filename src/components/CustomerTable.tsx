@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -19,6 +20,7 @@ interface CustomerTableProps {
 }
 
 const CustomerTable: React.FC<CustomerTableProps> = ({ searchQuery = '' }) => {
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   
@@ -52,6 +54,10 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ searchQuery = '' }) => {
 
   const getCustomerName = (customer: any) => {
     return customer.business_name || customer.doing_business_as || 'N/A';
+  };
+
+  const handleCustomerClick = (customerId: string) => {
+    navigate(`/superadmin/customers/${customerId}`);
   };
 
   if (isLoading) {
@@ -97,7 +103,11 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ searchQuery = '' }) => {
             <TableBody>
               {hasData ? (
                 customers.map((customer) => (
-                  <TableRow key={customer.id} className="h-12">
+                  <TableRow 
+                    key={customer.id} 
+                    className="h-12 cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => handleCustomerClick(customer.id)}
+                  >
                     <TableCell className="py-2">
                       <span className="truncate block max-w-[300px]" title={getCustomerName(customer)}>
                         {getCustomerName(customer)}
