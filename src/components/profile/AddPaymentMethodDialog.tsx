@@ -274,20 +274,32 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
     onOpenChange(false);
   };
 
-  // Prevent dialog from closing when clicking on Google Places autocomplete
+  // Enhanced dialog close prevention for Google Places interactions
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      // Check if Google Places dropdown is currently visible
+      // Multiple checks to prevent premature dialog closure
       const googlePlacesContainer = document.querySelector('.pac-container');
+      
+      // Check if Google Places dropdown is visible
       const isGooglePlacesVisible = googlePlacesContainer && 
         window.getComputedStyle(googlePlacesContainer).display !== 'none' &&
         window.getComputedStyle(googlePlacesContainer).visibility !== 'hidden';
       
-      if (isGooglePlacesVisible) {
-        // Don't close the dialog if Google Places dropdown is visible
+      // Check if we're currently processing a Google Places selection
+      const hasActiveGooglePlacesInput = document.querySelector('.google-places-input:focus');
+      
+      // Check for recent Google Places activity (within last 100ms)
+      const recentGooglePlacesActivity = document.querySelector('.pac-item:hover');
+      
+      if (isGooglePlacesVisible || hasActiveGooglePlacesInput || recentGooglePlacesActivity) {
+        console.log('Preventing dialog closure due to Google Places activity');
         return;
       }
-      handleClose();
+      
+      // Add small delay to allow Google Places events to complete
+      setTimeout(() => {
+        handleClose();
+      }, 50);
     }
   };
 

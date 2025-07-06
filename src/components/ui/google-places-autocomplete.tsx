@@ -128,7 +128,7 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
       }
     };
 
-    // Add CSS styles for Google Places autocomplete dropdown with enhanced z-index and event handling
+    // Enhanced CSS styles with better z-index management and modal support
     const addGooglePlacesStyles = () => {
       const existingStyle = document.getElementById('google-places-styles');
       if (existingStyle) return;
@@ -137,55 +137,84 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
       style.id = 'google-places-styles';
       style.textContent = `
         .pac-container {
-          z-index: 99999 !important;
+          z-index: 999999 !important;
           position: fixed !important;
-          background: white !important;
+          background: hsl(var(--background)) !important;
           border: 1px solid hsl(var(--border)) !important;
           border-radius: 8px !important;
-          box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+          box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25) !important;
           margin-top: 4px !important;
           pointer-events: auto !important;
           -webkit-transform: translateZ(0) !important;
           transform: translateZ(0) !important;
           isolation: isolate !important;
+          will-change: transform !important;
         }
         .pac-item {
-          padding: 8px 12px !important;
+          padding: 12px 16px !important;
           border-bottom: 1px solid hsl(var(--border)) !important;
           cursor: pointer !important;
           font-size: 14px !important;
           line-height: 1.4 !important;
           pointer-events: auto !important;
           position: relative !important;
-          z-index: 99999 !important;
+          z-index: 999999 !important;
+          color: hsl(var(--foreground)) !important;
+          background: hsl(var(--background)) !important;
         }
-        .pac-item:hover {
+        .pac-item:hover, .pac-item-selected {
           background-color: hsl(var(--accent)) !important;
-        }
-        .pac-item-selected {
-          background-color: hsl(var(--accent)) !important;
+          color: hsl(var(--accent-foreground)) !important;
         }
         .pac-item:last-child {
           border-bottom: none !important;
+          border-radius: 0 0 8px 8px !important;
+        }
+        .pac-item:first-child {
+          border-radius: 8px 8px 0 0 !important;
         }
         .pac-matched {
           font-weight: 600 !important;
-          color: hsl(var(--foreground)) !important;
+          color: hsl(var(--primary)) !important;
         }
-        /* Ensure dropdown is above any modal or dialog content */
-        [data-radix-popper-content-wrapper] .pac-container,
-        [data-radix-dialog-content] .pac-container {
-          z-index: 99999 !important;
+        /* Enhanced modal support with higher z-index */
+        [data-radix-dialog-overlay] ~ [data-radix-dialog-content] .pac-container,
+        [data-radix-dialog-content] .pac-container,
+        .pac-container {
+          z-index: 999999 !important;
           position: fixed !important;
+        }
+        /* Prevent dialog interference */
+        [data-radix-dialog-overlay] {
+          pointer-events: auto !important;
         }
       `;
       document.head.appendChild(style);
     };
 
-    // Ensure Google Places dropdown works properly in modal context
+    // Enhanced event handling to prevent dialog closure
     const addClickEventHandling = () => {
-      // No event interference - let Google Places handle its own clicks
-      return () => {}; // No cleanup needed
+      const handleDocumentClick = (event: Event) => {
+        const target = event.target as Element;
+        const pacContainer = document.querySelector('.pac-container');
+        
+        // If clicking on Google Places dropdown, prevent any dialog closure
+        if (pacContainer && (pacContainer.contains(target) || target.closest('.pac-container'))) {
+          console.log('Google Places interaction detected, preventing dialog closure');
+          event.stopPropagation();
+          event.preventDefault();
+          return false;
+        }
+      };
+
+      // Add event listeners with high priority
+      document.addEventListener('click', handleDocumentClick, { capture: true, passive: false });
+      document.addEventListener('mousedown', handleDocumentClick, { capture: true, passive: false });
+
+      return () => {
+        document.removeEventListener('click', handleDocumentClick, { capture: true });
+        document.removeEventListener('mousedown', handleDocumentClick, { capture: true });
+      };
     };
 
     initializeAutocomplete();
