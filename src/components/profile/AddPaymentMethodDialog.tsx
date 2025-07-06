@@ -244,27 +244,33 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
             </div>
 
             {/* Payment Type Toggle */}
-            <div className="flex items-center justify-center space-x-6 py-6">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <CreditCard className={`h-5 w-5 ${paymentType === 'card' ? 'text-primary' : 'text-muted-foreground'}`} />
-                  <Label className={`text-sm font-medium transition-colors ${paymentType === 'card' ? 'text-primary' : 'text-muted-foreground'}`}>
-                    Card
-                  </Label>
-                </div>
-                
-                <Switch
-                  checked={paymentType === 'bank'}
-                  onCheckedChange={(checked) => setPaymentType(checked ? 'bank' : 'card')}
-                  className="mx-3"
-                />
-                
-                <div className="flex items-center space-x-2">
-                  <Building2 className={`h-5 w-5 ${paymentType === 'bank' ? 'text-primary' : 'text-muted-foreground'}`} />
-                  <Label className={`text-sm font-medium transition-colors ${paymentType === 'bank' ? 'text-primary' : 'text-muted-foreground'}`}>
-                    Bank Account
-                  </Label>
-                </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Payment Type</Label>
+              <div className="grid grid-cols-2 gap-1 p-1 bg-muted rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setPaymentType('card')}
+                  className={`flex items-center justify-center space-x-2 py-3 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
+                    paymentType === 'card'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <CreditCard className="h-4 w-4" />
+                  <span>Card</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentType('bank')}
+                  className={`flex items-center justify-center space-x-2 py-3 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
+                    paymentType === 'bank'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Building2 className="h-4 w-4" />
+                  <span>Bank Account</span>
+                </button>
               </div>
             </div>
 
