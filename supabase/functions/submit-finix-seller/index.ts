@@ -98,15 +98,16 @@ function transformToFinixFormat(data: FinixSellerRequest) {
   }
 
   return {
+    type: "BUSINESS",
+    identity_roles: ["SELLER"],
     entity: {
-      type: "MERCHANT",
-      entity_type: businessInformation.businessType,
-      name: businessInformation.businessName,
+      business_type: businessInformation.businessType,
+      business_name: businessInformation.businessName,
       doing_business_as: businessInformation.doingBusinessAs,
       business_tax_id: businessInformation.businessTaxId,
       business_phone: businessInformation.businessPhone,
-      website: businessInformation.businessWebsite,
-      description: businessInformation.businessDescription,
+      url: businessInformation.businessWebsite,
+      business_description: businessInformation.businessDescription,
       incorporation_date: {
         year: parseInt(incorporationParts[0]),
         month: parseInt(incorporationParts[1]),
@@ -114,16 +115,16 @@ function transformToFinixFormat(data: FinixSellerRequest) {
       },
       ownership_type: businessInformation.ownershipType,
       business_address: {
-        street_address: businessInformation.businessAddress.line1,
-        street_address2: businessInformation.businessAddress.line2 || null,
+        line1: businessInformation.businessAddress.line1,
+        line2: businessInformation.businessAddress.line2 || null,
         city: businessInformation.businessAddress.city,
         region: businessInformation.businessAddress.state,
         postal_code: businessInformation.businessAddress.zipCode,
         country: businessInformation.businessAddress.country
       },
       personal_address: {
-        street_address: ownerInformation.personalAddress.line1,
-        street_address2: ownerInformation.personalAddress.line2 || null,
+        line1: ownerInformation.personalAddress.line1,
+        line2: ownerInformation.personalAddress.line2 || null,
         city: ownerInformation.personalAddress.city,
         region: ownerInformation.personalAddress.state,
         postal_code: ownerInformation.personalAddress.zipCode,
@@ -134,27 +135,44 @@ function transformToFinixFormat(data: FinixSellerRequest) {
       title: ownerInformation.jobTitle,
       email: ownerInformation.workEmail,
       phone: ownerInformation.personalPhone,
-      ...(ownerInformation.dateOfBirth && { date_of_birth: dobObject }),
-      ...(ownerInformation.personalTaxId && { personal_tax_id: ownerInformation.personalTaxId }),
-      ...(ownerInformation.ownershipPercentage && { ownership_percentage: ownerInformation.ownershipPercentage })
+      annual_card_volume: processingInformation.annualCardVolume,
+      max_transaction_amount: processingInformation.maxCardAmount,
+      ach_max_transaction_amount: processingInformation.maxAchAmount,
+      mcc: processingInformation.mccCode,
+      default_statement_descriptor: processingInformation.statementDescriptor,
+      has_accepted_credit_cards_previously: processingInformation.hasAcceptedCardsPreviously,
+      ...(ownerInformation.dateOfBirth && { dob: dobObject }),
+      ...(ownerInformation.personalTaxId && { tax_id: ownerInformation.personalTaxId }),
+      ...(ownerInformation.ownershipPercentage && { principal_percentage_ownership: ownerInformation.ownershipPercentage })
     },
     additional_underwriting_data: {
       annual_ach_volume: processingInformation.annualAchVolume,
-      annual_card_volume: processingInformation.annualCardVolume,
-      average_ach_amount: processingInformation.averageAchAmount,
-      average_card_amount: processingInformation.averageCardAmount,
-      max_ach_amount: processingInformation.maxAchAmount,
-      max_card_amount: processingInformation.maxCardAmount,
-      card_present_percentage: processingInformation.cardVolumeDistribution.cardPresent,
-      moto_percentage: processingInformation.cardVolumeDistribution.moto,
-      ecommerce_percentage: processingInformation.cardVolumeDistribution.ecommerce,
-      b2b_percentage: processingInformation.businessVolumeDistribution.b2b,
-      b2c_percentage: processingInformation.businessVolumeDistribution.b2c,
-      p2p_percentage: processingInformation.businessVolumeDistribution.p2p,
-      mcc_code: processingInformation.mccCode,
-      statement_descriptor: processingInformation.statementDescriptor,
-      has_accepted_cards_previously: processingInformation.hasAcceptedCardsPreviously,
-      refund_policy: processingInformation.refundPolicy
+      average_ach_transfer_amount: processingInformation.averageAchAmount,
+      average_card_transfer_amount: processingInformation.averageCardAmount,
+      business_description: businessInformation.businessDescription,
+      card_volume_distribution: {
+        card_present_percentage: processingInformation.cardVolumeDistribution.cardPresent,
+        mail_order_telephone_order_percentage: processingInformation.cardVolumeDistribution.moto,
+        ecommerce_percentage: processingInformation.cardVolumeDistribution.ecommerce
+      },
+      volume_distribution_by_business_type: {
+        business_to_business_volume_percentage: processingInformation.businessVolumeDistribution.b2b,
+        business_to_consumer_volume_percentage: processingInformation.businessVolumeDistribution.b2c,
+        person_to_person_volume_percentage: processingInformation.businessVolumeDistribution.p2p,
+        consumer_to_consumer_volume_percentage: 0,
+        other_volume_percentage: 0
+      },
+      refund_policy: processingInformation.refundPolicy,
+      merchant_agreement_accepted: processingInformation.merchantAgreementAccepted,
+      merchant_agreement_ip_address: processingInformation.merchantAgreementMetadata.ipAddress,
+      merchant_agreement_timestamp: processingInformation.merchantAgreementMetadata.timestamp,
+      merchant_agreement_user_agent: processingInformation.merchantAgreementMetadata.userAgent,
+      ...(processingInformation.creditCheckConsent && {
+        credit_check_allowed: processingInformation.creditCheckConsent,
+        credit_check_ip_address: processingInformation.creditCheckMetadata?.ipAddress,
+        credit_check_timestamp: processingInformation.creditCheckMetadata?.timestamp,
+        credit_check_user_agent: processingInformation.creditCheckMetadata?.userAgent
+      })
     }
   };
 }
@@ -193,9 +211,9 @@ serve(async (req) => {
     const finixResponse = await fetch(`${baseUrl}/identities`, {
       method: 'POST',
       headers: {
-        'Accept': 'application/vnd.json+api',
-        'Content-Type': 'application/vnd.json+api',
-        'Finix-Version': '2018-01-01',
+        'Accept': 'application/hal+json',
+        'Content-Type': 'application/json',
+        'Finix-Version': '2022-02-01',
         'Authorization': `Basic ${btoa(`${finixApplicationId}:${finixApiSecret}`)}`
       },
       body: JSON.stringify(finixPayload)
@@ -296,7 +314,7 @@ serve(async (req) => {
       finix_tags: finixResult.tags || null,
       submission_metadata: {
         submitted_at: new Date().toISOString(),
-        api_version: '2018-01-01',
+        api_version: '2022-02-01',
         environment: finixEnvironment
       },
       processing_status: 'submitted'
