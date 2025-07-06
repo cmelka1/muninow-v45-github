@@ -61,11 +61,13 @@ export const ownerInformationSchema = z.object({
   }),
   dateOfBirth: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
-    .optional(),
+    .optional()
+    .or(z.literal("")),
   personalTaxId: z.string()
     .min(4, "Last 4 digits of SSN required")
     .max(4, "Only last 4 digits")
-    .optional(),
+    .optional()
+    .or(z.literal("")),
   ownershipPercentage: z.number()
     .min(0, "Percentage must be 0 or greater")
     .max(100, "Percentage cannot exceed 100")
