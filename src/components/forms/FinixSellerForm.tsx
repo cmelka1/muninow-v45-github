@@ -271,7 +271,7 @@ export const FinixSellerForm: React.FC<FinixSellerFormProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>State *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="State" />
@@ -518,7 +518,7 @@ export const FinixSellerForm: React.FC<FinixSellerFormProps> = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>State *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="State" />
