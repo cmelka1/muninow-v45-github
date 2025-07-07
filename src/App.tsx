@@ -26,12 +26,6 @@ import CookiesPolicy from "./pages/CookiesPolicy";
 import Accessibility from "./pages/Accessibility";
 import NotFound from "./pages/NotFound";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
-import SuperAdminCustomers from "./pages/SuperAdminCustomers";
-import SuperAdminCustomerDetail from "./pages/SuperAdminCustomerDetail";
-import SuperAdminMerchantAccountForm from "./pages/SuperAdminMerchantAccountForm";
-import SuperAdminBankAccountSuccess from "./pages/SuperAdminBankAccountSuccess";
-import SuperAdminFinixOnboarding from "./pages/SuperAdminFinixOnboarding";
-import SuperAdminFinixOnboardingSuccess from "./pages/SuperAdminFinixOnboardingSuccess";
 import SuperAdminProfile from "./pages/SuperAdminProfile";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -67,36 +61,6 @@ const App = () => (
                 <Route path="/superadmin/dashboard" element={
                   <ProtectedRoute requiredRole="superAdmin">
                     <SuperAdminDashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/superadmin/customers" element={
-                  <ProtectedRoute requiredRole="superAdmin">
-                    <SuperAdminCustomers />
-                  </ProtectedRoute>
-                } />
-                <Route path="/superadmin/customers/:customerId" element={
-                  <ProtectedRoute requiredRole="superAdmin">
-                    <SuperAdminCustomerDetail />
-                  </ProtectedRoute>
-                } />
-                <Route path="/superadmin/customers/:customerId/add-merchant-account" element={
-                  <ProtectedRoute requiredRole="superAdmin">
-                    <SuperAdminMerchantAccountForm />
-                  </ProtectedRoute>
-                } />
-                <Route path="/superadmin/customers/:customerId/bank-account/success" element={
-                  <ProtectedRoute requiredRole="superAdmin">
-                    <SuperAdminBankAccountSuccess />
-                  </ProtectedRoute>
-                } />
-                <Route path="/superadmin/finix-onboarding" element={
-                  <ProtectedRoute requiredRole="superAdmin">
-                    <SuperAdminFinixOnboarding />
-                  </ProtectedRoute>
-                } />
-                <Route path="/superadmin/finix-onboarding/success" element={
-                  <ProtectedRoute requiredRole="superAdmin">
-                    <SuperAdminFinixOnboardingSuccess />
                   </ProtectedRoute>
                 } />
                 <Route path="/superadmin/profile" element={
