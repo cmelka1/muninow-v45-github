@@ -13,8 +13,6 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🔧 Create Finix Customer Payment Instrument function called');
-
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -23,7 +21,6 @@ serve(async (req) => {
     // Get authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.error('❌ No authorization header');
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -35,7 +32,6 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
-      console.error('❌ Authentication failed:', authError);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -44,22 +40,17 @@ serve(async (req) => {
 
     // Check if user is super admin (cmelka@muninow.com)
     if (user.email !== 'cmelka@muninow.com') {
-      console.error('❌ Access denied for user:', user.email);
       return new Response(JSON.stringify({ error: 'Access denied' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('✅ User authorized:', user.email);
-
     // Parse request body
     const { customerId, bankAccount } = await req.json();
-    console.log('📋 Request data:', { customerId, bankAccount: { ...bankAccount, accountNumber: '[REDACTED]' } });
 
     // Validate required fields
     if (!customerId || !bankAccount?.nameOnAccount || !bankAccount?.routingNumber || !bankAccount?.accountNumber) {
-      console.error('❌ Missing required fields');
       return new Response(JSON.stringify({ 
         error: 'Missing required fields',
         details: 'customerId, nameOnAccount, routingNumber, and accountNumber are required'
@@ -71,7 +62,6 @@ serve(async (req) => {
 
     // Validate routing number format (9 digits)
     if (!/^\d{9}$/.test(bankAccount.routingNumber)) {
-      console.error('❌ Invalid routing number format');
       return new Response(JSON.stringify({ 
         error: 'Invalid routing number format',
         details: 'Routing number must be exactly 9 digits'
@@ -82,7 +72,6 @@ serve(async (req) => {
     }
 
     // Get customer data from database
-    console.log('🔍 Fetching customer data for:', customerId);
     const { data: customer, error: customerError } = await supabase
       .from('customers')
       .select('*')
@@ -90,7 +79,6 @@ serve(async (req) => {
       .single();
 
     if (customerError || !customer) {
-      console.error('❌ Customer not found:', customerError);
       return new Response(JSON.stringify({ 
         error: 'Customer not found',
         details: customerError?.message
@@ -101,7 +89,6 @@ serve(async (req) => {
     }
 
     if (!customer.finix_identity_id) {
-      console.error('❌ Customer missing Finix identity ID');
       return new Response(JSON.stringify({ 
         error: 'Customer missing Finix identity',
         details: 'Customer must have a valid Finix identity before adding payment instruments'
@@ -111,15 +98,12 @@ serve(async (req) => {
       });
     }
 
-    console.log('✅ Customer found with Finix identity:', customer.finix_identity_id);
-
     // Get Finix credentials
     const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
     const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
     const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
 
     if (!finixApiSecret || !finixApplicationId) {
-      console.error('❌ Missing Finix credentials');
       return new Response(JSON.stringify({ 
         error: 'Server configuration error',
         details: 'Missing Finix API credentials'
@@ -143,9 +127,6 @@ serve(async (req) => {
       type: "BANK_ACCOUNT"
     };
 
-    console.log('🌐 Making Finix API request to:', `${finixBaseUrl}/payment_instruments`);
-    console.log('📦 Finix payload:', { ...finixPayload, account_number: '[REDACTED]' });
-
     // Make request to Finix API
     const finixResponse = await fetch(`${finixBaseUrl}/payment_instruments`, {
       method: 'POST',
@@ -161,7 +142,6 @@ serve(async (req) => {
     const finixData = await finixResponse.json();
 
     if (!finixResponse.ok) {
-      console.error('❌ Finix API error:', finixData);
       return new Response(JSON.stringify({ 
         error: 'Failed to create payment instrument',
         details: finixData.message || 'Finix API request failed',
@@ -171,8 +151,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    console.log('✅ Finix payment instrument created:', finixData.id);
 
     // Prepare data for database insertion
     const paymentMethodData = {
@@ -206,8 +184,6 @@ serve(async (req) => {
       institution_number: finixData.institution_number
     };
 
-    console.log('💾 Inserting payment method into database');
-
     // Insert into customer_payment_method table
     const { data: insertedPaymentMethod, error: insertError } = await supabase
       .from('customer_payment_method')
@@ -216,7 +192,6 @@ serve(async (req) => {
       .single();
 
     if (insertError) {
-      console.error('❌ Database insertion error:', insertError);
       return new Response(JSON.stringify({ 
         error: 'Failed to save payment method',
         details: insertError.message,
@@ -226,8 +201,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    console.log('✅ Payment method saved to database:', insertedPaymentMethod.id);
 
     // Return success response
     return new Response(JSON.stringify({
@@ -247,7 +220,6 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('❌ Unexpected error:', error);
     return new Response(JSON.stringify({ 
       error: 'Internal server error',
       details: error.message

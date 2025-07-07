@@ -224,7 +224,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
       });
 
       if (error) {
-        console.error('Email check error:', error);
         return;
       }
 
@@ -235,7 +234,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
         });
       }
     } catch (error) {
-      console.error('Email check exception:', error);
+      // Silent fail for better UX
     } finally {
       setIsCheckingEmail(false);
     }
@@ -243,8 +242,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
 
   // Handle address selection from Google Places Autocomplete
   const handleAddressSelect = (addressComponents: any) => {
-    console.log('Address selected:', addressComponents);
-    
     // Distribute to proper form fields using setValue
     if (addressComponents.streetAddress) {
       form.setValue('streetAddress', addressComponents.streetAddress);
@@ -295,7 +292,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
         setCurrentStep(2);
         verifyAddress(data);
       } catch (error) {
-        console.error('Email validation error:', error);
         toast({
           title: "Error",
           description: "Failed to validate email. Please try again.",
@@ -324,7 +320,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
       });
 
       if (error) {
-        console.error('Address verification error:', error);
         toast({
           title: "Error",
           description: "Failed to verify address. Please try again.",
@@ -336,7 +331,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
 
       setAddressStatus(addressExists ? 'duplicate' : 'available');
     } catch (error) {
-      console.error('Address verification exception:', error);
       toast({
         title: "Error",
         description: "Failed to verify address. Please try again.",
@@ -364,7 +358,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
     
     try {
       // Phase 1: Create Supabase auth account
-      console.log('Creating Supabase auth account...');
       const { data, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -394,10 +387,8 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
       }
       
       authData = data;
-      console.log('Auth account created successfully:', authData.user?.id);
       
       // Phase 2: Wait for profile creation (database trigger should handle this)
-      console.log('Waiting for profile creation...');
       let profileVerified = false;
       let attempts = 0;
       const maxAttempts = 5;
@@ -413,23 +404,20 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
             .single();
             
           if (profile && !profileError) {
-            console.log('Profile verified:', profile);
             profileVerified = true;
           }
         } catch (error) {
-          console.log(`Profile verification attempt ${attempts + 1} failed:`, error);
+          // Continue attempting
         }
         
         attempts++;
       }
       
       if (!profileVerified) {
-        console.warn('Profile verification failed after maximum attempts');
         // Continue anyway - profile creation might be delayed but shouldn't block signup
       }
       
       // Phase 3: Create Finix identity for payment processing
-      console.log('Creating Finix payment identity...');
       try {
         const identityData = {
           entity: {
@@ -458,7 +446,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
           });
         
         if (identityError) {
-          console.error('Finix identity creation failed:', identityError);
           // Don't fail the entire signup - payment can be set up later
           toast({
             title: "Account created with payment setup pending",
@@ -466,8 +453,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
             variant: "default"
           });
         } else {
-          console.log('Finix identity created successfully:', identityResult);
-          
           // Phase 4: Store Finix identity data in database
           if (identityResult?.identity) {
             try {
@@ -489,22 +474,18 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                 });
                 
               if (finixDbError) {
-                console.error('Failed to store Finix identity in database:', finixDbError);
-              } else {
-                console.log('Finix identity stored successfully in database');
+                // Handle error silently
               }
             } catch (dbError) {
-              console.error('Database storage error:', dbError);
+              // Handle error silently
             }
           }
         }
       } catch (finixError) {
-        console.error('Finix integration error:', finixError);
         // Continue with account creation - payment can be set up later
       }
       
       // Phase 5: Assign appropriate admin role based on account type
-      console.log('Assigning user role...');
       try {
         const roleName = formData.accountType === 'business' ? 'businessAdmin' : 'residentAdmin';
         const { error: roleError } = await supabase.rpc('assign_role_to_user', {
@@ -513,13 +494,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
         });
         
         if (roleError) {
-          console.error('Role assignment failed:', roleError);
           // Don't block account creation - user can be assigned role later
-        } else {
-          console.log('Role assigned successfully:', roleName);
         }
       } catch (roleError) {
-        console.error('Role assignment error:', roleError);
         // Continue with account creation - role can be assigned later
       }
       
@@ -531,8 +508,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
       setCurrentStep(4);
       
     } catch (error: any) {
-      console.error('Account creation error:', error);
-      
       // Enhanced error handling
       let errorMessage = "Failed to create account. Please try again.";
       

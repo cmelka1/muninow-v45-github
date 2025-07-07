@@ -81,7 +81,6 @@ serve(async (req) => {
 
     // Parse request body
     const requestData: CreateCardRequest = await req.json();
-    console.log('Creating payment card for user:', user.id);
 
     // Prepare Finix API request
     const finixApiUrl = Deno.env.get('FINIX_ENVIRONMENT') === 'live' 
@@ -107,8 +106,6 @@ serve(async (req) => {
       identity: finixIdentity.finix_identity_id
     };
 
-    console.log('Sending request to Finix API:', finixApiUrl);
-
     // Create payment instrument via Finix API
     const finixResponse = await fetch(`${finixApiUrl}/payment_instruments`, {
       method: 'POST',
@@ -121,10 +118,8 @@ serve(async (req) => {
     });
 
     const finixData = await finixResponse.json();
-    console.log('Finix API response status:', finixResponse.status);
 
     if (!finixResponse.ok) {
-      console.error('Finix API error:', finixData);
       return new Response(
         JSON.stringify({ 
           error: 'Failed to create payment card',
@@ -133,8 +128,6 @@ serve(async (req) => {
         { status: 400, headers: corsHeaders }
       );
     }
-
-    console.log('Payment card created successfully in Finix');
 
     // Check if this is the user's first payment instrument to set as default
     const { count } = await supabaseClient
@@ -214,7 +207,6 @@ serve(async (req) => {
       .single();
 
     if (saveError) {
-      console.error('Error saving payment card:', saveError);
       return new Response(
         JSON.stringify({ 
           error: 'Failed to save payment card',
@@ -223,8 +215,6 @@ serve(async (req) => {
         { status: 500, headers: corsHeaders }
       );
     }
-
-    console.log('Payment card saved successfully to database');
 
     return new Response(
       JSON.stringify({ 
@@ -236,7 +226,6 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Unexpected error in create-user-payment-card:', error);
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',

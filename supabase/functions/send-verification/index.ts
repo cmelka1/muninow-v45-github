@@ -10,11 +10,9 @@ const corsHeaders = {
 const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-// Performance logging helper
+// Performance logging helper (removed for production)
 function logPerformance(operation: string, startTime: number, additionalData?: any) {
-  const duration = Date.now() - startTime;
-  console.log(`PERFORMANCE: ${operation} took ${duration}ms`, additionalData ? JSON.stringify(additionalData) : '');
-  return duration;
+  return Date.now() - startTime;
 }
 
 // Helper functions for hashing using Deno's crypto API
@@ -39,7 +37,6 @@ async function compareCode(inputCode: string, hashedCode: string) {
 
 const handler = async (req: Request) => {
   const requestStartTime = Date.now();
-  console.log(`REQUEST START: ${req.method} ${req.url} at ${new Date().toISOString()}`);
 
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -52,7 +49,6 @@ const handler = async (req: Request) => {
   const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'RESEND_API_KEY'];
   for (const envVar of requiredEnvVars) {
     if (!Deno.env.get(envVar)) {
-      console.error(`Missing required environment variable: ${envVar}`);
       return new Response(JSON.stringify({
         error: `Server configuration error: Missing ${envVar}`,
         success: false

@@ -80,7 +80,6 @@ serve(async (req) => {
 
     // Parse request body
     const requestData: CreateBankAccountRequest = await req.json();
-    console.log('Creating bank account for user:', user.id);
 
     // Map account type to Finix format
     const accountTypeMapping = {
@@ -108,8 +107,6 @@ serve(async (req) => {
       identity: finixIdentity.finix_identity_id
     };
 
-    console.log('Sending request to Finix API:', finixApiUrl);
-
     // Create payment instrument via Finix API
     const finixResponse = await fetch(`${finixApiUrl}/payment_instruments`, {
       method: 'POST',
@@ -122,10 +119,8 @@ serve(async (req) => {
     });
 
     const finixData = await finixResponse.json();
-    console.log('Finix API response status:', finixResponse.status);
 
     if (!finixResponse.ok) {
-      console.error('Finix API error:', finixData);
       return new Response(
         JSON.stringify({ 
           error: 'Failed to create bank account',
@@ -134,8 +129,6 @@ serve(async (req) => {
         { status: 400, headers: corsHeaders }
       );
     }
-
-    console.log('Bank account created successfully in Finix');
 
     // Check if this is the user's first payment instrument to set as default
     const { count } = await supabaseClient
@@ -212,7 +205,6 @@ serve(async (req) => {
       .single();
 
     if (saveError) {
-      console.error('Error saving bank account:', saveError);
       return new Response(
         JSON.stringify({ 
           error: 'Failed to save bank account',
@@ -221,8 +213,6 @@ serve(async (req) => {
         { status: 500, headers: corsHeaders }
       );
     }
-
-    console.log('Bank account saved successfully to database');
 
     return new Response(
       JSON.stringify({ 
@@ -234,7 +224,6 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Unexpected error in create-user-bank-account:', error);
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',

@@ -15,7 +15,6 @@ serve(async (req) => {
     const googleMapsApiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
     
     if (!googleMapsApiKey) {
-      console.error('GOOGLE_MAPS_API_KEY not found in environment');
       return new Response(
         JSON.stringify({ error: 'Google Maps API key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -31,10 +30,6 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // Rate limiting check (simple implementation)
-    const userAgent = req.headers.get('user-agent') || 'unknown';
-    console.log(`Google Maps API request from: ${userAgent}, service: ${service}`);
 
     let apiUrl = '';
     
@@ -80,7 +75,6 @@ serve(async (req) => {
       );
     }
   } catch (error) {
-    console.error('Error in google-maps-proxy:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -135,15 +135,12 @@ export const GooglePlacesAutocompleteV2: React.FC<GooglePlacesAutocompleteV2Prop
         // Handle place selection
         autocomplete.addEventListener('gmp-placeselect', (event: any) => {
           const place = event.place;
-          console.log('Place selected:', place);
           
           if (!place.address_components) {
-            console.warn('No address components found in selected place');
             return;
           }
 
           const addressComponents = parseAddressComponents(place);
-          console.log('Parsed address components:', addressComponents);
 
           // Update the input value to show only street address
           if (addressComponents.streetAddress) {
@@ -166,7 +163,6 @@ export const GooglePlacesAutocompleteV2: React.FC<GooglePlacesAutocompleteV2Prop
 
         setHasError(false);
       } catch (error) {
-        console.error('Failed to initialize PlaceAutocompleteElement:', error);
         setHasError(true);
       }
     };
