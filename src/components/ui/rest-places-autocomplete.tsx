@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 import { useRestPlacesAutocomplete } from '@/hooks/useRestPlacesAutocomplete';
+import { useGeolocation } from '@/hooks/useGeolocation';
 
 interface AddressComponents {
   streetAddress: string;
@@ -35,6 +36,17 @@ export const RestPlacesAutocomplete: React.FC<RestPlacesAutocompleteProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Get user's geolocation for better autocomplete results
+  const { latitude, longitude, error: geoError } = useGeolocation();
+
+  // Prepare location bias if coordinates are available
+  const locationBias = latitude && longitude ? {
+    circle: {
+      center: { latitude, longitude },
+      radius: 50000 // 50km radius
+    }
+  } : undefined;
+
   const {
     suggestions,
     isLoading,
@@ -45,7 +57,8 @@ export const RestPlacesAutocomplete: React.FC<RestPlacesAutocompleteProps> = ({
   } = useRestPlacesAutocomplete({
     regionCode,
     includedRegionCodes,
-    includedPrimaryTypes: ['premise', 'street_address']
+    includedPrimaryTypes: ['premise', 'street_address'],
+    locationBias
   });
 
   // Update input value when prop changes
