@@ -1,8 +1,13 @@
 import React from 'react';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import CustomerTable from '@/components/CustomerTable';
 
 const SuperAdminCustomers = () => {
+  const handleAddCustomer = () => {
+    // TODO: Implement add customer functionality
+    console.log('Add customer clicked');
+  };
+
   return (
     <SuperAdminLayout>
       <div className="p-8">
@@ -15,16 +20,7 @@ const SuperAdminCustomers = () => {
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Customer Management</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600">
-              Customer management features will be added here.
-            </p>
-          </CardContent>
-        </Card>
+        <CustomerTable onAddCustomer={handleAddCustomer} />
       </div>
     </SuperAdminLayout>
   );
