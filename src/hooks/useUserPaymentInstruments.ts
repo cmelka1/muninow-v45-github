@@ -155,19 +155,39 @@ export const useUserPaymentInstruments = () => {
 
       if (error) {
         console.error('Error creating payment card:', error);
+        toast({
+          title: "Error",
+          description: "Failed to add payment card. Please try again.",
+          variant: "destructive",
+        });
         return { success: false, error };
       }
 
       if (!data.success) {
         console.error('Payment card creation failed:', data);
+        toast({
+          title: "Error",
+          description: data.error || "Failed to add payment card. Please try again.",
+          variant: "destructive",
+        });
         return { success: false, error: data.error };
       }
+
+      toast({
+        title: "Success",
+        description: "Payment card added successfully.",
+      });
 
       // Reload the payment instruments
       await loadPaymentInstruments();
       return { success: true, data: data.paymentInstrument };
     } catch (error) {
       console.error('Error creating payment card:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add payment card. Please try again.",
+        variant: "destructive",
+      });
       return { success: false, error };
     }
   };
@@ -191,19 +211,39 @@ export const useUserPaymentInstruments = () => {
 
       if (error) {
         console.error('Error creating bank account:', error);
+        toast({
+          title: "Error",
+          description: "Failed to add bank account. Please try again.",
+          variant: "destructive",
+        });
         return { success: false, error };
       }
 
       if (!data.success) {
         console.error('Bank account creation failed:', data);
+        toast({
+          title: "Error",
+          description: data.error || "Failed to add bank account. Please try again.",
+          variant: "destructive",
+        });
         return { success: false, error: data.error };
       }
+
+      toast({
+        title: "Success",
+        description: "Bank account added successfully.",
+      });
 
       // Reload the payment instruments
       await loadPaymentInstruments();
       return { success: true, data: data.paymentInstrument };
     } catch (error) {
       console.error('Error creating bank account:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add bank account. Please try again.",
+        variant: "destructive",
+      });
       return { success: false, error };
     }
   };
