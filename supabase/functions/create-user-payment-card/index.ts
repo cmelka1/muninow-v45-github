@@ -88,7 +88,7 @@ serve(async (req) => {
       ? 'https://finix.live-payments-api.com'
       : 'https://finix.sandbox-payments-api.com';
 
-    const finixCredentials = btoa(`${finixIdentity.finix_application_id}:${Deno.env.get('FINIX_API_SECRET')}`);
+    const finixCredentials = btoa(`${Deno.env.get('FINIX_APPLICATION_ID')}:${Deno.env.get('FINIX_API_SECRET')}`);
 
     const finixPayload = {
       name: requestData.cardholderName,
