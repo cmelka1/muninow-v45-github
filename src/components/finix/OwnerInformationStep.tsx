@@ -9,7 +9,7 @@ import {
   Form
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { GooglePlacesAutocomplete } from '@/components/ui/google-places-autocomplete';
+import { GooglePlacesAutocompleteV2 } from '@/components/ui/google-places-autocomplete-v2';
 import { FinixSellerFormData } from '@/schemas/finixSellerSchema';
 
 interface OwnerInformationStepProps {
@@ -261,17 +261,17 @@ export function OwnerInformationStep({ form, isGovernmentAgency }: OwnerInformat
               <FormItem className="md:col-span-2">
                 <FormLabel>Address Line 1 *</FormLabel>
                 <FormControl>
-                  <GooglePlacesAutocomplete
-                    placeholder="Enter personal address"
-                    value={field.value}
-                    onChange={(value) => field.onChange(value)}
-                    onAddressSelect={(addressComponents) => {
-                      form.setValue('ownerInformation.personalAddress.line1', addressComponents.streetAddress);
-                      form.setValue('ownerInformation.personalAddress.city', addressComponents.city);  
-                      form.setValue('ownerInformation.personalAddress.state', addressComponents.state);
-                      form.setValue('ownerInformation.personalAddress.zipCode', addressComponents.zipCode);
-                    }}
-                  />
+                   <GooglePlacesAutocompleteV2
+                     placeholder="Enter personal address"
+                     value={field.value}
+                     onChange={(value) => field.onChange(value)}
+                     onAddressSelect={(addressComponents) => {
+                       form.setValue('ownerInformation.personalAddress.line1', addressComponents.streetAddress);
+                       form.setValue('ownerInformation.personalAddress.city', addressComponents.city);  
+                       form.setValue('ownerInformation.personalAddress.state', addressComponents.state);
+                       form.setValue('ownerInformation.personalAddress.zipCode', addressComponents.zipCode);
+                     }}
+                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>

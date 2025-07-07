@@ -14,7 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { GooglePlacesAutocomplete } from '@/components/ui/google-places-autocomplete';
+import { GooglePlacesAutocompleteV2 } from '@/components/ui/google-places-autocomplete-v2';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { MFAVerificationStep } from '@/components/auth/MFAVerificationStep';
@@ -796,13 +796,13 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                   <FormItem>
                     <FormLabel>Street Address *</FormLabel>
                     <FormControl>
-                      <GooglePlacesAutocomplete
-                        placeholder="Start typing your address..."
-                        onAddressSelect={handleAddressSelect}
-                        className="h-11"
-                        value={field.value}
-                        onChange={field.onChange}
-                      />
+                       <GooglePlacesAutocompleteV2
+                         placeholder="Start typing your address..."
+                         onAddressSelect={handleAddressSelect}
+                         className="h-11"
+                         value={field.value}
+                         onChange={field.onChange}
+                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

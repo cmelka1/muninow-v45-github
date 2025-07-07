@@ -11,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { GooglePlacesAutocomplete } from '@/components/ui/google-places-autocomplete';
+import { GooglePlacesAutocompleteV2 } from '@/components/ui/google-places-autocomplete-v2';
 import { FinixSellerFormData } from '@/schemas/finixSellerSchema';
 
 interface BusinessInformationStepProps {
@@ -279,17 +279,17 @@ export function BusinessInformationStep({ form }: BusinessInformationStepProps) 
               <FormItem className="md:col-span-2">
                 <FormLabel>Address Line 1 *</FormLabel>
                 <FormControl>
-                  <GooglePlacesAutocomplete
-                    placeholder="Enter entity address"
-                    value={field.value}
-                    onChange={(value) => field.onChange(value)}
-                    onAddressSelect={(addressComponents) => {
-                      form.setValue('businessInformation.businessAddress.line1', addressComponents.streetAddress);
-                      form.setValue('businessInformation.businessAddress.city', addressComponents.city);
-                      form.setValue('businessInformation.businessAddress.state', addressComponents.state);
-                      form.setValue('businessInformation.businessAddress.zipCode', addressComponents.zipCode);
-                    }}
-                  />
+                   <GooglePlacesAutocompleteV2
+                     placeholder="Enter entity address"
+                     value={field.value}
+                     onChange={(value) => field.onChange(value)}
+                     onAddressSelect={(addressComponents) => {
+                       form.setValue('businessInformation.businessAddress.line1', addressComponents.streetAddress);
+                       form.setValue('businessInformation.businessAddress.city', addressComponents.city);
+                       form.setValue('businessInformation.businessAddress.state', addressComponents.state);
+                       form.setValue('businessInformation.businessAddress.zipCode', addressComponents.zipCode);
+                     }}
+                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { GooglePlacesAutocomplete } from '@/components/ui/google-places-autocomplete';
+import { GooglePlacesAutocompleteV2 } from '@/components/ui/google-places-autocomplete-v2';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -612,13 +612,13 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
                       <FormItem>
                         <FormLabel>Street Address</FormLabel>
                         <FormControl>
-                           <GooglePlacesAutocomplete
-                             onAddressSelect={handleAddressSelect}
-                             className="h-11"
-                             value={field.value}
-                             onChange={field.onChange}
-                             placeholder="Enter your street address"
-                           />
+                            <GooglePlacesAutocompleteV2
+                              onAddressSelect={handleAddressSelect}
+                              className="h-11"
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="Enter your street address"
+                            />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
