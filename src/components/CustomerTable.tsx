@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { AddCustomerDialog } from '@/components/AddCustomerDialog';
 
 interface CustomerTableProps {
   onAddCustomer?: () => void;
@@ -20,6 +21,7 @@ interface CustomerTableProps {
 const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [showAddDialog, setShowAddDialog] = useState(false);
   
   // Placeholder data - will be replaced with actual customer data later
   const customers: any[] = [];
@@ -47,7 +49,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Customers</CardTitle>
-          <Button onClick={onAddCustomer}>
+          <Button onClick={() => setShowAddDialog(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add Customer
           </Button>
@@ -68,7 +70,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Customers</CardTitle>
-          <Button onClick={onAddCustomer}>
+          <Button onClick={() => setShowAddDialog(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add Customer
           </Button>
@@ -84,7 +86,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Customers</CardTitle>
-        <Button onClick={onAddCustomer}>
+        <Button onClick={() => setShowAddDialog(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Customer
         </Button>
@@ -188,6 +190,11 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
           </div>
         )}
       </CardContent>
+      
+      <AddCustomerDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+      />
     </Card>
   );
 };
