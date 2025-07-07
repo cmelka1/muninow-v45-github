@@ -120,7 +120,7 @@ const Auth = () => {
                       htmlFor="remember" 
                       className="text-sm text-muted-foreground cursor-pointer"
                     >
-                      Remember Me
+                      Remember for 30 days
                     </Label>
                   </div>
                   <button
@@ -148,6 +148,17 @@ const Auth = () => {
               </form>
               
               <div className="mt-6 space-y-4">
+                <div className="text-center">
+                  <span className="text-muted-foreground text-sm">
+                    Don't have an account?
+                  </span>
+                  <Link
+                    to="/signup"
+                    className="ml-1 text-primary hover:text-primary/80 text-sm font-medium transition-colors"
+                  >
+                    Sign up for free
+                  </Link>
+                </div>
                 
                 <div className="text-center">
                   <Button
