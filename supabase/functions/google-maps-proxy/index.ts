@@ -15,6 +15,7 @@ serve(async (req) => {
     const googleMapsApiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
     
     if (!googleMapsApiKey) {
+      console.error('Google Maps API key not configured');
       return new Response(
         JSON.stringify({ error: 'Google Maps API key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -22,14 +23,28 @@ serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    const service = url.searchParams.get('service');
+    let service = url.searchParams.get('service');
+    
+    // If no service in query params, try to get it from request body
+    if (!service && req.method === 'POST') {
+      try {
+        const body = await req.json();
+        service = body.service;
+        console.log('Extracted service from request body:', service);
+      } catch (error) {
+        console.error('Failed to parse request body:', error);
+      }
+    }
     
     if (!service) {
+      console.error('Service parameter missing from both query params and request body');
       return new Response(
-        JSON.stringify({ error: 'Service parameter required' }),
+        JSON.stringify({ error: 'Service parameter required (provide as query param ?service=js or in request body)' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log('Processing request for service:', service);
 
     let apiUrl = '';
     
