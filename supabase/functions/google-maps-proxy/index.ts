@@ -143,7 +143,9 @@ serve(async (req) => {
         }
 
         try {
-          const { placeId, sessionToken } = await req.json();
+          // Use the already parsed request body if available, otherwise parse it
+          const body = requestBody || await req.json();
+          const { placeId, sessionToken } = body;
           
           if (!placeId) {
             return new Response(
