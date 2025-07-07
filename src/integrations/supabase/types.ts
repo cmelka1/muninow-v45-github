@@ -934,6 +934,8 @@ export type Database = {
       organization_invitations: {
         Row: {
           activated_at: string | null
+          email_sent_at: string | null
+          email_status: string | null
           expires_at: string | null
           id: string
           invitation_email: string
@@ -948,6 +950,8 @@ export type Database = {
         }
         Insert: {
           activated_at?: string | null
+          email_sent_at?: string | null
+          email_status?: string | null
           expires_at?: string | null
           id?: string
           invitation_email: string
@@ -962,6 +966,8 @@ export type Database = {
         }
         Update: {
           activated_at?: string | null
+          email_sent_at?: string | null
+          email_status?: string | null
           expires_at?: string | null
           id?: string
           invitation_email?: string
