@@ -170,9 +170,41 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
     return value.replace(/\D/g, '').slice(0, 5);
   };
 
-  const formatDateInput = (value: string) => {
+  const formatDateInput = (value: string, currentValue: string = '') => {
+    // If user is backspacing and current value is longer, handle it gracefully
+    if (value.length < currentValue.length) {
+      // Remove slashes and reformat from scratch
+      const digitsOnly = value.replace(/\D/g, '');
+      return formatDateString(digitsOnly);
+    }
+    
     // Remove all non-digit characters
     const digitsOnly = value.replace(/\D/g, '');
+    return formatDateString(digitsOnly);
+  };
+
+  const formatDateString = (digitsOnly: string) => {
+    if (digitsOnly.length === 0) return '';
+    
+    // Handle month validation (max 12)
+    if (digitsOnly.length >= 2) {
+      const month = parseInt(digitsOnly.slice(0, 2));
+      if (month > 12) {
+        digitsOnly = '12' + digitsOnly.slice(2);
+      } else if (month === 0) {
+        digitsOnly = '01' + digitsOnly.slice(2);
+      }
+    }
+    
+    // Handle day validation (max 31)
+    if (digitsOnly.length >= 4) {
+      const day = parseInt(digitsOnly.slice(2, 4));
+      if (day > 31) {
+        digitsOnly = digitsOnly.slice(0, 2) + '31' + digitsOnly.slice(4);
+      } else if (day === 0) {
+        digitsOnly = digitsOnly.slice(0, 2) + '01' + digitsOnly.slice(4);
+      }
+    }
     
     // Format as MM/DD/YYYY
     if (digitsOnly.length >= 8) {
@@ -381,7 +413,8 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                             placeholder="MM/DD/YYYY"
                             value={getDateDisplayValue(field.value)}
                             onChange={(e) => {
-                              const formatted = formatDateInput(e.target.value);
+                              const currentValue = getDateDisplayValue(field.value);
+                              const formatted = formatDateInput(e.target.value, currentValue);
                               field.onChange(formatted);
                             }}
                             maxLength={10}
@@ -685,7 +718,8 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                                 placeholder="MM/DD/YYYY"
                                 value={getDateDisplayValue(field.value)}
                                 onChange={(e) => {
-                                  const formatted = formatDateInput(e.target.value);
+                                  const currentValue = getDateDisplayValue(field.value);
+                                  const formatted = formatDateInput(e.target.value, currentValue);
                                   field.onChange(formatted);
                                 }}
                                 maxLength={10}
