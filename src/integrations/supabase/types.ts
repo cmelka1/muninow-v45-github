@@ -14,6 +14,162 @@ export type Database = {
   }
   public: {
     Tables: {
+      customers: {
+        Row: {
+          annual_ach_volume: number | null
+          annual_card_volume: number | null
+          average_ach_amount: number | null
+          average_card_amount: number | null
+          b2b_percentage: number | null
+          b2c_percentage: number | null
+          business_address_line1: string
+          business_address_line2: string | null
+          business_city: string
+          business_country: string | null
+          business_state: string
+          business_zip_code: string
+          card_present_percentage: number | null
+          created_at: string | null
+          customer_id: string
+          date_of_birth: Json | null
+          doing_business_as: string
+          ecommerce_percentage: number | null
+          entity_description: string
+          entity_phone: string
+          entity_type: string
+          entity_website: string | null
+          first_name: string
+          has_accepted_cards_previously: boolean | null
+          incorporation_date: Json | null
+          job_title: string
+          last_name: string
+          legal_entity_name: string
+          max_ach_amount: number | null
+          max_card_amount: number | null
+          mcc_code: string
+          moto_percentage: number | null
+          ownership_percentage: number | null
+          ownership_type: string
+          p2p_percentage: number | null
+          personal_address_line1: string
+          personal_address_line2: string | null
+          personal_city: string
+          personal_country: string | null
+          personal_phone: string
+          personal_state: string
+          personal_tax_id: string | null
+          personal_zip_code: string
+          refund_policy: string | null
+          status: string | null
+          tax_id: string
+          updated_at: string | null
+          user_id: string
+          work_email: string
+        }
+        Insert: {
+          annual_ach_volume?: number | null
+          annual_card_volume?: number | null
+          average_ach_amount?: number | null
+          average_card_amount?: number | null
+          b2b_percentage?: number | null
+          b2c_percentage?: number | null
+          business_address_line1: string
+          business_address_line2?: string | null
+          business_city: string
+          business_country?: string | null
+          business_state: string
+          business_zip_code: string
+          card_present_percentage?: number | null
+          created_at?: string | null
+          customer_id?: string
+          date_of_birth?: Json | null
+          doing_business_as: string
+          ecommerce_percentage?: number | null
+          entity_description: string
+          entity_phone: string
+          entity_type: string
+          entity_website?: string | null
+          first_name: string
+          has_accepted_cards_previously?: boolean | null
+          incorporation_date?: Json | null
+          job_title: string
+          last_name: string
+          legal_entity_name: string
+          max_ach_amount?: number | null
+          max_card_amount?: number | null
+          mcc_code: string
+          moto_percentage?: number | null
+          ownership_percentage?: number | null
+          ownership_type: string
+          p2p_percentage?: number | null
+          personal_address_line1: string
+          personal_address_line2?: string | null
+          personal_city: string
+          personal_country?: string | null
+          personal_phone: string
+          personal_state: string
+          personal_tax_id?: string | null
+          personal_zip_code: string
+          refund_policy?: string | null
+          status?: string | null
+          tax_id: string
+          updated_at?: string | null
+          user_id: string
+          work_email: string
+        }
+        Update: {
+          annual_ach_volume?: number | null
+          annual_card_volume?: number | null
+          average_ach_amount?: number | null
+          average_card_amount?: number | null
+          b2b_percentage?: number | null
+          b2c_percentage?: number | null
+          business_address_line1?: string
+          business_address_line2?: string | null
+          business_city?: string
+          business_country?: string | null
+          business_state?: string
+          business_zip_code?: string
+          card_present_percentage?: number | null
+          created_at?: string | null
+          customer_id?: string
+          date_of_birth?: Json | null
+          doing_business_as?: string
+          ecommerce_percentage?: number | null
+          entity_description?: string
+          entity_phone?: string
+          entity_type?: string
+          entity_website?: string | null
+          first_name?: string
+          has_accepted_cards_previously?: boolean | null
+          incorporation_date?: Json | null
+          job_title?: string
+          last_name?: string
+          legal_entity_name?: string
+          max_ach_amount?: number | null
+          max_card_amount?: number | null
+          mcc_code?: string
+          moto_percentage?: number | null
+          ownership_percentage?: number | null
+          ownership_type?: string
+          p2p_percentage?: number | null
+          personal_address_line1?: string
+          personal_address_line2?: string | null
+          personal_city?: string
+          personal_country?: string | null
+          personal_phone?: string
+          personal_state?: string
+          personal_tax_id?: string | null
+          personal_zip_code?: string
+          refund_policy?: string | null
+          status?: string | null
+          tax_id?: string
+          updated_at?: string | null
+          user_id?: string
+          work_email?: string
+        }
+        Relationships: []
+      }
       finix_identities: {
         Row: {
           account_type: string

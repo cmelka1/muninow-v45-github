@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useCustomers } from '@/hooks/useCustomers';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,6 +27,7 @@ import { normalizePhoneInput } from '@/lib/phoneUtils';
 interface AddCustomerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 // Entity types for the dropdown
@@ -142,7 +144,9 @@ const REFUND_POLICY_OPTIONS = [
 export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
   open,
   onOpenChange,
+  onSuccess,
 }) => {
+  const { createCustomer, isLoading: isSubmitting } = useCustomers();
   const [currentStep, setCurrentStep] = useState(1);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [dobCalendarOpen, setDobCalendarOpen] = useState(false);
@@ -213,12 +217,77 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
     }, 0);
   };
 
-  const onStep3Submit = (data: Step3FormData) => {
-    console.log('Step 1 data:', step1Data);
-    console.log('Step 2 data:', step2Data);
-    console.log('Step 3 data:', data);
-    // TODO: Submit complete customer data
-    onOpenChange(false);
+  const onStep3Submit = async (data: Step3FormData) => {
+    if (!step1Data || !step2Data) return;
+    
+    try {
+      const formData = {
+        // Step 1 data
+        entityType: step1Data.entityType,
+        ownershipType: step1Data.ownershipType,
+        legalEntityName: step1Data.legalEntityName,
+        doingBusinessAs: step1Data.doingBusinessAs,
+        taxId: step1Data.taxId,
+        entityPhone: step1Data.entityPhone,
+        entityWebsite: step1Data.entityWebsite,
+        incorporationDate: step1Data.incorporationDate,
+        entityDescription: step1Data.entityDescription,
+        addressLine1: step1Data.addressLine1,
+        addressLine2: step1Data.addressLine2,
+        city: step1Data.city,
+        state: step1Data.state,
+        zipCode: step1Data.zipCode,
+        country: step1Data.country,
+        
+        // Step 2 data
+        firstName: step2Data.firstName,
+        lastName: step2Data.lastName,
+        jobTitle: step2Data.jobTitle,
+        workEmail: step2Data.workEmail,
+        personalPhone: step2Data.personalPhone,
+        dateOfBirth: step2Data.dateOfBirth,
+        personalTaxId: step2Data.personalTaxId,
+        ownershipPercentage: step2Data.ownershipPercentage,
+        personalAddressLine1: step2Data.personalAddressLine1,
+        personalAddressLine2: step2Data.personalAddressLine2,
+        personalCity: step2Data.personalCity,
+        personalState: step2Data.personalState,
+        personalZipCode: step2Data.personalZipCode,
+        personalCountry: step2Data.personalCountry,
+        
+        // Step 3 data
+        annualAchVolume: data.annualAchVolume,
+        annualCardVolume: data.annualCardVolume,
+        averageAchAmount: data.averageAchAmount,
+        averageCardAmount: data.averageCardAmount,
+        maxAchAmount: data.maxAchAmount,
+        maxCardAmount: data.maxCardAmount,
+        mccCode: data.mccCode,
+        cardPresentPercent: data.cardPresentPercent,
+        motoPercent: data.motoPercent,
+        ecommercePercent: data.ecommercePercent,
+        b2bPercent: data.b2bPercent,
+        b2cPercent: data.b2cPercent,
+        p2pPercent: data.p2pPercent,
+        hasAcceptedCardsPreviously: data.hasAcceptedCardsPreviously,
+        refundPolicy: data.refundPolicy
+      };
+
+      await createCustomer(formData);
+      
+      // Reset forms
+      step1Form.reset();
+      step2Form.reset();
+      step3Form.reset();
+      setStep1Data(null);
+      setStep2Data(null);
+      setCurrentStep(1);
+      
+      onSuccess?.();
+      onOpenChange(false);
+    } catch (error) {
+      // Error handling is done in the hook
+    }
   };
 
   const goBackToStep1 = () => {

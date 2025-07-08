@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -10,9 +10,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { AddCustomerDialog } from '@/components/AddCustomerDialog';
+import { useCustomers } from '@/hooks/useCustomers';
+import { format } from 'date-fns';
 
 interface CustomerTableProps {
   onAddCustomer?: () => void;
@@ -22,14 +25,41 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [customersData, setCustomersData] = useState<{ data: any[], count: number }>({ data: [], count: 0 });
   
-  // Placeholder data - will be replaced with actual customer data later
-  const customers: any[] = [];
-  const isLoading = false;
-  const error = null;
+  const { fetchCustomers, isLoading, error } = useCustomers();
   
-  const totalCount = customers.length;
+  const customers = customersData.data;
+  const totalCount = customersData.count;
   const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Load customers on component mount and when pagination changes
+  useEffect(() => {
+    const loadCustomers = async () => {
+      const result = await fetchCustomers(currentPage, pageSize);
+      setCustomersData(result);
+    };
+    loadCustomers();
+  }, [currentPage, pageSize]);
+
+  const handleCustomerAdded = async () => {
+    // Refresh the customers list
+    const result = await fetchCustomers(currentPage, pageSize);
+    setCustomersData(result);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+      case 'approved':
+        return <Badge variant="secondary" className="bg-green-100 text-green-800">Approved</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive">Rejected</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
 
   const handlePageSizeChange = (newPageSize: string) => {
     setPageSize(Number(newPageSize));
@@ -113,23 +143,23 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
                   </TableCell>
                 </TableRow>
               ) : (
-                customers.map((customer, index) => (
-                  <TableRow key={index} className="h-12">
+                customers.map((customer) => (
+                  <TableRow key={customer.customer_id} className="h-12">
                     <TableCell className="py-2">
-                      <span className="truncate block max-w-[200px]">
-                        {/* Customer name will go here */}
+                      <span className="truncate block max-w-[200px]" title={customer.legal_entity_name}>
+                        {customer.legal_entity_name}
                       </span>
                     </TableCell>
                     <TableCell className="hidden md:table-cell py-2">
-                      <span className="truncate block max-w-[150px]">
-                        {/* Customer type will go here */}
+                      <span className="truncate block max-w-[150px]" title={customer.entity_type}>
+                        {customer.entity_type}
                       </span>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell py-2">
-                      {/* Status badge will go here */}
+                      {getStatusBadge(customer.status)}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell py-2">
-                      {/* Created date will go here */}
+                      {format(new Date(customer.created_at), 'MMM dd, yyyy')}
                     </TableCell>
                     <TableCell className="text-center py-2">
                       <Button size="sm" variant="outline" className="w-full h-8">
@@ -194,6 +224,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
       <AddCustomerDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
+        onSuccess={handleCustomerAdded}
       />
     </Card>
   );
