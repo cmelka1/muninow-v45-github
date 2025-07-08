@@ -149,7 +149,7 @@ serve(async (req) => {
     const finixResponse = await fetch(`${finixBaseUrl}/identities`, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${btoa(finixApiKey + ':')}`,
+        'Authorization': `Basic ${btoa(finixAppId + ':' + finixApiKey)}`,
         'Accept': 'application/hal+json',
         'Content-Type': 'application/json',
         'Finix-Version': '2022-02-01'
