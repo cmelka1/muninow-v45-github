@@ -217,11 +217,41 @@ export const useCustomers = () => {
     }
   };
 
+  const fetchCustomerById = async (customerId: string) => {
+    if (!user) return null;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('customer_id', customerId)
+        .single();
+
+      if (error) throw error;
+
+      return data;
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: "Error",
+        description: "Failed to fetch customer details",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     customers,
     isLoading,
     error,
     fetchCustomers,
+    fetchCustomerById,
     createCustomer
   };
 };

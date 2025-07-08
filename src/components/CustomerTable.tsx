@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { AddCustomerDialog } from '@/components/AddCustomerDialog';
 import { useCustomers } from '@/hooks/useCustomers';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 
 interface CustomerTableProps {
@@ -28,6 +29,11 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
   const [customersData, setCustomersData] = useState<{ data: any[], count: number }>({ data: [], count: 0 });
   
   const { fetchCustomers, isLoading, error } = useCustomers();
+  const navigate = useNavigate();
+
+  const handleRowClick = (customerId: string) => {
+    navigate(`/superadmin/customers/${customerId}`);
+  };
   
   const customers = customersData.data;
   const totalCount = customersData.count;
@@ -130,13 +136,12 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
                 <TableHead className="hidden md:table-cell">Type</TableHead>
                 <TableHead className="hidden lg:table-cell">Status</TableHead>
                 <TableHead className="hidden sm:table-cell">Created</TableHead>
-                <TableHead className="w-[120px] text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {customers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-8 text-center">
+                  <TableCell colSpan={4} className="py-8 text-center">
                     <span className="text-muted-foreground">
                       No customers found. Click "Add Customer" to get started.
                     </span>
@@ -144,7 +149,11 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
                 </TableRow>
               ) : (
                 customers.map((customer) => (
-                  <TableRow key={customer.customer_id} className="h-12">
+                  <TableRow 
+                    key={customer.customer_id} 
+                    className="h-12 cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => handleRowClick(customer.customer_id)}
+                  >
                     <TableCell className="py-2">
                       <span className="truncate block max-w-[200px]" title={customer.legal_entity_name}>
                         {customer.legal_entity_name}
@@ -160,11 +169,6 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
                     </TableCell>
                     <TableCell className="hidden sm:table-cell py-2">
                       {format(new Date(customer.created_at), 'MMM dd, yyyy')}
-                    </TableCell>
-                    <TableCell className="text-center py-2">
-                      <Button size="sm" variant="outline" className="w-full h-8">
-                        View
-                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
