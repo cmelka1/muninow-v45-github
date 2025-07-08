@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import CustomerTable from '@/components/CustomerTable';
+import { AddCustomerDialog } from '@/components/AddCustomerDialog';
 
 const SuperAdminCustomers = () => {
+  const [addCustomerOpen, setAddCustomerOpen] = useState(false);
+
   const handleAddCustomer = () => {
-    // TODO: Implement add customer functionality
-    console.log('Add customer clicked');
+    setAddCustomerOpen(true);
   };
 
   return (
@@ -21,6 +23,10 @@ const SuperAdminCustomers = () => {
         </div>
 
         <CustomerTable onAddCustomer={handleAddCustomer} />
+        <AddCustomerDialog 
+          open={addCustomerOpen}
+          onOpenChange={setAddCustomerOpen}
+        />
       </div>
     </SuperAdminLayout>
   );

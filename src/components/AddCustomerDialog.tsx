@@ -54,8 +54,13 @@ const step1Schema = z.object({
     .regex(/^\d{9}$/, 'Tax ID must contain only digits'),
   entityPhone: z.string().min(14, 'Valid phone number is required'),
   entityWebsite: z.string().url('Please enter a valid website URL'),
-  incorporationDate: z.date({
-    required_error: 'Incorporation date is required',
+  incorporationDate: z.union([
+    z.date(),
+    z.string().regex(/^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/\d{4}$/, 'Date must be in MM/DD/YYYY format')
+  ]).transform((val) => {
+    if (val instanceof Date) return val;
+    const [month, day, year] = val.split('/').map(Number);
+    return new Date(year, month - 1, day);
   }),
   entityDescription: z.string().min(10, 'Please provide a detailed description'),
   addressLine1: z.string().min(1, 'Address is required'),
@@ -73,7 +78,14 @@ const step2Schema = z.object({
   jobTitle: z.string().min(1, 'Job title is required'),
   workEmail: z.string().email('Please enter a valid email address'),
   personalPhone: z.string().min(14, 'Valid phone number is required'),
-  dateOfBirth: z.date().optional(),
+  dateOfBirth: z.union([
+    z.date(),
+    z.string().regex(/^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/\d{4}$/, 'Date must be in MM/DD/YYYY format')
+  ]).transform((val) => {
+    if (val instanceof Date) return val;
+    const [month, day, year] = val.split('/').map(Number);
+    return new Date(year, month - 1, day);
+  }).optional(),
   personalTaxId: z.string().optional(),
   ownershipPercentage: z.number().min(0).max(100).optional(),
   personalAddressLine1: z.string().min(1, 'Address is required'),
@@ -156,6 +168,29 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
 
   const formatZipCode = (value: string) => {
     return value.replace(/\D/g, '').slice(0, 5);
+  };
+
+  const formatDateInput = (value: string) => {
+    // Remove all non-digit characters
+    const digitsOnly = value.replace(/\D/g, '');
+    
+    // Format as MM/DD/YYYY
+    if (digitsOnly.length >= 8) {
+      return `${digitsOnly.slice(0, 2)}/${digitsOnly.slice(2, 4)}/${digitsOnly.slice(4, 8)}`;
+    } else if (digitsOnly.length >= 4) {
+      return `${digitsOnly.slice(0, 2)}/${digitsOnly.slice(2, 4)}/${digitsOnly.slice(4)}`;
+    } else if (digitsOnly.length >= 2) {
+      return `${digitsOnly.slice(0, 2)}/${digitsOnly.slice(2)}`;
+    }
+    return digitsOnly;
+  };
+
+  const getDateDisplayValue = (value: Date | string | undefined) => {
+    if (!value) return '';
+    if (value instanceof Date) {
+      return format(value, 'MM/dd/yyyy');
+    }
+    return value;
   };
 
   const progressValue = (currentStep / 3) * 100;
@@ -340,40 +375,47 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Incorporation Date *</FormLabel>
-                      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={(date) => {
-                              field.onChange(date);
-                              setCalendarOpen(false);
+                      <div className="flex gap-2">
+                        <FormControl>
+                          <Input
+                            placeholder="MM/DD/YYYY"
+                            value={getDateDisplayValue(field.value)}
+                            onChange={(e) => {
+                              const formatted = formatDateInput(e.target.value);
+                              field.onChange(formatted);
                             }}
-                            disabled={(date) =>
-                              date > new Date() || date < new Date("1900-01-01")
-                            }
-                            initialFocus
+                            maxLength={10}
+                            className="flex-1"
                           />
-                        </PopoverContent>
-                      </Popover>
+                        </FormControl>
+                        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="shrink-0"
+                            >
+                              <CalendarIcon className="h-4 w-4" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value instanceof Date ? field.value : undefined}
+                              onSelect={(date) => {
+                                field.onChange(date);
+                                setCalendarOpen(false);
+                              }}
+                              disabled={(date) =>
+                                date > new Date() || date < new Date("1900-01-01")
+                              }
+                              initialFocus
+                              className="pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -637,40 +679,47 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Date of Birth *</FormLabel>
-                          <Popover open={dobCalendarOpen} onOpenChange={setDobCalendarOpen}>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "w-full pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={(date) => {
-                                  field.onChange(date);
-                                  setDobCalendarOpen(false);
+                          <div className="flex gap-2">
+                            <FormControl>
+                              <Input
+                                placeholder="MM/DD/YYYY"
+                                value={getDateDisplayValue(field.value)}
+                                onChange={(e) => {
+                                  const formatted = formatDateInput(e.target.value);
+                                  field.onChange(formatted);
                                 }}
-                                disabled={(date) =>
-                                  date > new Date() || date < new Date("1900-01-01")
-                                }
-                                initialFocus
+                                maxLength={10}
+                                className="flex-1"
                               />
-                            </PopoverContent>
-                          </Popover>
+                            </FormControl>
+                            <Popover open={dobCalendarOpen} onOpenChange={setDobCalendarOpen}>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  className="shrink-0"
+                                >
+                                  <CalendarIcon className="h-4 w-4" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value instanceof Date ? field.value : undefined}
+                                  onSelect={(date) => {
+                                    field.onChange(date);
+                                    setDobCalendarOpen(false);
+                                  }}
+                                  disabled={(date) =>
+                                    date > new Date() || date < new Date("1900-01-01")
+                                  }
+                                  initialFocus
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
