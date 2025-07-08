@@ -135,7 +135,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
                 <TableHead>Customer Name</TableHead>
                 <TableHead className="hidden md:table-cell">Type</TableHead>
                 <TableHead className="hidden lg:table-cell">Status</TableHead>
-                <TableHead className="hidden sm:table-cell">Created</TableHead>
+                <TableHead className="hidden sm:table-cell text-center">Created</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -167,7 +167,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
                     <TableCell className="hidden lg:table-cell py-2">
                       {getStatusBadge(customer.status)}
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell py-2">
+                    <TableCell className="hidden sm:table-cell py-2 text-center">
                       {format(new Date(customer.created_at), 'MMM dd, yyyy')}
                     </TableCell>
                   </TableRow>
