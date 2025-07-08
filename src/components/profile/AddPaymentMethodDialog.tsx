@@ -44,12 +44,13 @@ const cardSchema = z.object({
   country: z.string().default('USA'),
 });
 
-const bankSchema = z.object({
+const bankBaseSchema = z.object({
   paymentType: z.literal('bank'),
   accountHolderName: z.string().min(1, 'Account holder name is required'),
   accountNickname: z.string().optional(),
   routingNumber: z.string().length(9, 'Routing number must be 9 digits'),
   accountNumber: z.string().min(4, 'Account number is required'),
+  confirmAccountNumber: z.string().min(4, 'Please confirm your account number'),
   accountType: z.enum(['personal_checking', 'personal_savings', 'business_checking', 'business_savings']),
   useProfileAddress: z.boolean(),
   streetAddress: z.string().min(1, 'Street address is required'),
@@ -59,7 +60,21 @@ const bankSchema = z.object({
   country: z.string().default('USA'),
 });
 
-const formSchema = z.discriminatedUnion('paymentType', [cardSchema, bankSchema]);
+const bankSchema = bankBaseSchema.refine((data) => data.accountNumber === data.confirmAccountNumber, {
+  message: "Account numbers must match",
+  path: ["confirmAccountNumber"],
+});
+
+const baseFormSchema = z.discriminatedUnion('paymentType', [cardSchema, bankBaseSchema]);
+const formSchema = baseFormSchema.refine((data) => {
+  if (data.paymentType === 'bank') {
+    return data.accountNumber === data.confirmAccountNumber;
+  }
+  return true;
+}, {
+  message: "Account numbers must match",
+  path: ["confirmAccountNumber"],
+});
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -480,65 +495,33 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
                   Bank Account Information
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="accountHolderName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Account Holder Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="accountNickname"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Account Nickname <span className="text-muted-foreground">(Optional)</span></FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="e.g., Primary Checking" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="routingNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Routing Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="123456789" maxLength={9} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="accountNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Account Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Account number" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="accountHolderName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Account Holder Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="accountNickname"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Account Nickname <span className="text-muted-foreground">(Optional)</span></FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="e.g., Primary Checking" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={form.control}
@@ -559,6 +542,48 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
                           <SelectItem value="business_savings">Business Savings</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="routingNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Routing Number</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="123456789" maxLength={9} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="accountNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Account Number</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Account number" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="confirmAccountNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm Account Number</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Re-enter account number" />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
