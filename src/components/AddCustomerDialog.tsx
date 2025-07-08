@@ -22,7 +22,6 @@ import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { normalizePhoneInput, formatPhoneForStorage } from '@/lib/phoneUtils';
 
 interface AddCustomerDialogProps {
   open: boolean;
@@ -168,7 +167,7 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
         legal_entity_name: data.legalEntityName,
         doing_business_as: data.doingBusinessAs,
         tax_id: data.taxId,
-        entity_phone: formatPhoneForStorage(data.entityPhone),
+        entity_phone: data.entityPhone,
         entity_website: data.entityWebsite || null,
         incorporation_date: transformDateForFinix(data.incorporationDate),
         entity_description: data.entityDescription,
@@ -181,7 +180,7 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
         last_name: data.lastName,
         job_title: data.jobTitle,
         work_email: data.workEmail,
-        personal_phone: formatPhoneForStorage(data.personalPhone),
+        personal_phone: data.personalPhone,
         date_of_birth: transformDateForFinix(data.dateOfBirth),
         personal_tax_id: data.personalTaxId || null,
         ownership_percentage: data.ownershipPercentage,
@@ -339,15 +338,7 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                     <FormItem>
                       <FormLabel>Entity Phone *</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="(555) 123-4567" 
-                          {...field}
-                          value={field.value}
-                          onChange={(e) => {
-                            const formatted = normalizePhoneInput(e.target.value);
-                            field.onChange(formatted);
-                          }}
-                        />
+                        <Input placeholder="(555) 123-4567" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -533,15 +524,7 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                     <FormItem>
                       <FormLabel>Personal Phone *</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="(555) 123-4567" 
-                          {...field}
-                          value={field.value}
-                          onChange={(e) => {
-                            const formatted = normalizePhoneInput(e.target.value);
-                            field.onChange(formatted);
-                          }}
-                        />
+                        <Input placeholder="(555) 123-4567" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
