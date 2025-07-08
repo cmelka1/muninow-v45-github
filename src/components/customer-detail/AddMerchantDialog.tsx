@@ -60,7 +60,7 @@ type Step2Data = z.infer<typeof step2Schema>;
 export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCreated }: AddMerchantDialogProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [step1Data, setStep1Data] = useState<Step1Data | null>(null);
+  const [step1Data, setStep1Data] = useState<(Step1Data & { merchant_id?: string; finix_identity_id?: string }) | null>(null);
   const { toast } = useToast();
 
   const step1Form = useForm<Step1Data>({
@@ -95,7 +95,11 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
 
       if (error) throw error;
 
-      setStep1Data(data);
+      setStep1Data({
+        ...data,
+        merchant_id: result.merchant_id,
+        finix_identity_id: result.finix_identity_id,
+      });
       setCurrentStep(2);
       toast({
         title: "Seller ID Created",
@@ -259,6 +263,34 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
 
         {currentStep === 2 && (
           <form onSubmit={step2Form.handleSubmit(handleStep2Submit)} className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">Merchant Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Merchant Name</Label>
+                    <div className="p-2 bg-muted rounded text-sm">
+                      {step1Data?.merchant_name}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Merchant ID</Label>
+                    <div className="p-2 bg-muted rounded text-sm font-mono">
+                      {step1Data?.merchant_id}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">Finix Identity ID</Label>
+                  <div className="p-2 bg-muted rounded text-sm font-mono">
+                    {step1Data?.finix_identity_id}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm font-medium">Bank Account Information</CardTitle>
