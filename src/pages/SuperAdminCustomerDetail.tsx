@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useCustomers } from '@/hooks/useCustomers';
-import { ArrowLeft, Building, MapPin, Phone, Globe, Hash } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import CustomerInformationTab from '@/components/customer-detail/CustomerInformationTab';
+import MerchantTab from '@/components/customer-detail/MerchantTab';
 
 interface Customer {
   customer_id: string;
@@ -31,8 +34,10 @@ interface Customer {
 const SuperAdminCustomerDetail = () => {
   const { customerId } = useParams<{ customerId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { fetchCustomerById, isLoading, error } = useCustomers();
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const activeTab = searchParams.get('tab') || 'customer-info';
 
   useEffect(() => {
     const loadCustomer = async () => {
@@ -48,22 +53,10 @@ const SuperAdminCustomerDetail = () => {
     navigate('/superadmin/customers');
   };
 
-  const formatIncorporationDate = (dateObj: any) => {
-    if (!dateObj || typeof dateObj !== 'object') return 'Not provided';
-    const { month, day, year } = dateObj;
-    if (!month || !day || !year) return 'Not provided';
-    return `${month}/${day}/${year}`;
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
   };
 
-  const formatAddress = (customer: Customer) => {
-    const parts = [
-      customer.business_address_line1,
-      customer.business_address_line2,
-      `${customer.business_city}, ${customer.business_state} ${customer.business_zip_code}`,
-      customer.business_country
-    ].filter(Boolean);
-    return parts.join('\n');
-  };
 
   if (isLoading) {
     return (
@@ -152,106 +145,33 @@ const SuperAdminCustomerDetail = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Entity Information */}
-          <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                <Building className="h-5 w-5 text-primary" />
-                Entity Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-slate-700 font-medium text-sm">Legal Entity Name</label>
-                <p className="text-slate-900 mt-1">{customer.legal_entity_name}</p>
-              </div>
-              
-              <div>
-                <label className="text-slate-700 font-medium text-sm">Doing Business As</label>
-                <p className="text-slate-900 mt-1">{customer.doing_business_as}</p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-slate-700 font-medium text-sm">Entity Type</label>
-                  <p className="text-slate-900 mt-1">{customer.entity_type}</p>
-                </div>
-                <div>
-                  <label className="text-slate-700 font-medium text-sm">Ownership Type</label>
-                  <p className="text-slate-900 mt-1">{customer.ownership_type}</p>
-                </div>
-              </div>
-              
-              <div>
-                <label className="text-slate-700 font-medium text-sm">Tax ID</label>
-                <p className="text-slate-900 mt-1 font-mono">{customer.tax_id}</p>
-              </div>
-              
-              <div>
-                <label className="text-slate-700 font-medium text-sm">Description</label>
-                <p className="text-slate-900 mt-1">{customer.entity_description}</p>
-              </div>
-              
-              <div>
-                <label className="text-slate-700 font-medium text-sm">Incorporation Date</label>
-                <p className="text-slate-900 mt-1">{formatIncorporationDate(customer.incorporation_date)}</p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Tab Navigation */}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 h-auto p-1 bg-white border border-slate-200 rounded-lg">
+            <TabsTrigger 
+              value="customer-info" 
+              className="text-sm font-medium py-3 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Customer Information
+            </TabsTrigger>
+            <TabsTrigger 
+              value="merchants" 
+              className="text-sm font-medium py-3 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Merchants
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Business Address */}
-          <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
-                Business Address
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-slate-700 font-medium text-sm">Address</label>
-                <div className="text-slate-900 mt-1 whitespace-pre-line">
-                  {formatAddress(customer)}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="mt-6">
+            <TabsContent value="customer-info" className="space-y-6">
+              <CustomerInformationTab customer={customer} />
+            </TabsContent>
 
-          {/* Contact Information */}
-          <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                <Phone className="h-5 w-5 text-primary" />
-                Contact Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-slate-700 font-medium text-sm">Phone</label>
-                <p className="text-slate-900 mt-1">{customer.entity_phone}</p>
-              </div>
-              
-              {customer.entity_website && (
-                <div>
-                  <label className="text-slate-700 font-medium text-sm">Website</label>
-                  <div className="mt-1">
-                    <a 
-                      href={customer.entity_website.startsWith('http') ? customer.entity_website : `https://${customer.entity_website}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:text-primary/80 flex items-center gap-1"
-                    >
-                      <Globe className="h-4 w-4" />
-                      {customer.entity_website}
-                    </a>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-        </div>
+            <TabsContent value="merchants" className="space-y-6">
+              <MerchantTab />
+            </TabsContent>
+          </div>
+        </Tabs>
       </div>
     </SuperAdminLayout>
   );
