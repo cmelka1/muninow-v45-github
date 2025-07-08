@@ -32,11 +32,11 @@ interface AddCustomerDialogProps {
 
 // Entity types for the dropdown
 const ENTITY_TYPES = [
-  { value: 'individual', label: 'Individual / Sole Proprietorship' },
-  { value: 'llc', label: 'Limited Liability Company (LLC)' },
-  { value: 'corporation', label: 'Corporation' },
-  { value: 'tax_exempt', label: 'Tax Exempt Organization' },
-  { value: 'government', label: 'Government Agency' },
+  'Individual / Sole Proprietorship',
+  'Limited Liability Company (LLC)',
+  'Corporation',
+  'Tax Exempt Organization',
+  'Government Agency',
 ];
 
 // Ownership types
@@ -452,8 +452,8 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                         </FormControl>
                         <SelectContent>
                           {ENTITY_TYPES.map((type) => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
+                            <SelectItem key={type} value={type}>
+                              {type}
                             </SelectItem>
                           ))}
                         </SelectContent>
