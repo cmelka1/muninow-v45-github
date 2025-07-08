@@ -363,6 +363,7 @@ export type Database = {
           has_accepted_cards_previously: boolean
           id: string
           incorporation_date: string | null
+          level_two_level_three_data_enabled: boolean | null
           max_ach_amount: number
           max_card_amount: number
           mcc_code: string
@@ -447,6 +448,7 @@ export type Database = {
           has_accepted_cards_previously?: boolean
           id?: string
           incorporation_date?: string | null
+          level_two_level_three_data_enabled?: boolean | null
           max_ach_amount?: number
           max_card_amount?: number
           mcc_code: string
@@ -531,6 +533,7 @@ export type Database = {
           has_accepted_cards_previously?: boolean
           id?: string
           incorporation_date?: string | null
+          level_two_level_three_data_enabled?: boolean | null
           max_ach_amount?: number
           max_card_amount?: number
           mcc_code?: string

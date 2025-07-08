@@ -29,6 +29,9 @@ interface Customer {
   incorporation_date?: any;
   created_at: string;
   status: string;
+  first_name: string;
+  last_name: string;
+  work_email: string;
 }
 
 const SuperAdminCustomerDetail = () => {
@@ -168,7 +171,7 @@ const SuperAdminCustomerDetail = () => {
             </TabsContent>
 
             <TabsContent value="merchants" className="space-y-6">
-              <MerchantTab />
+              <MerchantTab customer={customer} />
             </TabsContent>
           </div>
         </Tabs>
