@@ -42,7 +42,7 @@ const SuperAdminCustomerDetail = () => {
       }
     };
     loadCustomer();
-  }, [customerId, fetchCustomerById]);
+  }, [customerId]);
 
   const handleBack = () => {
     navigate('/superadmin/customers');
