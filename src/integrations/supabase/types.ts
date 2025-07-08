@@ -371,6 +371,7 @@ export type Database = {
           merchant_agreement_ip_address: string
           merchant_agreement_timestamp: string
           merchant_agreement_user_agent: string
+          merchant_name: string
           moto_percentage: number
           notes: string | null
           owner_date_of_birth: string | null
@@ -456,6 +457,7 @@ export type Database = {
           merchant_agreement_ip_address: string
           merchant_agreement_timestamp: string
           merchant_agreement_user_agent: string
+          merchant_name: string
           moto_percentage?: number
           notes?: string | null
           owner_date_of_birth?: string | null
@@ -541,6 +543,7 @@ export type Database = {
           merchant_agreement_ip_address?: string
           merchant_agreement_timestamp?: string
           merchant_agreement_user_agent?: string
+          merchant_name?: string
           moto_percentage?: number
           notes?: string | null
           owner_date_of_birth?: string | null
