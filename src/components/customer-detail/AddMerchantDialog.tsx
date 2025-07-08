@@ -57,10 +57,16 @@ const step2Schema = z.object({
 type Step1Data = z.infer<typeof step1Schema>;
 type Step2Data = z.infer<typeof step2Schema>;
 
+interface Step2ExtendedData extends Step2Data {
+  finix_payment_instrument_id?: string;
+  bank_last_four?: string;
+}
+
 export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCreated }: AddMerchantDialogProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [step1Data, setStep1Data] = useState<(Step1Data & { merchant_id?: string; finix_identity_id?: string }) | null>(null);
+  const [step2Data, setStep2Data] = useState<Step2ExtendedData | null>(null);
   const { toast } = useToast();
 
   const step1Form = useForm<Step1Data>({
@@ -123,7 +129,7 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
     setIsLoading(true);
     try {
       // Step 2: Create payment instrument
-      const { error: instrumentError } = await supabase.functions.invoke('create-finix-customer-payment-instrument', {
+      const { data: result, error: instrumentError } = await supabase.functions.invoke('create-finix-customer-payment-instrument', {
         body: {
           customer_id: customer.customer_id,
           merchant_id: step1Data.merchant_id,
@@ -133,10 +139,40 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
 
       if (instrumentError) throw instrumentError;
 
+      // Store step 2 data with payment instrument details
+      setStep2Data({
+        ...data,
+        finix_payment_instrument_id: result?.finix_payment_instrument_id,
+        bank_last_four: data.bank_account_number.slice(-4),
+      });
+      
+      setCurrentStep(3);
+      toast({
+        title: "Payment Instrument Created",
+        description: "Step 2 completed successfully. Review all information and create merchant account.",
+      });
+    } catch (error) {
+      console.error('Error creating payment instrument:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create payment instrument. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleStep3Submit = async () => {
+    if (!step1Data) return;
+    
+    setIsLoading(true);
+    try {
       // Step 3: Create merchant account
-      const { error: merchantError } = await supabase.functions.invoke('create-customer-merchant', {
+      const { data: result, error: merchantError } = await supabase.functions.invoke('create-customer-merchant', {
         body: {
           customer_id: customer.customer_id,
+          merchant_id: step1Data.merchant_id,
         },
       });
 
@@ -153,13 +189,14 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
       // Reset form state
       setCurrentStep(1);
       setStep1Data(null);
+      setStep2Data(null);
       step1Form.reset();
       step2Form.reset();
     } catch (error) {
-      console.error('Error completing merchant setup:', error);
+      console.error('Error creating merchant:', error);
       toast({
         title: "Error",
-        description: "Failed to complete merchant setup. Please try again.",
+        description: "Failed to create merchant account. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -171,6 +208,7 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
     onOpenChange(false);
     setCurrentStep(1);
     setStep1Data(null);
+    setStep2Data(null);
     step1Form.reset();
     step2Form.reset();
   };
@@ -186,6 +224,9 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
             </Badge>
             <Badge variant={currentStep >= 2 ? "default" : "secondary"}>
               Step 2: Bank Account
+            </Badge>
+            <Badge variant={currentStep >= 3 ? "default" : "secondary"}>
+              Step 3: Create Merchant
             </Badge>
           </div>
         </DialogHeader>
@@ -390,11 +431,116 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Creating Merchant...' : 'Create Merchant'}
+                  {isLoading ? 'Creating Payment Instrument...' : 'Next: Review & Create Merchant'}
                 </Button>
               </div>
             </div>
           </form>
+        )}
+
+        {currentStep === 3 && (
+          <div className="space-y-6">
+            {/* Customer Information Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">Customer Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Legal Entity Name</Label>
+                    <div className="p-2 bg-muted rounded text-sm">
+                      {customer.legal_entity_name}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Entity Type</Label>
+                    <div className="p-2 bg-muted rounded text-sm">
+                      {customer.entity_type}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Merchant Information Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">Merchant Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Merchant Name</Label>
+                    <div className="p-2 bg-muted rounded text-sm">
+                      {step1Data?.merchant_name}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Merchant ID</Label>
+                    <div className="p-2 bg-muted rounded text-sm font-mono">
+                      {step1Data?.merchant_id}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">Finix Identity ID</Label>
+                  <div className="p-2 bg-muted rounded text-sm font-mono">
+                    {step1Data?.finix_identity_id}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Bank Information Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">Bank Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Account Holder Name</Label>
+                    <div className="p-2 bg-muted rounded text-sm">
+                      {step2Data?.bank_account_holder_name}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Masked Account Number</Label>
+                    <div className="p-2 bg-muted rounded text-sm font-mono">
+                      ****{step2Data?.bank_last_four}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">Finix Payment Instrument ID</Label>
+                  <div className="p-2 bg-muted rounded text-sm font-mono">
+                    {step2Data?.finix_payment_instrument_id}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setCurrentStep(2)}
+                disabled={isLoading}
+              >
+                Back
+              </Button>
+              <div className="space-x-2">
+                <Button type="button" variant="outline" onClick={handleClose}>
+                  Cancel
+                </Button>
+                <Button onClick={handleStep3Submit} disabled={isLoading}>
+                  {isLoading ? 'Creating Merchant Account...' : 'Create Merchant Account'}
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
       </DialogContent>
     </Dialog>
