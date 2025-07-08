@@ -192,11 +192,25 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
   const onStep1Submit = (data: Step1FormData) => {
     setStep1Data(data);
     setCurrentStep(2);
+    // Scroll to top of dialog content
+    setTimeout(() => {
+      const dialogContent = document.querySelector('[role="dialog"] .overflow-y-auto');
+      if (dialogContent) {
+        dialogContent.scrollTop = 0;
+      }
+    }, 0);
   };
 
   const onStep2Submit = (data: Step2FormData) => {
     setStep2Data(data);
     setCurrentStep(3);
+    // Scroll to top of dialog content
+    setTimeout(() => {
+      const dialogContent = document.querySelector('[role="dialog"] .overflow-y-auto');
+      if (dialogContent) {
+        dialogContent.scrollTop = 0;
+      }
+    }, 0);
   };
 
   const onStep3Submit = (data: Step3FormData) => {
@@ -209,10 +223,24 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
 
   const goBackToStep1 = () => {
     setCurrentStep(1);
+    // Scroll to top of dialog content
+    setTimeout(() => {
+      const dialogContent = document.querySelector('[role="dialog"] .overflow-y-auto');
+      if (dialogContent) {
+        dialogContent.scrollTop = 0;
+      }
+    }, 0);
   };
 
   const goBackToStep2 = () => {
     setCurrentStep(2);
+    // Scroll to top of dialog content
+    setTimeout(() => {
+      const dialogContent = document.querySelector('[role="dialog"] .overflow-y-auto');
+      if (dialogContent) {
+        dialogContent.scrollTop = 0;
+      }
+    }, 0);
   };
 
   const handleStep1AddressSelect = (addressComponents: any) => {
