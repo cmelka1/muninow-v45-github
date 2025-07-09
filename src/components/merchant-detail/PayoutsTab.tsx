@@ -48,7 +48,7 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
       {/* Coming Soon Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Payout Management</CardTitle>
+          <CardTitle>Payout Profile</CardTitle>
         </CardHeader>
         <CardContent className="py-8">
           <div className="text-center text-muted-foreground">
