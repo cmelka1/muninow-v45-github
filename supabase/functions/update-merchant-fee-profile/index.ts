@@ -33,13 +33,11 @@ serve(async (req) => {
       );
     }
 
-    // Check if user is superAdmin
+    // Check if user is superAdmin using RPC function
     const { data: userRoles, error: rolesError } = await supabaseClient
-      .from('user_roles')
-      .select('roles!inner(name)')
-      .eq('user_id', user.id);
+      .rpc('get_user_roles', { _user_id: user.id });
 
-    if (rolesError || !userRoles?.some(ur => (ur as any).roles.name === 'superAdmin')) {
+    if (rolesError || !userRoles?.some((role: any) => role.role === 'superAdmin')) {
       return new Response(
         JSON.stringify({ error: 'Forbidden: Only super administrators can update fee profiles' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
