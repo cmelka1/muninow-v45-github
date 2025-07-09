@@ -143,6 +143,216 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
     );
   }
 
+  // Show editing form when isEditing is true (for both creating and editing)
+  if (isEditing) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                {feeProfile ? 'Edit Fee Profile' : 'Create Fee Profile'}
+              </CardTitle>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleCancel}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* General Fees */}
+            <div>
+              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                <Zap className="h-4 w-4" />
+                General Processing Fees
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="fixed_fee_cents">Fixed Fee</Label>
+                  <Input
+                    id="fixed_fee_cents"
+                    type="number"
+                    value={formData.fixed_fee_cents || 0}
+                    onChange={(e) => handleInputChange('fixed_fee_cents', e.target.value)}
+                    placeholder="Amount in cents"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="percentage_fee">Percentage Fee</Label>
+                  <Input
+                    id="percentage_fee"
+                    type="number"
+                    step="0.0001"
+                    value={formData.percentage_fee || 0}
+                    onChange={(e) => handleInputChange('percentage_fee', e.target.value)}
+                    placeholder="Decimal (e.g., 0.029 for 2.9%)"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Card Processing Fees */}
+            <div>
+              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                Card Processing Fees
+              </h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="card_present_fixed_fee_cents">Card Present - Fixed Fee</Label>
+                    <Input
+                      id="card_present_fixed_fee_cents"
+                      type="number"
+                      value={formData.card_present_fixed_fee_cents || 0}
+                      onChange={(e) => handleInputChange('card_present_fixed_fee_cents', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="card_present_percentage_fee">Card Present - Percentage Fee</Label>
+                    <Input
+                      id="card_present_percentage_fee"
+                      type="number"
+                      step="0.0001"
+                      value={formData.card_present_percentage_fee || 0}
+                      onChange={(e) => handleInputChange('card_present_percentage_fee', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="card_not_present_fixed_fee_cents">Card Not Present - Fixed Fee</Label>
+                    <Input
+                      id="card_not_present_fixed_fee_cents"
+                      type="number"
+                      value={formData.card_not_present_fixed_fee_cents || 0}
+                      onChange={(e) => handleInputChange('card_not_present_fixed_fee_cents', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="card_not_present_percentage_fee">Card Not Present - Percentage Fee</Label>
+                    <Input
+                      id="card_not_present_percentage_fee"
+                      type="number"
+                      step="0.0001"
+                      value={formData.card_not_present_percentage_fee || 0}
+                      onChange={(e) => handleInputChange('card_not_present_percentage_fee', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* ACH Fees */}
+            <div>
+              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                <Building className="h-4 w-4" />
+                ACH Processing Fees
+              </h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="ach_debit_fixed_fee_cents">ACH Debit - Fixed Fee</Label>
+                    <Input
+                      id="ach_debit_fixed_fee_cents"
+                      type="number"
+                      value={formData.ach_debit_fixed_fee_cents || 0}
+                      onChange={(e) => handleInputChange('ach_debit_fixed_fee_cents', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="ach_debit_percentage_fee">ACH Debit - Percentage Fee</Label>
+                    <Input
+                      id="ach_debit_percentage_fee"
+                      type="number"
+                      step="0.0001"
+                      value={formData.ach_debit_percentage_fee || 0}
+                      onChange={(e) => handleInputChange('ach_debit_percentage_fee', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="ach_credit_fixed_fee_cents">ACH Credit - Fixed Fee</Label>
+                    <Input
+                      id="ach_credit_fixed_fee_cents"
+                      type="number"
+                      value={formData.ach_credit_fixed_fee_cents || 0}
+                      onChange={(e) => handleInputChange('ach_credit_fixed_fee_cents', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="ach_credit_percentage_fee">ACH Credit - Percentage Fee</Label>
+                    <Input
+                      id="ach_credit_percentage_fee"
+                      type="number"
+                      step="0.0001"
+                      value={formData.ach_credit_percentage_fee || 0}
+                      onChange={(e) => handleInputChange('ach_credit_percentage_fee', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Additional Fees */}
+            <div>
+              <h3 className="text-lg font-medium mb-4">Additional Fees</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="chargeback_fixed_fee_cents">Chargeback Fee</Label>
+                  <Input
+                    id="chargeback_fixed_fee_cents"
+                    type="number"
+                    value={formData.chargeback_fixed_fee_cents || 0}
+                    onChange={(e) => handleInputChange('chargeback_fixed_fee_cents', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="refund_fixed_fee_cents">Refund Fee</Label>
+                  <Input
+                    id="refund_fixed_fee_cents"
+                    type="number"
+                    value={formData.refund_fixed_fee_cents || 0}
+                    onChange={(e) => handleInputChange('refund_fixed_fee_cents', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="monthly_fee_cents">Monthly Fee</Label>
+                  <Input
+                    id="monthly_fee_cents"
+                    type="number"
+                    value={formData.monthly_fee_cents || 0}
+                    onChange={(e) => handleInputChange('monthly_fee_cents', e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={isLoading}>
+                {isLoading ? 'Saving...' : feeProfile ? 'Save Changes' : 'Create Profile'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (!feeProfile && isSuperAdmin) {
     return (
       <Card>
