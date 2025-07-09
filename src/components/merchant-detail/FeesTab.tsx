@@ -228,18 +228,6 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="fixed_fee_cents">Fixed Fee</Label>
-                  <Input
-                    id="fixed_fee_cents"
-                    type="number"
-                    className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-                    value={getInputValue('fixed_fee_cents')}
-                    onChange={(e) => handleInputChange('fixed_fee_cents', e.target.value)}
-                    onFocus={() => handleInputFocus('fixed_fee_cents')}
-                    placeholder={getPlaceholderText('fixed_fee_cents')}
-                  />
-                </div>
-                <div>
                   <Label htmlFor="percentage_fee">Percentage Fee</Label>
                   <Input
                     id="percentage_fee"
@@ -250,6 +238,18 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     onChange={(e) => handleInputChange('percentage_fee', e.target.value)}
                     onFocus={() => handleInputFocus('percentage_fee')}
                     placeholder={getPlaceholderText('percentage_fee')}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="fixed_fee_cents">Fixed Fee</Label>
+                  <Input
+                    id="fixed_fee_cents"
+                    type="number"
+                    className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                    value={getInputValue('fixed_fee_cents')}
+                    onChange={(e) => handleInputChange('fixed_fee_cents', e.target.value)}
+                    onFocus={() => handleInputFocus('fixed_fee_cents')}
+                    placeholder={getPlaceholderText('fixed_fee_cents')}
                   />
                 </div>
               </div>
@@ -266,18 +266,6 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="card_present_fixed_fee_cents">Card Present - Fixed Fee</Label>
-                    <Input
-                      id="card_present_fixed_fee_cents"
-                      type="number"
-                      className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-                      value={getInputValue('card_present_fixed_fee_cents')}
-                      onChange={(e) => handleInputChange('card_present_fixed_fee_cents', e.target.value)}
-                      onFocus={() => handleInputFocus('card_present_fixed_fee_cents')}
-                      placeholder={getPlaceholderText('card_present_fixed_fee_cents')}
-                    />
-                  </div>
-                  <div>
                     <Label htmlFor="card_present_percentage_fee">Card Present - Percentage Fee</Label>
                     <Input
                       id="card_present_percentage_fee"
@@ -290,20 +278,20 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                       placeholder={getPlaceholderText('card_present_percentage_fee')}
                     />
                   </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="card_not_present_fixed_fee_cents">Card Not Present - Fixed Fee</Label>
+                    <Label htmlFor="card_present_fixed_fee_cents">Card Present - Fixed Fee</Label>
                     <Input
-                      id="card_not_present_fixed_fee_cents"
+                      id="card_present_fixed_fee_cents"
                       type="number"
                       className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-                      value={getInputValue('card_not_present_fixed_fee_cents')}
-                      onChange={(e) => handleInputChange('card_not_present_fixed_fee_cents', e.target.value)}
-                      onFocus={() => handleInputFocus('card_not_present_fixed_fee_cents')}
-                      placeholder={getPlaceholderText('card_not_present_fixed_fee_cents')}
+                      value={getInputValue('card_present_fixed_fee_cents')}
+                      onChange={(e) => handleInputChange('card_present_fixed_fee_cents', e.target.value)}
+                      onFocus={() => handleInputFocus('card_present_fixed_fee_cents')}
+                      placeholder={getPlaceholderText('card_present_fixed_fee_cents')}
                     />
                   </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="card_not_present_percentage_fee">Card Not Present - Percentage Fee</Label>
                     <Input
@@ -315,6 +303,18 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                       onChange={(e) => handleInputChange('card_not_present_percentage_fee', e.target.value)}
                       onFocus={() => handleInputFocus('card_not_present_percentage_fee')}
                       placeholder={getPlaceholderText('card_not_present_percentage_fee')}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="card_not_present_fixed_fee_cents">Card Not Present - Fixed Fee</Label>
+                    <Input
+                      id="card_not_present_fixed_fee_cents"
+                      type="number"
+                      className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                      value={getInputValue('card_not_present_fixed_fee_cents')}
+                      onChange={(e) => handleInputChange('card_not_present_fixed_fee_cents', e.target.value)}
+                      onFocus={() => handleInputFocus('card_not_present_fixed_fee_cents')}
+                      placeholder={getPlaceholderText('card_not_present_fixed_fee_cents')}
                     />
                   </div>
                 </div>
@@ -332,18 +332,6 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="ach_debit_fixed_fee_cents">ACH Debit - Fixed Fee</Label>
-                    <Input
-                      id="ach_debit_fixed_fee_cents"
-                      type="number"
-                      className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-                      value={getInputValue('ach_debit_fixed_fee_cents')}
-                      onChange={(e) => handleInputChange('ach_debit_fixed_fee_cents', e.target.value)}
-                      onFocus={() => handleInputFocus('ach_debit_fixed_fee_cents')}
-                      placeholder={getPlaceholderText('ach_debit_fixed_fee_cents')}
-                    />
-                  </div>
-                  <div>
                     <Label htmlFor="ach_debit_percentage_fee">ACH Debit - Percentage Fee</Label>
                     <Input
                       id="ach_debit_percentage_fee"
@@ -356,20 +344,20 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                       placeholder={getPlaceholderText('ach_debit_percentage_fee')}
                     />
                   </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="ach_credit_fixed_fee_cents">ACH Credit - Fixed Fee</Label>
+                    <Label htmlFor="ach_debit_fixed_fee_cents">ACH Debit - Fixed Fee</Label>
                     <Input
-                      id="ach_credit_fixed_fee_cents"
+                      id="ach_debit_fixed_fee_cents"
                       type="number"
                       className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-                      value={getInputValue('ach_credit_fixed_fee_cents')}
-                      onChange={(e) => handleInputChange('ach_credit_fixed_fee_cents', e.target.value)}
-                      onFocus={() => handleInputFocus('ach_credit_fixed_fee_cents')}
-                      placeholder={getPlaceholderText('ach_credit_fixed_fee_cents')}
+                      value={getInputValue('ach_debit_fixed_fee_cents')}
+                      onChange={(e) => handleInputChange('ach_debit_fixed_fee_cents', e.target.value)}
+                      onFocus={() => handleInputFocus('ach_debit_fixed_fee_cents')}
+                      placeholder={getPlaceholderText('ach_debit_fixed_fee_cents')}
                     />
                   </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="ach_credit_percentage_fee">ACH Credit - Percentage Fee</Label>
                     <Input
@@ -381,6 +369,18 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                       onChange={(e) => handleInputChange('ach_credit_percentage_fee', e.target.value)}
                       onFocus={() => handleInputFocus('ach_credit_percentage_fee')}
                       placeholder={getPlaceholderText('ach_credit_percentage_fee')}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="ach_credit_fixed_fee_cents">ACH Credit - Fixed Fee</Label>
+                    <Input
+                      id="ach_credit_fixed_fee_cents"
+                      type="number"
+                      className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                      value={getInputValue('ach_credit_fixed_fee_cents')}
+                      onChange={(e) => handleInputChange('ach_credit_fixed_fee_cents', e.target.value)}
+                      onFocus={() => handleInputFocus('ach_credit_fixed_fee_cents')}
+                      placeholder={getPlaceholderText('ach_credit_fixed_fee_cents')}
                     />
                   </div>
                 </div>
