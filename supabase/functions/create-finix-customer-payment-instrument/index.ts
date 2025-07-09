@@ -139,10 +139,13 @@ serve(async (req) => {
 
     const finixData = await finixResponse.json();
     console.log('Finix payment instrument created:', finixData.id);
+    console.log('Finix response masked_account_number:', finixData.masked_account_number);
 
-    // Extract masked account data from Finix response for security
-    const bankLastFour = finixData.account_number ? finixData.account_number.slice(-4) : null;
-    const maskedAccountNumber = finixData.account_number || null;
+    // Extract masked account data from Finix response for security (consistent with create-user-bank-account)
+    const bankLastFour = finixData.masked_account_number 
+      ? finixData.masked_account_number.slice(-4)
+      : bank_account_number.slice(-4);
+    const maskedAccountNumber = finixData.masked_account_number || `****${bank_account_number.slice(-4)}`;
 
     // Update merchant record with masked bank account details and payment instrument data
     const { data: updatedMerchant, error: updateError } = await supabase
