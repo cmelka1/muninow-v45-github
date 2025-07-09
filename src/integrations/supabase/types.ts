@@ -311,6 +311,98 @@ export type Database = {
         }
         Relationships: []
       }
+      merchant_payout_profiles: {
+        Row: {
+          created_at: string
+          finix_payout_profile_id: string | null
+          gross_fees_day_of_month: number | null
+          gross_fees_frequency:
+            | Database["public"]["Enums"]["payout_frequency"]
+            | null
+          gross_fees_payment_instrument_id: string | null
+          gross_fees_rail: Database["public"]["Enums"]["payout_rail"] | null
+          gross_fees_submission_delay_days: number | null
+          gross_payouts_frequency:
+            | Database["public"]["Enums"]["payout_frequency"]
+            | null
+          gross_payouts_payment_instrument_id: string | null
+          gross_payouts_rail: Database["public"]["Enums"]["payout_rail"] | null
+          gross_payouts_submission_delay_days: number | null
+          id: string
+          last_synced_at: string | null
+          merchant_id: string
+          net_frequency: Database["public"]["Enums"]["payout_frequency"] | null
+          net_payment_instrument_id: string | null
+          net_rail: Database["public"]["Enums"]["payout_rail"] | null
+          net_submission_delay_days: number | null
+          sync_status: Database["public"]["Enums"]["sync_status"]
+          type: Database["public"]["Enums"]["payout_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          finix_payout_profile_id?: string | null
+          gross_fees_day_of_month?: number | null
+          gross_fees_frequency?:
+            | Database["public"]["Enums"]["payout_frequency"]
+            | null
+          gross_fees_payment_instrument_id?: string | null
+          gross_fees_rail?: Database["public"]["Enums"]["payout_rail"] | null
+          gross_fees_submission_delay_days?: number | null
+          gross_payouts_frequency?:
+            | Database["public"]["Enums"]["payout_frequency"]
+            | null
+          gross_payouts_payment_instrument_id?: string | null
+          gross_payouts_rail?: Database["public"]["Enums"]["payout_rail"] | null
+          gross_payouts_submission_delay_days?: number | null
+          id?: string
+          last_synced_at?: string | null
+          merchant_id: string
+          net_frequency?: Database["public"]["Enums"]["payout_frequency"] | null
+          net_payment_instrument_id?: string | null
+          net_rail?: Database["public"]["Enums"]["payout_rail"] | null
+          net_submission_delay_days?: number | null
+          sync_status?: Database["public"]["Enums"]["sync_status"]
+          type?: Database["public"]["Enums"]["payout_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          finix_payout_profile_id?: string | null
+          gross_fees_day_of_month?: number | null
+          gross_fees_frequency?:
+            | Database["public"]["Enums"]["payout_frequency"]
+            | null
+          gross_fees_payment_instrument_id?: string | null
+          gross_fees_rail?: Database["public"]["Enums"]["payout_rail"] | null
+          gross_fees_submission_delay_days?: number | null
+          gross_payouts_frequency?:
+            | Database["public"]["Enums"]["payout_frequency"]
+            | null
+          gross_payouts_payment_instrument_id?: string | null
+          gross_payouts_rail?: Database["public"]["Enums"]["payout_rail"] | null
+          gross_payouts_submission_delay_days?: number | null
+          id?: string
+          last_synced_at?: string | null
+          merchant_id?: string
+          net_frequency?: Database["public"]["Enums"]["payout_frequency"] | null
+          net_payment_instrument_id?: string | null
+          net_rail?: Database["public"]["Enums"]["payout_rail"] | null
+          net_submission_delay_days?: number | null
+          sync_status?: Database["public"]["Enums"]["sync_status"]
+          type?: Database["public"]["Enums"]["payout_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_payout_profiles_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchants: {
         Row: {
           annual_ach_volume: number
@@ -2055,6 +2147,10 @@ export type Database = {
         | "businessAdmin"
         | "businessUser"
       payment_method_type: "card" | "ach"
+      payout_frequency: "DAILY" | "MONTHLY" | "CONTINUOUS"
+      payout_rail: "NEXT_DAY_ACH" | "SAME_DAY_ACH"
+      payout_type: "GROSS" | "NET"
+      sync_status: "synced" | "pending" | "error"
       vehicle_type: "personal" | "business"
     }
     CompositeTypes: {
@@ -2193,6 +2289,10 @@ export const Constants = {
         "businessUser",
       ],
       payment_method_type: ["card", "ach"],
+      payout_frequency: ["DAILY", "MONTHLY", "CONTINUOUS"],
+      payout_rail: ["NEXT_DAY_ACH", "SAME_DAY_ACH"],
+      payout_type: ["GROSS", "NET"],
+      sync_status: ["synced", "pending", "error"],
       vehicle_type: ["personal", "business"],
     },
   },
