@@ -105,8 +105,8 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
   };
 
   const getInputValue = (field: keyof FeeProfile) => {
-    if (touchedFields.has(field) || (formData[field] !== undefined && formData[field] !== 0)) {
-      return formData[field] || 0;
+    if (touchedFields.has(field)) {
+      return formData[field] !== undefined && formData[field] !== 0 ? formData[field] : '';
     }
     return '';
   };
