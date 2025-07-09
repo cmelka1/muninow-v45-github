@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { AddMerchantDialog } from './AddMerchantDialog';
 import { useMerchants } from '@/hooks/useMerchants';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 
 interface Customer {
@@ -44,6 +45,7 @@ const MerchantTab: React.FC<MerchantTabProps> = ({ customer }) => {
   const [pageSize, setPageSize] = useState(10);
   const [addMerchantOpen, setAddMerchantOpen] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
+  const navigate = useNavigate();
   
   const { merchants, isLoading, error, fetchMerchantsByCustomer, subscribeToMerchantChanges } = useMerchants();
 
@@ -85,6 +87,10 @@ const MerchantTab: React.FC<MerchantTabProps> = ({ customer }) => {
 
   const handleNextPage = () => {
     setCurrentPage(prev => prev + 1);
+  };
+
+  const handleMerchantClick = (merchantId: string) => {
+    navigate(`/superadmin/customers/${customer.customer_id}/merchants/${merchantId}`);
   };
 
   const getStatusBadgeVariant = (status: string) => {
@@ -156,7 +162,11 @@ const MerchantTab: React.FC<MerchantTabProps> = ({ customer }) => {
                   </TableRow>
                 ) : (
                   merchants.map((merchant) => (
-                    <TableRow key={merchant.id}>
+                    <TableRow 
+                      key={merchant.id}
+                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => handleMerchantClick(merchant.id)}
+                    >
                       <TableCell className="font-medium">
                         {merchant.merchant_name}
                       </TableCell>

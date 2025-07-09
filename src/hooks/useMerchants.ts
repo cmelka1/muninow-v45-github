@@ -6,9 +6,16 @@ import { useToast } from '@/hooks/use-toast';
 interface Merchant {
   id: string;
   merchant_name: string;
+  business_name: string;
   verification_status: string;
   processing_status: string;
   created_at: string;
+  business_address_line1: string;
+  business_address_line2?: string;
+  business_city: string;
+  business_state: string;
+  business_zip_code: string;
+  business_country: string;
   finix_merchant_id: string | null;
   onboarding_state: string | null;
   processing_enabled: boolean | null;
@@ -16,7 +23,7 @@ interface Merchant {
 }
 
 export const useMerchants = () => {
-  const [merchants, setMerchants] = useState<Merchant[]>([]);
+  const [merchants, setMerchants] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
@@ -102,6 +109,35 @@ export const useMerchants = () => {
     }
   };
 
+  const fetchMerchantById = async (merchantId: string) => {
+    if (!user) return null;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase
+        .from('merchants')
+        .select('*')
+        .eq('id', merchantId)
+        .single();
+
+      if (error) throw error;
+
+      return data;
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: "Error",
+        description: "Failed to fetch merchant details",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const subscribeToMerchantChanges = (userId: string, onUpdate: () => void) => {
     const channel = supabase
       .channel('merchant-changes')
@@ -130,6 +166,7 @@ export const useMerchants = () => {
     error,
     fetchMerchantsByCustomer,
     fetchMerchantsByUserId,
+    fetchMerchantById,
     subscribeToMerchantChanges
   };
 };
