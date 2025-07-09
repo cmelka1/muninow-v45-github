@@ -79,9 +79,9 @@ serve(async (req) => {
         rail: profileData.gross_fees_rail,
       };
 
-      // Only include day_of_month if frequency is MONTHLY
+      // Always include day_of_month as 1 if frequency is MONTHLY
       if (profileData.gross_fees_frequency === 'MONTHLY') {
-        feesConfig.day_of_month = profileData.gross_fees_day_of_month;
+        feesConfig.day_of_month = 1;
       }
 
       finixPayload.gross = {

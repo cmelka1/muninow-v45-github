@@ -54,7 +54,6 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
         gross_payouts_payment_instrument_id: result.profile.gross_payouts_payment_instrument_id,
         gross_payouts_rail: result.profile.gross_payouts_rail,
         gross_fees_frequency: result.profile.gross_fees_frequency,
-        gross_fees_day_of_month: result.profile.gross_fees_day_of_month,
         gross_fees_submission_delay_days: result.profile.gross_fees_submission_delay_days,
         gross_fees_payment_instrument_id: result.profile.gross_fees_payment_instrument_id,
         gross_fees_rail: result.profile.gross_fees_rail,
@@ -407,20 +406,6 @@ const PayoutsTab: React.FC<PayoutsTabProps> = ({ merchant }) => {
                             </SelectContent>
                           </Select>
                         </div>
-                        {formData.gross_fees_frequency === 'MONTHLY' && (
-                          <div className="space-y-2">
-                            <Label htmlFor="gross_fees_day_of_month">Day of Month</Label>
-                            <Input
-                              id="gross_fees_day_of_month"
-                              type="number"
-                              min="1"
-                              max="31"
-                              value={formData.gross_fees_day_of_month || ''}
-                              onChange={(e) => isEditing && setFormData({...formData, gross_fees_day_of_month: parseInt(e.target.value) || 1})}
-                              disabled={!isEditing}
-                            />
-                          </div>
-                        )}
                         <div className="space-y-2">
                           <Label htmlFor="gross_fees_submission_delay_days">Submission Delay Days</Label>
                           <Input

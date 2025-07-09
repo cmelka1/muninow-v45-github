@@ -46,7 +46,6 @@ export interface PayoutProfileFormData {
   gross_payouts_payment_instrument_id?: string;
   gross_payouts_rail?: PayoutRail;
   gross_fees_frequency?: PayoutFrequency;
-  gross_fees_day_of_month?: number;
   gross_fees_submission_delay_days?: number;
   gross_fees_payment_instrument_id?: string;
   gross_fees_rail?: PayoutRail;
