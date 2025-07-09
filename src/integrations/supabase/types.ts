@@ -311,74 +311,6 @@ export type Database = {
         }
         Relationships: []
       }
-      merchant_fee_profiles: {
-        Row: {
-          ach_basis_points: number
-          ach_basis_points_fee_limit: number | null
-          ach_credit_return_fixed_fee: number
-          ach_debit_return_fixed_fee: number
-          ach_fixed_fee: number
-          basis_points: number
-          created_at: string
-          dispute_fixed_fee: number
-          dispute_inquiry_fixed_fee: number
-          finix_application_id: string | null
-          finix_fee_profile_id: string | null
-          fixed_fee: number
-          id: string
-          last_synced_at: string | null
-          merchant_id: string
-          sync_status: Database["public"]["Enums"]["fee_profile_sync_status"]
-          updated_at: string
-        }
-        Insert: {
-          ach_basis_points?: number
-          ach_basis_points_fee_limit?: number | null
-          ach_credit_return_fixed_fee?: number
-          ach_debit_return_fixed_fee?: number
-          ach_fixed_fee?: number
-          basis_points?: number
-          created_at?: string
-          dispute_fixed_fee?: number
-          dispute_inquiry_fixed_fee?: number
-          finix_application_id?: string | null
-          finix_fee_profile_id?: string | null
-          fixed_fee?: number
-          id?: string
-          last_synced_at?: string | null
-          merchant_id: string
-          sync_status?: Database["public"]["Enums"]["fee_profile_sync_status"]
-          updated_at?: string
-        }
-        Update: {
-          ach_basis_points?: number
-          ach_basis_points_fee_limit?: number | null
-          ach_credit_return_fixed_fee?: number
-          ach_debit_return_fixed_fee?: number
-          ach_fixed_fee?: number
-          basis_points?: number
-          created_at?: string
-          dispute_fixed_fee?: number
-          dispute_inquiry_fixed_fee?: number
-          finix_application_id?: string | null
-          finix_fee_profile_id?: string | null
-          fixed_fee?: number
-          id?: string
-          last_synced_at?: string | null
-          merchant_id?: string
-          sync_status?: Database["public"]["Enums"]["fee_profile_sync_status"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_merchant_fee_profiles_merchant"
-            columns: ["merchant_id"]
-            isOneToOne: true
-            referencedRelation: "merchants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       merchant_payout_profiles: {
         Row: {
           created_at: string
@@ -2214,7 +2146,6 @@ export type Database = {
         | "residentUser"
         | "businessAdmin"
         | "businessUser"
-      fee_profile_sync_status: "pending" | "synced" | "error"
       payment_method_type: "card" | "ach"
       payout_frequency: "DAILY" | "MONTHLY" | "CONTINUOUS"
       payout_rail: "NEXT_DAY_ACH" | "SAME_DAY_ACH"
@@ -2357,7 +2288,6 @@ export const Constants = {
         "businessAdmin",
         "businessUser",
       ],
-      fee_profile_sync_status: ["pending", "synced", "error"],
       payment_method_type: ["card", "ach"],
       payout_frequency: ["DAILY", "MONTHLY", "CONTINUOUS"],
       payout_rail: ["NEXT_DAY_ACH", "SAME_DAY_ACH"],
