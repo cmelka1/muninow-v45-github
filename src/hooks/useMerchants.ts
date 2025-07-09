@@ -20,6 +20,9 @@ interface Merchant {
   onboarding_state: string | null;
   processing_enabled: boolean | null;
   settlement_enabled: boolean | null;
+  bank_account_holder_name: string | null;
+  bank_masked_account_number: string | null;
+  bank_routing_number: string | null;
 }
 
 export const useMerchants = () => {
