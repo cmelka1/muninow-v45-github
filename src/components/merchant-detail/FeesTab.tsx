@@ -36,7 +36,7 @@ interface FeeProfile {
 }
 
 const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
-  const { hasRole } = useUserRole();
+  const { hasRole, isLoading: roleLoading } = useUserRole();
   const { toast } = useToast();
   const [feeProfile, setFeeProfile] = useState<FeeProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,9 +47,14 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
 
   useEffect(() => {
     fetchFeeProfile();
-  }, [merchant.id]);
+  }, [merchant.id, roleLoading, isSuperAdmin]);
 
   const fetchFeeProfile = async () => {
+    // Wait for role loading to complete before making access decisions
+    if (roleLoading) {
+      return;
+    }
+    
     if (!isSuperAdmin) {
       setIsLoading(false);
       return;
