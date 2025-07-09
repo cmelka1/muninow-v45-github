@@ -10,6 +10,8 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface Merchant {
@@ -37,6 +39,15 @@ interface FeeProfile {
   updated_at: string;
 }
 
+const feeProfileSchema = z.object({
+  ach_basis_points: z.number().min(0).max(10000),
+  ach_fixed_fee: z.number().min(0).max(100000),
+  basis_points: z.number().min(0).max(10000),
+  fixed_fee: z.number().min(0).max(100000),
+  dispute_fixed_fee: z.number().min(0).max(100000),
+  dispute_inquiry_fixed_fee: z.number().min(0).max(100000),
+});
+
 interface FeeProfileFormData {
   ach_basis_points: number;
   ach_fixed_fee: number;
@@ -57,6 +68,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
 
   const form = useForm<FeeProfileFormData>({
+    resolver: zodResolver(feeProfileSchema),
     defaultValues: {
       ach_basis_points: 20,
       ach_fixed_fee: 30,
@@ -64,7 +76,8 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
       fixed_fee: 30,
       dispute_fixed_fee: 1500,
       dispute_inquiry_fixed_fee: 1500,
-    }
+    },
+    mode: 'onChange'
   });
 
   const isSuperAdmin = hasRole('superAdmin');
@@ -246,8 +259,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                   <Input
                     type="number"
                     placeholder="290"
+                    min={0}
+                    max={10000}
+                    step={1}
                     {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
@@ -266,8 +282,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                   <Input
                     type="number"
                     placeholder="30"
+                    min={0}
+                    max={100000}
+                    step={1}
                     {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
@@ -286,8 +305,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                   <Input
                     type="number"
                     placeholder="20"
+                    min={0}
+                    max={10000}
+                    step={1}
                     {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
@@ -306,8 +328,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                   <Input
                     type="number"
                     placeholder="30"
+                    min={0}
+                    max={100000}
+                    step={1}
                     {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
@@ -326,8 +351,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                   <Input
                     type="number"
                     placeholder="1500"
+                    min={0}
+                    max={100000}
+                    step={1}
                     {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
@@ -346,8 +374,11 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                   <Input
                     type="number"
                     placeholder="1500"
+                    min={0}
+                    max={100000}
+                    step={1}
                     {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
