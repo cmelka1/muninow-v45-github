@@ -143,9 +143,6 @@ const SuperAdminCustomerDetail = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             {customer.legal_entity_name}
           </h1>
-          <p className="text-gray-600">
-            Customer Details - {customer.entity_type}
-          </p>
         </div>
 
         {/* Tab Navigation */}
