@@ -241,7 +241,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
             name="basis_points"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Basis Points (Card)</FormLabel>
+                <FormLabel>Card Basis Points</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -261,7 +261,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
             name="fixed_fee"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Fixed Fee (Card) - Cents</FormLabel>
+                <FormLabel>Card Fixed Fee</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
