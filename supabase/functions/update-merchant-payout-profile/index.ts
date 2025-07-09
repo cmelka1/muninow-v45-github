@@ -72,6 +72,18 @@ serve(async (req) => {
         rail: profileData.net_rail,
       };
     } else if (profileData.type === 'GROSS') {
+      const feesConfig = {
+        frequency: profileData.gross_fees_frequency,
+        submission_delay_days: profileData.gross_fees_submission_delay_days || 0,
+        payment_instrument_id: profileData.gross_fees_payment_instrument_id,
+        rail: profileData.gross_fees_rail,
+      };
+
+      // Only include day_of_month if frequency is MONTHLY
+      if (profileData.gross_fees_frequency === 'MONTHLY') {
+        feesConfig.day_of_month = profileData.gross_fees_day_of_month;
+      }
+
       finixPayload.gross = {
         payouts: {
           frequency: profileData.gross_payouts_frequency,
@@ -79,13 +91,7 @@ serve(async (req) => {
           payment_instrument_id: profileData.gross_payouts_payment_instrument_id,
           rail: profileData.gross_payouts_rail,
         },
-        fees: {
-          frequency: profileData.gross_fees_frequency,
-          day_of_month: profileData.gross_fees_day_of_month,
-          submission_delay_days: profileData.gross_fees_submission_delay_days || 0,
-          payment_instrument_id: profileData.gross_fees_payment_instrument_id,
-          rail: profileData.gross_fees_rail,
-        },
+        fees: feesConfig,
       };
     }
 
