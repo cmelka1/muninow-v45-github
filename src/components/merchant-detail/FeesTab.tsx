@@ -153,9 +153,6 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
         </CardHeader>
         <CardContent className="py-8">
           <div className="text-center">
-            <div className="mb-4">
-              <DollarSign className="mx-auto h-12 w-12 text-muted-foreground" />
-            </div>
             <h3 className="text-lg font-medium mb-2">No Fee Profile Configured</h3>
             <p className="text-muted-foreground mb-4">
               Create a custom fee profile for {merchant.merchant_name} to manage processing fees.
