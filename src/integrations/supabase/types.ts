@@ -311,206 +311,6 @@ export type Database = {
         }
         Relationships: []
       }
-      merchant_fee_profiles: {
-        Row: {
-          ach_basis_points: number | null
-          ach_basis_points_fee_limit: number | null
-          ach_credit_return_fixed_fee: number | null
-          ach_debit_return_fixed_fee: number | null
-          ach_fixed_fee: number | null
-          american_express_assessment_basis_points: number | null
-          american_express_basis_points: number | null
-          american_express_charge_interchange: boolean | null
-          american_express_externally_funded_basis_points: number | null
-          american_express_externally_funded_fixed_fee: number | null
-          american_express_fixed_fee: number | null
-          ancillary_fixed_fee_primary: number | null
-          ancillary_fixed_fee_secondary: number | null
-          basis_points: number | null
-          charge_interchange: boolean | null
-          created_at: string | null
-          diners_club_basis_points: number | null
-          diners_club_charge_interchange: boolean | null
-          diners_club_fixed_fee: number | null
-          discover_assessments_basis_points: number | null
-          discover_basis_points: number | null
-          discover_charge_interchange: boolean | null
-          discover_data_usage_fixed_fee: number | null
-          discover_externally_funded_basis_points: number | null
-          discover_externally_funded_fixed_fee: number | null
-          discover_fixed_fee: number | null
-          discover_network_authorization_fixed_fee: number | null
-          dispute_fixed_fee: number | null
-          dispute_inquiry_fixed_fee: number | null
-          externally_funded_basis_points: number | null
-          externally_funded_fixed_fee: number | null
-          finix_application_id: string | null
-          finix_fee_profile_id: string | null
-          finix_raw_response: Json | null
-          fixed_fee: number | null
-          id: string
-          jcb_basis_points: number | null
-          jcb_charge_interchange: boolean | null
-          jcb_fixed_fee: number | null
-          last_synced_at: string | null
-          mastercard_acquirer_fees_basis_points: number | null
-          mastercard_assessments_over1k_basis_points: number | null
-          mastercard_assessments_under1k_basis_points: number | null
-          mastercard_basis_points: number | null
-          mastercard_charge_interchange: boolean | null
-          mastercard_fixed_fee: number | null
-          merchant_id: string
-          qualified_tiers: string | null
-          rounding_mode: string | null
-          sync_status: string | null
-          tags: Json | null
-          updated_at: string | null
-          visa_acquirer_processing_fixed_fee: number | null
-          visa_assessments_basis_points: number | null
-          visa_base_ii_credit_voucher_fixed_fee: number | null
-          visa_base_ii_system_file_transmission_fixed_fee: number | null
-          visa_basis_points: number | null
-          visa_charge_interchange: boolean | null
-          visa_credit_voucher_fixed_fee: number | null
-          visa_fixed_fee: number | null
-          visa_kilobyte_access_fixed_fee: number | null
-        }
-        Insert: {
-          ach_basis_points?: number | null
-          ach_basis_points_fee_limit?: number | null
-          ach_credit_return_fixed_fee?: number | null
-          ach_debit_return_fixed_fee?: number | null
-          ach_fixed_fee?: number | null
-          american_express_assessment_basis_points?: number | null
-          american_express_basis_points?: number | null
-          american_express_charge_interchange?: boolean | null
-          american_express_externally_funded_basis_points?: number | null
-          american_express_externally_funded_fixed_fee?: number | null
-          american_express_fixed_fee?: number | null
-          ancillary_fixed_fee_primary?: number | null
-          ancillary_fixed_fee_secondary?: number | null
-          basis_points?: number | null
-          charge_interchange?: boolean | null
-          created_at?: string | null
-          diners_club_basis_points?: number | null
-          diners_club_charge_interchange?: boolean | null
-          diners_club_fixed_fee?: number | null
-          discover_assessments_basis_points?: number | null
-          discover_basis_points?: number | null
-          discover_charge_interchange?: boolean | null
-          discover_data_usage_fixed_fee?: number | null
-          discover_externally_funded_basis_points?: number | null
-          discover_externally_funded_fixed_fee?: number | null
-          discover_fixed_fee?: number | null
-          discover_network_authorization_fixed_fee?: number | null
-          dispute_fixed_fee?: number | null
-          dispute_inquiry_fixed_fee?: number | null
-          externally_funded_basis_points?: number | null
-          externally_funded_fixed_fee?: number | null
-          finix_application_id?: string | null
-          finix_fee_profile_id?: string | null
-          finix_raw_response?: Json | null
-          fixed_fee?: number | null
-          id?: string
-          jcb_basis_points?: number | null
-          jcb_charge_interchange?: boolean | null
-          jcb_fixed_fee?: number | null
-          last_synced_at?: string | null
-          mastercard_acquirer_fees_basis_points?: number | null
-          mastercard_assessments_over1k_basis_points?: number | null
-          mastercard_assessments_under1k_basis_points?: number | null
-          mastercard_basis_points?: number | null
-          mastercard_charge_interchange?: boolean | null
-          mastercard_fixed_fee?: number | null
-          merchant_id: string
-          qualified_tiers?: string | null
-          rounding_mode?: string | null
-          sync_status?: string | null
-          tags?: Json | null
-          updated_at?: string | null
-          visa_acquirer_processing_fixed_fee?: number | null
-          visa_assessments_basis_points?: number | null
-          visa_base_ii_credit_voucher_fixed_fee?: number | null
-          visa_base_ii_system_file_transmission_fixed_fee?: number | null
-          visa_basis_points?: number | null
-          visa_charge_interchange?: boolean | null
-          visa_credit_voucher_fixed_fee?: number | null
-          visa_fixed_fee?: number | null
-          visa_kilobyte_access_fixed_fee?: number | null
-        }
-        Update: {
-          ach_basis_points?: number | null
-          ach_basis_points_fee_limit?: number | null
-          ach_credit_return_fixed_fee?: number | null
-          ach_debit_return_fixed_fee?: number | null
-          ach_fixed_fee?: number | null
-          american_express_assessment_basis_points?: number | null
-          american_express_basis_points?: number | null
-          american_express_charge_interchange?: boolean | null
-          american_express_externally_funded_basis_points?: number | null
-          american_express_externally_funded_fixed_fee?: number | null
-          american_express_fixed_fee?: number | null
-          ancillary_fixed_fee_primary?: number | null
-          ancillary_fixed_fee_secondary?: number | null
-          basis_points?: number | null
-          charge_interchange?: boolean | null
-          created_at?: string | null
-          diners_club_basis_points?: number | null
-          diners_club_charge_interchange?: boolean | null
-          diners_club_fixed_fee?: number | null
-          discover_assessments_basis_points?: number | null
-          discover_basis_points?: number | null
-          discover_charge_interchange?: boolean | null
-          discover_data_usage_fixed_fee?: number | null
-          discover_externally_funded_basis_points?: number | null
-          discover_externally_funded_fixed_fee?: number | null
-          discover_fixed_fee?: number | null
-          discover_network_authorization_fixed_fee?: number | null
-          dispute_fixed_fee?: number | null
-          dispute_inquiry_fixed_fee?: number | null
-          externally_funded_basis_points?: number | null
-          externally_funded_fixed_fee?: number | null
-          finix_application_id?: string | null
-          finix_fee_profile_id?: string | null
-          finix_raw_response?: Json | null
-          fixed_fee?: number | null
-          id?: string
-          jcb_basis_points?: number | null
-          jcb_charge_interchange?: boolean | null
-          jcb_fixed_fee?: number | null
-          last_synced_at?: string | null
-          mastercard_acquirer_fees_basis_points?: number | null
-          mastercard_assessments_over1k_basis_points?: number | null
-          mastercard_assessments_under1k_basis_points?: number | null
-          mastercard_basis_points?: number | null
-          mastercard_charge_interchange?: boolean | null
-          mastercard_fixed_fee?: number | null
-          merchant_id?: string
-          qualified_tiers?: string | null
-          rounding_mode?: string | null
-          sync_status?: string | null
-          tags?: Json | null
-          updated_at?: string | null
-          visa_acquirer_processing_fixed_fee?: number | null
-          visa_assessments_basis_points?: number | null
-          visa_base_ii_credit_voucher_fixed_fee?: number | null
-          visa_base_ii_system_file_transmission_fixed_fee?: number | null
-          visa_basis_points?: number | null
-          visa_charge_interchange?: boolean | null
-          visa_credit_voucher_fixed_fee?: number | null
-          visa_fixed_fee?: number | null
-          visa_kilobyte_access_fixed_fee?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "merchant_fee_profiles_merchant_id_fkey"
-            columns: ["merchant_id"]
-            isOneToOne: true
-            referencedRelation: "merchants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       merchant_payout_profiles: {
         Row: {
           created_at: string
@@ -1053,20 +853,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "municipal_bills_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "role_migration_backup"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "municipal_bills_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "role_migration_results"
             referencedColumns: ["id"]
           },
         ]
@@ -1902,20 +1688,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_payment_instruments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "role_migration_backup"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_payment_instruments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "role_migration_results"
-            referencedColumns: ["id"]
-          },
         ]
       }
       user_roles: {
@@ -2030,30 +1802,7 @@ export type Database = {
       }
     }
     Views: {
-      role_migration_backup: {
-        Row: {
-          current_role: string | null
-          email: string | null
-          entity_id: string | null
-          id: string | null
-          profile_account_type: string | null
-          profile_role: string | null
-        }
-        Relationships: []
-      }
-      role_migration_results: {
-        Row: {
-          alignment_status: string | null
-          assigned_role: string | null
-          email: string | null
-          entity_id: string | null
-          expected_role: string | null
-          id: string | null
-          profile_account_type: string | null
-          profile_role: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       accept_organization_invitation: {
@@ -2397,7 +2146,6 @@ export type Database = {
         | "residentUser"
         | "businessAdmin"
         | "businessUser"
-      fee_profile_sync_status: "pending" | "synced" | "error"
       payment_method_type: "card" | "ach"
       payout_frequency: "DAILY" | "MONTHLY" | "CONTINUOUS"
       payout_rail: "NEXT_DAY_ACH" | "SAME_DAY_ACH"
@@ -2540,7 +2288,6 @@ export const Constants = {
         "businessAdmin",
         "businessUser",
       ],
-      fee_profile_sync_status: ["pending", "synced", "error"],
       payment_method_type: ["card", "ach"],
       payout_frequency: ["DAILY", "MONTHLY", "CONTINUOUS"],
       payout_rail: ["NEXT_DAY_ACH", "SAME_DAY_ACH"],
