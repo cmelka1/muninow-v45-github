@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, RefreshCw, Save, Edit2, X, Plus } from 'lucide-react';
 import { useMerchants } from '@/hooks/useMerchants';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface Merchant {
   id: string;
@@ -47,6 +49,8 @@ interface FeeFormData {
 }
 
 const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const { fetchFeeProfile, createFeeProfile, updateFeeProfile, isLoading } = useMerchants();
   const [feeProfile, setFeeProfile] = useState<FeeProfile | null>(null);
   const [formData, setFormData] = useState<FeeFormData>({
@@ -65,57 +69,153 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
   const [hasProfile, setHasProfile] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced load function to prevent rapid successive calls
+  const debouncedLoadFeeProfile = useCallback(async () => {
+    // Clear any existing timeout
+    if (loadTimeoutRef.current) {
+      clearTimeout(loadTimeoutRef.current);
+    }
+
+    // Cancel any pending request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
+
+    try {
+      setError(null);
+      const result = await fetchFeeProfile(merchant.id);
+      
+      // Check if component is still mounted and request wasn't aborted
+      if (!abortControllerRef.current?.signal.aborted) {
+        if (result?.success && result?.profile) {
+          setFeeProfile(result.profile);
+          const profileData = {
+            basis_points: result.profile.basis_points || 0,
+            fixed_fee: result.profile.fixed_fee || 0,
+            ach_basis_points: result.profile.ach_basis_points || 0,
+            ach_fixed_fee: result.profile.ach_fixed_fee || 0,
+            dispute_fixed_fee: result.profile.dispute_fixed_fee || 0,
+            dispute_inquiry_fixed_fee: result.profile.dispute_inquiry_fixed_fee || 0,
+            ach_credit_return_fixed_fee: result.profile.ach_credit_return_fixed_fee || 0,
+            ach_debit_return_fixed_fee: result.profile.ach_debit_return_fixed_fee || 0,
+            charge_interchange: result.profile.charge_interchange || false,
+            rounding_mode: result.profile.rounding_mode || 'TRANSACTION'
+          };
+          setFormData(profileData);
+          setOriginalFormData(profileData);
+          setHasProfile(true);
+        } else {
+          setHasProfile(false);
+        }
+      }
+    } catch (err: any) {
+      if (!abortControllerRef.current?.signal.aborted) {
+        const errorMessage = err.message || 'Failed to load fee profile';
+        setError(errorMessage);
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
+    } finally {
+      if (!abortControllerRef.current?.signal.aborted) {
+        setIsInitialLoading(false);
+      }
+    }
+  }, [merchant.id, fetchFeeProfile, toast]);
 
   useEffect(() => {
-    loadFeeProfile();
-  }, [merchant.id]);
-
-  const loadFeeProfile = async () => {
-    const result = await fetchFeeProfile(merchant.id);
-    if (result?.success && result?.profile) {
-      setFeeProfile(result.profile);
-      const profileData = {
-        basis_points: result.profile.basis_points || 0,
-        fixed_fee: result.profile.fixed_fee || 0,
-        ach_basis_points: result.profile.ach_basis_points || 0,
-        ach_fixed_fee: result.profile.ach_fixed_fee || 0,
-        dispute_fixed_fee: result.profile.dispute_fixed_fee || 0,
-        dispute_inquiry_fixed_fee: result.profile.dispute_inquiry_fixed_fee || 0,
-        ach_credit_return_fixed_fee: result.profile.ach_credit_return_fixed_fee || 0,
-        ach_debit_return_fixed_fee: result.profile.ach_debit_return_fixed_fee || 0,
-        charge_interchange: result.profile.charge_interchange || false,
-        rounding_mode: result.profile.rounding_mode || 'TRANSACTION'
-      };
-      setFormData(profileData);
-      setOriginalFormData(profileData);
-      setHasProfile(true);
-    } else {
-      setHasProfile(false);
+    // Only load if user is authenticated
+    if (!user) {
+      setIsInitialLoading(false);
+      return;
     }
-  };
 
-  const handleSync = async () => {
-    await loadFeeProfile();
-  };
+    // Debounce the load call
+    loadTimeoutRef.current = setTimeout(() => {
+      debouncedLoadFeeProfile();
+    }, 100);
 
-  const handleCreate = async () => {
-    setIsUpdating(true);
-    const result = await createFeeProfile(merchant.id, formData);
-    if (result?.success) {
-      await loadFeeProfile();
+    // Cleanup function
+    return () => {
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [user, debouncedLoadFeeProfile]);
+
+  const handleSync = useCallback(async () => {
+    if (!user || isLoading) return;
+    setError(null);
+    await debouncedLoadFeeProfile();
+  }, [user, isLoading, debouncedLoadFeeProfile]);
+
+  const handleCreate = useCallback(async () => {
+    if (!user || isUpdating) return;
+    
+    try {
+      setError(null);
+      setIsUpdating(true);
+      const result = await createFeeProfile(merchant.id, formData);
+      if (result?.success) {
+        await debouncedLoadFeeProfile();
+        toast({
+          title: "Success",
+          description: "Fee profile created successfully",
+        });
+      }
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to create fee profile';
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
     }
-    setIsUpdating(false);
-  };
+  }, [user, isUpdating, merchant.id, formData, createFeeProfile, debouncedLoadFeeProfile, toast]);
 
-  const handleUpdate = async () => {
-    setIsUpdating(true);
-    const result = await updateFeeProfile(merchant.id, formData);
-    if (result?.success) {
-      await loadFeeProfile();
-      setIsEditing(false);
+  const handleUpdate = useCallback(async () => {
+    if (!user || isUpdating) return;
+    
+    try {
+      setError(null);
+      setIsUpdating(true);
+      const result = await updateFeeProfile(merchant.id, formData);
+      if (result?.success) {
+        await debouncedLoadFeeProfile();
+        setIsEditing(false);
+        toast({
+          title: "Success",
+          description: "Fee profile updated successfully",
+        });
+      }
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to update fee profile';
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
     }
-    setIsUpdating(false);
-  };
+  }, [user, isUpdating, merchant.id, formData, updateFeeProfile, debouncedLoadFeeProfile, toast]);
 
   const handleCancel = () => {
     setFormData(originalFormData);
@@ -218,7 +318,18 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
           </div>
         </CardHeader>
         <CardContent>
-          {!hasProfile ? (
+          {error && (
+            <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+          
+          {isInitialLoading ? (
+            <div className="text-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+              <p className="text-muted-foreground">Loading fee profile...</p>
+            </div>
+          ) : !hasProfile ? (
             <div className="text-center text-muted-foreground py-8">
               <p className="text-lg font-medium mb-2">No Fee Profile Found</p>
               <p>Click "Create Fee Profile" to set up fee configuration for {merchant.merchant_name}.</p>

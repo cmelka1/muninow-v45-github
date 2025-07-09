@@ -223,93 +223,106 @@ export const useMerchants = () => {
   };
 
   const fetchFeeProfile = async (merchantId: string) => {
-    if (!user) return null;
+    if (!user) return { success: false, profile: null };
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const { data, error } = await supabase
+      // Add a timeout to prevent hanging requests
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 10000)
+      );
+      
+      const queryPromise = supabase
         .from('merchant_fee_profiles')
         .select('*')
         .eq('merchant_id', merchantId)
         .maybeSingle();
 
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
+
       if (error) throw error;
 
       return { success: true, profile: data };
     } catch (err: any) {
-      setError(err.message);
-      toast({
-        title: "Error",
-        description: "Failed to fetch fee profile",
-        variant: "destructive",
-      });
-      return { success: false, profile: null };
+      const errorMessage = err.message === 'Request timeout' 
+        ? 'Request timed out. Please check your connection and try again.'
+        : err.message || 'Failed to fetch fee profile';
+      
+      setError(errorMessage);
+      console.error('Fee profile fetch error:', err);
+      return { success: false, profile: null, error: errorMessage };
     } finally {
       setIsLoading(false);
     }
   };
 
   const createFeeProfile = async (merchantId: string, profileData: any) => {
-    if (!user) return null;
+    if (!user) return { success: false, error: 'User not authenticated' };
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const { data, error } = await supabase.functions.invoke('create-merchant-fee-profile', {
+      // Add timeout for edge function calls
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 15000)
+      );
+
+      const createPromise = supabase.functions.invoke('create-merchant-fee-profile', {
         body: { merchantId, ...profileData }
       });
 
+      const { data, error } = await Promise.race([createPromise, timeoutPromise]) as any;
+
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Fee profile created successfully",
-      });
-
-      return data;
+      console.log('Fee profile created successfully:', data);
+      return { success: true, data };
     } catch (err: any) {
-      setError(err.message);
-      toast({
-        title: "Error",
-        description: "Failed to create fee profile",
-        variant: "destructive",
-      });
-      return null;
+      const errorMessage = err.message === 'Request timeout' 
+        ? 'Request timed out. Please check your connection and try again.'
+        : err.message || 'Failed to create fee profile';
+      
+      setError(errorMessage);
+      console.error('Create fee profile error:', err);
+      return { success: false, error: errorMessage };
     } finally {
       setIsLoading(false);
     }
   };
 
   const updateFeeProfile = async (merchantId: string, profileData: any) => {
-    if (!user) return null;
+    if (!user) return { success: false, error: 'User not authenticated' };
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const { data, error } = await supabase.functions.invoke('update-merchant-fee-profile', {
+      // Add timeout for edge function calls
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 15000)
+      );
+
+      const updatePromise = supabase.functions.invoke('update-merchant-fee-profile', {
         body: { merchantId, ...profileData }
       });
 
+      const { data, error } = await Promise.race([updatePromise, timeoutPromise]) as any;
+
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Fee profile updated successfully",
-      });
-
-      return data;
+      console.log('Fee profile updated successfully:', data);
+      return { success: true, data };
     } catch (err: any) {
-      setError(err.message);
-      toast({
-        title: "Error",
-        description: "Failed to update fee profile",
-        variant: "destructive",
-      });
-      return null;
+      const errorMessage = err.message === 'Request timeout' 
+        ? 'Request timed out. Please check your connection and try again.'
+        : err.message || 'Failed to update fee profile';
+      
+      setError(errorMessage);
+      console.error('Update fee profile error:', err);
+      return { success: false, error: errorMessage };
     } finally {
       setIsLoading(false);
     }
