@@ -248,6 +248,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     placeholder="290"
                     {...field}
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
                 <FormMessage />
@@ -267,6 +268,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     placeholder="30"
                     {...field}
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
                 <FormMessage />
@@ -286,6 +288,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     placeholder="20"
                     {...field}
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
                 <FormMessage />
@@ -305,6 +308,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     placeholder="30"
                     {...field}
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
                 <FormMessage />
@@ -324,6 +328,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     placeholder="1500"
                     {...field}
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
                 <FormMessage />
@@ -343,6 +348,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     placeholder="1500"
                     {...field}
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
                 <FormMessage />
