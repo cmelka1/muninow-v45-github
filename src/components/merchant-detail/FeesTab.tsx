@@ -40,21 +40,21 @@ interface FeeProfile {
 }
 
 const feeProfileSchema = z.object({
-  ach_basis_points: z.number().min(0).max(10000),
-  ach_fixed_fee: z.number().min(0).max(100000),
-  basis_points: z.number().min(0).max(10000),
-  fixed_fee: z.number().min(0).max(100000),
-  dispute_fixed_fee: z.number().min(0).max(100000),
-  dispute_inquiry_fixed_fee: z.number().min(0).max(100000),
+  ach_basis_points: z.string().transform((val) => val === '' ? 0 : Number(val)).refine((val) => !isNaN(val) && val >= 0 && val <= 10000, "Must be between 0 and 10000"),
+  ach_fixed_fee: z.string().transform((val) => val === '' ? 0 : Number(val)).refine((val) => !isNaN(val) && val >= 0 && val <= 100000, "Must be between 0 and 100000"),
+  basis_points: z.string().transform((val) => val === '' ? 0 : Number(val)).refine((val) => !isNaN(val) && val >= 0 && val <= 10000, "Must be between 0 and 10000"),
+  fixed_fee: z.string().transform((val) => val === '' ? 0 : Number(val)).refine((val) => !isNaN(val) && val >= 0 && val <= 100000, "Must be between 0 and 100000"),
+  dispute_fixed_fee: z.string().transform((val) => val === '' ? 0 : Number(val)).refine((val) => !isNaN(val) && val >= 0 && val <= 100000, "Must be between 0 and 100000"),
+  dispute_inquiry_fixed_fee: z.string().transform((val) => val === '' ? 0 : Number(val)).refine((val) => !isNaN(val) && val >= 0 && val <= 100000, "Must be between 0 and 100000"),
 });
 
 interface FeeProfileFormData {
-  ach_basis_points: number;
-  ach_fixed_fee: number;
-  basis_points: number;
-  fixed_fee: number;
-  dispute_fixed_fee: number;
-  dispute_inquiry_fixed_fee: number;
+  ach_basis_points: string;
+  ach_fixed_fee: string;
+  basis_points: string;
+  fixed_fee: string;
+  dispute_fixed_fee: string;
+  dispute_inquiry_fixed_fee: string;
 }
 
 const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
@@ -70,14 +70,14 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
   const form = useForm<FeeProfileFormData>({
     resolver: zodResolver(feeProfileSchema),
     defaultValues: {
-      ach_basis_points: 20,
-      ach_fixed_fee: 30,
-      basis_points: 290,
-      fixed_fee: 30,
-      dispute_fixed_fee: 1500,
-      dispute_inquiry_fixed_fee: 1500,
+      ach_basis_points: "20",
+      ach_fixed_fee: "30",
+      basis_points: "290",
+      fixed_fee: "30",
+      dispute_fixed_fee: "1500",
+      dispute_inquiry_fixed_fee: "1500",
     },
-    mode: 'onChange'
+    mode: 'onBlur'
   });
 
   const isSuperAdmin = hasRole('superAdmin');
@@ -111,12 +111,12 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
         if (data) {
           // Update form with existing data
           form.reset({
-            ach_basis_points: data.ach_basis_points || 0,
-            ach_fixed_fee: data.ach_fixed_fee || 0,
-            basis_points: data.basis_points || 0,
-            fixed_fee: data.fixed_fee || 0,
-            dispute_fixed_fee: data.dispute_fixed_fee || 0,
-            dispute_inquiry_fixed_fee: data.dispute_inquiry_fixed_fee || 0,
+            ach_basis_points: (data.ach_basis_points || 0).toString(),
+            ach_fixed_fee: (data.ach_fixed_fee || 0).toString(),
+            basis_points: (data.basis_points || 0).toString(),
+            fixed_fee: (data.fixed_fee || 0).toString(),
+            dispute_fixed_fee: (data.dispute_fixed_fee || 0).toString(),
+            dispute_inquiry_fixed_fee: (data.dispute_inquiry_fixed_fee || 0).toString(),
           });
         }
       }
@@ -263,7 +263,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     max={10000}
                     step={1}
                     {...field}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                    onChange={(e) => field.onChange(e.target.value)}
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
@@ -286,7 +286,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     max={100000}
                     step={1}
                     {...field}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                    onChange={(e) => field.onChange(e.target.value)}
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
@@ -309,7 +309,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     max={10000}
                     step={1}
                     {...field}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                    onChange={(e) => field.onChange(e.target.value)}
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
@@ -332,7 +332,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     max={100000}
                     step={1}
                     {...field}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                    onChange={(e) => field.onChange(e.target.value)}
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
@@ -355,7 +355,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     max={100000}
                     step={1}
                     {...field}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                    onChange={(e) => field.onChange(e.target.value)}
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
@@ -378,7 +378,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
                     max={100000}
                     step={1}
                     {...field}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                    onChange={(e) => field.onChange(e.target.value)}
                     className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                   />
                 </FormControl>
