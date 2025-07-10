@@ -65,13 +65,17 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
 
   const loadFeeProfile = async () => {
     try {
+      // Get the most recent fee profile (active one)
       const { data, error } = await supabase
         .from('merchant_fee_profiles')
         .select('*')
         .eq('merchant_id', merchant.id)
-        .single();
+        .eq('sync_status', 'synced') // Only get confirmed/synced profiles
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error loading fee profile:', error);
         toast({
           title: "Error",

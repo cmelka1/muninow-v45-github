@@ -156,6 +156,13 @@ serve(async (req) => {
     const merchantProfileData = await finixResponse.json();
     console.log('Merchant profile updated with fee profile:', merchantProfileData.id);
 
+    // Clean up old fee profiles for this merchant (keep only the current one)
+    await supabaseClient
+      .from('merchant_fee_profiles')
+      .delete()
+      .eq('merchant_id', feeProfile.merchant_id)
+      .neq('id', feeProfileId);
+
     // Update our database record with the merchant profile response
     const { data: updatedFeeProfile, error: updateError } = await supabaseClient
       .from('merchant_fee_profiles')
