@@ -15,11 +15,11 @@ interface BillFilters {
   amountRange?: string;
 }
 
-interface UseMunicipalBillsParams extends PaginationParams {
+interface UseBillsParams extends PaginationParams {
   filters?: BillFilters;
 }
 
-export const useMunicipalBills = (params?: UseMunicipalBillsParams) => {
+export const useBills = (params?: UseBillsParams) => {
   const { user } = useAuth();
   const { page = 1, pageSize = 5, filters = {} } = params || {};
 
@@ -90,7 +90,7 @@ export const useMunicipalBills = (params?: UseMunicipalBillsParams) => {
         .range(from, to);
 
       if (error) {
-        console.error('Error fetching municipal bills:', error);
+        console.error('Error fetching bills:', error);
         throw error;
       }
 

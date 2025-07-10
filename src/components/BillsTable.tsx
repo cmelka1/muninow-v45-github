@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useMunicipalBills } from '@/hooks/useMunicipalBills';
+import { useBills } from '@/hooks/useBills';
 
 interface BillFilters {
   vendor?: string;
@@ -32,7 +32,7 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {} }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   
-  const { data: billsData, isLoading, error } = useMunicipalBills({ 
+  const { data: billsData, isLoading, error } = useBills({ 
     page: currentPage, 
     pageSize,
     filters
