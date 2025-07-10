@@ -6,17 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface FeeProfileData {
-  merchantId: string;
-  ach_basis_points: number;
-  ach_basis_points_fee_limit?: number;
-  ach_fixed_fee: number;
-  basis_points: number;
-  fixed_fee: number;
-  ach_credit_return_fixed_fee: number;
-  ach_debit_return_fixed_fee: number;
-  dispute_fixed_fee: number;
-  dispute_inquiry_fixed_fee: number;
+interface ConfirmFeeProfileData {
+  feeProfileId: string;
 }
 
 serve(async (req) => {
@@ -74,33 +65,39 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const feeProfileData: FeeProfileData = await req.json();
-    const { merchantId, ...feeData } = feeProfileData;
+    const { feeProfileId }: ConfirmFeeProfileData = await req.json();
 
-    if (!merchantId) {
+    if (!feeProfileId) {
       return new Response(
-        JSON.stringify({ error: 'Merchant ID is required' }),
+        JSON.stringify({ error: 'Fee Profile ID is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Creating fee profile for merchant:', merchantId);
+    console.log('Confirming fee profile:', feeProfileId);
 
-    // Get merchant info for database record
-    const { data: merchant, error: merchantError } = await supabaseClient
-      .from('merchants')
-      .select('merchant_name, finix_merchant_id, finix_merchant_profile_id')
-      .eq('id', merchantId)
+    // Get fee profile from database
+    const { data: feeProfile, error: fetchError } = await supabaseClient
+      .from('merchant_fee_profiles')
+      .select('*')
+      .eq('id', feeProfileId)
       .single();
 
-    if (merchantError || !merchant) {
+    if (fetchError || !feeProfile) {
       return new Response(
-        JSON.stringify({ error: 'Merchant not found' }),
+        JSON.stringify({ error: 'Fee profile not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Create fee profile in Finix API
+    if (!feeProfile.finix_fee_profile_id || !feeProfile.finix_merchant_profile_id) {
+      return new Response(
+        JSON.stringify({ error: 'Required Finix IDs not found in fee profile' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Update merchant profile in Finix API
     const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
     const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
     const finixApiUrl = Deno.env.get('FINIX_API_URL') || 'https://finix.sandbox-payments-api.com';
@@ -112,95 +109,80 @@ serve(async (req) => {
       );
     }
 
-    const finixResponse = await fetch(`${finixApiUrl}/fee_profiles`, {
-      method: 'POST',
+    const updateData = {
+      fee_profile: feeProfile.finix_fee_profile_id,
+      card_present_fee_profile: feeProfile.finix_fee_profile_id
+    };
+
+    const finixResponse = await fetch(`${finixApiUrl}/merchant_profiles/${feeProfile.finix_merchant_profile_id}`, {
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Basic ${btoa(`${finixApplicationId}:${finixApiSecret}`)}`
       },
-      body: JSON.stringify(feeData)
+      body: JSON.stringify(updateData)
     });
 
     if (!finixResponse.ok) {
       const finixError = await finixResponse.text();
       console.error('Finix API error:', finixError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to create fee profile in Finix API', details: finixError }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const finixData = await finixResponse.json();
-    console.log('Finix fee profile created:', finixData.id);
-
-    // Store fee profile in our database
-    const { data: feeProfile, error: dbError } = await supabaseClient
-      .from('merchant_fee_profiles')
-      .insert({
-        merchant_id: merchantId,
-        merchant_name: merchant.merchant_name,
-        finix_merchant_id: merchant.finix_merchant_id,
-        finix_merchant_profile_id: merchant.finix_merchant_profile_id,
-        finix_fee_profile_id: finixData.id,
-        finix_application_id: finixData.application,
-        finix_raw_response: finixData,
-        sync_status: 'created',
-        last_synced_at: new Date().toISOString(),
-        
-        // Map response fields to database columns
-        ach_basis_points: finixData.ach_basis_points,
-        ach_basis_points_fee_limit: finixData.ach_basis_points_fee_limit,
-        ach_fixed_fee: finixData.ach_fixed_fee,
-        basis_points: finixData.basis_points,
-        fixed_fee: finixData.fixed_fee,
-        ach_credit_return_fixed_fee: finixData.ach_credit_return_fixed_fee,
-        ach_debit_return_fixed_fee: finixData.ach_debit_return_fixed_fee,
-        dispute_fixed_fee: finixData.dispute_fixed_fee,
-        dispute_inquiry_fixed_fee: finixData.dispute_inquiry_fixed_fee,
-        
-        // Additional fields from Finix response
-        american_express_assessment_basis_points: finixData.american_express_assessment_basis_points,
-        american_express_basis_points: finixData.american_express_basis_points,
-        american_express_charge_interchange: finixData.american_express_charge_interchange,
-        american_express_externally_funded_basis_points: finixData.american_express_externally_funded_basis_points,
-        american_express_externally_funded_fixed_fee: finixData.american_express_externally_funded_fixed_fee,
-        american_express_fixed_fee: finixData.american_express_fixed_fee,
-        
-        charge_interchange: finixData.charge_interchange,
-        qualified_tiers: finixData.qualified_tiers,
-        rounding_mode: finixData.rounding_mode,
-        tags: finixData.tags || {}
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      console.error('Database error:', dbError);
-      // Try to cleanup the created fee profile in Finix
+      
+      // Try to cleanup/rollback the fee profile creation
       try {
-        await fetch(`${finixApiUrl}/fee_profiles/${finixData.id}`, {
+        await fetch(`${finixApiUrl}/fee_profiles/${feeProfile.finix_fee_profile_id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Basic ${btoa(`${finixApplicationId}:${finixApiSecret}`)}`
           }
         });
-      } catch (cleanupError) {
-        console.error('Failed to cleanup fee profile:', cleanupError);
+        
+        // Also delete from our database
+        await supabaseClient
+          .from('merchant_fee_profiles')
+          .delete()
+          .eq('id', feeProfileId);
+        
+        console.log('Rollback completed due to merchant profile update failure');
+      } catch (rollbackError) {
+        console.error('Failed to rollback fee profile:', rollbackError);
       }
       
       return new Response(
-        JSON.stringify({ error: 'Failed to store fee profile in database', details: dbError.message }),
+        JSON.stringify({ error: 'Failed to update merchant profile in Finix API', details: finixError }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Fee profile created successfully:', feeProfile.id);
+    const merchantProfileData = await finixResponse.json();
+    console.log('Merchant profile updated with fee profile:', merchantProfileData.id);
+
+    // Update our database record with the merchant profile response
+    const { data: updatedFeeProfile, error: updateError } = await supabaseClient
+      .from('merchant_fee_profiles')
+      .update({
+        merchant_profile_raw_response: merchantProfileData,
+        sync_status: 'synced',
+        last_synced_at: new Date().toISOString()
+      })
+      .eq('id', feeProfileId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Database update error:', updateError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to update fee profile in database', details: updateError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Fee profile confirmed successfully:', updatedFeeProfile.id);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        feeProfile,
-        finixData
+        feeProfile: updatedFeeProfile,
+        merchantProfileData
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

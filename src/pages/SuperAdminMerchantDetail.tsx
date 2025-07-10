@@ -12,6 +12,7 @@ import MerchantProfileTab from '@/components/merchant-detail/MerchantProfileTab'
 import TransactionsTab from '@/components/merchant-detail/TransactionsTab';
 import PayoutsTab from '@/components/merchant-detail/PayoutsTab';
 import PaymentDevicesTab from '@/components/merchant-detail/PaymentDevicesTab';
+import FeesTab from '@/components/merchant-detail/FeesTab';
 
 interface Merchant {
   id: string;
@@ -148,7 +149,7 @@ const SuperAdminMerchantDetail = () => {
 
         {/* Tab Navigation */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-white border border-slate-200 rounded-lg">
+          <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-white border border-slate-200 rounded-lg">
             <TabsTrigger 
               value="profile" 
               className="text-sm font-medium py-3 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -166,6 +167,12 @@ const SuperAdminMerchantDetail = () => {
               className="text-sm font-medium py-3 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
               Payouts
+            </TabsTrigger>
+            <TabsTrigger 
+              value="fees" 
+              className="text-sm font-medium py-3 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Fees
             </TabsTrigger>
             <TabsTrigger 
               value="payment-devices" 
@@ -186,6 +193,10 @@ const SuperAdminMerchantDetail = () => {
 
             <TabsContent value="payouts" className="space-y-6">
               <PayoutsTab merchant={merchant} />
+            </TabsContent>
+
+            <TabsContent value="fees" className="space-y-6">
+              <FeesTab merchant={merchant} />
             </TabsContent>
 
             <TabsContent value="payment-devices" className="space-y-6">
