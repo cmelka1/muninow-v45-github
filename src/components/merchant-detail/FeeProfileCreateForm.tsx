@@ -21,31 +21,34 @@ interface FeeProfileCreateFormProps {
   onSubmit: (data: FeeFormData) => void;
   onCancel: () => void;
   isLoading: boolean;
+  initialValues?: FeeFormData;
+  isUpdate?: boolean;
 }
 
 const FeeProfileCreateForm: React.FC<FeeProfileCreateFormProps> = ({
   onSubmit,
   onCancel,
-  isLoading
+  isLoading,
+  initialValues,
+  isUpdate = false,
 }) => {
   const { register, handleSubmit, formState: { errors } } = useForm<FeeFormData>({
-    defaultValues: {
-      ach_basis_points: 20,
-      ach_basis_points_fee_limit: 500,
-      ach_fixed_fee: 30,
-      basis_points: 290,
+    defaultValues: initialValues || {
+      ach_basis_points: 25,
+      ach_fixed_fee: 25,
+      basis_points: 289,
       fixed_fee: 30,
-      ach_credit_return_fixed_fee: 0,
-      ach_debit_return_fixed_fee: 0,
+      ach_credit_return_fixed_fee: 500,
+      ach_debit_return_fixed_fee: 500,
       dispute_fixed_fee: 1500,
-      dispute_inquiry_fixed_fee: 1500
-    }
+      dispute_inquiry_fixed_fee: 1500,
+    },
   });
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Create Fee Profile - Step 1</CardTitle>
+        <CardTitle>{isUpdate ? 'Update Fee Profile' : 'Create Fee Profile'}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

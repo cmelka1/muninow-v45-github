@@ -48,7 +48,7 @@ interface FeesTabProps {
   merchant: Merchant;
 }
 
-type ViewState = 'display' | 'create' | 'confirm';
+type ViewState = 'display' | 'create' | 'confirm' | 'update';
 
 const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
   const [feeProfile, setFeeProfile] = useState<FeeProfile | null>(null);
@@ -56,6 +56,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
   const [formData, setFormData] = useState<FeeFormData | null>(null);
   const [tempFeeProfileId, setTempFeeProfileId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdate, setIsUpdate] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -88,7 +89,13 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
   };
 
   const handleCreateStart = () => {
+    setIsUpdate(false);
     setViewState('create');
+  };
+
+  const handleUpdateStart = () => {
+    setIsUpdate(true);
+    setViewState('update');
   };
 
   const handleCreateSubmit = async (data: FeeFormData) => {
@@ -111,7 +118,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
         setViewState('confirm');
         toast({
           title: "Success",
-          description: "Fee profile created successfully",
+          description: isUpdate ? "Fee profile updated successfully" : "Fee profile created successfully",
         });
       } else {
         throw new Error(result?.error || 'Failed to create fee profile');
@@ -150,7 +157,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
         setTempFeeProfileId(null);
         toast({
           title: "Success",
-          description: "Fee profile confirmed and applied to merchant",
+          description: isUpdate ? "Fee profile updated and applied to merchant" : "Fee profile confirmed and applied to merchant",
         });
       } else {
         throw new Error(result?.error || 'Failed to confirm fee profile');
@@ -171,6 +178,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
     setViewState('display');
     setFormData(null);
     setTempFeeProfileId(null);
+    setIsUpdate(false);
   };
 
   if (isLoading && viewState === 'display') {
@@ -190,7 +198,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
       {viewState === 'display' && (
         <>
           {feeProfile ? (
-            <FeeProfileDisplay feeProfile={feeProfile} />
+            <FeeProfileDisplay feeProfile={feeProfile} onUpdate={handleUpdateStart} />
           ) : (
             <Card>
               <CardHeader>
@@ -212,11 +220,23 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
         </>
       )}
 
-      {viewState === 'create' && (
+      {(viewState === 'create' || viewState === 'update') && (
         <FeeProfileCreateForm
           onSubmit={handleCreateSubmit}
           onCancel={handleCancel}
           isLoading={isLoading}
+          initialValues={isUpdate && feeProfile ? {
+            ach_basis_points: feeProfile.ach_basis_points || 0,
+            ach_basis_points_fee_limit: feeProfile.ach_basis_points_fee_limit,
+            ach_fixed_fee: feeProfile.ach_fixed_fee || 0,
+            basis_points: feeProfile.basis_points || 0,
+            fixed_fee: feeProfile.fixed_fee || 0,
+            ach_credit_return_fixed_fee: feeProfile.ach_credit_return_fixed_fee || 0,
+            ach_debit_return_fixed_fee: feeProfile.ach_debit_return_fixed_fee || 0,
+            dispute_fixed_fee: feeProfile.dispute_fixed_fee || 0,
+            dispute_inquiry_fixed_fee: feeProfile.dispute_inquiry_fixed_fee || 0,
+          } : undefined}
+          isUpdate={isUpdate}
         />
       )}
 
@@ -227,6 +247,7 @@ const FeesTab: React.FC<FeesTabProps> = ({ merchant }) => {
           onConfirm={handleConfirmSubmit}
           onCancel={handleCancel}
           isLoading={isLoading}
+          isUpdate={isUpdate}
         />
       )}
     </div>

@@ -27,6 +27,7 @@ interface FeeProfileConfirmFormProps {
   onConfirm: () => void;
   onCancel: () => void;
   isLoading: boolean;
+  isUpdate?: boolean;
 }
 
 const formatCurrency = (cents: number) => {
@@ -42,7 +43,8 @@ const FeeProfileConfirmForm: React.FC<FeeProfileConfirmFormProps> = ({
   formData,
   onConfirm,
   onCancel,
-  isLoading
+  isLoading,
+  isUpdate = false,
 }) => {
   return (
     <div className="space-y-6">
@@ -158,7 +160,7 @@ const FeeProfileConfirmForm: React.FC<FeeProfileConfirmFormProps> = ({
           onClick={onConfirm}
           disabled={isLoading}
         >
-          {isLoading ? 'Confirming...' : 'Confirm Fee Profile'}
+          {isLoading ? 'Confirming...' : (isUpdate ? 'Update Fee Profile' : 'Confirm Fee Profile')}
         </Button>
       </div>
     </div>

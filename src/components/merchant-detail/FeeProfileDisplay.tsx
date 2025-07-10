@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface FeeProfile {
   id: string;
@@ -21,6 +22,7 @@ interface FeeProfile {
 
 interface FeeProfileDisplayProps {
   feeProfile: FeeProfile;
+  onUpdate?: () => void;
 }
 
 const formatCurrency = (cents: number) => {
@@ -44,7 +46,7 @@ const getStatusColor = (status: string) => {
   }
 };
 
-const FeeProfileDisplay: React.FC<FeeProfileDisplayProps> = ({ feeProfile }) => {
+const FeeProfileDisplay: React.FC<FeeProfileDisplayProps> = ({ feeProfile, onUpdate }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -52,9 +54,16 @@ const FeeProfileDisplay: React.FC<FeeProfileDisplayProps> = ({ feeProfile }) => 
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Fee Profile</CardTitle>
-            <Badge variant={getStatusColor(feeProfile.sync_status)}>
-              {feeProfile.sync_status.charAt(0).toUpperCase() + feeProfile.sync_status.slice(1)}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant={getStatusColor(feeProfile.sync_status)}>
+                {feeProfile.sync_status.charAt(0).toUpperCase() + feeProfile.sync_status.slice(1)}
+              </Badge>
+              {onUpdate && (
+                <Button onClick={onUpdate} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  Update Fee Profile
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
