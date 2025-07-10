@@ -1,10 +1,23 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+interface UpdateFeeProfileData {
+  merchantId: string;
+  ach_basis_points?: number;
+  ach_basis_points_fee_limit?: number;
+  ach_fixed_fee?: number;
+  basis_points?: number;
+  fixed_fee?: number;
+  ach_credit_return_fixed_fee?: number;
+  ach_debit_return_fixed_fee?: number;
+  dispute_fixed_fee?: number;
+  dispute_inquiry_fixed_fee?: number;
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -13,17 +26,7 @@ serve(async (req) => {
   }
 
   try {
-    // Initialize Supabase client with service role key to bypass RLS
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    if (!supabaseServiceKey) {
-      return new Response(
-        JSON.stringify({ error: 'Supabase service role key not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Create client for user authentication with user's token
-    const authClient = createClient(
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
@@ -33,152 +36,172 @@ serve(async (req) => {
       }
     );
 
-    // Create service role client for database operations (bypasses RLS)
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      supabaseServiceKey
-    );
-
-    // Verify user is authenticated using auth client
-    const { data: { user }, error: authError } = await authClient.auth.getUser();
-    if (authError || !user) {
+    // Get the authorization header to extract user info
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Authorization header required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Check if user has superAdmin role using auth client
-    const { data: userRoles, error: roleError } = await authClient.rpc('get_user_roles', {
+    // Get current user
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if user is SuperAdmin
+    const { data: userRoles, error: rolesError } = await supabaseClient.rpc('get_user_roles', {
       _user_id: user.id
     });
 
-    if (roleError || !userRoles?.some((r: any) => r.role === 'superAdmin')) {
+    if (rolesError) {
+      console.error('Error checking user roles:', rolesError);
       return new Response(
-        JSON.stringify({ error: 'Insufficient permissions. SuperAdmin role required.' }),
+        JSON.stringify({ error: 'Failed to verify permissions' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const isSuperAdmin = userRoles?.some((roleData: any) => roleData.role === 'superAdmin');
+    if (!isSuperAdmin) {
+      return new Response(
+        JSON.stringify({ error: 'Insufficient permissions. SuperAdmin access required.' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const { merchantId, feeProfileData } = await req.json();
+    // Parse request body
+    const updateData: UpdateFeeProfileData = await req.json();
+    const { merchantId, ...feeData } = updateData;
 
-    if (!merchantId || !feeProfileData) {
+    if (!merchantId) {
       return new Response(
-        JSON.stringify({ error: 'Missing merchantId or feeProfileData' }),
+        JSON.stringify({ error: 'Merchant ID is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get existing fee profile
-    const { data: existingProfile, error: profileError } = await supabaseClient
+    console.log('Updating fee profile for merchant:', merchantId);
+
+    // Get existing fee profile from database
+    const { data: existingProfile, error: fetchError } = await supabaseClient
       .from('merchant_fee_profiles')
       .select('*')
       .eq('merchant_id', merchantId)
       .single();
 
-    if (profileError || !existingProfile) {
+    if (fetchError || !existingProfile) {
       return new Response(
-        JSON.stringify({ error: 'Fee profile not found' }),
+        JSON.stringify({ error: 'Fee profile not found for this merchant' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     if (!existingProfile.finix_fee_profile_id) {
       return new Response(
-        JSON.stringify({ error: 'Fee profile does not have a Finix fee profile ID' }),
+        JSON.stringify({ error: 'Finix fee profile ID not found' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get Finix credentials
+    // Update fee profile in Finix API
     const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
     const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
-    const finixBaseUrl = Deno.env.get('FINIX_BASE_URL') || 'https://finix.sandbox-payments-api.com/v2';
+    const finixApiUrl = Deno.env.get('FINIX_API_URL') || 'https://finix.sandbox-payments-api.com';
 
     if (!finixApplicationId || !finixApiSecret) {
       return new Response(
-        JSON.stringify({ error: 'Finix credentials not configured' }),
+        JSON.stringify({ error: 'Finix API credentials not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Update fee profile in Finix
-    const finixAuth = btoa(`${finixApplicationId}:${finixApiSecret}`);
-    
-    const finixResponse = await fetch(`${finixBaseUrl}/fee_profiles/${existingProfile.finix_fee_profile_id}`, {
+    const finixResponse = await fetch(`${finixApiUrl}/fee_profiles/${existingProfile.finix_fee_profile_id}`, {
       method: 'PUT',
       headers: {
-        'Authorization': `Basic ${finixAuth}`,
-        'Content-Type': 'application/vnd.api+json'
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${btoa(`${finixApplicationId}:${finixApiSecret}`)}`
       },
-      body: JSON.stringify({
-        basis_points: Math.round(feeProfileData.percentage_fee * 100), // Convert percentage to basis points
-        fixed_fee: feeProfileData.fixed_fee_cents,
-        ach_basis_points: Math.round((feeProfileData.ach_debit_percentage_fee || 0) * 100),
-        ach_fixed_fee: feeProfileData.ach_debit_fixed_fee_cents || 0,
-        dispute_fixed_fee: feeProfileData.chargeback_fixed_fee_cents || 0,
-        dispute_inquiry_fixed_fee: feeProfileData.chargeback_fixed_fee_cents || 0,
-        ach_basis_points_fee_limit: 500,
-        ach_credit_return_fixed_fee: feeProfileData.ach_credit_fixed_fee_cents || 0,
-        ach_debit_return_fixed_fee: feeProfileData.ach_debit_fixed_fee_cents || 0
-      })
+      body: JSON.stringify(feeData)
     });
 
     if (!finixResponse.ok) {
-      const errorText = await finixResponse.text();
-      console.error('Finix API Error:', errorText);
+      const finixError = await finixResponse.text();
+      console.error('Finix API error:', finixError);
       return new Response(
-        JSON.stringify({ error: 'Failed to update fee profile in Finix', details: errorText }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Failed to update fee profile in Finix API', details: finixError }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const finixFeeProfile = await finixResponse.json();
+    const finixData = await finixResponse.json();
+    console.log('Finix fee profile updated:', finixData.id);
 
-    // Update fee profile in database
+    // Update fee profile in our database
     const { data: updatedProfile, error: updateError } = await supabaseClient
       .from('merchant_fee_profiles')
       .update({
-        fixed_fee_cents: feeProfileData.fixed_fee_cents || 0,
-        percentage_fee: feeProfileData.percentage_fee || 0,
-        card_present_fixed_fee_cents: feeProfileData.card_present_fixed_fee_cents || 0,
-        card_present_percentage_fee: feeProfileData.card_present_percentage_fee || 0,
-        card_not_present_fixed_fee_cents: feeProfileData.card_not_present_fixed_fee_cents || 0,
-        card_not_present_percentage_fee: feeProfileData.card_not_present_percentage_fee || 0,
-        ach_debit_fixed_fee_cents: feeProfileData.ach_debit_fixed_fee_cents || 0,
-        ach_debit_percentage_fee: feeProfileData.ach_debit_percentage_fee || 0,
-        ach_credit_fixed_fee_cents: feeProfileData.ach_credit_fixed_fee_cents || 0,
-        ach_credit_percentage_fee: feeProfileData.ach_credit_percentage_fee || 0,
-        chargeback_fixed_fee_cents: feeProfileData.chargeback_fixed_fee_cents || 0,
-        refund_fixed_fee_cents: feeProfileData.refund_fixed_fee_cents || 0,
-        monthly_fee_cents: feeProfileData.monthly_fee_cents || 0,
+        finix_raw_response: finixData,
         sync_status: 'synced',
         last_synced_at: new Date().toISOString(),
-        finix_raw_response: finixFeeProfile
+        
+        // Map response fields to database columns
+        ach_basis_points: finixData.ach_basis_points,
+        ach_basis_points_fee_limit: finixData.ach_basis_points_fee_limit,
+        ach_fixed_fee: finixData.ach_fixed_fee,
+        basis_points: finixData.basis_points,
+        fixed_fee: finixData.fixed_fee,
+        ach_credit_return_fixed_fee: finixData.ach_credit_return_fixed_fee,
+        ach_debit_return_fixed_fee: finixData.ach_debit_return_fixed_fee,
+        dispute_fixed_fee: finixData.dispute_fixed_fee,
+        dispute_inquiry_fixed_fee: finixData.dispute_inquiry_fixed_fee,
+        
+        // Additional fields from Finix response
+        american_express_assessment_basis_points: finixData.american_express_assessment_basis_points,
+        american_express_basis_points: finixData.american_express_basis_points,
+        american_express_charge_interchange: finixData.american_express_charge_interchange,
+        american_express_externally_funded_basis_points: finixData.american_express_externally_funded_basis_points,
+        american_express_externally_funded_fixed_fee: finixData.american_express_externally_funded_fixed_fee,
+        american_express_fixed_fee: finixData.american_express_fixed_fee,
+        
+        charge_interchange: finixData.charge_interchange,
+        qualified_tiers: finixData.qualified_tiers,
+        rounding_mode: finixData.rounding_mode,
+        tags: finixData.tags || {}
       })
       .eq('merchant_id', merchantId)
       .select()
       .single();
 
     if (updateError) {
-      console.error('Database Error:', updateError);
+      console.error('Database update error:', updateError);
       return new Response(
         JSON.stringify({ error: 'Failed to update fee profile in database', details: updateError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    console.log('Fee profile updated successfully:', updatedProfile.id);
+
     return new Response(
       JSON.stringify({ 
         success: true, 
         feeProfile: updatedProfile,
-        finixResponse: finixFeeProfile 
+        finixData
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error updating fee profile:', error);
+    console.error('Unexpected error:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error', details: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

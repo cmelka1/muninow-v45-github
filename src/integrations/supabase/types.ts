@@ -313,79 +313,193 @@ export type Database = {
       }
       merchant_fee_profiles: {
         Row: {
-          ach_credit_fixed_fee_cents: number | null
-          ach_credit_percentage_fee: number | null
-          ach_debit_fixed_fee_cents: number | null
-          ach_debit_percentage_fee: number | null
-          card_not_present_fixed_fee_cents: number | null
-          card_not_present_percentage_fee: number | null
-          card_present_fixed_fee_cents: number | null
-          card_present_percentage_fee: number | null
-          chargeback_fixed_fee_cents: number | null
+          ach_basis_points: number | null
+          ach_basis_points_fee_limit: number | null
+          ach_credit_return_fixed_fee: number | null
+          ach_debit_return_fixed_fee: number | null
+          ach_fixed_fee: number | null
+          american_express_assessment_basis_points: number | null
+          american_express_basis_points: number | null
+          american_express_charge_interchange: boolean | null
+          american_express_externally_funded_basis_points: number | null
+          american_express_externally_funded_fixed_fee: number | null
+          american_express_fixed_fee: number | null
+          ancillary_fixed_fee_primary: number | null
+          ancillary_fixed_fee_secondary: number | null
+          basis_points: number | null
+          charge_interchange: boolean | null
           created_at: string | null
+          diners_club_basis_points: number | null
+          diners_club_charge_interchange: boolean | null
+          diners_club_fixed_fee: number | null
+          discover_assessments_basis_points: number | null
+          discover_basis_points: number | null
+          discover_charge_interchange: boolean | null
+          discover_data_usage_fixed_fee: number | null
+          discover_externally_funded_basis_points: number | null
+          discover_externally_funded_fixed_fee: number | null
+          discover_fixed_fee: number | null
+          discover_network_authorization_fixed_fee: number | null
+          dispute_fixed_fee: number | null
+          dispute_inquiry_fixed_fee: number | null
+          externally_funded_basis_points: number | null
+          externally_funded_fixed_fee: number | null
+          finix_application_id: string | null
           finix_fee_profile_id: string | null
-          finix_merchant_id: string | null
           finix_raw_response: Json | null
-          fixed_fee_cents: number | null
+          fixed_fee: number | null
           id: string
+          jcb_basis_points: number | null
+          jcb_charge_interchange: boolean | null
+          jcb_fixed_fee: number | null
           last_synced_at: string | null
+          mastercard_acquirer_fees_basis_points: number | null
+          mastercard_assessments_over1k_basis_points: number | null
+          mastercard_assessments_under1k_basis_points: number | null
+          mastercard_basis_points: number | null
+          mastercard_charge_interchange: boolean | null
+          mastercard_fixed_fee: number | null
           merchant_id: string
-          merchant_name: string | null
-          monthly_fee_cents: number | null
-          percentage_fee: number | null
-          refund_fixed_fee_cents: number | null
+          qualified_tiers: string | null
+          rounding_mode: string | null
           sync_status: string | null
+          tags: Json | null
           updated_at: string | null
+          visa_acquirer_processing_fixed_fee: number | null
+          visa_assessments_basis_points: number | null
+          visa_base_ii_credit_voucher_fixed_fee: number | null
+          visa_base_ii_system_file_transmission_fixed_fee: number | null
+          visa_basis_points: number | null
+          visa_charge_interchange: boolean | null
+          visa_credit_voucher_fixed_fee: number | null
+          visa_fixed_fee: number | null
+          visa_kilobyte_access_fixed_fee: number | null
         }
         Insert: {
-          ach_credit_fixed_fee_cents?: number | null
-          ach_credit_percentage_fee?: number | null
-          ach_debit_fixed_fee_cents?: number | null
-          ach_debit_percentage_fee?: number | null
-          card_not_present_fixed_fee_cents?: number | null
-          card_not_present_percentage_fee?: number | null
-          card_present_fixed_fee_cents?: number | null
-          card_present_percentage_fee?: number | null
-          chargeback_fixed_fee_cents?: number | null
+          ach_basis_points?: number | null
+          ach_basis_points_fee_limit?: number | null
+          ach_credit_return_fixed_fee?: number | null
+          ach_debit_return_fixed_fee?: number | null
+          ach_fixed_fee?: number | null
+          american_express_assessment_basis_points?: number | null
+          american_express_basis_points?: number | null
+          american_express_charge_interchange?: boolean | null
+          american_express_externally_funded_basis_points?: number | null
+          american_express_externally_funded_fixed_fee?: number | null
+          american_express_fixed_fee?: number | null
+          ancillary_fixed_fee_primary?: number | null
+          ancillary_fixed_fee_secondary?: number | null
+          basis_points?: number | null
+          charge_interchange?: boolean | null
           created_at?: string | null
+          diners_club_basis_points?: number | null
+          diners_club_charge_interchange?: boolean | null
+          diners_club_fixed_fee?: number | null
+          discover_assessments_basis_points?: number | null
+          discover_basis_points?: number | null
+          discover_charge_interchange?: boolean | null
+          discover_data_usage_fixed_fee?: number | null
+          discover_externally_funded_basis_points?: number | null
+          discover_externally_funded_fixed_fee?: number | null
+          discover_fixed_fee?: number | null
+          discover_network_authorization_fixed_fee?: number | null
+          dispute_fixed_fee?: number | null
+          dispute_inquiry_fixed_fee?: number | null
+          externally_funded_basis_points?: number | null
+          externally_funded_fixed_fee?: number | null
+          finix_application_id?: string | null
           finix_fee_profile_id?: string | null
-          finix_merchant_id?: string | null
           finix_raw_response?: Json | null
-          fixed_fee_cents?: number | null
+          fixed_fee?: number | null
           id?: string
+          jcb_basis_points?: number | null
+          jcb_charge_interchange?: boolean | null
+          jcb_fixed_fee?: number | null
           last_synced_at?: string | null
+          mastercard_acquirer_fees_basis_points?: number | null
+          mastercard_assessments_over1k_basis_points?: number | null
+          mastercard_assessments_under1k_basis_points?: number | null
+          mastercard_basis_points?: number | null
+          mastercard_charge_interchange?: boolean | null
+          mastercard_fixed_fee?: number | null
           merchant_id: string
-          merchant_name?: string | null
-          monthly_fee_cents?: number | null
-          percentage_fee?: number | null
-          refund_fixed_fee_cents?: number | null
+          qualified_tiers?: string | null
+          rounding_mode?: string | null
           sync_status?: string | null
+          tags?: Json | null
           updated_at?: string | null
+          visa_acquirer_processing_fixed_fee?: number | null
+          visa_assessments_basis_points?: number | null
+          visa_base_ii_credit_voucher_fixed_fee?: number | null
+          visa_base_ii_system_file_transmission_fixed_fee?: number | null
+          visa_basis_points?: number | null
+          visa_charge_interchange?: boolean | null
+          visa_credit_voucher_fixed_fee?: number | null
+          visa_fixed_fee?: number | null
+          visa_kilobyte_access_fixed_fee?: number | null
         }
         Update: {
-          ach_credit_fixed_fee_cents?: number | null
-          ach_credit_percentage_fee?: number | null
-          ach_debit_fixed_fee_cents?: number | null
-          ach_debit_percentage_fee?: number | null
-          card_not_present_fixed_fee_cents?: number | null
-          card_not_present_percentage_fee?: number | null
-          card_present_fixed_fee_cents?: number | null
-          card_present_percentage_fee?: number | null
-          chargeback_fixed_fee_cents?: number | null
+          ach_basis_points?: number | null
+          ach_basis_points_fee_limit?: number | null
+          ach_credit_return_fixed_fee?: number | null
+          ach_debit_return_fixed_fee?: number | null
+          ach_fixed_fee?: number | null
+          american_express_assessment_basis_points?: number | null
+          american_express_basis_points?: number | null
+          american_express_charge_interchange?: boolean | null
+          american_express_externally_funded_basis_points?: number | null
+          american_express_externally_funded_fixed_fee?: number | null
+          american_express_fixed_fee?: number | null
+          ancillary_fixed_fee_primary?: number | null
+          ancillary_fixed_fee_secondary?: number | null
+          basis_points?: number | null
+          charge_interchange?: boolean | null
           created_at?: string | null
+          diners_club_basis_points?: number | null
+          diners_club_charge_interchange?: boolean | null
+          diners_club_fixed_fee?: number | null
+          discover_assessments_basis_points?: number | null
+          discover_basis_points?: number | null
+          discover_charge_interchange?: boolean | null
+          discover_data_usage_fixed_fee?: number | null
+          discover_externally_funded_basis_points?: number | null
+          discover_externally_funded_fixed_fee?: number | null
+          discover_fixed_fee?: number | null
+          discover_network_authorization_fixed_fee?: number | null
+          dispute_fixed_fee?: number | null
+          dispute_inquiry_fixed_fee?: number | null
+          externally_funded_basis_points?: number | null
+          externally_funded_fixed_fee?: number | null
+          finix_application_id?: string | null
           finix_fee_profile_id?: string | null
-          finix_merchant_id?: string | null
           finix_raw_response?: Json | null
-          fixed_fee_cents?: number | null
+          fixed_fee?: number | null
           id?: string
+          jcb_basis_points?: number | null
+          jcb_charge_interchange?: boolean | null
+          jcb_fixed_fee?: number | null
           last_synced_at?: string | null
+          mastercard_acquirer_fees_basis_points?: number | null
+          mastercard_assessments_over1k_basis_points?: number | null
+          mastercard_assessments_under1k_basis_points?: number | null
+          mastercard_basis_points?: number | null
+          mastercard_charge_interchange?: boolean | null
+          mastercard_fixed_fee?: number | null
           merchant_id?: string
-          merchant_name?: string | null
-          monthly_fee_cents?: number | null
-          percentage_fee?: number | null
-          refund_fixed_fee_cents?: number | null
+          qualified_tiers?: string | null
+          rounding_mode?: string | null
           sync_status?: string | null
+          tags?: Json | null
           updated_at?: string | null
+          visa_acquirer_processing_fixed_fee?: number | null
+          visa_assessments_basis_points?: number | null
+          visa_base_ii_credit_voucher_fixed_fee?: number | null
+          visa_base_ii_system_file_transmission_fixed_fee?: number | null
+          visa_basis_points?: number | null
+          visa_charge_interchange?: boolean | null
+          visa_credit_voucher_fixed_fee?: number | null
+          visa_fixed_fee?: number | null
+          visa_kilobyte_access_fixed_fee?: number | null
         }
         Relationships: [
           {
@@ -400,7 +514,6 @@ export type Database = {
       merchant_payout_profiles: {
         Row: {
           created_at: string
-          finix_merchant_id: string | null
           finix_payout_profile_id: string | null
           gross_fees_day_of_month: number | null
           gross_fees_frequency:
@@ -418,7 +531,6 @@ export type Database = {
           id: string
           last_synced_at: string | null
           merchant_id: string
-          merchant_name: string | null
           net_frequency: Database["public"]["Enums"]["payout_frequency"] | null
           net_payment_instrument_id: string | null
           net_rail: Database["public"]["Enums"]["payout_rail"] | null
@@ -429,7 +541,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          finix_merchant_id?: string | null
           finix_payout_profile_id?: string | null
           gross_fees_day_of_month?: number | null
           gross_fees_frequency?:
@@ -447,7 +558,6 @@ export type Database = {
           id?: string
           last_synced_at?: string | null
           merchant_id: string
-          merchant_name?: string | null
           net_frequency?: Database["public"]["Enums"]["payout_frequency"] | null
           net_payment_instrument_id?: string | null
           net_rail?: Database["public"]["Enums"]["payout_rail"] | null
@@ -458,7 +568,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          finix_merchant_id?: string | null
           finix_payout_profile_id?: string | null
           gross_fees_day_of_month?: number | null
           gross_fees_frequency?:
@@ -476,7 +585,6 @@ export type Database = {
           id?: string
           last_synced_at?: string | null
           merchant_id?: string
-          merchant_name?: string | null
           net_frequency?: Database["public"]["Enums"]["payout_frequency"] | null
           net_payment_instrument_id?: string | null
           net_rail?: Database["public"]["Enums"]["payout_rail"] | null

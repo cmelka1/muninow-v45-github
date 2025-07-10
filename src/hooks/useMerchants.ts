@@ -222,101 +222,6 @@ export const useMerchants = () => {
     };
   };
 
-  const fetchFeeProfile = async (merchantId: string) => {
-    if (!user) return null;
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const { data, error } = await supabase
-        .from('merchant_fee_profiles')
-        .select('*')
-        .eq('merchant_id', merchantId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
-        throw error;
-      }
-
-      return data;
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        title: "Error",
-        description: "Failed to fetch fee profile",
-        variant: "destructive",
-      });
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const createFeeProfile = async (merchantId: string, feeProfileData: any) => {
-    if (!user) return null;
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('create-merchant-fee-profile', {
-        body: { merchantId, feeProfileData }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Fee profile created successfully",
-      });
-
-      return data;
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        title: "Error",
-        description: "Failed to create fee profile",
-        variant: "destructive",
-      });
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updateFeeProfile = async (merchantId: string, feeProfileData: any) => {
-    if (!user) return null;
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('update-merchant-fee-profile', {
-        body: { merchantId, feeProfileData }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Fee profile updated successfully",
-      });
-
-      return data;
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        title: "Error",
-        description: "Failed to update fee profile",
-        variant: "destructive",
-      });
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return {
     merchants,
     isLoading,
@@ -326,9 +231,6 @@ export const useMerchants = () => {
     fetchMerchantById,
     subscribeToMerchantChanges,
     fetchPayoutProfile,
-    updatePayoutProfile,
-    fetchFeeProfile,
-    createFeeProfile,
-    updateFeeProfile
+    updatePayoutProfile
   };
 };
