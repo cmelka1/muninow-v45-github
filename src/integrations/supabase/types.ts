@@ -1798,10 +1798,6 @@ export type Database = {
         Args: { email_input: string }
         Returns: boolean
       }
-      cleanup_expired_fraud_sessions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       cleanup_expired_verification_codes: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -2095,10 +2091,6 @@ export type Database = {
           p_user_id?: string
         }
         Returns: boolean
-      }
-      migrate_payment_records_metadata: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
       }
       normalize_business_name: {
         Args: { business_name: string }
