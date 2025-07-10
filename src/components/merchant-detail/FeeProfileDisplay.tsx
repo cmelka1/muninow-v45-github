@@ -87,6 +87,21 @@ const FeeProfileDisplay: React.FC<FeeProfileDisplayProps> = ({ feeProfile, onUpd
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Card Fees */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-primary">Card Fees</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-2 border-b border-border">
+                  <span className="text-sm text-muted-foreground">Basis Points:</span>
+                  <span className="font-medium">{formatBasisPoints(feeProfile.basis_points)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-border">
+                  <span className="text-sm text-muted-foreground">Fixed Fee:</span>
+                  <span className="font-medium">{formatCurrency(feeProfile.fixed_fee)}</span>
+                </div>
+              </div>
+            </div>
+
             {/* ACH Fees */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-primary">ACH Fees</h3>
@@ -105,21 +120,6 @@ const FeeProfileDisplay: React.FC<FeeProfileDisplayProps> = ({ feeProfile, onUpd
                     <span className="font-medium">{formatCurrency(feeProfile.ach_basis_points_fee_limit)}</span>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Card Processing Fees */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-primary">Card Processing Fees</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-sm text-muted-foreground">Basis Points:</span>
-                  <span className="font-medium">{formatBasisPoints(feeProfile.basis_points)}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-sm text-muted-foreground">Fixed Fee:</span>
-                  <span className="font-medium">{formatCurrency(feeProfile.fixed_fee)}</span>
-                </div>
               </div>
             </div>
 

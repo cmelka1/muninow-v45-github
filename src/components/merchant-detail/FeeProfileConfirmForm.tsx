@@ -78,6 +78,21 @@ const FeeProfileConfirmForm: React.FC<FeeProfileConfirmFormProps> = ({
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Card Fees */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Card Fees</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Basis Points:</span>
+                  <span className="font-medium">{formatBasisPoints(formData.basis_points)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Fixed Fee:</span>
+                  <span className="font-medium">{formatCurrency(formData.fixed_fee)}</span>
+                </div>
+              </div>
+            </div>
+
             {/* ACH Fees */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">ACH Fees</h3>
@@ -96,21 +111,6 @@ const FeeProfileConfirmForm: React.FC<FeeProfileConfirmFormProps> = ({
                     <span className="font-medium">{formatCurrency(formData.ach_basis_points_fee_limit)}</span>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Card Processing Fees */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Card Processing Fees</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Basis Points:</span>
-                  <span className="font-medium">{formatBasisPoints(formData.basis_points)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Fixed Fee:</span>
-                  <span className="font-medium">{formatCurrency(formData.fixed_fee)}</span>
-                </div>
               </div>
             </div>
 

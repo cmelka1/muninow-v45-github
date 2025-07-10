@@ -53,6 +53,49 @@ const FeeProfileCreateForm: React.FC<FeeProfileCreateFormProps> = ({
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Card Fees */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Card Fees</h3>
+              
+              <div className="space-y-2">
+                <Label htmlFor="basis_points">Basis Points</Label>
+                <Input
+                  id="basis_points"
+                  type="text"
+                  inputMode="numeric"
+                  {...register('basis_points', { 
+                    required: 'Basis points is required',
+                    valueAsNumber: true,
+                    min: { value: 0, message: 'Must be 0 or greater' }
+                  })}
+                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <p className="text-xs text-muted-foreground">Basis points (1/100th of a percent)</p>
+                {errors.basis_points && (
+                  <p className="text-sm text-destructive">{errors.basis_points.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="fixed_fee">Fixed Fee</Label>
+                <Input
+                  id="fixed_fee"
+                  type="text"
+                  inputMode="numeric"
+                  {...register('fixed_fee', { 
+                    required: 'Fixed fee is required',
+                    valueAsNumber: true,
+                    min: { value: 0, message: 'Must be 0 or greater' }
+                  })}
+                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <p className="text-xs text-muted-foreground">Fixed fee in cents</p>
+                {errors.fixed_fee && (
+                  <p className="text-sm text-destructive">{errors.fixed_fee.message}</p>
+                )}
+              </div>
+            </div>
+
             {/* ACH Fees */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">ACH Fees</h3>
@@ -110,49 +153,6 @@ const FeeProfileCreateForm: React.FC<FeeProfileCreateFormProps> = ({
                 <p className="text-xs text-muted-foreground">Maximum fee in cents (optional)</p>
                 {errors.ach_basis_points_fee_limit && (
                   <p className="text-sm text-destructive">{errors.ach_basis_points_fee_limit.message}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Card Fees */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Card Processing Fees</h3>
-              
-              <div className="space-y-2">
-                <Label htmlFor="basis_points">Basis Points</Label>
-                <Input
-                  id="basis_points"
-                  type="text"
-                  inputMode="numeric"
-                  {...register('basis_points', { 
-                    required: 'Basis points is required',
-                    valueAsNumber: true,
-                    min: { value: 0, message: 'Must be 0 or greater' }
-                  })}
-                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                <p className="text-xs text-muted-foreground">Basis points (1/100th of a percent)</p>
-                {errors.basis_points && (
-                  <p className="text-sm text-destructive">{errors.basis_points.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="fixed_fee">Fixed Fee</Label>
-                <Input
-                  id="fixed_fee"
-                  type="text"
-                  inputMode="numeric"
-                  {...register('fixed_fee', { 
-                    required: 'Fixed fee is required',
-                    valueAsNumber: true,
-                    min: { value: 0, message: 'Must be 0 or greater' }
-                  })}
-                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                <p className="text-xs text-muted-foreground">Fixed fee in cents</p>
-                {errors.fixed_fee && (
-                  <p className="text-sm text-destructive">{errors.fixed_fee.message}</p>
                 )}
               </div>
             </div>
