@@ -2657,6 +2657,26 @@ export type Database = {
           entity_id: string
         }[]
       }
+      gtrgm_compress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_decompress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_in: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_options: {
+        Args: { "": unknown }
+        Returns: undefined
+      }
+      gtrgm_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
       has_permission: {
         Args: { _user_id: string; _permission: string; _entity_id?: string }
         Returns: boolean
@@ -2726,6 +2746,18 @@ export type Database = {
       set_default_user_payment_instrument: {
         Args: { p_id: string }
         Returns: undefined
+      }
+      set_limit: {
+        Args: { "": number }
+        Returns: number
+      }
+      show_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      show_trgm: {
+        Args: { "": string }
+        Returns: string[]
       }
       smart_bill_matching: {
         Args: { input_bill_id: string }
