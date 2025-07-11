@@ -1,5 +1,5 @@
 import React from 'react';
-import googlePayLogo from '@/assets/google-pay-logo.png';
+
 
 interface GooglePayButtonProps {
   isSelected: boolean;
@@ -23,9 +23,9 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
     >
       <div className="flex items-center justify-center">
         <img 
-          src={googlePayLogo}
+          src="/lovable-uploads/c2b3d2f7-9a1c-480f-9b7f-eca749490b01.png"
           alt="Google Pay"
-          className="h-8 w-auto object-contain"
+          className="h-6 w-auto object-contain"
         />
       </div>
     </div>
