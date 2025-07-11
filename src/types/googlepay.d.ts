@@ -76,6 +76,17 @@ export interface PaymentData {
     tokenizationData: {
       token: string;
     };
+    info?: {
+      billingAddress?: {
+        name?: string;
+        postalCode?: string;
+        countryCode?: string;
+        address1?: string;
+        address2?: string;
+        locality?: string;
+        administrativeArea?: string;
+      };
+    };
   };
 }
 

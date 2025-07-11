@@ -496,10 +496,10 @@ const BillOverview = () => {
                     {bill?.finix_merchant_id && (
                       <GooglePayButton
                         merchantId={bill.finix_merchant_id}
+                        billId={bill.bill_id}
                         billAmount={totalWithFee}
                         merchantName={bill.merchant_name || bill.business_legal_name || 'Merchant'}
-                        isDisabled={true}
-                        onClick={() => console.log("Google Pay clicked - Coming soon!")}
+                        isDisabled={false}
                       />
                     )}
                  </div>

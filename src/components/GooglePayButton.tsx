@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
-import type { PaymentsClient, IsReadyToPayRequest, PaymentMethod } from '@/types/googlepay';
+import type { PaymentsClient, IsReadyToPayRequest, PaymentMethod, PaymentDataRequest, PaymentData } from '@/types/googlepay';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface GooglePayButtonProps {
   merchantId: string;
   billAmount: number;
   merchantName: string;
+  billId: string;
   googlePayMerchantId?: string;
   isDisabled?: boolean;
   onClick?: () => void;
@@ -15,8 +18,9 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
   merchantId,
   billAmount,
   merchantName,
+  billId,
   googlePayMerchantId,
-  isDisabled = true,
+  isDisabled = false,
   onClick
 }) => {
   const [isReady, setIsReady] = useState(false);
@@ -73,7 +77,7 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
         };
 
         // Step 8: Create a Payment Data Request
-        const paymentDataRequest = {
+        const paymentDataRequest: PaymentDataRequest = {
           ...baseRequest,
           allowedPaymentMethods: [cardPaymentMethod],
           transactionInfo: {
@@ -86,6 +90,59 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
             merchantId: googlePayMerchantId || '12345678901234567890', // TEST merchant ID
             merchantName: merchantName,
           },
+        };
+
+        // Step 9: Handle Google Pay payment processing
+        const processGooglePayPayment = async () => {
+          try {
+            if (!window.googlePayClient) {
+              throw new Error('Google Pay client not initialized');
+            }
+
+            // Load payment data from Google Pay
+            const paymentData: PaymentData = await window.googlePayClient.loadPaymentData(paymentDataRequest);
+            
+            console.log('Google Pay payment data received:', paymentData);
+
+            // Extract token and billing info
+            const paymentToken = paymentData.paymentMethodData.tokenizationData.token;
+            const billingAddress = paymentData.paymentMethodData.info?.billingAddress;
+
+            // Generate idempotency ID
+            const idempotencyId = `googlepay_${billId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+            // Call our edge function to process the payment
+            const { data, error } = await supabase.functions.invoke('process-google-pay-transfer', {
+              body: {
+                bill_id: billId,
+                google_pay_token: paymentToken,
+                total_amount_cents: billAmount,
+                idempotency_id: idempotencyId,
+                billing_address: billingAddress ? {
+                  name: billingAddress.name,
+                  postal_code: billingAddress.postalCode,
+                  country: billingAddress.countryCode
+                } : undefined
+              }
+            });
+
+            if (error) {
+              throw error;
+            }
+
+            if (data?.success) {
+              toast.success('Payment successful!');
+              if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+              }
+            } else {
+              throw new Error(data?.error || 'Payment failed');
+            }
+
+          } catch (error) {
+            console.error('Google Pay payment error:', error);
+            toast.error(error.message || 'Payment failed. Please try again.');
+          }
         };
 
         // Step 6: Check Readiness to Pay with Google Pay
@@ -103,11 +160,12 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
           if (containerRef.current) {
             const button = window.googlePayClient.createButton({
               onClick: () => {
-                if (onClick && !isDisabled) {
+                if (onClick) {
                   onClick();
+                } else if (!isDisabled) {
+                  processGooglePayPayment();
                 } else {
-                  console.log("Google Pay button clicked - Coming soon!");
-                  console.log("Payment Data Request:", paymentDataRequest);
+                  console.log("Google Pay button clicked but disabled");
                 }
               },
               allowedPaymentMethods: [cardPaymentMethod],
@@ -129,7 +187,7 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
 
     // Initialize Google Pay when component mounts
     initializeGooglePay();
-  }, [merchantId, billAmount, merchantName, googlePayMerchantId, onClick, isDisabled]);
+  }, [merchantId, billAmount, merchantName, billId, googlePayMerchantId, onClick, isDisabled]);
 
   if (isLoading) {
     return (
