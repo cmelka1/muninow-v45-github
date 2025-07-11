@@ -1,16 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CreditCard, Building, Star, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import { useBill } from '@/hooks/useBill';
+import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
 
 const BillOverview = () => {
   const { billId } = useParams<{ billId: string }>();
   const navigate = useNavigate();
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  
   const { data: bill, isLoading, error } = useBill(billId!);
+  const { 
+    paymentInstruments, 
+    isLoading: paymentMethodsLoading 
+  } = useUserPaymentInstruments();
 
   const formatDate = (date: string | null) => {
     if (!date) return 'N/A';
@@ -24,6 +32,53 @@ const BillOverview = () => {
       currency: 'USD'
     }).format(cents / 100);
   };
+
+  const getCardBrandIcon = (cardBrand: string) => {
+    const brandMap: { [key: string]: string } = {
+      'visa': 'visa-brandmark-blue-1960x622.webp',
+      'mastercard': 'Mastercard-Logo.wine.png',
+      'amex': 'Amex_logo_color.png',
+      'american express': 'Amex_logo_color.png',
+      'discover': 'Discover Logo.png'
+    };
+
+    const fileName = brandMap[cardBrand.toLowerCase()];
+    if (fileName) {
+      return `https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/credit-card-logos/${fileName}`;
+    }
+    return null;
+  };
+
+  const getCardIcon = (instrumentType: string, cardBrand?: string) => {
+    if (instrumentType === 'BANK_ACCOUNT') {
+      return <Building className="h-6 w-6 text-primary" />;
+    }
+    
+    if (cardBrand) {
+      const logoUrl = getCardBrandIcon(cardBrand);
+      if (logoUrl) {
+        return (
+          <img 
+            src={logoUrl} 
+            alt={`${cardBrand} logo`}
+            className="h-6 w-6 object-contain"
+          />
+        );
+      }
+    }
+    
+    return <CreditCard className="h-6 w-6 text-primary" />;
+  };
+
+  // Get top 3 payment methods (prioritize default, then by creation date)
+  const topPaymentMethods = paymentInstruments
+    .slice()
+    .sort((a, b) => {
+      if (a.is_default && !b.is_default) return -1;
+      if (!a.is_default && b.is_default) return 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    })
+    .slice(0, 3);
 
   if (isLoading) {
     return (
@@ -200,10 +255,94 @@ const BillOverview = () => {
                 {/* Separator */}
                 <div className="border-t border-border"></div>
 
-                {/* Check Out Process Section */}
+                {/* Payment Method Selection */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Payment Method</h3>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => navigate('/profile?tab=payment-methods')}
+                      className="text-sm"
+                    >
+                      <Settings className="h-4 w-4 mr-1" />
+                      Manage
+                    </Button>
+                  </div>
+
+                  {paymentMethodsLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-12 w-full" />
+                      <Skeleton className="h-12 w-full" />
+                    </div>
+                  ) : topPaymentMethods.length > 0 ? (
+                    <div className="space-y-2">
+                      {topPaymentMethods.map((instrument) => (
+                        <div
+                          key={instrument.id}
+                          className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                            selectedPaymentMethod === instrument.id
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                          onClick={() => setSelectedPaymentMethod(instrument.id)}
+                        >
+                          <div className="flex items-center space-x-3">
+                            {getCardIcon(instrument.instrument_type, instrument.card_brand || undefined)}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2">
+                                <p className="text-sm font-medium truncate">
+                                  {instrument.display_name}
+                                </p>
+                                {instrument.is_default && (
+                                  <Badge variant="default" className="text-xs">
+                                    <Star className="h-3 w-3 mr-1" />
+                                    Default
+                                  </Badge>
+                                )}
+                              </div>
+                              {instrument.instrument_type === 'PAYMENT_CARD' && 
+                               instrument.card_expiration_month && 
+                               instrument.card_expiration_year && (
+                                <p className="text-xs text-muted-foreground">
+                                  Expires {instrument.card_expiration_month.toString().padStart(2, '0')}/{instrument.card_expiration_year}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <CreditCard className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground mb-2">No payment methods added</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => navigate('/profile?tab=payment-methods')}
+                      >
+                        Add Payment Method
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Separator */}
+                <div className="border-t border-border"></div>
+
+                {/* Pay Now Section */}
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold">Check Out Process</h3>
-                  <p className="text-muted-foreground">Coming soon...</p>
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    disabled={!selectedPaymentMethod || topPaymentMethods.length === 0}
+                  >
+                    Pay {formatCurrency(bill.total_amount_cents)}
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Your payment will be processed securely
+                  </p>
                 </div>
               </CardContent>
             </Card>
