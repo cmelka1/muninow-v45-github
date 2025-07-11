@@ -92,12 +92,12 @@ const BillOverview = () => {
                 <p className="text-base">{bill.category || 'N/A'}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Subcategory</label>
-                <p className="text-base">{bill.subcategory || 'N/A'}</p>
-              </div>
-              <div>
                 <label className="text-sm font-medium text-muted-foreground">Issue Date</label>
                 <p className="text-base">{formatDate(bill.issue_date)}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Subcategory</label>
+                <p className="text-base">{bill.subcategory || 'N/A'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Due Date</label>
