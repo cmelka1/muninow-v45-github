@@ -21,17 +21,12 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
       } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       onClick={() => !isDisabled && onSelect()}
     >
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center justify-center">
         <img 
           src={googlePayLogo}
           alt="Google Pay"
-          className="h-6 w-6 object-contain"
+          className="h-8 w-auto object-contain"
         />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">
-            Google Pay
-          </p>
-        </div>
       </div>
     </div>
   );
