@@ -25,7 +25,7 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
         <img 
           src={googlePayLogo}
           alt="Google Pay"
-          className="h-8 w-auto object-contain"
+          className="h-6 w-auto object-contain"
         />
       </div>
     </div>
