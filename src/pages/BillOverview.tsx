@@ -370,15 +370,6 @@ const BillOverview = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Payment Method</h3>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => navigate('/profile?tab=payment-methods')}
-                      className="text-sm"
-                    >
-                      <Settings className="h-4 w-4 mr-1" />
-                      Manage
-                    </Button>
                   </div>
 
                   {paymentMethodsLoading ? (
