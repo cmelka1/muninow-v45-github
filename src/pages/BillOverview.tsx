@@ -8,11 +8,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { useBill } from '@/hooks/useBill';
 import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const BillOverview = () => {
   const { billId } = useParams<{ billId: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   
   const { data: bill, isLoading, error } = useBill(billId!);
   const { 
@@ -113,6 +117,69 @@ const BillOverview = () => {
     }
     
     return <CreditCard className="h-6 w-6 text-primary" />;
+  };
+
+  const handlePayment = async () => {
+    if (!selectedPaymentMethod || !bill || !serviceFee) {
+      toast({
+        title: "Error",
+        description: "Please select a payment method and ensure bill details are loaded.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsProcessingPayment(true);
+
+      // Generate idempotency ID
+      const idempotencyId = `${bill.bill_id}-${selectedPaymentMethod}-${Date.now()}`;
+
+      const { data, error } = await supabase.functions.invoke('process-finix-transfer', {
+        body: {
+          bill_id: bill.bill_id,
+          payment_instrument_id: selectedPaymentMethod,
+          total_amount_cents: totalWithFee,
+          idempotency_id: idempotencyId,
+          fraud_session_id: undefined // To be implemented later
+        }
+      });
+
+      if (error) {
+        console.error('Payment error:', error);
+        toast({
+          title: "Payment Failed",
+          description: "There was an error processing your payment. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.success) {
+        toast({
+          title: "Payment Successful",
+          description: "Your payment has been processed successfully.",
+        });
+        
+        // Navigate to payment confirmation page
+        navigate(data.redirect_url);
+      } else {
+        toast({
+          title: "Payment Failed",
+          description: data.error || "Payment processing failed. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast({
+        title: "Payment Failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
 
@@ -380,9 +447,10 @@ const BillOverview = () => {
                   <Button 
                     className="w-full" 
                     size="lg"
-                    disabled={!selectedPaymentMethod || topPaymentMethods.length === 0}
+                    disabled={!selectedPaymentMethod || topPaymentMethods.length === 0 || isProcessingPayment}
+                    onClick={handlePayment}
                   >
-                    Pay {formatCurrency(totalWithFee)}
+                    {isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency(totalWithFee)}`}
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">
                     Your payment will be processed securely

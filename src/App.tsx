@@ -31,6 +31,7 @@ import SuperAdminCustomerDetail from "./pages/SuperAdminCustomerDetail";
 import SuperAdminMerchantDetail from "./pages/SuperAdminMerchantDetail";
 import SuperAdminProfile from "./pages/SuperAdminProfile";
 import BillOverview from "./pages/BillOverview";
+import PaymentConfirmation from "./pages/PaymentConfirmation";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ const App = () => (
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/bill/:billId" element={<BillOverview />} />
+                <Route path="/payment-confirmation/:paymentHistoryId" element={<PaymentConfirmation />} />
                 <Route path="/members" element={<Members />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/reset-password" element={<ResetPassword />} />

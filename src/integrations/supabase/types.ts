@@ -1217,6 +1217,86 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_history: {
+        Row: {
+          amount_cents: number
+          bill_id: string
+          created_at: string
+          currency: string
+          failure_code: string | null
+          failure_message: string | null
+          finix_created_at: string | null
+          finix_merchant_id: string
+          finix_payment_instrument_id: string
+          finix_transfer_id: string | null
+          finix_updated_at: string | null
+          fraud_session_id: string | null
+          id: string
+          idempotency_id: string
+          payment_type: string
+          raw_finix_response: Json | null
+          service_fee_cents: number
+          total_amount_cents: number
+          transfer_state: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          bill_id: string
+          created_at?: string
+          currency?: string
+          failure_code?: string | null
+          failure_message?: string | null
+          finix_created_at?: string | null
+          finix_merchant_id: string
+          finix_payment_instrument_id: string
+          finix_transfer_id?: string | null
+          finix_updated_at?: string | null
+          fraud_session_id?: string | null
+          id?: string
+          idempotency_id: string
+          payment_type: string
+          raw_finix_response?: Json | null
+          service_fee_cents: number
+          total_amount_cents: number
+          transfer_state?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          bill_id?: string
+          created_at?: string
+          currency?: string
+          failure_code?: string | null
+          failure_message?: string | null
+          finix_created_at?: string | null
+          finix_merchant_id?: string
+          finix_payment_instrument_id?: string
+          finix_transfer_id?: string | null
+          finix_updated_at?: string | null
+          fraud_session_id?: string | null
+          id?: string
+          idempotency_id?: string
+          payment_type?: string
+          raw_finix_response?: Json | null
+          service_fee_cents?: number
+          total_amount_cents?: number
+          transfer_state?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_history_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "master_bills"
+            referencedColumns: ["bill_id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           account_type: string
