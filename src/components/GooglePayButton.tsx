@@ -191,10 +191,9 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
 
   if (isLoading) {
     return (
-      <Card className={`p-4 border-2 border-dashed ${isDisabled ? 'opacity-50' : ''}`}>
-        <div className="flex items-center justify-center space-x-3">
+      <Card className={`p-3 border rounded-lg cursor-pointer transition-all ${isDisabled ? 'opacity-50' : 'hover:border-primary/50'}`}>
+        <div className="flex items-center justify-center">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-          <span className="text-sm text-muted-foreground">Loading Google Pay...</span>
         </div>
       </Card>
     );
@@ -202,38 +201,32 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
 
   if (!isReady) {
     return (
-      <Card className={`p-4 border-2 border-dashed ${isDisabled ? 'opacity-50' : ''}`}>
-        <div className="flex items-center justify-center space-x-3">
+      <Card className={`p-3 border rounded-lg cursor-pointer transition-all opacity-50`}>
+        <div className="flex items-center justify-center">
           <img 
-            src="https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/google-pay-button/Google_Pay_Logo.png"
+            src="https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/google-pay-button/Google_Pay_Logo.png?v=1"
             alt="Google Pay"
             className="h-6 w-auto"
           />
-          <span className="text-sm text-muted-foreground">Google Pay not available</span>
         </div>
       </Card>
     );
   }
 
   return (
-    <Card className={`p-3 border-2 ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary/50'}`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+    <Card className={`p-3 border rounded-lg cursor-pointer transition-all ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary/50'}`}>
+      <div className="flex items-center justify-center">
+        {/* Google Pay button container - when ready, this will contain the native button */}
+        <div ref={containerRef} style={{ display: isDisabled ? 'none' : 'block' }} />
+        {/* Fallback logo if button isn't loaded yet */}
+        {isDisabled && (
           <img 
-            src="https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/google-pay-button/Google_Pay_Logo.png"
+            src="https://qcuiuubbaozncmejzvxje.supabase.co/storage/v1/object/public/google-pay-button/Google_Pay_Logo.png?v=1"
             alt="Google Pay"
             className="h-6 w-auto"
           />
-          <div className="flex-1">
-            <p className="text-sm font-medium">Google Pay</p>
-            {isDisabled && (
-              <p className="text-xs text-muted-foreground">Coming soon</p>
-            )}
-          </div>
-        </div>
+        )}
       </div>
-      {/* Google Pay button container */}
-      <div ref={containerRef} className="mt-2" style={{ display: isDisabled ? 'none' : 'block' }} />
     </Card>
   );
 };
