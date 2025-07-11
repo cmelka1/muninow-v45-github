@@ -65,15 +65,28 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
     // Handle merchant validation
     applePaySession.onvalidatemerchant = async (event) => {
       try {
-        const merchantSession = {
-          merchantSessionIdentifier: 'merchant_session_id',
-          nonce: 'nonce',
-          merchantIdentifier: 'merchant.com.muninow',
-          domainName: window.location.hostname,
-          displayName: 'MuniNow',
-          signature: 'signature'
-        };
-        applePaySession.completeMerchantValidation(merchantSession);
+        console.log('Apple Pay onvalidatemerchant triggered', event);
+        
+        // Import supabase client
+        const { supabase } = await import('@/integrations/supabase/client');
+        
+        // Call our edge function to validate with Finix
+        const { data, error } = await supabase.functions.invoke('validate-apple-pay-merchant', {
+          body: {
+            validation_url: event.validationURL,
+            merchant_id: bill.merchant_id
+          }
+        });
+
+        if (error || !data) {
+          console.error('Merchant validation failed:', error);
+          applePaySession.abort();
+          onPaymentComplete(false, 'Merchant validation failed');
+          return;
+        }
+        
+        console.log('Completing merchant validation with Finix session');
+        applePaySession.completeMerchantValidation(data);
       } catch (error) {
         console.error('Merchant validation failed:', error);
         applePaySession.abort();
