@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard, Building, Star, Settings } from 'lucide-react';
+import { ArrowLeft, CreditCard, Building, Star, Settings, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,6 +10,7 @@ import { useBill } from '@/hooks/useBill';
 import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 
 const BillOverview = () => {
   const { billId } = useParams<{ billId: string }>();
@@ -17,11 +18,13 @@ const BillOverview = () => {
   const { toast } = useToast();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
   
   const { data: bill, isLoading, error } = useBill(billId!);
   const { 
     paymentInstruments, 
-    isLoading: paymentMethodsLoading 
+    isLoading: paymentMethodsLoading,
+    loadPaymentInstruments
   } = useUserPaymentInstruments();
 
   const formatDate = (date: string | null) => {
@@ -443,6 +446,16 @@ const BillOverview = () => {
                   >
                     {isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency(totalWithFee)}`}
                   </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    size="lg"
+                    onClick={() => setIsAddPaymentDialogOpen(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add New Payment Method
+                  </Button>
                   <p className="text-xs text-muted-foreground text-center">
                     Your payment will be processed securely
                   </p>
@@ -452,6 +465,12 @@ const BillOverview = () => {
           </div>
         </div>
       </div>
+      
+      <AddPaymentMethodDialog
+        open={isAddPaymentDialogOpen}
+        onOpenChange={setIsAddPaymentDialogOpen}
+        onSuccess={loadPaymentInstruments}
+      />
     </div>
   );
 };
