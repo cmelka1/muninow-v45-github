@@ -767,25 +767,23 @@ const BillOverview = () => {
                      </div>
                    )}
 
-                       {/* Google Pay Option */}
-                       {bill?.finix_merchant_id && (
-                         <GooglePayButton
-                           onPayment={handleGooglePayment}
-                           bill={bill}
-                           totalAmount={totalWithFee}
-                           merchantId={bill.finix_merchant_id}
-                           isDisabled={isProcessingPayment}
-                         />
-                       )}
-
-                        {/* Apple Pay Option */}
+                        {/* Payment Options - Side by Side */}
                         {bill?.finix_merchant_id && (
-                          <ApplePayButton
-                            onPayment={handleApplePayment}
-                            bill={bill}
-                            totalAmount={totalWithFee}
-                            isDisabled={isProcessingPayment}
-                          />
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <GooglePayButton
+                              onPayment={handleGooglePayment}
+                              bill={bill}
+                              totalAmount={totalWithFee}
+                              merchantId={bill.finix_merchant_id}
+                              isDisabled={isProcessingPayment}
+                            />
+                            <ApplePayButton
+                              onPayment={handleApplePayment}
+                              bill={bill}
+                              totalAmount={totalWithFee}
+                              isDisabled={isProcessingPayment}
+                            />
+                          </div>
                         )}
                  </div>
 

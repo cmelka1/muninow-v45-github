@@ -86,33 +86,11 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
         {isProcessing ? (
           <Loader2 className="h-4 w-4 animate-spin mr-2" />
         ) : null}
-        <div className="flex items-center">
-          <svg 
-            className="h-6 w-auto" 
-            viewBox="0 0 200 50" 
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <rect width="200" height="50" rx="8" fill="black"/>
-            <text 
-              x="50" 
-              y="30" 
-              fill="white" 
-              fontSize="18" 
-              fontFamily="San Francisco, -apple-system, BlinkMacSystemFont, sans-serif"
-              fontWeight="500"
-            >
-              Pay
-            </text>
-            <path 
-              d="M20 15c-2.5 0-4.5 2-4.5 4.5v11c0 2.5 2 4.5 4.5 4.5s4.5-2 4.5-4.5v-11c0-2.5-2-4.5-4.5-4.5z" 
-              fill="white"
-            />
-            <path 
-              d="M30 18c-1.5 0-2.5 1-2.5 2.5v9c0 1.5 1 2.5 2.5 2.5s2.5-1 2.5-2.5v-9c0-1.5-1-2.5-2.5-2.5z" 
-              fill="white"
-            />
-          </svg>
-        </div>
+        <img 
+          src="https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/apple-pay-logo/Apple_Pay-White-Logo.png"
+          alt="Apple Pay"
+          className="h-6 w-auto object-contain"
+        />
         {isProcessing && <span className="ml-2 text-sm">Processing...</span>}
       </div>
     </div>
