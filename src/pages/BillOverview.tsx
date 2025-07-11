@@ -359,11 +359,23 @@ const BillOverview = () => {
 
     } catch (error) {
       console.error('Google Pay payment error:', error);
-      toast({
-        title: "Payment Failed",
-        description: error.message || 'Google Pay payment failed. Please try again.',
-        variant: "destructive",
-      });
+      
+      // Don't show notification for user cancellation
+      const errorMessage = error.message || error.toString() || '';
+      const isUserCancellation = errorMessage.includes('CANCELED') || 
+                                errorMessage.includes('canceled') || 
+                                errorMessage.includes('cancelled') ||
+                                errorMessage.includes('User canceled') ||
+                                errorMessage.includes('AbortError') ||
+                                errorMessage.includes('Payment request was aborted');
+      
+      if (!isUserCancellation) {
+        toast({
+          title: "Payment Failed",
+          description: error.message || 'Google Pay payment failed. Please try again.',
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsProcessingPayment(false);
     }
