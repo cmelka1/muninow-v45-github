@@ -33,6 +33,16 @@ const BillOverview = () => {
     }).format(cents / 100);
   };
 
+  // Get top 3 payment methods (prioritize default, then by creation date)
+  const topPaymentMethods = paymentInstruments
+    .slice()
+    .sort((a, b) => {
+      if (a.is_default && !b.is_default) return -1;
+      if (!a.is_default && b.is_default) return 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    })
+    .slice(0, 3);
+
   const calculateServiceFee = () => {
     if (!selectedPaymentMethod || !bill) return null;
     
@@ -95,15 +105,6 @@ const BillOverview = () => {
     return <CreditCard className="h-6 w-6 text-primary" />;
   };
 
-  // Get top 3 payment methods (prioritize default, then by creation date)
-  const topPaymentMethods = paymentInstruments
-    .slice()
-    .sort((a, b) => {
-      if (a.is_default && !b.is_default) return -1;
-      if (!a.is_default && b.is_default) return 1;
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    })
-    .slice(0, 3);
 
   if (isLoading) {
     return (
