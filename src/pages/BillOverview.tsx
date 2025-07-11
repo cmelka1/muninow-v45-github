@@ -75,9 +75,9 @@ const BillOverview = () => {
         </div>
 
         {/* Two Column Layout */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column - Existing Tiles */}
-          <div className="xl:col-span-8 space-y-6">
+          <div className="lg:col-span-8 space-y-6">
             {/* Bill Overview Tile */}
             <Card>
               <CardHeader>
@@ -181,7 +181,7 @@ const BillOverview = () => {
           </div>
 
           {/* Right Column - Check Out Tile */}
-          <div className="xl:col-span-4">
+          <div className="lg:col-span-4">
             <Card className="h-fit">
               <CardHeader>
                 <CardTitle>Check Out</CardTitle>
