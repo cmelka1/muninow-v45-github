@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import GooglePayButton from '@/components/GooglePayButton';
+import ApplePayButton from '@/components/ApplePayButton';
 
 const BillOverview = () => {
   const { billId } = useParams<{ billId: string }>();
@@ -56,8 +57,8 @@ const BillOverview = () => {
   const calculateServiceFee = () => {
     if (!bill) return null;
     
-    // Handle Google Pay as a special case - always use card fees
-    if (selectedPaymentMethod === 'google-pay') {
+    // Handle Google Pay and Apple Pay as special cases - always use card fees
+    if (selectedPaymentMethod === 'google-pay' || selectedPaymentMethod === 'apple-pay') {
       const basisPoints = bill.basis_points || 250;
       const fixedFee = bill.fixed_fee || 50;
       const percentageFee = Math.round((bill.total_amount_cents * basisPoints) / 10000);
@@ -395,6 +396,130 @@ const BillOverview = () => {
     }
   };
 
+  const handleApplePayment = async () => {
+    try {
+      setIsProcessingPayment(true);
+
+      // Check if Apple Pay is available
+      if (!window.ApplePaySession) {
+        throw new Error('Apple Pay is not available');
+      }
+
+      // Define payment request
+      const paymentRequest = {
+        countryCode: 'US',
+        currencyCode: 'USD',
+        supportedNetworks: ['visa', 'masterCard', 'amex', 'discover'],
+        merchantCapabilities: ['supports3DS'],
+        total: {
+          label: bill.merchant_name || bill.business_legal_name || 'Payment',
+          amount: (totalWithFee / 100).toFixed(2)
+        }
+      };
+
+      // Create Apple Pay session
+      const session = new window.ApplePaySession(3, paymentRequest);
+
+      // Handle merchant validation
+      session.onvalidatemerchant = async (event) => {
+        // In production, you would validate with your server
+        // For now, we'll handle this basic case
+        try {
+          const merchantSession = {
+            // This would come from your backend validation
+            merchantSessionIdentifier: 'merchant_session_id',
+            nonce: 'nonce',
+            merchantIdentifier: 'merchant.com.muninow',
+            domainName: window.location.hostname,
+            displayName: 'MuniNow',
+            signature: 'signature'
+          };
+          session.completeMerchantValidation(merchantSession);
+        } catch (error) {
+          console.error('Merchant validation failed:', error);
+          session.abort();
+        }
+      };
+
+      // Handle payment authorization
+      session.onpaymentauthorized = async (event) => {
+        try {
+          const paymentToken = JSON.stringify(event.payment.token);
+          const billingContact = event.payment.billingContact;
+
+          // Generate idempotency ID
+          const idempotencyId = `applepay_${bill.bill_id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+          // Call our edge function to process the payment
+          const { data, error } = await supabase.functions.invoke('process-apple-pay-transfer', {
+            body: {
+              bill_id: bill.bill_id,
+              apple_pay_token: paymentToken,
+              total_amount_cents: totalWithFee,
+              idempotency_id: idempotencyId,
+              billing_contact: billingContact ? {
+                givenName: billingContact.givenName,
+                familyName: billingContact.familyName,
+                postalCode: billingContact.postalCode,
+                countryCode: billingContact.countryCode
+              } : undefined,
+              fraud_session_id: fraudSessionId
+            }
+          });
+
+          if (error || !data?.success) {
+            session.completePayment(window.ApplePaySession.STATUS_FAILURE);
+            throw new Error(data?.error || error?.message || 'Payment failed');
+          }
+
+          session.completePayment(window.ApplePaySession.STATUS_SUCCESS);
+          
+          toast({
+            title: "Payment Successful",
+            description: "Your Apple Pay payment has been processed successfully.",
+          });
+          
+          if (data.redirect_url) {
+            navigate(data.redirect_url);
+          }
+
+        } catch (error) {
+          console.error('Apple Pay payment processing error:', error);
+          session.completePayment(window.ApplePaySession.STATUS_FAILURE);
+          throw error;
+        }
+      };
+
+      // Handle payment cancellation
+      session.oncancel = () => {
+        console.log('Apple Pay cancelled by user');
+        // Don't show error toast for user cancellation
+      };
+
+      // Start the Apple Pay session
+      session.begin();
+
+    } catch (error) {
+      console.error('Apple Pay payment error:', error);
+      
+      // Check if it's a user cancellation
+      const errorMessage = error?.message || '';
+      const isUserCancellation = errorMessage.includes('canceled') || 
+                                errorMessage.includes('cancelled') ||
+                                errorMessage.includes('User canceled');
+      
+      if (!isUserCancellation) {
+        toast({
+          title: "Payment Failed",
+          description: errorMessage || 'Apple Pay payment failed. Please try again.',
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
 
   if (isLoading) {
     return (
@@ -642,16 +767,26 @@ const BillOverview = () => {
                      </div>
                    )}
 
-                      {/* Google Pay Option */}
-                      {bill?.finix_merchant_id && (
-                        <GooglePayButton
-                          onPayment={handleGooglePayment}
-                          bill={bill}
-                          totalAmount={totalWithFee}
-                          merchantId={bill.finix_merchant_id}
-                          isDisabled={isProcessingPayment}
-                        />
-                      )}
+                       {/* Google Pay Option */}
+                       {bill?.finix_merchant_id && (
+                         <GooglePayButton
+                           onPayment={handleGooglePayment}
+                           bill={bill}
+                           totalAmount={totalWithFee}
+                           merchantId={bill.finix_merchant_id}
+                           isDisabled={isProcessingPayment}
+                         />
+                       )}
+
+                        {/* Apple Pay Option */}
+                        {bill?.finix_merchant_id && (
+                          <ApplePayButton
+                            onPayment={handleApplePayment}
+                            bill={bill}
+                            totalAmount={totalWithFee}
+                            isDisabled={isProcessingPayment}
+                          />
+                        )}
                  </div>
 
                  {/* Separator */}
@@ -662,10 +797,13 @@ const BillOverview = () => {
                     <Button 
                       className="w-full" 
                       size="lg"
-                      disabled={!selectedPaymentMethod || isProcessingPayment || selectedPaymentMethod === 'google-pay'}
+                      disabled={!selectedPaymentMethod || isProcessingPayment || selectedPaymentMethod === 'google-pay' || selectedPaymentMethod === 'apple-pay'}
                       onClick={handlePayment}
                     >
-                     {isProcessingPayment ? 'Processing...' : selectedPaymentMethod === 'google-pay' ? 'Use Google Pay button above' : `Pay ${formatCurrency(totalWithFee)}`}
+                     {isProcessingPayment ? 'Processing...' : 
+                      selectedPaymentMethod === 'google-pay' ? 'Use Google Pay button above' : 
+                      selectedPaymentMethod === 'apple-pay' ? 'Use Apple Pay button above' :
+                      `Pay ${formatCurrency(totalWithFee)}`}
                    </Button>
                   
                   <Button 
