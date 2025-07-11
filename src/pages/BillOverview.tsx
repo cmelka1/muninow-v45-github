@@ -17,6 +17,14 @@ const BillOverview = () => {
     return format(new Date(date), 'MMM dd, yyyy');
   };
 
+  const formatCurrency = (cents: number | null) => {
+    if (cents === null || cents === undefined) return 'N/A';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(cents / 100);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background p-6">
@@ -132,8 +140,21 @@ const BillOverview = () => {
           <CardHeader>
             <CardTitle>Payment Details</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Coming soon...</p>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Amount Due</label>
+                <p className="text-base font-semibold">{formatCurrency(bill.total_amount_cents)}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Service Fee</label>
+                <p className="text-base">—</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Total Amount Due</label>
+                <p className="text-base font-semibold">{formatCurrency(bill.total_amount_cents)}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
