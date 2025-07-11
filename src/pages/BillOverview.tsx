@@ -141,18 +141,25 @@ const BillOverview = () => {
             <CardTitle>Payment Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Amount Due</label>
-                <p className="text-base font-semibold">{formatCurrency(bill.total_amount_cents)}</p>
+            <div className="space-y-3">
+              {/* Line Items */}
+              <div className="flex justify-between items-center py-2">
+                <span className="text-base">Amount Due</span>
+                <span className="text-base font-medium">{formatCurrency(bill.total_amount_cents)}</span>
               </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Service Fee</label>
-                <p className="text-base">—</p>
+              
+              <div className="flex justify-between items-center py-2">
+                <span className="text-base">Service Fee</span>
+                <span className="text-base font-medium">—</span>
               </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Total Amount Due</label>
-                <p className="text-base font-semibold">{formatCurrency(bill.total_amount_cents)}</p>
+              
+              {/* Separator */}
+              <div className="border-t border-border my-3"></div>
+              
+              {/* Total */}
+              <div className="flex justify-between items-center py-2 bg-muted/30 px-3 rounded">
+                <span className="text-base font-semibold">Total Amount Due</span>
+                <span className="text-lg font-bold">{formatCurrency(bill.total_amount_cents)}</span>
               </div>
             </div>
           </CardContent>
