@@ -32,6 +32,16 @@
       async
     ></script>
 
+    <!-- Google Pay JavaScript Library -->
+    <script async src="https://pay.google.com/gp/p/js/pay.js" onload="onGooglePayLoaded()"></script>
+    <script>
+      function onGooglePayLoaded() {
+        window.googlePayClient = new google.payments.api.PaymentsClient({
+          environment: "TEST"
+        });
+      }
+    </script>
+
     <meta property="og:title" content="MuniNow – Streamlining Municipal Payments" />
     <meta property="og:description" content="Simplify local government payments. MuniNow offers a unified platform for residents, businesses, and municipalities" />
     <meta property="og:type" content="website" />

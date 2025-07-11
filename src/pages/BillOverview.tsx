@@ -11,6 +11,7 @@ import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
+import GooglePayButton from '@/components/GooglePayButton';
 
 const BillOverview = () => {
   const { billId } = useParams<{ billId: string }>();
@@ -488,14 +489,23 @@ const BillOverview = () => {
                       >
                         Add Payment Method
                       </Button>
-                    </div>
-                  )}
-                </div>
+                     </div>
+                   )}
 
-                {/* Separator */}
-                <div className="border-t border-border"></div>
+                   {/* Google Pay Button */}
+                   {bill?.finix_merchant_id && (
+                     <GooglePayButton
+                       merchantId={bill.finix_merchant_id}
+                       isDisabled={true}
+                       onClick={() => console.log("Google Pay clicked - Coming soon!")}
+                     />
+                   )}
+                 </div>
 
-                {/* Pay Now Section */}
+                 {/* Separator */}
+                 <div className="border-t border-border"></div>
+
+                 {/* Pay Now Section */}
                 <div className="space-y-3">
                   <Button 
                     className="w-full" 
