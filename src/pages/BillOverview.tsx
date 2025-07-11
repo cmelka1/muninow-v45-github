@@ -1,4 +1,5 @@
 import React from 'react';
+import { format } from 'date-fns';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,11 @@ const BillOverview = () => {
   const { billId } = useParams<{ billId: string }>();
   const navigate = useNavigate();
   const { data: bill, isLoading, error } = useBill(billId!);
+
+  const formatDate = (date: string | null) => {
+    if (!date) return 'N/A';
+    return format(new Date(date), 'MMM dd, yyyy');
+  };
 
   if (isLoading) {
     return (
@@ -88,6 +94,14 @@ const BillOverview = () => {
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Subcategory</label>
                 <p className="text-base">{bill.subcategory || 'N/A'}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Issue Date</label>
+                <p className="text-base">{formatDate(bill.issue_date)}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Due Date</label>
+                <p className="text-base">{formatDate(bill.due_date)}</p>
               </div>
             </div>
           </CardContent>
