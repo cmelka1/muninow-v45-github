@@ -24,7 +24,7 @@ import { CreditCard, Building2, MapPin } from 'lucide-react';
 interface AddPaymentMethodDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
+  onSuccess: (paymentMethodId?: string) => void;
 }
 
 // Form schemas
@@ -261,8 +261,11 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
         description: `${data.paymentType === 'card' ? 'Payment card' : 'Bank account'} added successfully.`,
       });
       
+      // Extract payment method ID from response
+      const paymentMethodId = response.data?.paymentInstrument?.id;
+      
       // Refresh payment methods list and close dialog
-      await onSuccess();
+      await onSuccess(paymentMethodId);
       onOpenChange(false);
       
     } catch (error) {

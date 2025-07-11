@@ -469,7 +469,12 @@ const BillOverview = () => {
       <AddPaymentMethodDialog
         open={isAddPaymentDialogOpen}
         onOpenChange={setIsAddPaymentDialogOpen}
-        onSuccess={loadPaymentInstruments}
+        onSuccess={async (paymentMethodId) => {
+          await loadPaymentInstruments();
+          if (paymentMethodId) {
+            setSelectedPaymentMethod(paymentMethodId);
+          }
+        }}
       />
     </div>
   );
