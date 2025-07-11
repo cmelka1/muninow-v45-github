@@ -610,6 +610,7 @@ const BillOverview = () => {
                          isSelected={selectedPaymentMethod === 'google-pay'}
                          onSelect={() => setSelectedPaymentMethod('google-pay')}
                          isDisabled={false}
+                         merchantId={bill.finix_merchant_id}
                        />
                      )}
                  </div>
