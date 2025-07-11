@@ -359,20 +359,34 @@ const BillOverview = () => {
 
     } catch (error) {
       console.error('Google Pay payment error:', error);
+      console.log('Google Pay error structure:', {
+        message: error?.message,
+        valueMessage: error?.value?.message,
+        valueStatusCode: error?.value?.statusCode,
+        valueName: error?.value?.name,
+        toString: error?.toString()
+      });
       
-      // Don't show notification for user cancellation
-      const errorMessage = error.message || error.toString() || '';
-      const isUserCancellation = errorMessage.includes('CANCELED') || 
+      // Extract error message from nested structure
+      const errorMessage = error?.value?.message || error?.message || error?.toString() || '';
+      const statusCode = error?.value?.statusCode;
+      const errorName = error?.value?.name;
+      
+      // Check for user cancellation using multiple indicators
+      const isUserCancellation = statusCode === 'CANCELED' ||
+                                errorName === 'AbortError' ||
+                                errorMessage.includes('CANCELED') || 
                                 errorMessage.includes('canceled') || 
                                 errorMessage.includes('cancelled') ||
                                 errorMessage.includes('User canceled') ||
+                                errorMessage.includes('User closed the Payment Request UI') ||
                                 errorMessage.includes('AbortError') ||
                                 errorMessage.includes('Payment request was aborted');
       
       if (!isUserCancellation) {
         toast({
           title: "Payment Failed",
-          description: error.message || 'Google Pay payment failed. Please try again.',
+          description: errorMessage || 'Google Pay payment failed. Please try again.',
           variant: "destructive",
         });
       }
