@@ -234,13 +234,13 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
               <CardHeader>
                 <CardTitle className="text-lg">Payment Details</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between items-center py-2">
+              <CardContent className="space-y-2">
+                <div className="flex justify-between items-center py-1">
                   <span className="text-base">Amount Due</span>
                   <span className="text-base font-medium">{formatCurrency(baseAmount)}</span>
                 </div>
                 
-                <div className="flex justify-between items-center py-2">
+                <div className="flex justify-between items-center py-1">
                   <span className="text-base">Service Fee</span>
                   <span className="text-base font-medium text-right">
                     {serviceFee ? (
@@ -253,9 +253,9 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
                   </span>
                 </div>
                 
-                <div className="border-t border-border my-3"></div>
+                <div className="border-t border-border my-2"></div>
                 
-                <div className="flex justify-between items-center py-2 bg-muted/30 px-3 rounded">
+                <div className="flex justify-between items-center py-1 bg-muted/30 px-3 rounded">
                   <span className="text-base font-semibold">Total Amount Due</span>
                   <span className="text-lg font-bold">{formatCurrency(totalWithFee)}</span>
                 </div>
