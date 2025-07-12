@@ -64,7 +64,9 @@ export const MERCHANT_CATEGORIES = {
     "Impact Fees",
     "Development Review Fees",
     "Tree Removal / Arborist Permits",
-    "Cemetery Plot or Burial Fees"
+    "Cemetery Plot or Burial Fees",
+    "Inspections",
+    "Consulting"
   ],
   "Other": [
     "Other"
