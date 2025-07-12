@@ -268,6 +268,7 @@ serve(async (req) => {
       .insert({
         user_id: user.id,
         bill_id: bill_id,
+        customer_id: bill.customer_id,
         finix_payment_instrument_id: piData.id,
         finix_merchant_id: finixMerchantId,
         amount_cents: bill.total_amount_cents,

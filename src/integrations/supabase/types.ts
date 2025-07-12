@@ -1241,6 +1241,7 @@ export type Database = {
           customer_city: string | null
           customer_email: string | null
           customer_first_name: string | null
+          customer_id: string | null
           customer_last_name: string | null
           customer_state: string | null
           customer_street_address: string | null
@@ -1301,6 +1302,7 @@ export type Database = {
           customer_city?: string | null
           customer_email?: string | null
           customer_first_name?: string | null
+          customer_id?: string | null
           customer_last_name?: string | null
           customer_state?: string | null
           customer_street_address?: string | null
@@ -1361,6 +1363,7 @@ export type Database = {
           customer_city?: string | null
           customer_email?: string | null
           customer_first_name?: string | null
+          customer_id?: string | null
           customer_last_name?: string | null
           customer_state?: string | null
           customer_street_address?: string | null
