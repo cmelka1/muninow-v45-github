@@ -96,15 +96,11 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
       onClick={handleClick}
     >
       <div className="flex items-center justify-center">
-        {isProcessing ? (
-          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-        ) : null}
         <img 
           src="/lovable-uploads/c2b3d2f7-9a1c-480f-9b7f-eca749490b01.png"
           alt="Google Pay"
           className="h-6 w-auto object-contain"
         />
-        {isProcessing && <span className="ml-2 text-sm">Processing...</span>}
       </div>
     </div>
   );

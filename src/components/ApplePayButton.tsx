@@ -190,15 +190,11 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
       onClick={handleClick}
     >
       <div className="flex items-center justify-center">
-        {isProcessing ? (
-          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-        ) : null}
         <img 
           src="https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/apple-pay-logo/Apple_Pay-White-Logo.png"
           alt="Apple Pay"
           className="h-8 w-auto object-contain"
         />
-        {isProcessing && <span className="ml-2 text-sm">Processing...</span>}
       </div>
     </div>
   );
