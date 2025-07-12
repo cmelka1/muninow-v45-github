@@ -1902,6 +1902,10 @@ export type Database = {
         Args: { input_bill_id: string }
         Returns: undefined
       }
+      validate_merchant_category_subcategory: {
+        Args: { p_category: string; p_subcategory: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
