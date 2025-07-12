@@ -175,7 +175,6 @@ serve(async (req) => {
         card_expiration_month: finixData.expiration_month,
         card_expiration_year: finixData.expiration_year,
         card_name: finixData.name || requestData.cardholderName,
-        card_bin: finixData.bin,
         card_issuer_country: finixData.issuer_country,
         card_network_token_enabled: finixData.network_token_enabled ?? false,
         card_network_token_state: finixData.network_token_state,

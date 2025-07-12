@@ -1442,7 +1442,6 @@ export type Database = {
           billing_region: string | null
           card_account_updater_enabled: boolean | null
           card_address_verification: string | null
-          card_bin: string | null
           card_brand: string | null
           card_expiration_month: number | null
           card_expiration_year: number | null
@@ -1497,7 +1496,6 @@ export type Database = {
           billing_region?: string | null
           card_account_updater_enabled?: boolean | null
           card_address_verification?: string | null
-          card_bin?: string | null
           card_brand?: string | null
           card_expiration_month?: number | null
           card_expiration_year?: number | null
@@ -1552,7 +1550,6 @@ export type Database = {
           billing_region?: string | null
           card_account_updater_enabled?: boolean | null
           card_address_verification?: string | null
-          card_bin?: string | null
           card_brand?: string | null
           card_expiration_month?: number | null
           card_expiration_year?: number | null
