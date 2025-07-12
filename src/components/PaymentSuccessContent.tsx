@@ -106,7 +106,7 @@ const PaymentSuccessContent: React.FC<PaymentSuccessContentProps> = ({
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">Transaction ID</span>
             <span className="text-sm font-medium font-mono">
-              {paymentResult?.payment_history_id?.slice(-8) || 'N/A'}
+              {paymentResult?.transfer_id?.slice(-8) || 'N/A'}
             </span>
           </div>
           

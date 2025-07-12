@@ -218,7 +218,7 @@ export const usePaymentMethods = (bill: any) => {
           description: "Your payment has been processed successfully.",
         });
         
-        return { success: true, redirect_url: data.redirect_url };
+        return { success: true, ...data };
       } else {
         toast({
           title: "Payment Failed",
@@ -332,7 +332,7 @@ export const usePaymentMethods = (bill: any) => {
           title: "Payment Successful",
           description: "Your Google Pay payment has been processed successfully.",
         });
-        return { success: true, redirect_url: data.redirect_url };
+        return { success: true, ...data };
       } else {
         throw new Error(data?.error || 'Payment failed');
       }
