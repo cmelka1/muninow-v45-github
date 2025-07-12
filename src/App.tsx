@@ -33,7 +33,14 @@ import SuperAdminProfile from "./pages/SuperAdminProfile";
 import BillOverview from "./pages/BillOverview";
 import PaymentConfirmation from "./pages/PaymentConfirmation";
 import PaymentHistory from "./pages/PaymentHistory";
+import MunicipalSignup from "./pages/MunicipalSignup";
+import MunicipalDashboard from "./pages/MunicipalDashboard";
+import MunicipalSearch from "./pages/MunicipalSearch";
+import MunicipalMembers from "./pages/MunicipalMembers";
+import MunicipalProfile from "./pages/MunicipalProfile";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { MunicipalProtectedRoute } from "@/components/MunicipalProtectedRoute";
+import { MunicipalLayout } from "@/components/layouts/MunicipalLayout";
 
 const queryClient = new QueryClient();
 
@@ -91,6 +98,35 @@ const App = () => (
                   <ProtectedRoute requiredRole="superAdmin">
                     <SuperAdminMerchantDetail />
                   </ProtectedRoute>
+                } />
+                <Route path="/municipal/signup" element={<MunicipalSignup />} />
+                <Route path="/municipal/dashboard" element={
+                  <MunicipalProtectedRoute>
+                    <MunicipalLayout>
+                      <MunicipalDashboard />
+                    </MunicipalLayout>
+                  </MunicipalProtectedRoute>
+                } />
+                <Route path="/municipal/search" element={
+                  <MunicipalProtectedRoute>
+                    <MunicipalLayout>
+                      <MunicipalSearch />
+                    </MunicipalLayout>
+                  </MunicipalProtectedRoute>
+                } />
+                <Route path="/municipal/members" element={
+                  <MunicipalProtectedRoute>
+                    <MunicipalLayout>
+                      <MunicipalMembers />
+                    </MunicipalLayout>
+                  </MunicipalProtectedRoute>
+                } />
+                <Route path="/municipal/profile" element={
+                  <MunicipalProtectedRoute>
+                    <MunicipalLayout>
+                      <MunicipalProfile />
+                    </MunicipalLayout>
+                  </MunicipalProtectedRoute>
                 } />
                 <Route path="*" element={<NotFound />} />
               </Routes>

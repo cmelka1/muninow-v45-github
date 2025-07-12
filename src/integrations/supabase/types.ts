@@ -1139,6 +1139,64 @@ export type Database = {
         }
         Relationships: []
       }
+      municipal_team_members: {
+        Row: {
+          admin_id: string
+          created_at: string
+          customer_id: string
+          id: string
+          invited_at: string
+          member_id: string
+          role: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          invited_at?: string
+          member_id: string
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          invited_at?: string
+          member_id?: string
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "municipal_team_members_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "municipal_team_members_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "municipal_team_members_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_invitations: {
         Row: {
           activated_at: string | null
@@ -1422,6 +1480,7 @@ export type Database = {
           business_legal_name: string | null
           city: string | null
           created_at: string
+          customer_id: string | null
           email: string
           first_name: string
           id: string
@@ -1443,6 +1502,7 @@ export type Database = {
           business_legal_name?: string | null
           city?: string | null
           created_at?: string
+          customer_id?: string | null
           email: string
           first_name: string
           id: string
@@ -1464,6 +1524,7 @@ export type Database = {
           business_legal_name?: string | null
           city?: string | null
           created_at?: string
+          customer_id?: string | null
           email?: string
           first_name?: string
           id?: string
@@ -1478,7 +1539,15 @@ export type Database = {
           updated_at?: string
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["customer_id"]
+          },
+        ]
       }
       roles: {
         Row: {
@@ -1838,6 +1907,10 @@ export type Database = {
           zip_input: string
           apt_input?: string
         }
+        Returns: boolean
+      }
+      check_customer_admin_exists: {
+        Args: { p_customer_id: string }
         Returns: boolean
       }
       check_email_duplicate: {

@@ -16,6 +16,7 @@ interface Profile {
   state?: string;
   zip_code?: string;
   business_legal_name?: string;
+  customer_id?: string;
 }
 
 interface AuthContextType {
@@ -130,6 +131,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Redirect users based on account type after profile loads
+  useEffect(() => {
+    if (!isLoading && user && profile) {
+      const currentPath = window.location.pathname;
+      
+      // Don't redirect if already on correct path or on auth/signup pages
+      if (currentPath.includes('/auth') || currentPath.includes('/signup') || currentPath.includes('/reset-password')) {
+        return;
+      }
+
+      // Redirect based on account type
+      if (profile.account_type === 'municipal' && !currentPath.startsWith('/municipal')) {
+        window.location.href = '/municipal/dashboard';
+      } else if (profile.account_type === 'superAdmin' && !currentPath.startsWith('/superadmin')) {
+        // Keep existing super admin redirect logic if needed
+      } else if (['resident', 'business'].includes(profile.account_type) && currentPath.startsWith('/municipal')) {
+        window.location.href = '/dashboard';
+      }
+    }
+  }, [user, profile, isLoading]);
 
   const signIn = async (email: string, password: string) => {
     setIsSubmitting(true);
