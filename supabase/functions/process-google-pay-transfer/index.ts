@@ -144,16 +144,30 @@ serve(async (req) => {
     // Get bill details and validate ownership
     const { data: bill, error: billError } = await supabaseService
       .from("master_bills")
-      .select(`
-        *,
-        merchants!inner(finix_merchant_id, merchant_name, finix_identity_id)
-      `)
+      .select("*")
       .eq("bill_id", bill_id)
       .eq("user_id", user.id)
       .single();
 
     if (billError || !bill) {
       throw new Error("Bill not found or access denied");
+    }
+
+    console.log('Processing payment for bill:', {
+      bill_id: bill.bill_id,
+      amount: bill.total_amount_cents,
+      merchant_id: bill.merchant_id,
+      finix_merchant_id: bill.finix_merchant_id,
+      merchant_finix_identity_id: bill.merchant_finix_identity_id
+    });
+
+    // Validate required merchant data for payment processing
+    if (!bill.finix_merchant_id) {
+      throw new Error("Merchant payment profile not configured - missing merchant ID");
+    }
+
+    if (!bill.merchant_finix_identity_id) {
+      throw new Error("Merchant payment profile not configured - missing identity ID");
     }
 
     // Get user's Finix identity
@@ -180,19 +194,15 @@ serve(async (req) => {
       throw new Error(`Total amount mismatch. Expected: ${expectedTotal}, Received: ${total_amount_cents}`);
     }
 
-    // Get Finix merchant ID from the bill's merchant
-    const finixMerchantId = bill.merchants?.finix_merchant_id;
-    const merchantIdentityId = bill.merchants?.finix_identity_id;
+    // Use merchant data directly from the bill
+    const finixMerchantId = bill.finix_merchant_id;
+    const merchantIdentityId = bill.merchant_finix_identity_id;
     
     console.log("Merchant configuration:", { 
       finixMerchantId, 
       merchantIdentityId,
-      merchantName: bill.merchants?.merchant_name 
+      merchantName: bill.merchant_name 
     });
-    
-    if (!finixMerchantId || !merchantIdentityId) {
-      throw new Error("Merchant not configured with Finix");
-    }
 
     // Get Finix credentials
     const finixApplicationId = Deno.env.get("FINIX_APPLICATION_ID");

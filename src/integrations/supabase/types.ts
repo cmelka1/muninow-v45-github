@@ -362,6 +362,7 @@ export type Database = {
           match_score: number | null
           matching_confidence: number | null
           merchant_fee_profile_id: string | null
+          merchant_finix_identity_id: string | null
           merchant_id: string | null
           merchant_name: string | null
           merchant_payout_id: string | null
@@ -475,6 +476,7 @@ export type Database = {
           match_score?: number | null
           matching_confidence?: number | null
           merchant_fee_profile_id?: string | null
+          merchant_finix_identity_id?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
           merchant_payout_id?: string | null
@@ -588,6 +590,7 @@ export type Database = {
           match_score?: number | null
           matching_confidence?: number | null
           merchant_fee_profile_id?: string | null
+          merchant_finix_identity_id?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
           merchant_payout_id?: string | null
