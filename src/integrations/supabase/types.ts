@@ -1225,10 +1225,38 @@ export type Database = {
           amount_cents: number
           bank_last_four: string | null
           bill_id: string
+          bill_status: string | null
+          bill_type: string | null
+          business_address_line1: string | null
+          business_city: string | null
+          business_legal_name: string | null
+          business_state: string | null
+          business_zip_code: string | null
           card_brand: string | null
           card_last_four: string | null
+          category: string | null
           created_at: string
           currency: string
+          customer_apt_number: string | null
+          customer_city: string | null
+          customer_email: string | null
+          customer_first_name: string | null
+          customer_last_name: string | null
+          customer_state: string | null
+          customer_street_address: string | null
+          customer_zip_code: string | null
+          data_source_system: string | null
+          doing_business_as: string | null
+          due_date: string | null
+          entity_type: string | null
+          external_account_number: string | null
+          external_bill_number: string | null
+          external_business_name: string | null
+          external_customer_address_line1: string | null
+          external_customer_city: string | null
+          external_customer_name: string | null
+          external_customer_state: string | null
+          external_customer_zip_code: string | null
           failure_code: string | null
           failure_message: string | null
           finix_created_at: string | null
@@ -1239,9 +1267,15 @@ export type Database = {
           fraud_session_id: string | null
           id: string
           idempotency_id: string
+          issue_date: string | null
+          merchant_name: string | null
+          original_amount_cents: number | null
+          payment_status: string | null
           payment_type: string
           raw_finix_response: Json | null
           service_fee_cents: number
+          statement_descriptor: string | null
+          subcategory: string | null
           total_amount_cents: number
           transfer_state: string
           updated_at: string
@@ -1251,10 +1285,38 @@ export type Database = {
           amount_cents: number
           bank_last_four?: string | null
           bill_id: string
+          bill_status?: string | null
+          bill_type?: string | null
+          business_address_line1?: string | null
+          business_city?: string | null
+          business_legal_name?: string | null
+          business_state?: string | null
+          business_zip_code?: string | null
           card_brand?: string | null
           card_last_four?: string | null
+          category?: string | null
           created_at?: string
           currency?: string
+          customer_apt_number?: string | null
+          customer_city?: string | null
+          customer_email?: string | null
+          customer_first_name?: string | null
+          customer_last_name?: string | null
+          customer_state?: string | null
+          customer_street_address?: string | null
+          customer_zip_code?: string | null
+          data_source_system?: string | null
+          doing_business_as?: string | null
+          due_date?: string | null
+          entity_type?: string | null
+          external_account_number?: string | null
+          external_bill_number?: string | null
+          external_business_name?: string | null
+          external_customer_address_line1?: string | null
+          external_customer_city?: string | null
+          external_customer_name?: string | null
+          external_customer_state?: string | null
+          external_customer_zip_code?: string | null
           failure_code?: string | null
           failure_message?: string | null
           finix_created_at?: string | null
@@ -1265,9 +1327,15 @@ export type Database = {
           fraud_session_id?: string | null
           id?: string
           idempotency_id: string
+          issue_date?: string | null
+          merchant_name?: string | null
+          original_amount_cents?: number | null
+          payment_status?: string | null
           payment_type: string
           raw_finix_response?: Json | null
           service_fee_cents: number
+          statement_descriptor?: string | null
+          subcategory?: string | null
           total_amount_cents: number
           transfer_state?: string
           updated_at?: string
@@ -1277,10 +1345,38 @@ export type Database = {
           amount_cents?: number
           bank_last_four?: string | null
           bill_id?: string
+          bill_status?: string | null
+          bill_type?: string | null
+          business_address_line1?: string | null
+          business_city?: string | null
+          business_legal_name?: string | null
+          business_state?: string | null
+          business_zip_code?: string | null
           card_brand?: string | null
           card_last_four?: string | null
+          category?: string | null
           created_at?: string
           currency?: string
+          customer_apt_number?: string | null
+          customer_city?: string | null
+          customer_email?: string | null
+          customer_first_name?: string | null
+          customer_last_name?: string | null
+          customer_state?: string | null
+          customer_street_address?: string | null
+          customer_zip_code?: string | null
+          data_source_system?: string | null
+          doing_business_as?: string | null
+          due_date?: string | null
+          entity_type?: string | null
+          external_account_number?: string | null
+          external_bill_number?: string | null
+          external_business_name?: string | null
+          external_customer_address_line1?: string | null
+          external_customer_city?: string | null
+          external_customer_name?: string | null
+          external_customer_state?: string | null
+          external_customer_zip_code?: string | null
           failure_code?: string | null
           failure_message?: string | null
           finix_created_at?: string | null
@@ -1291,9 +1387,15 @@ export type Database = {
           fraud_session_id?: string | null
           id?: string
           idempotency_id?: string
+          issue_date?: string | null
+          merchant_name?: string | null
+          original_amount_cents?: number | null
+          payment_status?: string | null
           payment_type?: string
           raw_finix_response?: Json | null
           service_fee_cents?: number
+          statement_descriptor?: string | null
+          subcategory?: string | null
           total_amount_cents?: number
           transfer_state?: string
           updated_at?: string

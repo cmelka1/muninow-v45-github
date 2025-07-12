@@ -271,7 +271,7 @@ serve(async (req) => {
     const cardBrand = piData.card?.brand || null;
     const cardLastFour = piData.card?.last_four || null;
 
-    // Create payment history record with card details
+    // Create payment history record with card details and bill information
     const { data: paymentHistory, error: phError } = await supabaseService
       .from("payment_history")
       .insert({
@@ -289,7 +289,46 @@ serve(async (req) => {
         transfer_state: 'PENDING',
         card_brand: cardBrand,
         card_last_four: cardLastFour,
-        bank_last_four: null
+        bank_last_four: null,
+        // Merchant Information
+        merchant_name: bill.merchant_name || bill.merchants?.merchant_name,
+        category: bill.category,
+        subcategory: bill.subcategory,
+        doing_business_as: bill.doing_business_as,
+        statement_descriptor: bill.statement_descriptor,
+        // Bill Identification & External Data
+        external_bill_number: bill.external_bill_number,
+        external_account_number: bill.external_account_number,
+        data_source_system: bill.data_source_system,
+        external_business_name: bill.external_business_name,
+        external_customer_name: bill.external_customer_name,
+        external_customer_address_line1: bill.external_customer_address_line1,
+        external_customer_city: bill.external_customer_city,
+        external_customer_state: bill.external_customer_state,
+        external_customer_zip_code: bill.external_customer_zip_code,
+        // Customer Information
+        customer_first_name: bill.first_name,
+        customer_last_name: bill.last_name,
+        customer_email: bill.email,
+        customer_street_address: bill.street_address,
+        customer_apt_number: bill.apt_number,
+        customer_city: bill.city,
+        customer_state: bill.state,
+        customer_zip_code: bill.zip_code,
+        // Business Legal Information
+        business_legal_name: bill.business_legal_name,
+        business_address_line1: bill.business_address_line1,
+        business_city: bill.business_city,
+        business_state: bill.business_state,
+        business_zip_code: bill.business_zip_code,
+        entity_type: bill.entity_type,
+        // Key Bill Details
+        bill_type: bill.type,
+        issue_date: bill.issue_date,
+        due_date: bill.due_date,
+        original_amount_cents: bill.original_amount_cents,
+        payment_status: bill.payment_status,
+        bill_status: bill.bill_status
       })
       .select()
       .single();
