@@ -217,14 +217,14 @@ serve(async (req) => {
     // Step 1: Create Finix Payment Instrument from Google Pay token
     const paymentInstrumentRequest: FinixPaymentInstrumentRequest = {
       identity: userIdentity.finix_identity_id,
-      merchant_identity: finixMerchantId, // Use finix_merchant_id, not finix_identity_id
+      merchant_identity: merchantIdentityId, // Use merchant's finix_identity_id for payment instrument creation
       third_party_token: google_pay_token,
       type: "GOOGLE_PAY"
     };
     
     console.log("Creating payment instrument with:", {
       user_identity: userIdentity.finix_identity_id,
-      merchant_identity: finixMerchantId,
+      merchant_identity: merchantIdentityId,
       has_token: !!google_pay_token
     });
 
