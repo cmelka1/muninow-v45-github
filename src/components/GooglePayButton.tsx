@@ -90,16 +90,16 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
 
   return (
     <div
-      className={`border rounded-lg p-3 cursor-pointer transition-all bg-card hover:bg-accent min-h-[56px] ${
+      className={`border rounded-lg p-3 cursor-pointer transition-all bg-card hover:bg-accent ${
         isDisabled || isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary/50'
       }`}
       onClick={handleClick}
     >
-      <div className="flex items-center justify-center place-items-center h-full">
+      <div className="flex items-center justify-center">
         <img 
           src="/lovable-uploads/c2b3d2f7-9a1c-480f-9b7f-eca749490b01.png"
           alt="Google Pay"
-          className="h-8 w-auto object-contain"
+          className="h-6 w-auto object-contain"
         />
       </div>
     </div>
