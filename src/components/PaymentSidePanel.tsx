@@ -54,6 +54,12 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
   const feeAmount = serviceFee?.totalFee || 0;
   const totalWithFee = baseAmount + feeAmount;
 
+  // Check if payment is available for this bill
+  const isPaymentAvailable = bill?.finix_merchant_id && !billLoading;
+  const paymentUnavailableReason = !bill?.finix_merchant_id ? 
+    "Payment processing is not available for this bill. The merchant account may not be fully configured." : 
+    null;
+
   // Reset selected payment method when panel opens
   useEffect(() => {
     if (open && paymentInstruments.length > 0) {
@@ -262,6 +268,21 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
               </CardContent>
             </Card>
 
+            {/* Payment unavailable warning */}
+            {!isPaymentAvailable && paymentUnavailableReason && (
+              <Card className="border-warning bg-warning/5">
+                <CardContent className="pt-6">
+                  <div className="flex items-center space-x-2">
+                    <X className="h-5 w-5 text-warning" />
+                    <p className="text-sm text-warning font-medium">Payment Not Available</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {paymentUnavailableReason}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Payment Method Selection */}
             <Card>
               <CardHeader>
@@ -325,8 +346,8 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
                   </div>
                 )}
 
-                {/* Payment Options - Google/Apple Pay */}
-                {bill?.finix_merchant_id && (
+                 {/* Payment Options - Google/Apple Pay */}
+                {isPaymentAvailable && (
                   <PaymentButtonsContainer
                     bill={bill}
                     totalAmount={totalWithFee}
@@ -344,10 +365,11 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
                   <Button 
                     className="w-full" 
                     size="lg"
-                    disabled={!selectedPaymentMethod || isProcessingPayment || selectedPaymentMethod === 'google-pay' || selectedPaymentMethod === 'apple-pay'}
+                    disabled={!selectedPaymentMethod || isProcessingPayment || !isPaymentAvailable || selectedPaymentMethod === 'google-pay' || selectedPaymentMethod === 'apple-pay'}
                     onClick={handlePayment}
                   >
-                    {isProcessingPayment ? 'Processing...' : 
+                    {!isPaymentAvailable ? 'Payment Not Available' :
+                     isProcessingPayment ? 'Processing...' : 
                      selectedPaymentMethod === 'google-pay' ? 'Use Google Pay button above' : 
                      selectedPaymentMethod === 'apple-pay' ? 'Use Apple Pay button above' :
                      `Pay ${formatCurrency(totalWithFee)}`}
