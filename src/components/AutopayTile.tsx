@@ -77,9 +77,9 @@ const AutopayTile: React.FC = () => {
         <CardDescription>Manage automatic payments for your merchants</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-2">
           {uniqueMerchants.map((merchant) => (
-            <div key={merchant} className="flex items-center justify-between py-2">
+            <div key={merchant} className="flex items-center justify-between py-1">
               <span className="font-medium text-sm">{merchant}</span>
               <Switch disabled className="opacity-50" />
             </div>
