@@ -66,10 +66,11 @@ Deno.serve(async (req) => {
 
     // Get Finix configuration
     const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
+    const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
     const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
 
-    if (!finixApiSecret) {
-      console.error('Missing Finix API secret');
+    if (!finixApplicationId || !finixApiSecret) {
+      console.error('Missing Finix API credentials');
       return new Response(
         JSON.stringify({ error: 'Finix configuration not found' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -96,7 +97,7 @@ Deno.serve(async (req) => {
       headers: {
         'Content-Type': 'application/json',
         'Finix-Version': '2022-02-01',
-        'Authorization': `Basic ${btoa(finixApiSecret + ':')}`
+        'Authorization': `Basic ${btoa(finixApplicationId + ':' + finixApiSecret)}`
       },
       body: JSON.stringify(finixPayload)
     });
