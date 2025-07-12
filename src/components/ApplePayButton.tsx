@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
+import applePayLogo from '@/assets/apple-pay-logo.png';
 
 interface ApplePayButtonProps {
   bill: any;
@@ -184,16 +185,16 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
 
   return (
     <div
-      className={`border rounded-lg p-3 cursor-pointer transition-all bg-black hover:bg-black/80 ${
+      className={`border rounded-lg p-3 cursor-pointer transition-all bg-black hover:bg-black/80 h-6 ${
         isDisabled || isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary/50'
       }`}
       onClick={handleClick}
     >
-      <div className="flex items-center justify-center">
+      <div className="flex items-center justify-center h-full">
         <img 
-          src="https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/apple-pay-logo/Apple_Pay-White-Logo.png"
+          src={applePayLogo}
           alt="Apple Pay"
-          className="h-8 w-auto object-contain"
+          className="h-full w-auto object-contain"
         />
       </div>
     </div>
