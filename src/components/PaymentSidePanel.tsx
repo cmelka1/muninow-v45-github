@@ -18,7 +18,8 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { X } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
+import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import PaymentMethodSelector from '@/components/PaymentMethodSelector';
 import PaymentSummary from '@/components/PaymentSummary';
 import PaymentButtonsContainer from '@/components/PaymentButtonsContainer';
@@ -35,6 +36,7 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
   billId,
 }) => {
   const navigate = useNavigate();
+  const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
   const { data: bill, isLoading: billLoading } = useBill(billId);
   const {
     selectedPaymentMethod,
@@ -48,6 +50,7 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
     googlePayMerchantId,
     handleGooglePayment,
     handleApplePayment,
+    loadPaymentInstruments,
   } = usePaymentMethods(bill);
 
   // Check if payment is available for this bill
@@ -72,10 +75,6 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
     }
   };
 
-  const handlePayOnFullPage = () => {
-    onOpenChange(false);
-    navigate(`/bill/${billId}`);
-  };
 
   const handleGooglePaySuccess = async () => {
     const result = await handleGooglePayment();
@@ -203,9 +202,10 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
               variant="outline" 
               className="w-full" 
               size="lg"
-              onClick={handlePayOnFullPage}
+              onClick={() => setIsAddPaymentDialogOpen(true)}
             >
-              Pay on Full Page
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Payment Method
             </Button>
             
             <p className="text-xs text-muted-foreground text-center">
@@ -214,6 +214,17 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
           </div>
         </div>
       </SheetContent>
+      
+      <AddPaymentMethodDialog
+        open={isAddPaymentDialogOpen}
+        onOpenChange={setIsAddPaymentDialogOpen}
+        onSuccess={async (paymentMethodId) => {
+          await loadPaymentInstruments();
+          if (paymentMethodId) {
+            setSelectedPaymentMethod(paymentMethodId);
+          }
+        }}
+      />
     </Sheet>
   );
 };
