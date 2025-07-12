@@ -104,7 +104,7 @@ const PaymentSuccessContent: React.FC<PaymentSuccessContentProps> = ({
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Transaction ID</span>
+            <span className="text-sm text-muted-foreground">TxnID</span>
             <span className="text-sm font-medium font-mono">
               {paymentResult?.transfer_id || 'N/A'}
             </span>
