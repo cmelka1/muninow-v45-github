@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { CheckCircle, ArrowLeft, Receipt } from 'lucide-react';
+import { CheckCircle, ArrowLeft, Receipt, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -107,6 +107,87 @@ const PaymentConfirmation = () => {
     return paymentDetails.payment_type;
   };
 
+  const handleDownloadPDF = () => {
+    // Create a new window for print
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    
+    // Generate PDF-friendly HTML content
+    const content = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Payment Confirmation - ${paymentDetails.master_bills.external_bill_number}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.5; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .section { margin-bottom: 20px; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+            .label { font-weight: bold; color: #666; font-size: 12px; }
+            .value { margin-top: 3px; }
+            .total-row { background: #f5f5f5; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+            .divider { border-top: 1px solid #ddd; margin: 15px 0; }
+            @media print { body { margin: 20px; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Payment Confirmation</h1>
+            <p>Payment ${paymentDetails.transfer_state === 'SUCCEEDED' ? 'Successful' : 'Processing'}</p>
+          </div>
+          
+          <div class="section">
+            <h2>Payment Details</h2>
+            <div class="grid">
+              <div><div class="label">Bill From</div><div class="value">${paymentDetails.master_bills.merchant_name}</div></div>
+              <div><div class="label">Bill Number</div><div class="value">${paymentDetails.master_bills.external_bill_number}</div></div>
+              <div><div class="label">Category</div><div class="value">${paymentDetails.master_bills.category || 'N/A'}</div></div>
+              <div><div class="label">Due Date</div><div class="value">${formatDate(paymentDetails.master_bills.due_date)}</div></div>
+              <div><div class="label">Payment Method</div><div class="value">${getPaymentMethodDisplay()}</div></div>
+              <div><div class="label">Transaction ID</div><div class="value" style="font-family: monospace; font-size: 11px;">${paymentDetails.finix_transfer_id}</div></div>
+            </div>
+          </div>
+          
+          <div class="section">
+            <h2>Amount Breakdown</h2>
+            <div style="margin-bottom: 10px;">
+              <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                <span>Bill Amount</span>
+                <span>${formatCurrency(paymentDetails.amount_cents)}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                <span>Service Fee</span>
+                <span>${formatCurrency(paymentDetails.service_fee_cents)}</span>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="total-row">
+              <span style="font-weight: bold;">Total Paid</span>
+              <span style="font-weight: bold; font-size: 18px;">${formatCurrency(paymentDetails.total_amount_cents)}</span>
+            </div>
+          </div>
+          
+          <div class="section">
+            <h2>Transaction Information</h2>
+            <div class="grid">
+              <div><div class="label">Status</div><div class="value" style="color: ${paymentDetails.transfer_state === 'SUCCEEDED' ? '#16a34a' : '#ca8a04'}; font-weight: bold;">${paymentDetails.transfer_state}</div></div>
+              <div><div class="label">Processed At</div><div class="value">${formatDateTime(paymentDetails.created_at)}</div></div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+    
+    printWindow.document.write(content);
+    printWindow.document.close();
+    
+    // Wait for content to load, then trigger print dialog
+    printWindow.onload = () => {
+      printWindow.print();
+      printWindow.close();
+    };
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-100 p-6">
@@ -141,6 +222,14 @@ const PaymentConfirmation = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-2xl mx-auto space-y-6">
+        {/* Top Navigation */}
+        <div className="flex justify-start mb-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </Button>
+        </div>
+        
         {/* Header */}
         <div className="text-center">
           <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
@@ -247,9 +336,9 @@ const PaymentConfirmation = () => {
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button variant="outline" onClick={() => navigate('/dashboard')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+          <Button variant="outline" onClick={handleDownloadPDF}>
+            <Download className="h-4 w-4 mr-2" />
+            Download PDF
           </Button>
           <Button onClick={() => window.print()}>
             <Receipt className="h-4 w-4 mr-2" />
