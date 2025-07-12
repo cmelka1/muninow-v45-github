@@ -23,6 +23,7 @@ import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDia
 import PaymentMethodSelector from '@/components/PaymentMethodSelector';
 import PaymentSummary from '@/components/PaymentSummary';
 import PaymentButtonsContainer from '@/components/PaymentButtonsContainer';
+import PaymentSuccessContent from '@/components/PaymentSuccessContent';
 
 interface PaymentSidePanelProps {
   open: boolean;
@@ -37,6 +38,8 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
 }) => {
   const navigate = useNavigate();
   const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
+  const [showSuccessView, setShowSuccessView] = useState(false);
+  const [paymentResult, setPaymentResult] = useState<any>(null);
   const { data: bill, isLoading: billLoading } = useBill(billId);
   const {
     selectedPaymentMethod,
@@ -61,10 +64,20 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
 
   const handlePaymentSuccess = async (result: any) => {
     if (result?.success) {
-      onOpenChange(false);
-      if (result?.redirect_url) {
-        navigate(result.redirect_url);
-      }
+      setPaymentResult(result);
+      setShowSuccessView(true);
+    }
+  };
+
+  const handleCloseSuccess = () => {
+    setShowSuccessView(false);
+    setPaymentResult(null);
+    onOpenChange(false);
+  };
+
+  const handleViewFullReceipt = () => {
+    if (paymentResult?.redirect_url) {
+      navigate(paymentResult.redirect_url);
     }
   };
 
@@ -107,112 +120,136 @@ const PaymentSidePanel: React.FC<PaymentSidePanelProps> = ({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Pay Bill</SheetTitle>
-          <SheetDescription>
-            Complete payment for {bill.merchant_name || 'this bill'}
-          </SheetDescription>
-        </SheetHeader>
+        {showSuccessView ? (
+          <>
+            <SheetHeader>
+              <SheetTitle>Payment Successful</SheetTitle>
+              <SheetDescription>
+                Your payment has been processed successfully
+              </SheetDescription>
+            </SheetHeader>
 
-        <div className="space-y-6 mt-6">
-          {/* Bill Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Bill Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <p className="text-base font-medium">{bill.merchant_name || 'N/A'}</p>
-                <p className="text-sm text-muted-foreground">{bill.category || 'N/A'}</p>
-                <p className="text-sm text-muted-foreground">{formatDate(bill.due_date)}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Payment Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Payment Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PaymentSummary
-                baseAmount={bill.total_amount_cents}
+            <div className="mt-6">
+              <PaymentSuccessContent
+                paymentResult={paymentResult}
+                bill={bill}
                 serviceFee={serviceFee}
                 selectedPaymentMethod={selectedPaymentMethod}
-                compact={true}
+                onClose={handleCloseSuccess}
+                onViewFullReceipt={handleViewFullReceipt}
               />
-            </CardContent>
-          </Card>
+            </div>
+          </>
+        ) : (
+          <>
+            <SheetHeader>
+              <SheetTitle>Pay Bill</SheetTitle>
+              <SheetDescription>
+                Complete payment for {bill.merchant_name || 'this bill'}
+              </SheetDescription>
+            </SheetHeader>
 
-          {/* Payment unavailable warning */}
-          {!isPaymentAvailable && paymentUnavailableReason && (
-            <Card className="border-warning bg-warning/5">
-              <CardContent className="pt-6">
-                <div className="flex items-center space-x-2">
-                  <X className="h-5 w-5 text-warning" />
-                  <p className="text-sm text-warning font-medium">Payment Not Available</p>
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {paymentUnavailableReason}
-                </p>
-              </CardContent>
-            </Card>
-          )}
+            <div className="space-y-6 mt-6">
+              {/* Bill Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Bill Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2">
+                    <p className="text-base font-medium">{bill.merchant_name || 'N/A'}</p>
+                    <p className="text-sm text-muted-foreground">{bill.category || 'N/A'}</p>
+                    <p className="text-sm text-muted-foreground">{formatDate(bill.due_date)}</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Payment Method Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Payment Method</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <PaymentMethodSelector
-                paymentInstruments={topPaymentMethods}
-                selectedPaymentMethod={selectedPaymentMethod}
-                onSelectPaymentMethod={setSelectedPaymentMethod}
-                isLoading={paymentMethodsLoading}
-                maxMethods={2}
-              />
-              
-              {/* Google Pay and Apple Pay buttons */}
-              {bill?.merchant_finix_identity_id && googlePayMerchantId && (
-                <PaymentButtonsContainer
-                  bill={bill}
-                  totalAmount={totalWithFee}
-                  merchantId={googlePayMerchantId}
-                  isDisabled={isProcessingPayment || !isPaymentAvailable}
-                  onGooglePayment={handleGooglePaySuccess}
-                  onApplePayment={handleApplePaySuccess}
-                />
+              {/* Payment Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Payment Details</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <PaymentSummary
+                    baseAmount={bill.total_amount_cents}
+                    serviceFee={serviceFee}
+                    selectedPaymentMethod={selectedPaymentMethod}
+                    compact={true}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Payment unavailable warning */}
+              {!isPaymentAvailable && paymentUnavailableReason && (
+                <Card className="border-warning bg-warning/5">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center space-x-2">
+                      <X className="h-5 w-5 text-warning" />
+                      <p className="text-sm text-warning font-medium">Payment Not Available</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {paymentUnavailableReason}
+                    </p>
+                  </CardContent>
+                </Card>
               )}
-            </CardContent>
-          </Card>
 
-          {/* Action Buttons */}
-          <div className="space-y-3">
-            <Button 
-              className="w-full" 
-              size="lg"
-              disabled={!selectedPaymentMethod || isProcessingPayment || !isPaymentAvailable}
-              onClick={handleSidePanelPayment}
-            >
-              {isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency(totalWithFee / 100)}`}
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="w-full" 
-              size="lg"
-              onClick={() => setIsAddPaymentDialogOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Payment Method
-            </Button>
-            
-            <p className="text-xs text-muted-foreground text-center">
-              Your payment will be processed securely
-            </p>
-          </div>
-        </div>
+              {/* Payment Method Selection */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Payment Method</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <PaymentMethodSelector
+                    paymentInstruments={topPaymentMethods}
+                    selectedPaymentMethod={selectedPaymentMethod}
+                    onSelectPaymentMethod={setSelectedPaymentMethod}
+                    isLoading={paymentMethodsLoading}
+                    maxMethods={2}
+                  />
+                  
+                  {/* Google Pay and Apple Pay buttons */}
+                  {bill?.merchant_finix_identity_id && googlePayMerchantId && (
+                    <PaymentButtonsContainer
+                      bill={bill}
+                      totalAmount={totalWithFee}
+                      merchantId={googlePayMerchantId}
+                      isDisabled={isProcessingPayment || !isPaymentAvailable}
+                      onGooglePayment={handleGooglePaySuccess}
+                      onApplePayment={handleApplePaySuccess}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Action Buttons */}
+              <div className="space-y-3">
+                <Button 
+                  className="w-full" 
+                  size="lg"
+                  disabled={!selectedPaymentMethod || isProcessingPayment || !isPaymentAvailable}
+                  onClick={handleSidePanelPayment}
+                >
+                  {isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency(totalWithFee / 100)}`}
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  size="lg"
+                  onClick={() => setIsAddPaymentDialogOpen(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New Payment Method
+                </Button>
+                
+                <p className="text-xs text-muted-foreground text-center">
+                  Your payment will be processed securely
+                </p>
+              </div>
+            </div>
+          </>
+        )}
       </SheetContent>
       
       <AddPaymentMethodDialog
