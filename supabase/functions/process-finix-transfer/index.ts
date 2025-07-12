@@ -165,7 +165,7 @@ serve(async (req) => {
     // Determine payment type
     const paymentType = paymentInstrument.instrument_type === 'PAYMENT_CARD' ? 'Card' : 'Bank Account';
 
-    // Create payment history record with card details
+    // Create payment history record with payment method details
     const { data: paymentHistory, error: phError } = await supabaseService
       .from("payment_history")
       .insert({
@@ -182,7 +182,8 @@ serve(async (req) => {
         fraud_session_id: fraud_session_id,
         transfer_state: 'PENDING',
         card_brand: paymentInstrument.card_brand,
-        card_last_four: paymentInstrument.card_last_four
+        card_last_four: paymentInstrument.card_last_four,
+        bank_last_four: paymentInstrument.bank_last_four
       })
       .select()
       .single();

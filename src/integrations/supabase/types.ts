@@ -1220,6 +1220,7 @@ export type Database = {
       payment_history: {
         Row: {
           amount_cents: number
+          bank_last_four: string | null
           bill_id: string
           card_brand: string | null
           card_last_four: string | null
@@ -1245,6 +1246,7 @@ export type Database = {
         }
         Insert: {
           amount_cents: number
+          bank_last_four?: string | null
           bill_id: string
           card_brand?: string | null
           card_last_four?: string | null
@@ -1270,6 +1272,7 @@ export type Database = {
         }
         Update: {
           amount_cents?: number
+          bank_last_four?: string | null
           bill_id?: string
           card_brand?: string | null
           card_last_four?: string | null

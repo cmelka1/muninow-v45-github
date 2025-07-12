@@ -17,6 +17,9 @@ interface PaymentHistoryDetails {
   payment_type: string;
   transfer_state: string;
   created_at: string;
+  card_brand?: string;
+  card_last_four?: string;
+  bank_last_four?: string;
   master_bills: {
     merchant_name: string;
     external_bill_number: string;
@@ -86,6 +89,22 @@ const PaymentConfirmation = () => {
 
   const formatDateTime = (dateString: string) => {
     return format(new Date(dateString), 'MMM dd, yyyy • h:mm a');
+  };
+
+  const getPaymentMethodDisplay = () => {
+    // For card payments
+    if (paymentDetails.card_brand && paymentDetails.card_last_four) {
+      const brandName = paymentDetails.card_brand.charAt(0).toUpperCase() + paymentDetails.card_brand.slice(1).toLowerCase();
+      return `${brandName} •••• ${paymentDetails.card_last_four}`;
+    }
+    
+    // For bank account payments
+    if (paymentDetails.bank_last_four) {
+      return `Bank Account •••• ${paymentDetails.bank_last_four}`;
+    }
+    
+    // For digital wallet payments or fallback
+    return paymentDetails.payment_type;
   };
 
   if (isLoading) {
@@ -169,7 +188,7 @@ const PaymentConfirmation = () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Payment Method</label>
-                <p className="text-base">{paymentDetails.payment_type}</p>
+                <p className="text-base">{getPaymentMethodDisplay()}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Transaction ID</label>

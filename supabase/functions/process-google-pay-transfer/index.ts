@@ -278,7 +278,8 @@ serve(async (req) => {
         fraud_session_id: fraud_session_id,
         transfer_state: 'PENDING',
         card_brand: cardBrand,
-        card_last_four: cardLastFour
+        card_last_four: cardLastFour,
+        bank_last_four: null
       })
       .select()
       .single();
