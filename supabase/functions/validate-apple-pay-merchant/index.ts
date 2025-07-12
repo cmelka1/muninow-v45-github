@@ -53,11 +53,10 @@ Deno.serve(async (req) => {
     console.log(`Using finix_identity_id: ${merchant.finix_identity_id}`);
 
     // Get Apple Pay configuration from Supabase secrets
-    const applePayMerchantId = Deno.env.get('APPLE_PAY_MERCHANT_ID');
     const applePayDisplayName = Deno.env.get('APPLE_PAY_DISPLAY_NAME');
     const applePayDomainName = Deno.env.get('APPLE_PAY_DOMAIN_NAME');
 
-    if (!applePayMerchantId || !applePayDisplayName || !applePayDomainName) {
+    if (!applePayDisplayName || !applePayDomainName) {
       console.error('Missing Apple Pay configuration secrets');
       return new Response(
         JSON.stringify({ error: 'Apple Pay configuration not found' }),
