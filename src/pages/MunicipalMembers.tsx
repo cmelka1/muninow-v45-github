@@ -51,7 +51,7 @@ const MunicipalMembers = () => {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="max-w-md">
         {/* Send Invitations Card */}
         <Card>
           <CardHeader>
@@ -74,28 +74,6 @@ const MunicipalMembers = () => {
             <MunicipalInviteMemberDialog onInvite={inviteMember} />
           </CardContent>
         </Card>
-
-        {/* Manage Team Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Team Overview
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Admin Users</span>
-                <Badge variant="secondary">{adminCount}</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Regular Users</span>
-                <Badge variant="outline">{userCount}</Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Team Members List */}
@@ -112,10 +90,9 @@ const MunicipalMembers = () => {
             <div className="text-center py-8">
               <Users className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">No team members yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Start by inviting team members to join your municipal organization.
+              <p className="text-muted-foreground">
+                Use the invitation card above to start adding team members to your municipal organization.
               </p>
-              <MunicipalInviteMemberDialog onInvite={inviteMember} />
             </div>
           ) : (
             <div className="space-y-4">
