@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MunicipalityAutocomplete } from '@/components/ui/municipality-autocomplete';
 import { PreloginHeader } from '@/components/layout/PreloginHeader';
 import { PreloginFooter } from '@/components/layout/PreloginFooter';
+import { Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
 import { toast } from '@/hooks/use-toast';
@@ -26,6 +28,10 @@ const MunicipalSignup = () => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
@@ -52,6 +58,33 @@ const MunicipalSignup = () => {
       toast({
         title: "Error",
         description: "Please select a municipality.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords don't match.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!termsAccepted) {
+      toast({
+        title: "Error",
+        description: "You must accept the terms and conditions.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!marketingConsent) {
+      toast({
+        title: "Error",
+        description: "Marketing consent is required.",
         variant: "destructive"
       });
       return;
@@ -191,15 +224,92 @@ const MunicipalSignup = () => {
                   <Label htmlFor="password" className="text-sm font-medium text-foreground">
                     Password *
                   </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Create a secure password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="h-11"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Create a secure password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="h-11 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
+                    Confirm Password *
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Confirm your password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      className="h-11 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Terms and Notifications */}
+                <div className="space-y-3">
+                  <div className="flex flex-row items-start space-x-3 space-y-0">
+                    <Checkbox
+                      checked={termsAccepted}
+                      onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                      className="mt-1"
+                    />
+                    <div className="space-y-1 leading-none">
+                      <Label className="cursor-pointer text-sm">
+                        I agree to the{' '}
+                        <Link to="/terms" className="text-primary hover:underline">
+                          terms of service
+                        </Link>
+                        {' '}and{' '}
+                        <Link to="/privacy" className="text-primary hover:underline">
+                          privacy policy
+                        </Link>
+                      </Label>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-row items-start space-x-3 space-y-0">
+                    <Checkbox
+                      checked={marketingConsent}
+                      onCheckedChange={(checked) => setMarketingConsent(checked as boolean)}
+                      className="mt-1"
+                    />
+                    <div className="space-y-1 leading-none">
+                      <Label className="cursor-pointer text-sm">
+                        I agree to receive notifications and messages from MuniNow
+                      </Label>
+                    </div>
+                  </div>
                 </div>
 
                 <Button 
