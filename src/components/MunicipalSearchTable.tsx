@@ -162,7 +162,6 @@ const MunicipalSearchTable: React.FC<MunicipalSearchTableProps> = ({
                 <TableHead>Name/Business</TableHead>
                 <TableHead className="hidden sm:table-cell">Type</TableHead>
                 <TableHead className="hidden md:table-cell">Address</TableHead>
-                <TableHead className="hidden lg:table-cell">Contact</TableHead>
                 <TableHead className="text-center">Bills</TableHead>
                 <TableHead className="text-right">Total Due</TableHead>
                 <TableHead className="hidden sm:table-cell text-center">Last Bill</TableHead>
@@ -193,13 +192,6 @@ const MunicipalSearchTable: React.FC<MunicipalSearchTableProps> = ({
                   <TableCell className="hidden md:table-cell py-3">
                     <div className="text-sm truncate max-w-[200px]" title={formatAddress(user)}>
                       {formatAddress(user)}
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell py-3">
-                    <div className="text-sm">
-                      {user.phone && (
-                        <div className="truncate" title={user.phone}>{user.phone}</div>
-                      )}
                     </div>
                   </TableCell>
                   <TableCell className="text-center py-3">
