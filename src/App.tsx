@@ -39,6 +39,7 @@ import MunicipalSearch from "./pages/MunicipalSearch";
 import MunicipalMembers from "./pages/MunicipalMembers";
 import MunicipalMerchants from "./pages/MunicipalMerchants";
 import MunicipalProfile from "./pages/MunicipalProfile";
+import MunicipalUserDetail from "./pages/MunicipalUserDetail";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MunicipalProtectedRoute } from "@/components/MunicipalProtectedRoute";
 import { MunicipalLayout } from "@/components/layouts/MunicipalLayout";
@@ -112,6 +113,13 @@ const App = () => (
                   <MunicipalProtectedRoute>
                     <MunicipalLayout>
                       <MunicipalSearch />
+                    </MunicipalLayout>
+                  </MunicipalProtectedRoute>
+                } />
+                <Route path="/municipal/search/user/:userId" element={
+                  <MunicipalProtectedRoute>
+                    <MunicipalLayout>
+                      <MunicipalUserDetail />
                     </MunicipalLayout>
                   </MunicipalProtectedRoute>
                 } />
