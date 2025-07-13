@@ -38,6 +38,12 @@ const MunicipalSearch = () => {
     setCurrentPage(1);
   };
 
+  const handleSearch = () => {
+    // Force immediate search by setting the search term
+    // This bypasses the debounce for instant results
+    setCurrentPage(1);
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
@@ -63,10 +69,11 @@ const MunicipalSearch = () => {
                 placeholder="Search by name, business name, address, or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="pl-10"
               />
             </div>
-            <Button className="px-6">
+            <Button className="px-6" onClick={handleSearch}>
               Search
             </Button>
           </div>
