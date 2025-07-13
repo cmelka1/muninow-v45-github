@@ -180,6 +180,11 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
   const [isValidatingInvitation, setIsValidatingInvitation] = useState(false);
   const { signUp, isSubmitting } = useAuth();
 
+  // Scroll to top utility function
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -345,6 +350,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
         // Store form data and move to address verification
         setFormData(data);
         setCurrentStep(2);
+        scrollToTop();
         verifyAddress(data);
       } catch (error) {
         toast({
@@ -401,6 +407,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
   const confirmAddress = () => {
     if (addressStatus === 'available') {
       setCurrentStep(3);
+      scrollToTop();
     }
   };
 
@@ -588,6 +595,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
       }
       
       setCurrentStep(4);
+      scrollToTop();
       
     } catch (error: any) {
       // Enhanced error handling
@@ -620,6 +628,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
       if (currentStep === 2) {
         setAddressStatus(null);
       }
+      scrollToTop();
     } else {
       onBack();
     }

@@ -37,6 +37,11 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
   const [attemptCount, setAttemptCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
+  // Scroll to top utility function
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // Countdown timer for resend button
   useEffect(() => {
     if (resendCooldown > 0) {
@@ -96,6 +101,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
       setVerificationStage('verify');
       setResendCooldown(60); // 60 second cooldown
       setAttemptCount(prev => prev + 1);
+      scrollToTop();
     } catch (error: any) {
       console.error('Error sending verification code:', error);
       const errorMessage = error.message || 'Failed to send verification code';
@@ -180,6 +186,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
   const handleBackToSetup = () => {
     setVerificationStage('setup');
     setVerificationCode('');
+    scrollToTop();
   };
 
   const handlePhoneChange = (value: string) => {
