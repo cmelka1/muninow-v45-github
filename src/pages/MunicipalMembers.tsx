@@ -126,26 +126,30 @@ const MunicipalMembers = () => {
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {member.role === 'user' ? (
-                          <DropdownMenuItem onClick={() => handleUpdateRole(member.member_id, 'admin')}>
-                            <Shield className="h-4 w-4 mr-2" />
-                            Promote to Admin
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem onClick={() => handleUpdateRole(member.member_id, 'user')}>
-                            <User className="h-4 w-4 mr-2" />
-                            Demote to User
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem 
-                          onClick={() => handleRemoveMember(member.member_id)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Remove Member
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
+                       <DropdownMenuContent align="end">
+                         {member.role === 'admin' ? (
+                           <>
+                             <DropdownMenuItem disabled className="text-muted-foreground">
+                               <Shield className="h-4 w-4 mr-2" />
+                               Contact SuperAdmin for role changes
+                             </DropdownMenuItem>
+                           </>
+                         ) : (
+                           <>
+                             <DropdownMenuItem onClick={() => handleUpdateRole(member.member_id, 'admin')}>
+                               <Shield className="h-4 w-4 mr-2" />
+                               Promote to Admin
+                             </DropdownMenuItem>
+                             <DropdownMenuItem 
+                               onClick={() => handleRemoveMember(member.member_id)}
+                               className="text-destructive"
+                             >
+                               <Trash2 className="h-4 w-4 mr-2" />
+                               Remove Member
+                             </DropdownMenuItem>
+                           </>
+                         )}
+                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
                 </div>
