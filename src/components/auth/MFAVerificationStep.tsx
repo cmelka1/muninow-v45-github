@@ -99,7 +99,6 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
     } catch (error: any) {
       console.error('Error sending verification code:', error);
       const errorMessage = error.message || 'Failed to send verification code';
-      setError(errorMessage);
       
       toast({
         title: "Error",
@@ -113,11 +112,14 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
 
   const handleVerifyCode = async () => {
     if (verificationCode.length !== 6) {
-      setError('Please enter a valid 6-digit code');
+      toast({
+        title: "Invalid Code",
+        description: "Please enter a valid 6-digit code",
+        variant: "destructive"
+      });
       return;
     }
 
-    setError(null);
     setIsVerifying(true);
 
     try {
@@ -155,7 +157,6 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
     } catch (error: any) {
       console.error('Error verifying code:', error);
       const errorMessage = error.message || 'Failed to verify code';
-      setError(errorMessage);
       
       toast({
         title: "Verification Failed",
@@ -179,7 +180,6 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
   const handleBackToSetup = () => {
     setVerificationStage('setup');
     setVerificationCode('');
-    setError(null);
   };
 
   const handlePhoneChange = (value: string) => {
@@ -254,13 +254,6 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
             )}
           </div>
 
-          {error && (
-            <Card className="border-destructive bg-destructive/10">
-              <CardContent className="pt-6">
-                <p className="text-sm text-destructive">{error}</p>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Send Code Button */}
           <div className="flex gap-4">
@@ -317,13 +310,6 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
               </p>
             </div>
 
-            {error && (
-              <Card className="border-destructive bg-destructive/10">
-                <CardContent className="pt-6">
-                  <p className="text-sm text-destructive text-center">{error}</p>
-                </CardContent>
-              </Card>
-            )}
           </div>
 
           {/* Resend Code */}
