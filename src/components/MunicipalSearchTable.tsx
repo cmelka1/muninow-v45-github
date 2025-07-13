@@ -154,7 +154,7 @@ const MunicipalSearchTable: React.FC<MunicipalSearchTableProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Search Results ({totalCount} total bills, {data.length} unique users)</CardTitle>
+        <CardTitle>Search Results</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
