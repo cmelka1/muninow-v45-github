@@ -9,7 +9,7 @@ interface MunicipalProtectedRouteProps {
 
 export const MunicipalProtectedRoute: React.FC<MunicipalProtectedRouteProps> = ({
   children,
-  redirectTo = '/auth'
+  redirectTo = '/signin'
 }) => {
   const { user, profile, isLoading } = useAuth();
 

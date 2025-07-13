@@ -396,7 +396,7 @@ const MunicipalSignup = () => {
                     Already have an account?{' '}
                     <button
                       type="button"
-                      onClick={() => navigate('/auth')}
+                      onClick={() => navigate('/signin')}
                       className="text-primary hover:text-primary/80 font-medium transition-colors"
                     >
                       Sign in here

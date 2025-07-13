@@ -73,13 +73,13 @@ const ResetPassword = () => {
       setIsSuccess(true);
       // Redirect to auth page after 3 seconds
       setTimeout(() => {
-        navigate('/auth');
+        navigate('/signin');
       }, 3000);
     }
   };
 
   const handleBackToLogin = () => {
-    navigate('/auth');
+    navigate('/signin');
   };
 
   // Loading state while checking token
