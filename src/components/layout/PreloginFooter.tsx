@@ -121,7 +121,7 @@ export const PreloginFooter = () => {
               </li>
               <li>
                 <Link
-                  to="/municipal-signup"
+                  to="/municipal/signup"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   Municipal Sign Up
