@@ -51,7 +51,7 @@ const MunicipalMembers = () => {
         </div>
       </div>
 
-      <div className="max-w-md">
+      <div>
         {/* Send Invitations Card */}
         <Card>
           <CardHeader>
