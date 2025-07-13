@@ -67,7 +67,7 @@ const MunicipalSearchFilter: React.FC<MunicipalSearchFilterProps> = ({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {/* Account Type Filter */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Account Type</label>
@@ -141,6 +141,28 @@ const MunicipalSearchFilter: React.FC<MunicipalSearchFilterProps> = ({
                   (filterOptions?.categories || []).map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Subcategory Filter */}
+          <div className="hidden sm:block space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">Subcategory</label>
+            <Select value={filters.subcategory || 'all'} onValueChange={(value) => updateFilter('subcategory', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Subcategory" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subcategories</SelectItem>
+                {isLoading ? (
+                  <SelectItem value="loading" disabled>Loading...</SelectItem>
+                ) : (
+                  (filterOptions?.subcategories || []).map((subcategory) => (
+                    <SelectItem key={subcategory} value={subcategory}>
+                      {subcategory}
                     </SelectItem>
                   ))
                 )}

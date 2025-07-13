@@ -6,6 +6,7 @@ export interface MunicipalSearchFilters {
   accountType?: 'resident' | 'business';
   billStatus?: string;
   category?: string;
+  subcategory?: string;
   dueDateRange?: string;
   amountRange?: string;
 }
@@ -84,6 +85,7 @@ export const useMunicipalSearch = (params?: UseMunicipalSearchParams) => {
           amount_due_cents,
           payment_status,
           category,
+          subcategory,
           due_date,
           created_at
         `, { count: 'exact' })
@@ -107,6 +109,10 @@ export const useMunicipalSearch = (params?: UseMunicipalSearchParams) => {
 
       if (filters.category) {
         query = query.eq('category', filters.category);
+      }
+
+      if (filters.subcategory) {
+        query = query.eq('subcategory', filters.subcategory);
       }
 
       if (filters.dueDateRange) {
@@ -224,26 +230,39 @@ export const useMunicipalSearchFilterOptions = () => {
     queryKey: ['municipal-search-filter-options', profile?.customer_id],
     queryFn: async () => {
       if (!profile?.customer_id || profile.account_type !== 'municipal') {
-        return { categories: [], billStatuses: [] };
+        return { categories: [], subcategories: [], billStatuses: [] };
       }
 
-      // Fetch categories from database but use static bill statuses
-      const categoriesRes = await supabase
-        .from('master_bills')
-        .select('category')
-        .eq('customer_id', profile.customer_id)
-        .not('category', 'is', null);
+      // Fetch categories and subcategories from database
+      const [categoriesRes, subcategoriesRes] = await Promise.all([
+        supabase
+          .from('master_bills')
+          .select('category')
+          .eq('customer_id', profile.customer_id)
+          .not('category', 'is', null),
+        supabase
+          .from('master_bills')
+          .select('subcategory')
+          .eq('customer_id', profile.customer_id)
+          .not('subcategory', 'is', null)
+      ]);
 
       if (categoriesRes.error) {
-        console.error('Error fetching filter options:', categoriesRes.error);
+        console.error('Error fetching categories:', categoriesRes.error);
         throw categoriesRes.error;
       }
 
+      if (subcategoriesRes.error) {
+        console.error('Error fetching subcategories:', subcategoriesRes.error);
+        throw subcategoriesRes.error;
+      }
+
       const categories = [...new Set(categoriesRes.data.map(item => item.category))].sort();
+      const subcategories = [...new Set(subcategoriesRes.data.map(item => item.subcategory))].sort();
       // Return all possible bill statuses from the database enum
       const billStatuses = ['unpaid', 'overdue', 'delinquent', 'paid', 'cancelled', 'disputed', 'refunded'];
 
-      return { categories, billStatuses };
+      return { categories, subcategories, billStatuses };
     },
     enabled: !!profile?.customer_id && profile.account_type === 'municipal',
   });
