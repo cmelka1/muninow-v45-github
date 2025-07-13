@@ -28,12 +28,7 @@ const Auth = () => {
     clearError 
   } = useAuth();
 
-  // Redirect authenticated users
-  useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
-    }
-  }, [user, navigate]);
+  // Let AuthContext handle navigation - no redirects here
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -15,12 +15,14 @@ const Dashboard = () => {
   const [selectedBillId, setSelectedBillId] = useState<string>('');
   const [isPaymentPanelOpen, setIsPaymentPanelOpen] = useState(false);
 
-  // Redirect unauthenticated users
+  // Redirect unauthenticated users and municipal users
   useEffect(() => {
     if (!isLoading && !user) {
       navigate('/signin');
+    } else if (!isLoading && user && profile && profile.account_type === 'municipal') {
+      navigate('/municipal/dashboard');
     }
-  }, [user, isLoading, navigate]);
+  }, [user, profile, isLoading, navigate]);
 
   if (isLoading) {
     return (
