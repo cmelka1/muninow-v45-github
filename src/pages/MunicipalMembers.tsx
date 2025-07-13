@@ -55,12 +55,15 @@ const MunicipalMembers = () => {
         {/* Send Invitations Card */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5" />
-              Send Invitations
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <UserPlus className="h-5 w-5" />
+                Send Invitations
+              </CardTitle>
+              <MunicipalInviteMemberDialog onInvite={inviteMember} />
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold">{members.length}</div>
@@ -71,7 +74,6 @@ const MunicipalMembers = () => {
                 <div className="text-sm text-muted-foreground">Administrators</div>
               </div>
             </div>
-            <MunicipalInviteMemberDialog onInvite={inviteMember} />
           </CardContent>
         </Card>
       </div>
