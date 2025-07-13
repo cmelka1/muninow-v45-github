@@ -447,10 +447,10 @@ const MunicipalSignup = () => {
                   </div>
 
                   <Button
-                    onClick={() => navigate('/auth')}
+                    onClick={() => navigate('/municipal/dashboard')}
                     className="w-full h-11"
                   >
-                    Go to Sign In
+                    Go to Dashboard
                   </Button>
                 </div>
               )}
