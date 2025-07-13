@@ -137,8 +137,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!isLoading && user && profile) {
       const currentPath = window.location.pathname;
       
-      // Don't redirect if already on correct path or on auth/signup pages
-      if (currentPath.includes('/auth') || currentPath.includes('/signup') || currentPath.includes('/reset-password')) {
+      // Don't redirect if already on correct path or on auth/signin/signup pages
+      if (currentPath.includes('/auth') || currentPath.includes('/signin') || currentPath.includes('/signup') || currentPath.includes('/reset-password')) {
         return;
       }
 
