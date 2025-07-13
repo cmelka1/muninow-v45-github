@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MunicipalityAutocomplete } from '@/components/ui/municipality-autocomplete';
 import { PreloginHeader } from '@/components/layout/PreloginHeader';
 import { PreloginFooter } from '@/components/layout/PreloginFooter';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,9 +27,8 @@ const MunicipalSignup = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [selectedMunicipality, setSelectedMunicipality] = useState<Customer | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
 
   // Redirect authenticated users
   useEffect(() => {
@@ -38,31 +37,6 @@ const MunicipalSignup = () => {
     }
   }, [user, navigate]);
 
-  // Load customers for dropdown
-  useEffect(() => {
-    const loadCustomers = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('customers')
-          .select('customer_id, legal_entity_name, doing_business_as, business_city, business_state')
-          .order('legal_entity_name');
-
-        if (error) throw error;
-        setCustomers(data || []);
-      } catch (error) {
-        console.error('Error loading customers:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load municipalities. Please refresh the page.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoadingCustomers(false);
-      }
-    };
-
-    loadCustomers();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,8 +86,9 @@ const MunicipalSignup = () => {
     }
   };
 
-  const getCustomerDisplayName = (customer: Customer) => {
-    return `${customer.legal_entity_name} - ${customer.business_city}, ${customer.business_state}`;
+  const handleMunicipalitySelect = (municipality: Customer) => {
+    setSelectedMunicipality(municipality);
+    setSelectedCustomerId(municipality.customer_id);
   };
 
   return (
@@ -136,22 +111,11 @@ const MunicipalSignup = () => {
                   <Label htmlFor="municipality" className="text-sm font-medium text-foreground">
                     Municipality *
                   </Label>
-                  <Select 
-                    value={selectedCustomerId} 
-                    onValueChange={setSelectedCustomerId}
-                    disabled={isLoadingCustomers}
-                  >
-                    <SelectTrigger className="h-11">
-                      <SelectValue placeholder={isLoadingCustomers ? "Loading municipalities..." : "Select your municipality"} />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60">
-                      {customers.map((customer) => (
-                        <SelectItem key={customer.customer_id} value={customer.customer_id}>
-                          {getCustomerDisplayName(customer)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <MunicipalityAutocomplete
+                    onSelect={handleMunicipalitySelect}
+                    placeholder="Search for your municipality..."
+                    disabled={isLoading}
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -217,7 +181,7 @@ const MunicipalSignup = () => {
 
                 <Button 
                   type="submit" 
-                  disabled={isLoading || isLoadingCustomers}
+                  disabled={isLoading}
                   className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-sm transition-colors"
                 >
                   {isLoading ? 'Creating Account...' : 'Create Municipal Account'}
