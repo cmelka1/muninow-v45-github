@@ -2009,6 +2009,28 @@ export type Database = {
         Args: { _role_name: string }
         Returns: string
       }
+      get_user_bill_summary_for_municipal: {
+        Args: { p_user_id: string }
+        Returns: {
+          user_id: string
+          first_name: string
+          last_name: string
+          email: string
+          phone: string
+          street_address: string
+          apt_number: string
+          city: string
+          state: string
+          zip_code: string
+          account_type: string
+          business_legal_name: string
+          created_at: string
+          updated_at: string
+          bill_count: number
+          total_amount_due_cents: number
+          has_bills: boolean
+        }[]
+      }
       get_user_payment_instruments_with_display_names: {
         Args: Record<PropertyKey, never>
         Returns: {

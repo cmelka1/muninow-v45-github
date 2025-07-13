@@ -6,22 +6,33 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Mail, Phone, MapPin, User, AlertCircle } from 'lucide-react';
 import UserBillsTable from '@/components/UserBillsTable';
 import UserPaymentHistoryTable from '@/components/UserPaymentHistoryTable';
-import { useMunicipalUserProfile } from '@/hooks/useMunicipalUserProfile';
-import { useBillBasedUserInfo } from '@/hooks/useBillBasedUserInfo';
+import { useMunicipalUserSummary } from '@/hooks/useMunicipalUserSummary';
 
 const MunicipalUserDetail = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   
-  // Try to get profile via municipal security function first
-  const { data: municipalProfile, isLoading: profileLoading, error: profileError } = useMunicipalUserProfile(userId);
+  const { data: userSummary, isLoading, error } = useMunicipalUserSummary(userId);
   
-  // Fallback to bill-based user info if profile access is denied
-  const { data: billBasedInfo, isLoading: billLoading, error: billError } = useBillBasedUserInfo(userId);
+  const profile = userSummary ? {
+    id: userSummary.user_id,
+    first_name: userSummary.first_name,
+    last_name: userSummary.last_name,
+    email: userSummary.email,
+    phone: userSummary.phone,
+    street_address: userSummary.street_address,
+    apt_number: userSummary.apt_number,
+    city: userSummary.city,
+    state: userSummary.state,
+    zip_code: userSummary.zip_code,
+    account_type: userSummary.account_type,
+    business_legal_name: userSummary.business_legal_name,
+    created_at: userSummary.created_at,
+    updated_at: userSummary.updated_at,
+  } : null;
   
-  const isLoading = profileLoading || billLoading;
-  const userInfo = municipalProfile || billBasedInfo;
-  const hasProfileAccess = !!municipalProfile;
+  const userInfo = profile;
+  const hasProfileAccess = !!userSummary?.has_bills;
 
   if (isLoading) {
     return (
@@ -111,7 +122,7 @@ const MunicipalUserDetail = () => {
                 <p className="text-gray-600">
                   {userInfo.first_name && userInfo.last_name 
                     ? `${userInfo.first_name} ${userInfo.last_name}`
-                    : ('external_customer_name' in userInfo ? userInfo.external_customer_name : null) || 'Name not available'
+                    : 'Name not available'
                   }
                 </p>
               </div>
@@ -119,11 +130,11 @@ const MunicipalUserDetail = () => {
                 <h3 className="font-medium text-gray-900 mb-1">Account Type</h3>
                 {userInfo.account_type ? getAccountTypeBadge(userInfo.account_type) : <Badge variant="outline">Unknown</Badge>}
               </div>
-              {(userInfo.business_legal_name || ('external_business_name' in userInfo ? userInfo.external_business_name : null)) && (
+              {userInfo.business_legal_name && (
                 <div>
                   <h3 className="font-medium text-gray-900 mb-1">Business Name</h3>
                   <p className="text-gray-600">
-                    {userInfo.business_legal_name || ('external_business_name' in userInfo ? userInfo.external_business_name : null)}
+                    {userInfo.business_legal_name}
                   </p>
                 </div>
               )}
@@ -139,19 +150,19 @@ const MunicipalUserDetail = () => {
                   </div>
                 </div>
               )}
-              {('phone' in userInfo ? userInfo.phone : null) && (
+              {userInfo.phone && (
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-gray-400" />
                   <div>
                     <h3 className="font-medium text-gray-900 mb-1">Phone</h3>
-                    <p className="text-gray-600">{'phone' in userInfo ? userInfo.phone : ''}</p>
+                    <p className="text-gray-600">{userInfo.phone}</p>
                   </div>
                 </div>
               )}
-              {'bill_count' in userInfo && (
+              {userSummary && (
                 <div>
                   <h3 className="font-medium text-gray-900 mb-1">Bills Count</h3>
-                  <p className="text-gray-600">{userInfo.bill_count} bills</p>
+                  <p className="text-gray-600">{userSummary.bill_count} bills</p>
                 </div>
               )}
             </div>
@@ -166,10 +177,10 @@ const MunicipalUserDetail = () => {
                   </p>
                 </div>
               </div>
-              {'total_amount_due' in userInfo && (
+              {userSummary && (
                 <div>
                   <h3 className="font-medium text-gray-900 mb-1">Total Amount Due</h3>
-                  <p className="text-gray-600">${(userInfo.total_amount_due / 100).toFixed(2)}</p>
+                  <p className="text-gray-600">${(userSummary.total_amount_due_cents / 100).toFixed(2)}</p>
                 </div>
               )}
             </div>
