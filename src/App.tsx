@@ -37,6 +37,7 @@ import MunicipalSignup from "./pages/MunicipalSignup";
 import MunicipalDashboard from "./pages/MunicipalDashboard";
 import MunicipalSearch from "./pages/MunicipalSearch";
 import MunicipalMembers from "./pages/MunicipalMembers";
+import MunicipalMerchants from "./pages/MunicipalMerchants";
 import MunicipalProfile from "./pages/MunicipalProfile";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MunicipalProtectedRoute } from "@/components/MunicipalProtectedRoute";
@@ -118,6 +119,13 @@ const App = () => (
                   <MunicipalProtectedRoute>
                     <MunicipalLayout>
                       <MunicipalMembers />
+                    </MunicipalLayout>
+                  </MunicipalProtectedRoute>
+                } />
+                <Route path="/municipal/merchants" element={
+                  <MunicipalProtectedRoute>
+                    <MunicipalLayout>
+                      <MunicipalMerchants />
                     </MunicipalLayout>
                   </MunicipalProtectedRoute>
                 } />

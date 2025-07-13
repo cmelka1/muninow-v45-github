@@ -31,6 +31,11 @@ const navigationItems = [
     url: '/municipal/members'
   },
   {
+    title: 'Merchants',
+    icon: Building2,
+    url: '/municipal/merchants'
+  },
+  {
     title: 'Profile',
     icon: User,
     url: '/municipal/profile'
