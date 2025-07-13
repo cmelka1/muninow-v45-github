@@ -29,13 +29,19 @@ export const MerchantsTable: React.FC = () => {
     const loadMerchants = async () => {
       if (!profile?.customer_id) return;
 
-      const result = await fetchMerchantsByCustomer(profile.customer_id, currentPage, pageSize);
-      setMerchants(result.data);
-      setTotalCount(result.count);
+      try {
+        const result = await fetchMerchantsByCustomer(profile.customer_id, currentPage, pageSize);
+        setMerchants(result.data || []);
+        setTotalCount(result.count || 0);
+      } catch (err) {
+        console.error('Error loading merchants:', err);
+        setMerchants([]);
+        setTotalCount(0);
+      }
     };
 
     loadMerchants();
-  }, [profile?.customer_id, currentPage, pageSize, fetchMerchantsByCustomer]);
+  }, [profile?.customer_id, currentPage, pageSize]);
 
   const handlePageSizeChange = (newPageSize: string) => {
     setPageSize(Number(newPageSize));
