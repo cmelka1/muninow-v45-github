@@ -1932,6 +1932,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      create_municipal_team_invitation: {
+        Args: {
+          p_customer_id: string
+          p_invitation_email: string
+          p_role: string
+        }
+        Returns: string
+      }
       create_organization_invitation: {
         Args: {
           p_invitation_email: string
@@ -1958,6 +1966,19 @@ export type Database = {
           user_id: string
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
           year: string
+        }[]
+      }
+      get_municipal_team_members: {
+        Args: { p_customer_id: string }
+        Returns: {
+          id: string
+          member_id: string
+          role: string
+          joined_at: string
+          first_name: string
+          last_name: string
+          email: string
+          phone: string
         }[]
       }
       get_organization_members: {
@@ -2076,6 +2097,10 @@ export type Database = {
         Args: { business_name: string }
         Returns: string
       }
+      remove_municipal_team_member: {
+        Args: { p_customer_id: string; p_member_id: string }
+        Returns: boolean
+      }
       remove_role_from_user: {
         Args: { _user_id: string; _role_name: string; _entity_id?: string }
         Returns: boolean
@@ -2099,6 +2124,10 @@ export type Database = {
       smart_bill_matching: {
         Args: { input_bill_id: string }
         Returns: undefined
+      }
+      update_municipal_team_member_role: {
+        Args: { p_customer_id: string; p_member_id: string; p_new_role: string }
+        Returns: boolean
       }
       validate_merchant_category_subcategory: {
         Args: { p_category: string; p_subcategory: string }
