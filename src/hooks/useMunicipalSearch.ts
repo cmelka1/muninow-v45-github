@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export interface MunicipalSearchFilters {
   accountType?: 'resident' | 'business';
   billStatus?: string;
+  merchantId?: string;
   category?: string;
   subcategory?: string;
   dueDateRange?: string;
@@ -105,6 +106,10 @@ export const useMunicipalSearch = (params?: UseMunicipalSearchParams) => {
 
       if (filters.billStatus) {
         query = query.eq('bill_status', filters.billStatus as any);
+      }
+
+      if (filters.merchantId) {
+        query = query.eq('merchant_id', filters.merchantId);
       }
 
       if (filters.category) {
@@ -230,11 +235,11 @@ export const useMunicipalSearchFilterOptions = () => {
     queryKey: ['municipal-search-filter-options', profile?.customer_id],
     queryFn: async () => {
       if (!profile?.customer_id || profile.account_type !== 'municipal') {
-        return { categories: [], subcategories: [], billStatuses: [] };
+        return { categories: [], subcategories: [], billStatuses: [], merchants: [] };
       }
 
-      // Fetch categories and subcategories from database
-      const [categoriesRes, subcategoriesRes] = await Promise.all([
+      // Fetch categories, subcategories, and merchants from database
+      const [categoriesRes, subcategoriesRes, merchantsRes] = await Promise.all([
         supabase
           .from('master_bills')
           .select('category')
@@ -244,7 +249,12 @@ export const useMunicipalSearchFilterOptions = () => {
           .from('master_bills')
           .select('subcategory')
           .eq('customer_id', profile.customer_id)
-          .not('subcategory', 'is', null)
+          .not('subcategory', 'is', null),
+        supabase
+          .from('merchants')
+          .select('id, merchant_name')
+          .eq('customer_id', profile.customer_id)
+          .order('merchant_name')
       ]);
 
       if (categoriesRes.error) {
@@ -257,12 +267,18 @@ export const useMunicipalSearchFilterOptions = () => {
         throw subcategoriesRes.error;
       }
 
+      if (merchantsRes.error) {
+        console.error('Error fetching merchants:', merchantsRes.error);
+        throw merchantsRes.error;
+      }
+
       const categories = [...new Set(categoriesRes.data.map(item => item.category))].sort();
       const subcategories = [...new Set(subcategoriesRes.data.map(item => item.subcategory))].sort();
+      const merchants = merchantsRes.data || [];
       // Return all possible bill statuses from the database enum
       const billStatuses = ['unpaid', 'overdue', 'delinquent', 'paid', 'cancelled', 'disputed', 'refunded'];
 
-      return { categories, subcategories, billStatuses };
+      return { categories, subcategories, billStatuses, merchants };
     },
     enabled: !!profile?.customer_id && profile.account_type === 'municipal',
   });

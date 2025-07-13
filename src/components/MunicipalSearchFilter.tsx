@@ -67,7 +67,7 @@ const MunicipalSearchFilter: React.FC<MunicipalSearchFilterProps> = ({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
           {/* Account Type Filter */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Account Type</label>
@@ -122,6 +122,28 @@ const MunicipalSearchFilter: React.FC<MunicipalSearchFilterProps> = ({
                     {option.label}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Merchant Filter */}
+          <div className="hidden sm:block space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">Merchant</label>
+            <Select value={filters.merchantId || 'all'} onValueChange={(value) => updateFilter('merchantId', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Merchant" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Merchants</SelectItem>
+                {isLoading ? (
+                  <SelectItem value="loading" disabled>Loading...</SelectItem>
+                ) : (
+                  (filterOptions?.merchants || []).map((merchant) => (
+                    <SelectItem key={merchant.id} value={merchant.id}>
+                      {merchant.merchant_name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
