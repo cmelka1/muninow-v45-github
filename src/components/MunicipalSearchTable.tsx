@@ -160,10 +160,10 @@ const MunicipalSearchTable: React.FC<MunicipalSearchTableProps> = ({
             <TableHeader className="bg-muted/50">
               <TableRow>
                 <TableHead>Name/Business</TableHead>
-                <TableHead className="hidden sm:table-cell">Type</TableHead>
+                <TableHead className="hidden sm:table-cell text-center">Type</TableHead>
                 <TableHead className="hidden md:table-cell">Address</TableHead>
                 <TableHead className="text-center">Bills</TableHead>
-                <TableHead className="text-right">Total Due</TableHead>
+                <TableHead className="text-center">Total Due</TableHead>
                 <TableHead className="hidden sm:table-cell text-center">Last Bill</TableHead>
               </TableRow>
             </TableHeader>
@@ -186,7 +186,7 @@ const MunicipalSearchTable: React.FC<MunicipalSearchTableProps> = ({
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell py-3">
+                  <TableCell className="hidden sm:table-cell py-3 text-center">
                     {getAccountTypeBadge(user.account_type)}
                   </TableCell>
                   <TableCell className="hidden md:table-cell py-3">
@@ -197,7 +197,7 @@ const MunicipalSearchTable: React.FC<MunicipalSearchTableProps> = ({
                   <TableCell className="text-center py-3">
                     <div className="font-medium">{user.bill_count}</div>
                   </TableCell>
-                  <TableCell className="text-right font-medium py-3">
+                  <TableCell className="text-center font-medium py-3">
                     {formatAmount(user.total_amount_due_cents / 100)}
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-center py-3">
