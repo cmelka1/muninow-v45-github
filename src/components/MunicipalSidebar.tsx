@@ -26,14 +26,14 @@ const navigationItems = [
     url: '/municipal/search'
   },
   {
-    title: 'Team Members',
-    icon: Users,
-    url: '/municipal/members'
-  },
-  {
     title: 'Merchants',
     icon: Building2,
     url: '/municipal/merchants'
+  },
+  {
+    title: 'Team Members',
+    icon: Users,
+    url: '/municipal/members'
   },
   {
     title: 'Profile',
