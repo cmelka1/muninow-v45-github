@@ -42,7 +42,6 @@ import MunicipalProfile from "./pages/MunicipalProfile";
 import MunicipalUserDetail from "./pages/MunicipalUserDetail";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MunicipalProtectedRoute } from "@/components/MunicipalProtectedRoute";
-import { AuthenticatedRoute } from "@/components/AuthenticatedRoute";
 import { MunicipalLayout } from "@/components/layouts/MunicipalLayout";
 
 const queryClient = new QueryClient();
@@ -61,36 +60,12 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/signin" element={<Auth />} />
                 <Route path="/signup" element={<Signup />} />
-                <Route path="/dashboard" element={
-                  <AuthenticatedRoute>
-                    <Dashboard />
-                  </AuthenticatedRoute>
-                } />
-                <Route path="/payment-history" element={
-                  <AuthenticatedRoute>
-                    <PaymentHistory />
-                  </AuthenticatedRoute>
-                } />
-                <Route path="/bill/:billId" element={
-                  <AuthenticatedRoute>
-                    <BillOverview />
-                  </AuthenticatedRoute>
-                } />
-                <Route path="/payment-confirmation/:paymentHistoryId" element={
-                  <AuthenticatedRoute>
-                    <PaymentConfirmation />
-                  </AuthenticatedRoute>
-                } />
-                <Route path="/members" element={
-                  <AuthenticatedRoute>
-                    <Members />
-                  </AuthenticatedRoute>
-                } />
-                <Route path="/profile" element={
-                  <AuthenticatedRoute>
-                    <Profile />
-                  </AuthenticatedRoute>
-                } />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/payment-history" element={<PaymentHistory />} />
+                <Route path="/bill/:billId" element={<BillOverview />} />
+                <Route path="/payment-confirmation/:paymentHistoryId" element={<PaymentConfirmation />} />
+                <Route path="/members" element={<Members />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/features" element={<Features />} />
                 <Route path="/municipalities" element={<Municipalities />} />
