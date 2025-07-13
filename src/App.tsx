@@ -60,7 +60,11 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/signin" element={<Auth />} />
                 <Route path="/signup" element={<Signup />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={
+                  <ProtectedRoute requiredRole="residentUser">
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
                 <Route path="/payment-history" element={<PaymentHistory />} />
                 <Route path="/bill/:billId" element={<BillOverview />} />
                 <Route path="/payment-confirmation/:paymentHistoryId" element={<PaymentConfirmation />} />
