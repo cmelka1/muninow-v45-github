@@ -21,6 +21,8 @@ const Auth = () => {
   
   const { 
     user, 
+    profile,
+    isLoading,
     isSubmitting, 
     loginError, 
     signIn, 
@@ -28,12 +30,18 @@ const Auth = () => {
     clearError 
   } = useAuth();
 
-  // Redirect authenticated users
+  // Dynamic navigation based on user type
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
+    if (user && !isLoading && profile) {
+      if (profile.account_type === 'municipal') {
+        navigate('/municipal/dashboard');
+      } else if (profile.account_type === 'business' && profile.role === 'superAdmin') {
+        navigate('/superadmin/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     }
-  }, [user, navigate]);
+  }, [user, profile, isLoading, navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
