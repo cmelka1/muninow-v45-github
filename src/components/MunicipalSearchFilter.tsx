@@ -86,10 +86,10 @@ const MunicipalSearchFilter: React.FC<MunicipalSearchFilterProps> = ({
             </Select>
           </div>
 
-          {/* Payment Status Filter */}
+          {/* Bill Status Filter */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Payment Status</label>
-            <Select value={filters.paymentStatus || 'all'} onValueChange={(value) => updateFilter('paymentStatus', value)}>
+            <label className="text-sm font-medium text-muted-foreground">Bill Status</label>
+            <Select value={filters.billStatus || 'all'} onValueChange={(value) => updateFilter('billStatus', value)}>
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -98,7 +98,7 @@ const MunicipalSearchFilter: React.FC<MunicipalSearchFilterProps> = ({
                 {isLoading ? (
                   <SelectItem value="loading" disabled>Loading...</SelectItem>
                 ) : (
-                  filterOptions?.paymentStatuses.map((status) => (
+                  filterOptions?.billStatuses.map((status) => (
                     <SelectItem key={status} value={status}>
                       {status.charAt(0).toUpperCase() + status.slice(1)}
                     </SelectItem>

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export interface MunicipalSearchFilters {
   accountType?: 'resident' | 'business';
-  paymentStatus?: string;
+  billStatus?: string;
   category?: string;
   dueDateRange?: string;
   amountRange?: string;
@@ -101,8 +101,8 @@ export const useMunicipalSearch = (params?: UseMunicipalSearchParams) => {
         query = query.eq('account_type', filters.accountType);
       }
 
-      if (filters.paymentStatus) {
-        query = query.eq('payment_status', filters.paymentStatus as any);
+      if (filters.billStatus) {
+        query = query.eq('bill_status', filters.billStatus as any);
       }
 
       if (filters.category) {
@@ -224,7 +224,7 @@ export const useMunicipalSearchFilterOptions = () => {
     queryKey: ['municipal-search-filter-options', profile?.customer_id],
     queryFn: async () => {
       if (!profile?.customer_id || profile.account_type !== 'municipal') {
-        return { categories: [], paymentStatuses: [] };
+        return { categories: [], billStatuses: [] };
       }
 
       const [categoriesRes, statusRes] = await Promise.all([
@@ -235,9 +235,9 @@ export const useMunicipalSearchFilterOptions = () => {
           .not('category', 'is', null),
         supabase
           .from('master_bills')
-          .select('payment_status')
+          .select('bill_status')
           .eq('customer_id', profile.customer_id)
-          .not('payment_status', 'is', null)
+          .not('bill_status', 'is', null)
       ]);
 
       if (categoriesRes.error || statusRes.error) {
@@ -246,9 +246,9 @@ export const useMunicipalSearchFilterOptions = () => {
       }
 
       const categories = [...new Set(categoriesRes.data.map(item => item.category))].sort();
-      const paymentStatuses = [...new Set(statusRes.data.map(item => item.payment_status))].sort();
+      const billStatuses = [...new Set(statusRes.data.map(item => item.bill_status))].sort();
 
-      return { categories, paymentStatuses };
+      return { categories, billStatuses };
     },
     enabled: !!profile?.customer_id && profile.account_type === 'municipal',
   });
