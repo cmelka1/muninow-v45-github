@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -16,6 +17,7 @@ import { useMerchants } from '@/hooks/useMerchants';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const MerchantsTable: React.FC = () => {
+  const navigate = useNavigate();
   const { profile } = useAuth();
   const { fetchMerchantsByCustomer, isLoading, error } = useMerchants();
   const [merchants, setMerchants] = useState<any[]>([]);
@@ -122,7 +124,11 @@ export const MerchantsTable: React.FC = () => {
             </TableHeader>
             <TableBody>
               {merchants.map((merchant) => (
-                <TableRow key={merchant.id} className="h-12 hover:bg-muted/50">
+                <TableRow 
+                  key={merchant.id} 
+                  className="h-12 hover:bg-muted/50 cursor-pointer" 
+                  onClick={() => navigate(`/municipal/merchants/${merchant.id}`)}
+                >
                   <TableCell className="py-2">
                     <span className="truncate block max-w-[200px]" title={merchant.merchant_name}>
                       {merchant.merchant_name}
