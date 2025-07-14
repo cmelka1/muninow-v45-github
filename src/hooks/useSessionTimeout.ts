@@ -74,19 +74,24 @@ export const useSessionTimeout = ({
       document.addEventListener(event, handleActivity, true);
     });
 
-    // Window close detection
-    const handleBeforeUnload = () => {
-      onTimeout();
+    // Use visibilitychange for better window state detection
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // Don't logout immediately on tab switch - let normal timeout handle it
+        return;
+      }
+      // Reset timer when tab becomes visible again
+      handleActivity();
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       clearTimers();
       events.forEach(event => {
         document.removeEventListener(event, handleActivity, true);
       });
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [isAuthenticated, resetTimer, handleActivity, onTimeout, clearTimers]);
 
