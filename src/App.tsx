@@ -40,6 +40,7 @@ import MunicipalMembers from "./pages/MunicipalMembers";
 import MunicipalMerchants from "./pages/MunicipalMerchants";
 import MunicipalProfile from "./pages/MunicipalProfile";
 import MunicipalUserDetail from "./pages/MunicipalUserDetail";
+import MunicipalBillOverview from "./pages/MunicipalBillOverview";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MunicipalProtectedRoute } from "@/components/MunicipalProtectedRoute";
 import { MunicipalLayout } from "@/components/layouts/MunicipalLayout";
@@ -141,6 +142,13 @@ const App = () => (
                   <MunicipalProtectedRoute>
                     <MunicipalLayout>
                       <MunicipalProfile />
+                    </MunicipalLayout>
+                  </MunicipalProtectedRoute>
+                } />
+                <Route path="/municipal/bill/:billId" element={
+                  <MunicipalProtectedRoute>
+                    <MunicipalLayout>
+                      <MunicipalBillOverview />
                     </MunicipalLayout>
                   </MunicipalProtectedRoute>
                 } />

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -23,6 +23,7 @@ interface UserBillsTableProps {
 
 const UserBillsTable: React.FC<UserBillsTableProps> = ({ userId }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   
@@ -74,7 +75,14 @@ const UserBillsTable: React.FC<UserBillsTableProps> = ({ userId }) => {
   };
 
   const handleRowClick = (billId: string) => {
-    navigate(`/bill/${billId}`);
+    // Check if we're in a municipal context by looking at the current path
+    const isMunicipalContext = location.pathname.includes('/municipal/');
+    
+    if (isMunicipalContext) {
+      navigate(`/municipal/bill/${billId}`);
+    } else {
+      navigate(`/bill/${billId}`);
+    }
   };
 
   if (isLoading) {
