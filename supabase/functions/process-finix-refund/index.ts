@@ -17,6 +17,9 @@ interface RefundResponse {
   finix_reversal_id?: string;
   message: string;
   error?: string;
+  refund?: {
+    refund_status: string;
+  };
 }
 
 Deno.serve(async (req) => {
@@ -231,7 +234,10 @@ Deno.serve(async (req) => {
       success: true,
       refund_id: refundRecord.id,
       finix_reversal_id: finixData.id,
-      message: `Refund ${refundStatus} - ${finixData.state}`
+      message: `Refund ${refundStatus} - ${finixData.state}`,
+      refund: {
+        refund_status: refundStatus
+      }
     };
 
     return new Response(
