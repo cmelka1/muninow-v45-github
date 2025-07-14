@@ -36,14 +36,15 @@ const MunicipalUserDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="p-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded mb-4 w-1/3"></div>
-          <div className="space-y-4">
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+      <div className="min-h-screen bg-gray-100 p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="h-10 bg-gray-200 rounded animate-pulse w-24"></div>
+            <div className="h-8 bg-gray-200 rounded animate-pulse w-32"></div>
           </div>
+          <div className="h-64 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-48 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-32 bg-gray-200 rounded animate-pulse"></div>
         </div>
       </div>
     );
@@ -51,18 +52,20 @@ const MunicipalUserDetail = () => {
 
   if (!userInfo) {
     return (
-      <div className="p-8">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/municipal/search')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Search
-          </Button>
+      <div className="min-h-screen bg-gray-100 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-4 mb-6">
+            <Button variant="outline" onClick={() => navigate('/municipal/search')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Search
+            </Button>
+          </div>
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-destructive">User not found or no bills exist for this municipality.</p>
+            </CardContent>
+          </Card>
         </div>
-        <Card>
-          <CardContent className="p-8 text-center">
-            <p className="text-destructive">User not found or no bills exist for this municipality.</p>
-          </CardContent>
-        </Card>
       </div>
     );
   }
@@ -90,36 +93,35 @@ const MunicipalUserDetail = () => {
   };
 
   return (
-    <div className="p-8">
-      {/* Header with back button */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/municipal/search')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Search
-        </Button>
-        <h1 className="text-3xl font-bold text-gray-900">User Detail</h1>
-      </div>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header with back button */}
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={() => navigate('/municipal/search')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Search
+          </Button>
+          <h1 className="text-2xl font-bold">User Details</h1>
+        </div>
 
-      {/* User Information Card */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            User Information
-            {!hasProfileAccess && (
-              <Badge variant="secondary" className="ml-2">
-                <AlertCircle className="h-3 w-3 mr-1" />
-                Bill Data Only
-              </Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="space-y-4">
+        {/* User Information Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              User Information
+              {!hasProfileAccess && (
+                <Badge variant="secondary" className="ml-2">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  Bill Data Only
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h3 className="font-medium text-gray-900 mb-1">Name</h3>
-                <p className="text-gray-600">
+                <label className="text-sm font-medium text-muted-foreground">Name</label>
+                <p className="text-base">
                   {userInfo.first_name && userInfo.last_name 
                     ? `${userInfo.first_name} ${userInfo.last_name}`
                     : 'Name not available'
@@ -127,84 +129,67 @@ const MunicipalUserDetail = () => {
                 </p>
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 mb-1">Account Type</h3>
-                {userInfo.account_type ? getAccountTypeBadge(userInfo.account_type) : <Badge variant="outline">Unknown</Badge>}
+                <label className="text-sm font-medium text-muted-foreground">Account Type</label>
+                <div className="mt-1">
+                  {userInfo.account_type ? getAccountTypeBadge(userInfo.account_type) : <Badge variant="outline">Unknown</Badge>}
+                </div>
               </div>
               {userInfo.business_legal_name && (
                 <div>
-                  <h3 className="font-medium text-gray-900 mb-1">Business Name</h3>
-                  <p className="text-gray-600">
-                    {userInfo.business_legal_name}
-                  </p>
+                  <label className="text-sm font-medium text-muted-foreground">Business Name</label>
+                  <p className="text-base">{userInfo.business_legal_name}</p>
                 </div>
               )}
-            </div>
-            
-            <div className="space-y-4">
               {userInfo.email && (
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-gray-400" />
-                  <div>
-                    <h3 className="font-medium text-gray-900 mb-1">Email</h3>
-                    <p className="text-gray-600">{userInfo.email}</p>
-                  </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Email</label>
+                  <p className="text-base">{userInfo.email}</p>
                 </div>
               )}
               {userInfo.phone && (
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-400" />
-                  <div>
-                    <h3 className="font-medium text-gray-900 mb-1">Phone</h3>
-                    <p className="text-gray-600">{userInfo.phone}</p>
-                  </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Phone</label>
+                  <p className="text-base">{userInfo.phone}</p>
                 </div>
               )}
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Address</label>
+                <p className="text-base">{formatAddress(userInfo)}</p>
+              </div>
               {userSummary && (
-                <div>
-                  <h3 className="font-medium text-gray-900 mb-1">Bills Count</h3>
-                  <p className="text-gray-600">{userSummary.bill_count} bills</p>
-                </div>
+                <>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Bills Count</label>
+                    <p className="text-base">{userSummary.bill_count} bills</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Total Amount Due</label>
+                    <p className="text-base">${(userSummary.total_amount_due_cents / 100).toFixed(2)}</p>
+                  </div>
+                </>
               )}
             </div>
             
-            <div className="space-y-4">
-              <div className="flex items-start gap-2">
-                <MapPin className="h-4 w-4 text-gray-400 mt-1" />
-                <div>
-                  <h3 className="font-medium text-gray-900 mb-1">Address</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    {formatAddress(userInfo)}
-                  </p>
-                </div>
+            {!hasProfileAccess && (
+              <div className="mt-6 p-4 bg-muted/30 border border-muted rounded-md">
+                <p className="text-sm text-muted-foreground flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  Showing limited information from bill data. Full profile access may be restricted.
+                </p>
               </div>
-              {userSummary && (
-                <div>
-                  <h3 className="font-medium text-gray-900 mb-1">Total Amount Due</h3>
-                  <p className="text-gray-600">${(userSummary.total_amount_due_cents / 100).toFixed(2)}</p>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {!hasProfileAccess && (
-            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-              <p className="text-sm text-yellow-800">
-                <AlertCircle className="h-4 w-4 inline mr-1" />
-                Showing limited information from bill data. Full profile access may be restricted.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* User Bills Section */}
-      <div className="mb-6">
-        <UserBillsTable userId={userId!} />
-      </div>
+        {/* User Bills Section */}
+        <div>
+          <UserBillsTable userId={userId!} />
+        </div>
 
-      {/* User Payment History Section */}
-      <div>
-        <UserPaymentHistoryTable userId={userId!} />
+        {/* User Payment History Section */}
+        <div>
+          <UserPaymentHistoryTable userId={userId!} />
+        </div>
       </div>
     </div>
   );
