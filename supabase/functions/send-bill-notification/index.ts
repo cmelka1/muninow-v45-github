@@ -144,23 +144,45 @@ serve(async (req: Request) => {
       throw new Error('User profile not found for notification');
     }
 
+    // Get merchant name with priority order
+    const getMerchantName = () => {
+      if (bill.merchant_name) return bill.merchant_name;
+      if (bill.external_business_name) return bill.external_business_name;
+      if (bill.business_legal_name) return bill.business_legal_name;
+      if (bill.doing_business_as) return bill.doing_business_as;
+      return 'Your Service Provider';
+    };
+
+    // Get customer name
+    const getCustomerName = () => {
+      if (userProfile.first_name) return userProfile.first_name;
+      if (bill.external_customer_name) return bill.external_customer_name.split(' ')[0];
+      return 'Customer';
+    };
+
     const billAmount = (bill.amount_due_cents / 100).toFixed(2);
     const dueDate = bill.due_date ? new Date(bill.due_date).toLocaleDateString() : 'N/A';
+    const merchantName = getMerchantName();
+    const customerName = getCustomerName();
     
-    const defaultSubject = messageSubject || `Bill Notification - ${bill.external_bill_number}`;
-    const defaultMessage = messageBody || `
-      Hello ${userProfile.first_name},
-      
-      This is a notification regarding your bill ${bill.external_bill_number}.
-      
-      Amount Due: $${billAmount}
-      Due Date: ${dueDate}
-      
-      Please contact us if you have any questions.
-      
-      Best regards,
-      ${municipalProfile.first_name} ${municipalProfile.last_name}
-    `.trim();
+    // Standardized subject line
+    const standardSubject = `Bill Notice - ${merchantName} - $${billAmount}`;
+    const finalSubject = messageSubject || standardSubject;
+    
+    // Standardized message body
+    const standardMessage = `Dear ${customerName},
+
+You have a bill from ${merchantName}:
+• Bill #: ${bill.external_bill_number}
+• Amount Due: $${billAmount}
+• Due Date: ${dueDate}
+
+${messageBody || ''}
+
+---
+This is a no-reply message. Please log into your MuniNow account to view and pay your bills. MuniNow will never send you a link to pay.`.trim();
+
+    const finalMessage = standardMessage;
 
     let emailSent = false;
     let smsSent = false;
@@ -183,8 +205,8 @@ serve(async (req: Request) => {
           body: JSON.stringify({
             from: 'MuniNow <notifications@muninow.com>',
             to: [userProfile.email],
-            subject: defaultSubject,
-            text: defaultMessage,
+            subject: finalSubject,
+            text: finalMessage,
           }),
         });
 
@@ -227,7 +249,7 @@ serve(async (req: Request) => {
             body: new URLSearchParams({
               From: twilioPhoneNumber,
               To: userProfile.phone,
-              Body: `${defaultSubject}\n\n${defaultMessage}`,
+              Body: `${finalSubject}\n\n${finalMessage}`,
             }),
           }
         );
