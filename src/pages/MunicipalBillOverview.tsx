@@ -1,16 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useBill } from '@/hooks/useBill';
-import PaymentSummary from '@/components/PaymentSummary';
 
 const MunicipalBillOverview = () => {
   const { billId } = useParams<{ billId: string }>();
   const navigate = useNavigate();
+  const [paymentMethod, setPaymentMethod] = useState<string>('');
   
   const { data: bill, isLoading, error } = useBill(billId!);
 
@@ -146,12 +147,25 @@ const MunicipalBillOverview = () => {
               <CardHeader>
                 <CardTitle>Payment Details</CardTitle>
               </CardHeader>
-              <CardContent>
-                <PaymentSummary
-                  baseAmount={bill.total_amount_cents}
-                  serviceFee={null}
-                  selectedPaymentMethod={null}
-                />
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground mb-2 block">Paid In-Person</label>
+                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select payment method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="check">Check</SelectItem>
+                      <SelectItem value="terminal">Terminal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-base">Amount Due</span>
+                  <span className="text-base font-medium">{formatCurrency(bill.total_amount_cents)}</span>
+                </div>
               </CardContent>
             </Card>
 
