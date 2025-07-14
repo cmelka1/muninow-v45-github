@@ -1,16 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useBill } from '@/hooks/useBill';
 import PaymentSummary from '@/components/PaymentSummary';
 
 const MunicipalBillOverview = () => {
   const { billId } = useParams<{ billId: string }>();
   const navigate = useNavigate();
+  const [paymentMethod, setPaymentMethod] = useState<string>('');
   
   const { data: bill, isLoading, error } = useBill(billId!);
 
@@ -185,18 +187,19 @@ const MunicipalBillOverview = () => {
                 {/* Separator */}
                 <div className="border-t border-border"></div>
 
-                {/* Amount Section */}
+                {/* Paid In-Person Section */}
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Amount Due:</span>
-                    <span className="text-lg font-semibold">{formatCurrency(bill.total_amount_cents)}</span>
-                  </div>
-                  {bill.payment_status && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Status:</span>
-                      <span className="text-sm font-medium capitalize">{bill.payment_status}</span>
-                    </div>
-                  )}
+                  <label className="text-sm font-medium text-muted-foreground">Paid In-Person</label>
+                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select payment method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="check">Check</SelectItem>
+                      <SelectItem value="terminal">Terminal</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Info Note */}
