@@ -165,16 +165,23 @@ export const useMerchants = () => {
     setError(null);
     
     try {
+      console.log('Fetching merchant with ID:', merchantId);
+      
       const { data, error } = await supabase
         .from('merchants')
         .select('*')
         .eq('id', merchantId)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
-
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Merchant data:', data);
       return data;
     } catch (err: any) {
+      console.error('fetchMerchantById error:', err);
       setError(err.message);
       toast({
         title: "Error",

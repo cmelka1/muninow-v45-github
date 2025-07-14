@@ -14,10 +14,16 @@ const MunicipalMerchantDetail = () => {
 
   React.useEffect(() => {
     const loadMerchant = async () => {
-      if (!merchantId) return;
+      if (!merchantId) {
+        console.log('No merchantId provided');
+        return;
+      }
+      
+      console.log('Loading merchant with ID:', merchantId);
       
       try {
         const result = await fetchMerchantById(merchantId);
+        console.log('Received merchant result:', result);
         setMerchant(result);
       } catch (err) {
         console.error('Error loading merchant:', err);
