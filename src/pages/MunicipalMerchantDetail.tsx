@@ -128,6 +128,15 @@ const MunicipalMerchantDetail = () => {
     return routingNumber;
   };
 
+  const formatAccountType = (accountType: string | null) => {
+    if (!accountType) return 'Not specified';
+    // Convert underscore_case to Title Case
+    return accountType
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -143,17 +152,13 @@ const MunicipalMerchantDetail = () => {
         {/* Basic Merchant Information Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
+            <CardTitle>Merchant Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Merchant Name</label>
                 <p className="text-base">{merchant.merchant_name || 'Not provided'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">DBA (Doing Business As)</label>
-                <p className="text-base">{merchant.doing_business_as || 'Not provided'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Category</label>
@@ -196,10 +201,7 @@ const MunicipalMerchantDetail = () => {
         {/* Business Address Card */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              Business Address
-            </CardTitle>
+            <CardTitle>Business Address</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -221,10 +223,7 @@ const MunicipalMerchantDetail = () => {
         {/* Bank Account Information Card */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Bank Account Information
-            </CardTitle>
+            <CardTitle>Bank Account Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -234,7 +233,7 @@ const MunicipalMerchantDetail = () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Account Type</label>
-                <p className="text-base">{merchant.bank_account_type || 'Not specified'}</p>
+                <p className="text-base">{formatAccountType(merchant.bank_account_type)}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Routing Number</label>
