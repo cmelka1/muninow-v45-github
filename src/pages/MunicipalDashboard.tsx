@@ -41,6 +41,15 @@ const revenueByCategory = [
   { category: 'Other Fees', revenue: 3200000, percentage: 17, color: '#8dd1e1' },
 ];
 
+const actualVsBudget = [
+  { month: 'Jan', actual: 2850000, budget: 3000000 },
+  { month: 'Feb', actual: 2620000, budget: 2800000 },
+  { month: 'Mar', actual: 3100000, budget: 3200000 },
+  { month: 'Apr', actual: 2950000, budget: 3100000 },
+  { month: 'May', actual: 3350000, budget: 3400000 },
+  { month: 'Jun', actual: 3200000, budget: 3300000 },
+];
+
 const paymentMethods = [
   { method: 'Online Payment', count: 45600, percentage: 62 },
   { method: 'ACH Transfer', count: 18200, percentage: 25 },
@@ -75,6 +84,14 @@ const chartConfig = {
   collection: {
     label: "Collection Rate",
     color: "hsl(var(--accent))",
+  },
+  actual: {
+    label: "Actual Revenue",
+    color: "hsl(var(--primary))",
+  },
+  budget: {
+    label: "Budget Revenue",
+    color: "hsl(var(--muted-foreground))",
   },
 };
 
@@ -153,6 +170,40 @@ const MunicipalDashboard = () => {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Actual vs Budget Revenue */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Actual vs Budget Revenue</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={actualVsBudget} barCategoryGap="20%">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
+                  <ChartTooltip 
+                    content={<ChartTooltipContent />}
+                    formatter={(value) => [`$${(Number(value) / 1000000).toFixed(2)}M`]}
+                  />
+                  <Bar 
+                    dataKey="actual" 
+                    fill="hsl(var(--primary))" 
+                    radius={[2, 2, 0, 0]}
+                    name="Actual Revenue"
+                  />
+                  <Bar 
+                    dataKey="budget" 
+                    fill="hsl(var(--muted-foreground))" 
+                    radius={[2, 2, 0, 0]}
+                    name="Budget Revenue"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
         {/* Revenue Trend */}
         <Card>
           <CardHeader>
@@ -181,7 +232,10 @@ const MunicipalDashboard = () => {
             </ChartContainer>
           </CardContent>
         </Card>
+      </div>
 
+      {/* Additional Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue by Category */}
         <Card>
           <CardHeader>
