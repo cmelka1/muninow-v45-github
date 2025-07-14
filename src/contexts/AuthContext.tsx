@@ -161,7 +161,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsLoading(false);
           
           // Redirect to signin page if not already there
-          if (!window.location.pathname.includes('/signin') && !window.location.pathname.includes('/auth')) {
+          if (!window.location.pathname.includes('/signin')) {
             window.location.href = '/signin';
           }
         }
@@ -190,8 +190,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!isLoading && user && profile) {
       const currentPath = window.location.pathname;
       
-      // Don't redirect if already on correct path or on auth/signup pages
-      if (currentPath.includes('/auth') || currentPath.includes('/signup') || currentPath.includes('/reset-password')) {
+      // Don't redirect if already on correct path or on signin/signup pages
+      if (currentPath.includes('/signin') || currentPath.includes('/signup') || currentPath.includes('/reset-password')) {
         return;
       }
 
