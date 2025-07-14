@@ -100,10 +100,28 @@ export const RefundDialog: React.FC<RefundDialogProps> = ({
         throw new Error(data.error || 'Refund processing failed');
       }
 
-      toast({
-        title: "Refund Initiated",
-        description: `Refund request for ${paymentDetails.master_bills.external_bill_number} has been processed: ${data.message}`
-      });
+      // Handle different refund statuses
+      const status = data.refund?.refund_status || 'unknown';
+      
+      if (status === 'pending') {
+        toast({
+          title: "Refund Submitted Successfully",
+          description: `Refund request for ${paymentDetails.master_bills.external_bill_number} has been submitted and is being processed. You will be notified when the refund is completed.`,
+          variant: "default"
+        });
+      } else if (status === 'succeeded') {
+        toast({
+          title: "Refund Completed",
+          description: `Refund for ${paymentDetails.master_bills.external_bill_number} has been successfully processed.`,
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "Refund Initiated",
+          description: `Refund request for ${paymentDetails.master_bills.external_bill_number} has been processed: ${data.message}`,
+          variant: "default"
+        });
+      }
 
       onRefundCreated();
       onOpenChange(false);
