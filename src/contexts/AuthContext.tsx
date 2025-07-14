@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useSessionTimeout } from '@/hooks/useSessionTimeout';
+import { SessionWarningDialog } from '@/components/SessionWarningDialog';
 
 interface Profile {
   id: string;
@@ -28,6 +30,7 @@ interface AuthContextType {
   loginError: string | null;
   isForgotPasswordOpen: boolean;
   resetSent: boolean;
+  isSessionWarningOpen: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -35,6 +38,7 @@ interface AuthContextType {
   updatePassword: (password: string) => Promise<{ error: any }>;
   setForgotPasswordOpen: (open: boolean) => void;
   clearError: () => void;
+  extendSession: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -60,6 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [isSessionWarningOpen, setIsSessionWarningOpen] = useState(false);
 
   // Removed debug logging for production
 
@@ -213,11 +218,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = async () => {
     try {
+      // Clear session warning dialog
+      setIsSessionWarningOpen(false);
+      
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      // Clear local state
+      // Clear local state and storage
       setProfile(null);
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Redirect to signin page
+      window.location.href = '/signin';
     } catch (error: any) {
       toast({
         title: "Error",
@@ -301,6 +314,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoginError(null);
   };
 
+  const handleSessionTimeout = () => {
+    toast({
+      title: "Session Expired",
+      description: "You have been signed out due to inactivity.",
+      variant: "destructive"
+    });
+    signOut();
+  };
+
+  const handleSessionWarning = () => {
+    setIsSessionWarningOpen(true);
+  };
+
+  const extendSession = () => {
+    setIsSessionWarningOpen(false);
+    // Timer will be reset automatically by activity detection
+  };
+
+  // Session timeout hook
+  useSessionTimeout({
+    timeoutMinutes: 10,
+    warningMinutes: 1,
+    onTimeout: handleSessionTimeout,
+    onWarning: handleSessionWarning,
+    isAuthenticated: !!user
+  });
+
   const value: AuthContextType = {
     user,
     session,
@@ -310,18 +350,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loginError,
     isForgotPasswordOpen,
     resetSent,
+    isSessionWarningOpen,
     signIn,
     signUp,
     signOut,
     resetPassword,
     updatePassword,
     setForgotPasswordOpen,
-    clearError
+    clearError,
+    extendSession
   };
 
   return (
     <AuthContext.Provider value={value}>
       {children}
+      <SessionWarningDialog
+        isOpen={isSessionWarningOpen}
+        onExtendSession={extendSession}
+        onSignOut={signOut}
+        warningSeconds={60}
+      />
     </AuthContext.Provider>
   );
 };
