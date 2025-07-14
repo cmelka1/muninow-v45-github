@@ -3,19 +3,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useBill = (billId: string) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   return useQuery({
     queryKey: ['master-bill', billId],
     queryFn: async () => {
       if (!user?.id || !billId) return null;
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('master_bills')
         .select('*')
-        .eq('bill_id', billId)
-        .eq('user_id', user.id)
-        .single();
+        .eq('bill_id', billId);
+
+      // For non-municipal users, filter by user_id
+      // Municipal users rely on RLS policies for access control
+      if (profile?.account_type !== 'municipal') {
+        query = query.eq('user_id', user.id);
+      }
+
+      const { data, error } = await query.single();
 
       if (error) {
         console.error('Error fetching bill:', error);
