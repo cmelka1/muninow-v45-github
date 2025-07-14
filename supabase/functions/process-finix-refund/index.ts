@@ -70,6 +70,14 @@ Deno.serve(async (req) => {
       );
     }
 
+    console.log('Payment history data:', {
+      id: paymentHistory.id,
+      customer_id: paymentHistory.customer_id,
+      customer_id_type: typeof paymentHistory.customer_id,
+      bill_id: paymentHistory.bill_id,
+      user_id: paymentHistory.user_id
+    });
+
     if (!paymentHistory.finix_transfer_id) {
       return new Response(
         JSON.stringify({ success: false, error: 'Payment not eligible for refund (no Finix transfer ID)' }),
