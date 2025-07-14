@@ -161,16 +161,16 @@ const MunicipalMerchantDetail = () => {
                 <p className="text-base">{merchant.merchant_name || 'Not provided'}</p>
               </div>
               <div>
+                <label className="text-sm font-medium text-muted-foreground">MCC Code</label>
+                <p className="text-base">{merchant.mcc_code || 'Not provided'}</p>
+              </div>
+              <div>
                 <label className="text-sm font-medium text-muted-foreground">Category</label>
                 <p className="text-base">{merchant.category || 'Not specified'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Subcategory</label>
                 <p className="text-base">{merchant.subcategory || 'Not specified'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">MCC Code</label>
-                <p className="text-base">{merchant.mcc_code || 'Not provided'}</p>
               </div>
               {merchant.business_website && (
                 <div>
