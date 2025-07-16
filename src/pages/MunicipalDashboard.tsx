@@ -171,12 +171,12 @@ const MunicipalDashboard = () => {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Actual vs Budget Revenue */}
-        <Card>
+        <Card className="h-[400px]">
           <CardHeader>
             <CardTitle>Actual vs Budget Revenue</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+          <CardContent className="h-[320px]">
+            <ChartContainer config={chartConfig} className="h-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={actualVsBudget} barCategoryGap="20%">
                   <CartesianGrid strokeDasharray="3 3" />
@@ -205,12 +205,12 @@ const MunicipalDashboard = () => {
         </Card>
 
         {/* Revenue Trend */}
-        <Card>
+        <Card className="h-[400px]">
           <CardHeader>
             <CardTitle>Monthly Revenue Trend</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+          <CardContent className="h-[320px]">
+            <ChartContainer config={chartConfig} className="h-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={monthlyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -234,15 +234,15 @@ const MunicipalDashboard = () => {
         </Card>
       </div>
 
-      {/* Additional Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Revenue Category and Additional Metrics */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue by Category */}
-        <Card>
+        <Card className="h-[400px]">
           <CardHeader>
             <CardTitle>Revenue by Category</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+          <CardContent className="h-[320px]">
+            <ChartContainer config={chartConfig} className="h-full">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -266,16 +266,13 @@ const MunicipalDashboard = () => {
             </ChartContainer>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Additional Metrics */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Payment Methods */}
-        <Card>
+        <Card className="h-[400px]">
           <CardHeader>
             <CardTitle>Payment Methods</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="h-[320px] space-y-4 overflow-y-auto">
             {paymentMethods.map((method) => (
               <div key={method.method} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -292,11 +289,11 @@ const MunicipalDashboard = () => {
         </Card>
 
         {/* Top Departments */}
-        <Card>
+        <Card className="h-[400px]">
           <CardHeader>
             <CardTitle>Top Revenue Departments</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="h-[320px] space-y-4 overflow-y-auto">
             {topDepartments.map((dept) => (
               <div key={dept.department} className="flex items-center justify-between">
                 <div>
@@ -312,13 +309,15 @@ const MunicipalDashboard = () => {
             ))}
           </CardContent>
         </Card>
+      </div>
 
-        {/* System Status */}
-        <Card>
+      {/* System Status */}
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+        <Card className="h-[240px]">
           <CardHeader>
             <CardTitle>System Status</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="h-[160px] space-y-4 overflow-y-auto">
             <div className="flex items-center justify-between">
               <span className="text-sm">Payment Processing</span>
               <Badge variant="default">
