@@ -37,6 +37,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({ isMobile }) => {
               </Link>
             </div>
             
+            <div className="mt-4 text-center sm:text-left">
+              <p className="text-sm text-muted-foreground mb-2">Municipal administrators:</p>
+              <Link to="/municipal/signup" aria-label="Municipal administrator signup">
+                <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80">
+                  Sign up as Municipal Admin →
+                </Button>
+              </Link>
+            </div>
             <div className={`mt-6 grid grid-cols-2 ${isMobile ? 'gap-2' : 'gap-3'}`}>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="text-primary h-5 w-5" aria-hidden="true" />

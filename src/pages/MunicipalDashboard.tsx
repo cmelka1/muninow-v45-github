@@ -1,500 +1,399 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer as RechartsResponsiveContainer, Area, AreaChart, LineChart, Line } from 'recharts';
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import ReportBuilder from '@/components/ReportBuilder';
-import ResponsiveContainer from '@/components/ui/responsive-container';
-import ResponsiveTypography from '@/components/ui/responsive-typography';
-import { useResponsiveNavigation } from '@/hooks/useResponsiveNavigation';
 import { 
   DollarSign, 
   FileText, 
+  Users, 
+  Clock, 
   TrendingUp, 
   AlertCircle,
-  Building2,
   CreditCard,
-  FileBarChart,
-  Activity,
-  Target,
+  Building2,
+  Car,
   Calendar,
-  Bell,
-  Users
+  CheckCircle,
+  XCircle,
+  Timer,
+  FileBarChart
 } from 'lucide-react';
 
-// Enhanced responsive data
-const revenueMetrics = {
-  total: 18800000,
-  monthly: 3200000,
-  growth: 12.5,
-  target: 20000000
-};
-
-const collectionMetrics = {
-  rate: 92.8,
-  improvement: 1.2,
-  totalBills: 73500,
-  overdue: 156
-};
-
-const monthlyTrend = [
-  { month: 'Jan', revenue: 2850000, collection: 92, bills: 12300 },
-  { month: 'Feb', revenue: 2620000, collection: 89, bills: 11800 },
-  { month: 'Mar', revenue: 3100000, collection: 94, bills: 13200 },
-  { month: 'Apr', revenue: 2950000, collection: 91, bills: 12900 },
-  { month: 'May', revenue: 3350000, collection: 96, bills: 14100 },
-  { month: 'Jun', revenue: 3200000, collection: 93, bills: 13600 },
+// Dummy data for the dashboard
+const monthlyRevenue = [
+  { month: 'Jan', revenue: 2850000, bills: 12500, collection: 92 },
+  { month: 'Feb', revenue: 2620000, bills: 11800, collection: 89 },
+  { month: 'Mar', revenue: 3100000, bills: 13200, collection: 94 },
+  { month: 'Apr', revenue: 2950000, bills: 12900, collection: 91 },
+  { month: 'May', revenue: 3350000, bills: 14100, collection: 96 },
+  { month: 'Jun', revenue: 3200000, bills: 13800, collection: 93 },
 ];
 
-const departmentBreakdown = [
-  { department: 'Property Tax', revenue: 8500000, percentage: 45, color: 'hsl(var(--primary))' },
-  { department: 'Utilities', revenue: 3200000, percentage: 17, color: 'hsl(var(--secondary))' },
-  { department: 'Transportation', revenue: 2100000, percentage: 11, color: 'hsl(var(--accent))' },
-  { department: 'Planning', revenue: 1800000, percentage: 10, color: 'hsl(var(--chart-1))' },
-  { department: 'Other', revenue: 3200000, percentage: 17, color: 'hsl(var(--chart-2))' },
+const revenueByCategory = [
+  { category: 'Property Taxes', revenue: 8500000, percentage: 45, color: '#8884d8' },
+  { category: 'Traffic Fines', revenue: 2100000, percentage: 11, color: '#82ca9d' },
+  { category: 'Permits & Licenses', revenue: 1800000, percentage: 10, color: '#ffc658' },
+  { category: 'Utilities', revenue: 3200000, percentage: 17, color: '#ff7c7c' },
+  { category: 'Other Fees', revenue: 3200000, percentage: 17, color: '#8dd1e1' },
 ];
 
-const paymentAnalytics = [
-  { method: 'Online Payment', count: 45600, percentage: 62, color: 'hsl(var(--primary))' },
-  { method: 'ACH Transfer', count: 18200, percentage: 25, color: 'hsl(var(--secondary))' },
-  { method: 'In-Person', count: 7300, percentage: 10, color: 'hsl(var(--accent))' },
-  { method: 'Phone Payment', count: 2200, percentage: 3, color: 'hsl(var(--chart-1))' },
+const actualVsBudget = [
+  { month: 'Jan', actual: 2850000, budget: 3000000 },
+  { month: 'Feb', actual: 2620000, budget: 2800000 },
+  { month: 'Mar', actual: 3100000, budget: 3200000 },
+  { month: 'Apr', actual: 2950000, budget: 3100000 },
+  { month: 'May', actual: 3350000, budget: 3400000 },
+  { month: 'Jun', actual: 3200000, budget: 3300000 },
 ];
 
-const recentTransactions = [
-  { id: 'T-2024-001', customer: 'John Smith', department: 'Property Tax', amount: 2450, type: 'Payment', date: '2024-01-15', status: 'Completed' },
-  { id: 'T-2024-002', customer: 'Mary Johnson', department: 'Transportation', amount: 75, type: 'Fine', date: '2024-01-14', status: 'Pending' },
-  { id: 'T-2024-003', customer: 'ABC Corp', department: 'Planning', amount: 150, type: 'License', date: '2024-01-14', status: 'Completed' },
-  { id: 'T-2024-004', customer: 'David Wilson', department: 'Utilities', amount: 89, type: 'Bill', date: '2024-01-13', status: 'Completed' },
-  { id: 'T-2024-005', customer: 'Sarah Davis', department: 'Property Tax', amount: 500, type: 'Permit', date: '2024-01-13', status: 'Processing' },
-  { id: 'T-2024-006', customer: 'Tech Solutions', department: 'Planning', amount: 300, type: 'License', date: '2024-01-12', status: 'Completed' },
+const paymentMethods = [
+  { method: 'Online Payment', count: 45600, percentage: 62 },
+  { method: 'ACH Transfer', count: 18200, percentage: 25 },
+  { method: 'In-Person', count: 7300, percentage: 10 },
+  { method: 'Phone Payment', count: 2200, percentage: 3 },
+];
+
+const recentBills = [
+  { id: 'B-2024-001', type: 'Property Tax', amount: 2450, status: 'Paid', date: '2024-01-15' },
+  { id: 'B-2024-002', type: 'Parking Fine', amount: 75, status: 'Overdue', date: '2024-01-12' },
+  { id: 'B-2024-003', type: 'Business License', amount: 150, status: 'Paid', date: '2024-01-14' },
+  { id: 'B-2024-004', type: 'Water Bill', amount: 89, status: 'Pending', date: '2024-01-16' },
+  { id: 'B-2024-005', type: 'Building Permit', amount: 500, status: 'Paid', date: '2024-01-13' },
+];
+
+const topDepartments = [
+  { department: 'Property Assessment', revenue: 8500000, growth: 12 },
+  { department: 'Transportation', revenue: 2100000, growth: -5 },
+  { department: 'Planning & Zoning', revenue: 1800000, growth: 8 },
+  { department: 'Public Works', revenue: 1600000, growth: 15 },
 ];
 
 const chartConfig = {
-  revenue: { label: "Revenue", color: "hsl(var(--primary))" },
-  collection: { label: "Collection Rate", color: "hsl(var(--secondary))" },
-  department: { label: "Department", color: "hsl(var(--accent))" },
+  revenue: {
+    label: "Revenue",
+    color: "hsl(var(--primary))",
+  },
+  bills: {
+    label: "Bills Issued",
+    color: "hsl(var(--secondary))",
+  },
+  collection: {
+    label: "Collection Rate",
+    color: "hsl(var(--accent))",
+  },
+  actual: {
+    label: "Actual Revenue",
+    color: "hsl(var(--primary))",
+  },
+  budget: {
+    label: "Budget Revenue",
+    color: "hsl(var(--muted-foreground))",
+  },
 };
 
 const MunicipalDashboard = () => {
-  const { isMobile } = useResponsiveNavigation();
-
   return (
-    <ResponsiveContainer variant="section" maxWidth="full">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <ResponsiveTypography variant="h1" className="text-foreground">
-          Municipal Dashboard
-        </ResponsiveTypography>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Municipal Dashboard</h1>
+        </div>
         <ReportBuilder>
-          <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
+          <Button variant="outline" className="flex items-center gap-2">
             <FileBarChart className="h-4 w-4" />
-            <span className="hidden sm:inline">Create Report</span>
-            <span className="sm:hidden">Report</span>
+            Create Report
           </Button>
         </ReportBuilder>
       </div>
 
-      {/* Responsive Dashboard Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6">
-        
-        {/* Key Metrics - Top Priority */}
-        <Card className="md:col-span-2 xl:col-span-2 2xl:col-span-2 min-h-[280px] md:min-h-[350px]">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <ResponsiveTypography variant="h3" className="text-foreground">
-                Revenue Overview
-              </ResponsiveTypography>
-              <DollarSign className="h-5 w-5 text-muted-foreground" />
-            </div>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="text-center lg:text-left">
-                <ResponsiveTypography variant="h4" className="text-primary">
-                  ${(revenueMetrics.total / 1000000).toFixed(1)}M
-                </ResponsiveTypography>
-                <ResponsiveTypography variant="small" className="text-muted-foreground">
-                  Total Revenue
-                </ResponsiveTypography>
-              </div>
-              <div className="text-center lg:text-left">
-                <ResponsiveTypography variant="h4" className="text-secondary">
-                  +{revenueMetrics.growth}%
-                </ResponsiveTypography>
-                <ResponsiveTypography variant="small" className="text-muted-foreground">
-                  Growth Rate
-                </ResponsiveTypography>
-              </div>
-              <div className="text-center lg:text-left">
-                <ResponsiveTypography variant="h4" className="text-foreground">
-                  {collectionMetrics.rate}%
-                </ResponsiveTypography>
-                <ResponsiveTypography variant="small" className="text-muted-foreground">
-                  Collection Rate
-                </ResponsiveTypography>
-              </div>
-              <div className="text-center lg:text-left">
-                <ResponsiveTypography variant="h4" className="text-foreground">
-                  {collectionMetrics.totalBills.toLocaleString()}
-                </ResponsiveTypography>
-                <ResponsiveTypography variant="small" className="text-muted-foreground">
-                  Bills Processed
-                </ResponsiveTypography>
-              </div>
-            </div>
-            <ChartContainer config={chartConfig} className="h-[180px] md:h-[220px]">
-              <RechartsResponsiveContainer width="100%" height="100%">
-                <AreaChart data={monthlyTrend}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis 
-                    dataKey="month" 
-                    fontSize={isMobile ? 10 : 12}
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+          <CardContent>
+            <div className="text-2xl font-bold">$18.8M</div>
+            <p className="text-xs text-muted-foreground">
+              <TrendingUp className="inline h-3 w-3 mr-1" />
+              +12.5% from last year
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Bills Processed</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">73,500</div>
+            <p className="text-xs text-muted-foreground">
+              +2,100 this month
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Collection Rate</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">92.8%</div>
+            <p className="text-xs text-muted-foreground">
+              +1.2% from last month
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Outstanding Bills</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">$1.3M</div>
+            <p className="text-xs text-muted-foreground">
+              <AlertCircle className="inline h-3 w-3 mr-1" />
+              156 overdue
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Actual vs Budget Revenue */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Actual vs Budget Revenue</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={actualVsBudget} barCategoryGap="20%">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
+                  <ChartTooltip 
+                    content={<ChartTooltipContent />}
+                    formatter={(value) => [`$${(Number(value) / 1000000).toFixed(2)}M`]}
                   />
-                  <YAxis 
-                    tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} 
-                    fontSize={isMobile ? 10 : 12}
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  <Bar 
+                    dataKey="actual" 
+                    fill="hsl(var(--primary))" 
+                    radius={[2, 2, 0, 0]}
+                    name="Actual Revenue"
                   />
-                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar 
+                    dataKey="budget" 
+                    fill="hsl(var(--muted-foreground))" 
+                    radius={[2, 2, 0, 0]}
+                    name="Budget Revenue"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* Revenue Trend */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly Revenue Trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthlyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
+                  <ChartTooltip 
+                    content={<ChartTooltipContent />}
+                    formatter={(value) => [`$${(Number(value) / 1000000).toFixed(2)}M`, 'Revenue']}
+                  />
                   <Area 
                     type="monotone" 
                     dataKey="revenue" 
                     stroke="hsl(var(--primary))" 
                     fill="hsl(var(--primary))" 
-                    fillOpacity={0.2}
+                    fillOpacity={0.3}
                   />
                 </AreaChart>
-              </RechartsResponsiveContainer>
+              </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
+      </div>
 
-        {/* Collection Performance */}
-        <Card className="md:col-span-1 xl:col-span-1 2xl:col-span-1 min-h-[280px] md:min-h-[350px]">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <ResponsiveTypography variant="h4" className="text-foreground">
-                Collection Performance
-              </ResponsiveTypography>
-              <Target className="h-5 w-5 text-muted-foreground" />
-            </div>
+      {/* Additional Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Revenue by Category */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Revenue by Category</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[200px] md:h-[250px]">
-              <RechartsResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyTrend}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis 
-                    dataKey="month" 
-                    fontSize={isMobile ? 10 : 12}
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <YAxis 
-                    domain={[85, 100]} 
-                    fontSize={isMobile ? 10 : 12}
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar 
-                    dataKey="collection" 
-                    fill="hsl(var(--secondary))" 
-                    radius={[2, 2, 0, 0]}
-                  />
-                </BarChart>
-              </RechartsResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Alerts - High Priority on Mobile */}
-        <Card className="md:col-span-1 xl:col-span-1 2xl:col-span-1 min-h-[280px] md:min-h-[350px]">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <ResponsiveTypography variant="h4" className="text-foreground">
-                System Alerts
-              </ResponsiveTypography>
-              <Bell className="h-5 w-5 text-muted-foreground" />
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertCircle className="h-4 w-4 text-destructive" />
-                <ResponsiveTypography variant="small" className="font-medium">
-                  Urgent Alert
-                </ResponsiveTypography>
-              </div>
-              <ResponsiveTypography variant="caption" className="text-muted-foreground">
-                {collectionMetrics.overdue} bills are overdue
-              </ResponsiveTypography>
-            </div>
-            
-            <div className="space-y-3">
-              <ResponsiveTypography variant="small" className="font-medium">
-                System Status
-              </ResponsiveTypography>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <ResponsiveTypography variant="caption">Payment Processing</ResponsiveTypography>
-                  <Badge variant="default">Online</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <ResponsiveTypography variant="caption">System Sync</ResponsiveTypography>
-                  <Badge variant="default">Active</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <ResponsiveTypography variant="caption">Data Backup</ResponsiveTypography>
-                  <Badge variant="secondary">Running</Badge>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t">
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div>
-                  <ResponsiveTypography variant="h5" className="text-primary">
-                    98.5%
-                  </ResponsiveTypography>
-                  <ResponsiveTypography variant="caption" className="text-muted-foreground">
-                    Uptime
-                  </ResponsiveTypography>
-                </div>
-                <div>
-                  <ResponsiveTypography variant="h5" className="text-foreground">
-                    4.2s
-                  </ResponsiveTypography>
-                  <ResponsiveTypography variant="caption" className="text-muted-foreground">
-                    Response
-                  </ResponsiveTypography>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Department Breakdown */}
-        <Card className="md:col-span-2 xl:col-span-2 2xl:col-span-2 min-h-[280px] md:min-h-[400px]">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <ResponsiveTypography variant="h4" className="text-foreground">
-                Department Revenue
-              </ResponsiveTypography>
-              <Building2 className="h-5 w-5 text-muted-foreground" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[200px] md:h-[300px]">
-              <RechartsResponsiveContainer width="100%" height="100%">
-                <BarChart data={departmentBreakdown} layout={isMobile ? "vertical" : "horizontal"}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                  {isMobile ? (
-                    <>
-                      <XAxis type="category" dataKey="department" fontSize={10} />
-                      <YAxis type="number" tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} fontSize={10} />
-                    </>
-                  ) : (
-                    <>
-                      <XAxis type="number" tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} fontSize={12} />
-                      <YAxis type="category" dataKey="department" width={100} fontSize={11} />
-                    </>
-                  )}
+            <ChartContainer config={chartConfig} className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={revenueByCategory}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    dataKey="revenue"
+                    label={({ category, percentage }) => `${category}: ${percentage}%`}
+                  >
+                    {revenueByCategory.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
                   <ChartTooltip 
                     content={<ChartTooltipContent />}
                     formatter={(value) => [`$${(Number(value) / 1000000).toFixed(1)}M`, 'Revenue']}
                   />
-                  <Bar 
-                    dataKey="revenue" 
-                    fill="hsl(var(--accent))" 
-                    radius={isMobile ? [2, 2, 0, 0] : [0, 2, 2, 0]}
-                  />
-                </BarChart>
-              </RechartsResponsiveContainer>
+                </PieChart>
+              </ResponsiveContainer>
             </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Payment Analytics */}
-        <Card className="md:col-span-1 xl:col-span-1 2xl:col-span-1 min-h-[280px] md:min-h-[400px]">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <ResponsiveTypography variant="h4" className="text-foreground">
-                Payment Methods
-              </ResponsiveTypography>
-              <CreditCard className="h-5 w-5 text-muted-foreground" />
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-center">
-              <ChartContainer config={chartConfig} className="h-[180px] w-[180px]">
-                <RechartsResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={paymentAnalytics}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={30}
-                      outerRadius={70}
-                      dataKey="percentage"
-                    >
-                      {paymentAnalytics.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <ChartTooltip 
-                      content={<ChartTooltipContent />}
-                      formatter={(value) => [`${value}%`, 'Share']}
-                    />
-                  </PieChart>
-                </RechartsResponsiveContainer>
-              </ChartContainer>
-            </div>
-            <div className="space-y-2">
-              {paymentAnalytics.map((method) => (
-                <div key={method.method} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: method.color }}
-                    />
-                    <ResponsiveTypography variant="caption">
-                      {method.method}
-                    </ResponsiveTypography>
-                  </div>
-                  <ResponsiveTypography variant="caption" className="font-medium">
-                    {method.percentage}%
-                  </ResponsiveTypography>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Transaction Activity */}
-        <Card className="md:col-span-1 xl:col-span-1 2xl:col-span-1 min-h-[280px] md:min-h-[400px]">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <ResponsiveTypography variant="h4" className="text-foreground">
-                Daily Activity
-              </ResponsiveTypography>
-              <Activity className="h-5 w-5 text-muted-foreground" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[200px] md:h-[300px]">
-              <RechartsResponsiveContainer width="100%" height="100%">
-                <LineChart data={monthlyTrend}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis 
-                    dataKey="month" 
-                    fontSize={isMobile ? 10 : 12}
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <YAxis 
-                    fontSize={isMobile ? 10 : 12}
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="bills" 
-                    stroke="hsl(var(--chart-1))" 
-                    strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--chart-1))', strokeWidth: 2, r: 4 }}
-                  />
-                </LineChart>
-              </RechartsResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Recent Transactions Table - Desktop Full Width, Mobile Stacked */}
-        <Card className="col-span-full min-h-[300px] md:min-h-[400px]">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <ResponsiveTypography variant="h4" className="text-foreground">
-                Recent Transactions
-              </ResponsiveTypography>
-              <FileText className="h-5 w-5 text-muted-foreground" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isMobile ? (
-              /* Mobile: Card-based layout */
-              <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                {recentTransactions.slice(0, 6).map((transaction) => (
-                  <div key={transaction.id} className="p-3 bg-muted/30 rounded-lg">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <ResponsiveTypography variant="small" className="font-medium">
-                          {transaction.customer}
-                        </ResponsiveTypography>
-                        <ResponsiveTypography variant="caption" className="text-muted-foreground">
-                          {transaction.department}
-                        </ResponsiveTypography>
-                      </div>
-                      <div className="text-right">
-                        <ResponsiveTypography variant="small" className="font-bold">
-                          ${transaction.amount}
-                        </ResponsiveTypography>
-                        <Badge variant={transaction.status === 'Completed' ? 'default' : 'secondary'} className="text-xs">
-                          {transaction.status}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <ResponsiveTypography variant="caption" className="text-muted-foreground">
-                        {transaction.type} • {transaction.date}
-                      </ResponsiveTypography>
-                      <ResponsiveTypography variant="caption" className="text-muted-foreground">
-                        {transaction.id}
-                      </ResponsiveTypography>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              /* Desktop: Traditional table */
-              <div className="max-h-[320px] overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Transaction ID</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Department</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recentTransactions.map((transaction) => (
-                      <TableRow key={transaction.id}>
-                        <TableCell className="font-mono text-sm">{transaction.id}</TableCell>
-                        <TableCell className="font-medium">{transaction.customer}</TableCell>
-                        <TableCell>{transaction.department}</TableCell>
-                        <TableCell>{transaction.type}</TableCell>
-                        <TableCell>{transaction.date}</TableCell>
-                        <TableCell className="font-bold">${transaction.amount}</TableCell>
-                        <TableCell>
-                          <Badge variant={transaction.status === 'Completed' ? 'default' : 'secondary'}>
-                            {transaction.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
-    </ResponsiveContainer>
+
+      {/* Additional Metrics */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Payment Methods */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Payment Methods</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {paymentMethods.map((method) => (
+              <div key={method.method} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  <span className="text-sm">{method.method}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Progress value={method.percentage} className="w-16" />
+                  <span className="text-sm font-medium">{method.percentage}%</span>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Top Departments */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Revenue Departments</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {topDepartments.map((dept) => (
+              <div key={dept.department} className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">{dept.department}</p>
+                  <p className="text-xs text-muted-foreground">
+                    ${(dept.revenue / 1000000).toFixed(1)}M
+                  </p>
+                </div>
+                <Badge variant={dept.growth > 0 ? "default" : "destructive"}>
+                  {dept.growth > 0 ? '+' : ''}{dept.growth}%
+                </Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* System Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle>System Status</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Payment Processing</span>
+              <Badge variant="default">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Online
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Bill Generation</span>
+              <Badge variant="default">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Active
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Notification Service</span>
+              <Badge variant="secondary">
+                <Timer className="h-3 w-3 mr-1" />
+                Maintenance
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Data Sync</span>
+              <Badge variant="default">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Synced
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Activity Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Bills Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2">Bill ID</th>
+                  <th className="text-left py-2">Type</th>
+                  <th className="text-left py-2">Amount</th>
+                  <th className="text-left py-2">Status</th>
+                  <th className="text-left py-2">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentBills.map((bill) => (
+                  <tr key={bill.id} className="border-b">
+                    <td className="py-2 font-mono text-sm">{bill.id}</td>
+                    <td className="py-2">{bill.type}</td>
+                    <td className="py-2">${bill.amount}</td>
+                    <td className="py-2">
+                      <Badge 
+                        variant={
+                          bill.status === 'Paid' ? 'default' : 
+                          bill.status === 'Overdue' ? 'destructive' : 
+                          'secondary'
+                        }
+                      >
+                        {bill.status}
+                      </Badge>
+                    </td>
+                    <td className="py-2 text-sm text-muted-foreground">{bill.date}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
