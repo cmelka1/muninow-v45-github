@@ -47,9 +47,29 @@ function mapFinixStatus(finixState: string): { verification_status: string; proc
 // Process different webhook event types
 async function processWebhookEvent(eventData: any, correlationId: string): Promise<void> {
   const eventType = eventData.type;
-  const eventObject = eventData.data?.object || eventData.object;
+  const eventEntity = eventData.entity;
   
   console.log(`🔄 Processing event type: ${eventType}`);
+  console.log(`📦 Event entity: ${eventEntity}`);
+  console.log(`📋 Full event data:`, JSON.stringify(eventData, null, 2));
+
+  // Extract event object based on Finix webhook structure
+  let eventObject = null;
+  
+  if (eventData._embedded) {
+    // Handle Finix webhook format with _embedded structure
+    if (eventEntity === 'merchant' && eventData._embedded.merchants) {
+      eventObject = eventData._embedded.merchants[0];
+    } else if (eventEntity === 'verification' && eventData._embedded.verifications) {
+      eventObject = eventData._embedded.verifications[0];
+    } else if (eventEntity === 'merchant_profile' && eventData._embedded.merchant_profiles) {
+      eventObject = eventData._embedded.merchant_profiles[0];
+    }
+  } else {
+    // Fallback to legacy format
+    eventObject = eventData.data?.object || eventData.object;
+  }
+
   console.log(`📦 Event object:`, JSON.stringify(eventObject, null, 2));
 
   if (!eventObject) {
@@ -98,6 +118,106 @@ async function processWebhookEvent(eventData: any, correlationId: string): Promi
 
   // Handle different event types
   switch (eventType) {
+    case 'underwritten':
+      // Merchant approval event - this is the key event we were missing!
+      console.log('🎉 Merchant underwritten (approved) event received!');
+      if (eventEntity === 'merchant' && eventObject.onboarding_state) {
+        const statusMapping = mapFinixStatus(eventObject.onboarding_state);
+        updateData.onboarding_state = eventObject.onboarding_state;
+        updateData.verification_status = statusMapping.verification_status;
+        updateData.processing_status = statusMapping.processing_status;
+        console.log(`📊 Status mapping: ${eventObject.onboarding_state} → verification: ${statusMapping.verification_status}, processing: ${statusMapping.processing_status}`);
+      }
+      
+      // Update processing and settlement flags
+      if (typeof eventObject.processing_enabled === 'boolean') {
+        updateData.processing_enabled = eventObject.processing_enabled;
+        console.log(`🔧 Processing enabled: ${eventObject.processing_enabled}`);
+      }
+      
+      if (typeof eventObject.settlement_enabled === 'boolean') {
+        updateData.settlement_enabled = eventObject.settlement_enabled;
+        console.log(`💰 Settlement enabled: ${eventObject.settlement_enabled}`);
+      }
+
+      // Update other relevant fields
+      if (eventObject.merchant_profile) {
+        updateData.finix_merchant_profile_id = eventObject.merchant_profile;
+      }
+      
+      if (eventObject.verification) {
+        updateData.finix_verification_id = eventObject.verification;
+      }
+      break;
+
+    case 'updated':
+      // Handle merchant/verification updated events
+      if (eventEntity === 'merchant') {
+        console.log('🔄 Merchant updated event received');
+        if (eventObject.onboarding_state) {
+          const statusMapping = mapFinixStatus(eventObject.onboarding_state);
+          updateData.onboarding_state = eventObject.onboarding_state;
+          updateData.verification_status = statusMapping.verification_status;
+          updateData.processing_status = statusMapping.processing_status;
+          console.log(`📊 Status mapping: ${eventObject.onboarding_state} → verification: ${statusMapping.verification_status}, processing: ${statusMapping.processing_status}`);
+        }
+        
+        // Update processing and settlement flags
+        if (typeof eventObject.processing_enabled === 'boolean') {
+          updateData.processing_enabled = eventObject.processing_enabled;
+          console.log(`🔧 Processing enabled: ${eventObject.processing_enabled}`);
+        }
+        
+        if (typeof eventObject.settlement_enabled === 'boolean') {
+          updateData.settlement_enabled = eventObject.settlement_enabled;
+          console.log(`💰 Settlement enabled: ${eventObject.settlement_enabled}`);
+        }
+
+        // Update other relevant fields
+        if (eventObject.merchant_profile) {
+          updateData.finix_merchant_profile_id = eventObject.merchant_profile;
+        }
+        
+        if (eventObject.verification) {
+          updateData.finix_verification_id = eventObject.verification;
+        }
+      } else if (eventEntity === 'verification') {
+        console.log('🔍 Verification updated event received');
+        if (eventObject.state) {
+          // Map verification state to our status
+          if (eventObject.state === 'SUCCEEDED') {
+            updateData.verification_status = 'approved';
+          } else if (eventObject.state === 'FAILED') {
+            updateData.verification_status = 'rejected';
+          } else if (eventObject.state === 'PENDING') {
+            updateData.verification_status = 'pending';
+          }
+          console.log(`🔍 Verification state: ${eventObject.state} → status: ${updateData.verification_status}`);
+        }
+      }
+      break;
+
+    case 'created':
+      // Handle creation events
+      if (eventEntity === 'merchant') {
+        console.log('🆕 Merchant created event received');
+        if (eventObject.onboarding_state) {
+          const statusMapping = mapFinixStatus(eventObject.onboarding_state);
+          updateData.onboarding_state = eventObject.onboarding_state;
+          updateData.verification_status = statusMapping.verification_status;
+          updateData.processing_status = statusMapping.processing_status;
+          console.log(`📊 Status mapping: ${eventObject.onboarding_state} → verification: ${statusMapping.verification_status}, processing: ${statusMapping.processing_status}`);
+        }
+      } else if (eventEntity === 'verification') {
+        console.log('🔍 Verification created event received');
+        if (eventObject.state === 'PENDING') {
+          updateData.verification_status = 'pending';
+          console.log(`🔍 Verification state: ${eventObject.state} → status: pending`);
+        }
+      }
+      break;
+
+    // Legacy case handlers for backward compatibility
     case 'merchant.verification.updated':
     case 'merchant.onboarding.state.updated':
     case 'merchant.updated':
