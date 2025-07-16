@@ -153,7 +153,7 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {}, onPayClick }) => 
                 <TableHead>Merchant</TableHead>
                 <TableHead className="hidden md:table-cell">Category</TableHead>
                 <TableHead className="hidden lg:table-cell text-center">Status</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="text-center">Amount</TableHead>
                 <TableHead className="w-[120px] text-center">Pay</TableHead>
               </TableRow>
             </TableHeader>
@@ -180,7 +180,7 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {}, onPayClick }) => 
                   <TableCell className="hidden lg:table-cell py-2 text-center">
                     {getStatusBadge(bill.payment_status || 'unpaid')}
                   </TableCell>
-                  <TableCell className="text-right font-medium py-2">
+                  <TableCell className="text-center font-medium py-2">
                     {formatAmount(Number(bill.amount_due_cents) / 100)}
                   </TableCell>
                   <TableCell className="text-center py-2">
