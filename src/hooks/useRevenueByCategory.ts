@@ -24,9 +24,9 @@ const getDateRange = (timeRange: TimeRange) => {
   }
 };
 
-export const usePaymentMethods = (timeRange: TimeRange) => {
+export const useRevenueByCategory = (timeRange: TimeRange) => {
   return useQuery({
-    queryKey: ["payment-methods", timeRange],
+    queryKey: ["revenue-by-category", timeRange],
     queryFn: async () => {
       const { startDate, endDate } = getDateRange(timeRange);
       
@@ -41,35 +41,30 @@ export const usePaymentMethods = (timeRange: TimeRange) => {
         throw new Error("No customer ID found");
       }
 
-      // Get payment method distribution
-      const { data: paymentData } = await supabase
+      // Revenue by category from payment history
+      const { data: categoryData } = await supabase
         .from("payment_history")
-        .select("payment_type, total_amount_cents")
+        .select("category, total_amount_cents")
         .eq("customer_id", profile.customer_id)
         .eq("transfer_state", "SUCCEEDED")
         .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
+        .lte("created_at", endDate.toISOString())
+        .not("category", "is", null);
 
-      // Group by payment type
-      const methodMap = new Map<string, { count: number; amount: number }>();
+      // Group by category and sum revenue
+      const categoryMap = new Map<string, number>();
       
-      paymentData?.forEach((payment) => {
-        const method = getPaymentMethodLabel(payment.payment_type);
-        const existing = methodMap.get(method) || { count: 0, amount: 0 };
-        methodMap.set(method, {
-          count: existing.count + 1,
-          amount: existing.amount + (payment.total_amount_cents || 0),
-        });
+      categoryData?.forEach((payment) => {
+        const category = payment.category || "Other";
+        const amount = payment.total_amount_cents || 0;
+        categoryMap.set(category, (categoryMap.get(category) || 0) + amount);
       });
 
       // Convert to chart format
-      const totalTransactions = Array.from(methodMap.values()).reduce((sum, data) => sum + data.count, 0);
-      
-      const chartData = Array.from(methodMap.entries()).map(([method, data]) => ({
-        method,
-        value: totalTransactions > 0 ? (data.count / totalTransactions) * 100 : 0,
-        count: data.count,
-        amount: data.amount / 100, // Convert cents to dollars
+      const chartData = Array.from(categoryMap.entries()).map(([category, amount]) => ({
+        name: category,
+        value: amount / 100, // Convert cents to dollars
+        fill: getCategoryColor(category),
       }));
 
       return chartData.sort((a, b) => b.value - a.value);
@@ -77,20 +72,22 @@ export const usePaymentMethods = (timeRange: TimeRange) => {
   });
 };
 
-const getPaymentMethodLabel = (paymentType: string): string => {
-  switch (paymentType?.toLowerCase()) {
-    case "ach":
-    case "bank_account":
-      return "Bank Transfer";
-    case "card":
-    case "credit_card":
-    case "debit_card":
-      return "Credit Card";
-    case "cash":
-      return "Cash";
-    case "check":
-      return "Check";
-    default:
-      return "Other";
-  }
+const getCategoryColor = (category: string): string => {
+  const colors = [
+    "hsl(var(--chart-1))",
+    "hsl(var(--chart-2))",
+    "hsl(var(--chart-3))",
+    "hsl(var(--chart-4))",
+    "hsl(var(--chart-5))",
+  ];
+  
+  const categoryColors: Record<string, string> = {
+    "Utilities & Services": colors[0],
+    "Property-Related": colors[1],
+    "Vehicle & Transportation": colors[2],
+    "Licensing & Registration": colors[3],
+    "Other": colors[4],
+  };
+  
+  return categoryColors[category] || colors[4];
 };
