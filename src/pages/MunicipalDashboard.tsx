@@ -12,7 +12,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer as RechartsResponsiveContainer, Area, AreaChart } from 'recharts';
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Area, AreaChart } from 'recharts';
 import ReportBuilder from '@/components/ReportBuilder';
 import ResponsiveContainer from '@/components/ui/responsive-container';
 import { 
@@ -187,29 +187,27 @@ const MunicipalDashboard = () => {
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px]">
-              <RechartsResponsiveContainer width="100%" height="100%">
-                <BarChart data={actualVsBudget} barCategoryGap="20%">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
-                  <ChartTooltip 
-                    content={<ChartTooltipContent />}
-                    formatter={(value) => [`$${(Number(value) / 1000000).toFixed(2)}M`]}
-                  />
-                  <Bar 
-                    dataKey="actual" 
-                    fill="hsl(var(--primary))" 
-                    radius={[2, 2, 0, 0]}
-                    name="Actual Revenue"
-                  />
-                  <Bar 
-                    dataKey="budget" 
-                    fill="hsl(var(--muted-foreground))" 
-                    radius={[2, 2, 0, 0]}
-                    name="Budget Revenue"
-                  />
-                </BarChart>
-              </RechartsResponsiveContainer>
+              <BarChart data={actualVsBudget} barCategoryGap="20%">
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  formatter={(value) => [`$${(Number(value) / 1000000).toFixed(2)}M`]}
+                />
+                <Bar 
+                  dataKey="actual" 
+                  fill="hsl(var(--primary))" 
+                  radius={[2, 2, 0, 0]}
+                  name="Actual Revenue"
+                />
+                <Bar 
+                  dataKey="budget" 
+                  fill="hsl(var(--muted-foreground))" 
+                  radius={[2, 2, 0, 0]}
+                  name="Budget Revenue"
+                />
+              </BarChart>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -221,24 +219,22 @@ const MunicipalDashboard = () => {
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px]">
-              <RechartsResponsiveContainer width="100%" height="100%">
-                <AreaChart data={monthlyRevenue}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
-                  <ChartTooltip 
-                    content={<ChartTooltipContent />}
-                    formatter={(value) => [`$${(Number(value) / 1000000).toFixed(2)}M`, 'Revenue']}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="hsl(var(--primary))" 
-                    fill="hsl(var(--primary))" 
-                    fillOpacity={0.3}
-                  />
-                </AreaChart>
-              </RechartsResponsiveContainer>
+              <AreaChart data={monthlyRevenue}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`} />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  formatter={(value) => [`$${(Number(value) / 1000000).toFixed(2)}M`, 'Revenue']}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="revenue" 
+                  stroke="hsl(var(--primary))" 
+                  fill="hsl(var(--primary))" 
+                  fillOpacity={0.3}
+                />
+              </AreaChart>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -253,26 +249,24 @@ const MunicipalDashboard = () => {
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px]">
-              <RechartsResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={revenueByCategory}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    dataKey="revenue"
-                    label={({ category, percentage }) => `${category}: ${percentage}%`}
-                  >
-                    {revenueByCategory.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <ChartTooltip 
-                    content={<ChartTooltipContent />}
-                    formatter={(value) => [`$${(Number(value) / 1000000).toFixed(1)}M`, 'Revenue']}
-                  />
-                </PieChart>
-              </RechartsResponsiveContainer>
+              <PieChart>
+                <Pie
+                  data={revenueByCategory}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius="70%"
+                  dataKey="revenue"
+                  label={({ category, percentage }) => `${category}: ${percentage}%`}
+                >
+                  {revenueByCategory.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                  formatter={(value) => [`$${(Number(value) / 1000000).toFixed(1)}M`, 'Revenue']}
+                />
+              </PieChart>
             </ChartContainer>
           </CardContent>
         </Card>
