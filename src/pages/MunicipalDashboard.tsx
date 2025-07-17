@@ -12,8 +12,9 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer as RechartsResponsiveContainer, Area, AreaChart } from 'recharts';
 import ReportBuilder from '@/components/ReportBuilder';
+import ResponsiveContainer from '@/components/ui/responsive-container';
 import { 
   DollarSign, 
   FileText, 
@@ -105,7 +106,8 @@ const chartConfig = {
 
 const MunicipalDashboard = () => {
   return (
-    <div className="p-6 space-y-6">
+    <ResponsiveContainer maxWidth="6xl">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -184,8 +186,8 @@ const MunicipalDashboard = () => {
             <CardTitle>Actual vs Budget Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
+            <ChartContainer config={chartConfig} className="h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px]">
+              <RechartsResponsiveContainer width="100%" height="100%">
                 <BarChart data={actualVsBudget} barCategoryGap="20%">
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
@@ -207,7 +209,7 @@ const MunicipalDashboard = () => {
                     name="Budget Revenue"
                   />
                 </BarChart>
-              </ResponsiveContainer>
+              </RechartsResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -218,8 +220,8 @@ const MunicipalDashboard = () => {
             <CardTitle>Monthly Revenue Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
+            <ChartContainer config={chartConfig} className="h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px]">
+              <RechartsResponsiveContainer width="100%" height="100%">
                 <AreaChart data={monthlyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
@@ -236,7 +238,7 @@ const MunicipalDashboard = () => {
                     fillOpacity={0.3}
                   />
                 </AreaChart>
-              </ResponsiveContainer>
+              </RechartsResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -250,8 +252,8 @@ const MunicipalDashboard = () => {
             <CardTitle>Revenue by Category</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
+            <ChartContainer config={chartConfig} className="h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px]">
+              <RechartsResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={revenueByCategory}
@@ -270,7 +272,7 @@ const MunicipalDashboard = () => {
                     formatter={(value) => [`$${(Number(value) / 1000000).toFixed(1)}M`, 'Revenue']}
                   />
                 </PieChart>
-              </ResponsiveContainer>
+              </RechartsResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -407,7 +409,8 @@ const MunicipalDashboard = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </ResponsiveContainer>
   );
 };
 
