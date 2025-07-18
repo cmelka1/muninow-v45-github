@@ -151,7 +151,7 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {}, onPayClick }) => 
               <TableRow>
                 <TableHead className="hidden sm:table-cell">Due Date</TableHead>
                 <TableHead>Merchant</TableHead>
-                <TableHead className="hidden md:table-cell">Category</TableHead>
+                <TableHead className="hidden md:table-cell text-center">Category</TableHead>
                 <TableHead className="hidden lg:table-cell text-center">Status</TableHead>
                 <TableHead className="text-center">Amount</TableHead>
                 <TableHead className="w-[120px] text-center">Pay</TableHead>
@@ -172,8 +172,8 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {}, onPayClick }) => 
                       {bill.merchant_name}
                     </span>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell py-2">
-                    <span className="truncate block max-w-[100px] lg:max-w-[150px] xl:max-w-[200px]" title={bill.category}>
+                  <TableCell className="hidden md:table-cell py-2 text-center">
+                    <span className="truncate block max-w-[100px] lg:max-w-[150px] xl:max-w-[200px] mx-auto" title={bill.category}>
                       {bill.category}
                     </span>
                   </TableCell>
