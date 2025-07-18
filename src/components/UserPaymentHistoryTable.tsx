@@ -134,9 +134,9 @@ const UserPaymentHistoryTable: React.FC<UserPaymentHistoryTableProps> = ({ userI
               <TableRow>
                 <TableHead className="hidden sm:table-cell">Paid Date</TableHead>
                 <TableHead>Merchant</TableHead>
-                <TableHead className="hidden md:table-cell">Category</TableHead>
-                <TableHead className="text-right">Amount Paid</TableHead>
-                <TableHead className="hidden md:table-cell">Payment Method</TableHead>
+                <TableHead className="hidden md:table-cell text-center">Category</TableHead>
+                <TableHead className="text-center">Amount Paid</TableHead>
+                <TableHead className="hidden md:table-cell text-center">Payment Method</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -154,16 +154,16 @@ const UserPaymentHistoryTable: React.FC<UserPaymentHistoryTableProps> = ({ userI
                       {payment.merchant_name || 'Unknown Merchant'}
                     </span>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell py-2">
-                    <span className="truncate block max-w-[100px] lg:max-w-[150px] xl:max-w-[200px]" title={payment.category}>
+                  <TableCell className="hidden md:table-cell py-2 text-center">
+                    <span className="truncate block max-w-[100px] lg:max-w-[150px] xl:max-w-[200px] mx-auto" title={payment.category}>
                       {payment.category || '-'}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right font-medium py-2">
+                  <TableCell className="text-center font-medium py-2">
                     {formatAmount(payment.total_amount_cents)}
                   </TableCell>
-                  <TableCell className="hidden md:table-cell py-2">
-                    <span className="truncate block max-w-[150px]" title={formatPaymentMethod(payment)}>
+                  <TableCell className="hidden md:table-cell py-2 text-center">
+                    <span className="truncate block max-w-[150px] mx-auto" title={formatPaymentMethod(payment)}>
                       {formatPaymentMethod(payment)}
                     </span>
                   </TableCell>
