@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -135,7 +136,7 @@ export const MerchantsTable: React.FC = () => {
                     </span>
                   </TableCell>
                   <TableCell className="hidden md:table-cell py-2">
-                    <span className="truncate block max-w-[150px]" title={merchant.category || 'Not specified'}>
+                    <span className="truncate block max-w-[100px] lg:max-w-[150px] xl:max-w-[200px]" title={merchant.category || 'Not specified'}>
                       {merchant.category || 'Not specified'}
                     </span>
                   </TableCell>
