@@ -118,8 +118,8 @@ export const MerchantsTable: React.FC = () => {
             <TableHeader className="bg-muted/50">
               <TableRow>
                 <TableHead>Merchant Name</TableHead>
-                <TableHead className="hidden md:table-cell">Category</TableHead>
-                <TableHead className="hidden lg:table-cell">Subcategory</TableHead>
+                <TableHead className="hidden md:table-cell text-center">Category</TableHead>
+                <TableHead className="hidden lg:table-cell text-center">Subcategory</TableHead>
                 <TableHead className="hidden sm:table-cell">Bank Account</TableHead>
               </TableRow>
             </TableHeader>
@@ -135,13 +135,13 @@ export const MerchantsTable: React.FC = () => {
                       {merchant.merchant_name}
                     </span>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell py-2">
-                    <span className="truncate block max-w-[100px] lg:max-w-[150px] xl:max-w-[200px]" title={merchant.category || 'Not specified'}>
+                  <TableCell className="hidden md:table-cell py-2 text-center">
+                    <span className="truncate block max-w-[100px] lg:max-w-[150px] xl:max-w-[200px] mx-auto" title={merchant.category || 'Not specified'}>
                       {merchant.category || 'Not specified'}
                     </span>
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell py-2">
-                    <span className="truncate block max-w-[150px]" title={merchant.subcategory || 'Not specified'}>
+                  <TableCell className="hidden lg:table-cell py-2 text-center">
+                    <span className="truncate block max-w-[100px] lg:max-w-[150px] xl:max-w-[200px] mx-auto" title={merchant.subcategory || 'Not specified'}>
                       {merchant.subcategory || 'Not specified'}
                     </span>
                   </TableCell>
