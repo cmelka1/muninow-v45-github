@@ -246,7 +246,7 @@ const MunicipalDashboard = () => {
                     data={revenueByCategory}
                     cx="50%"
                     cy="50%"
-                    outerRadius="70%"
+                    outerRadius="50%"
                     dataKey="revenue"
                     label={({ category, percentage }) => `${category}: ${percentage}%`}
                     labelLine={false}
