@@ -168,15 +168,15 @@ const MunicipalDashboard = () => {
         </Card>
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Charts Section - Single Column Layout */}
+      <div className="grid grid-cols-1 gap-6">
         {/* Actual vs Budget Revenue */}
         <Card>
           <CardHeader>
             <CardTitle>Actual vs Budget Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+            <ChartContainer config={chartConfig} className="w-full aspect-[2/1]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={actualVsBudget} barCategoryGap="20%">
                   <CartesianGrid strokeDasharray="3 3" />
@@ -210,7 +210,7 @@ const MunicipalDashboard = () => {
             <CardTitle>Monthly Revenue Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+            <ChartContainer config={chartConfig} className="w-full aspect-[2/1]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={monthlyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -232,17 +232,14 @@ const MunicipalDashboard = () => {
             </ChartContainer>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Additional Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue by Category */}
         <Card>
           <CardHeader>
             <CardTitle>Revenue by Category</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+            <ChartContainer config={chartConfig} className="w-full aspect-[2/1]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
