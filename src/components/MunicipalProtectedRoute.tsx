@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,7 +32,7 @@ export const MunicipalProtectedRoute: React.FC<MunicipalProtectedRouteProps> = (
 
   // Check if municipal user has valid customer_id assignment
   if (!profile.customer_id) {
-    return <Navigate to="/municipal/setup" replace />;
+    return <Navigate to="/signin" replace />;
   }
 
   return <>{children}</>;
