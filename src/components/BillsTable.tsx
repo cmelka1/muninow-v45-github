@@ -178,7 +178,7 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {}, onPayClick }) => 
                     </span>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell py-2 text-center">
-                    {getStatusBadge(bill.payment_status || 'unpaid')}
+                    {getStatusBadge(bill.bill_status || 'unpaid')}
                   </TableCell>
                   <TableCell className="text-center font-medium py-2">
                     {formatAmount(Number(bill.amount_due_cents) / 100)}
