@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,7 +29,7 @@ export const useUserBills = (params: UseUserBillsParams) => {
         .select('*', { count: 'exact' })
         .eq('user_id', userId)
         .eq('customer_id', profile.customer_id)
-        .not('payment_status', 'eq', 'paid')
+        .not('bill_status', 'eq', 'paid')
         .order('due_date', { ascending: true })
         .range(from, to);
 

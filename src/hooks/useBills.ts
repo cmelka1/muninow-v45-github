@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,7 +36,7 @@ export const useBills = (params?: UseBillsParams) => {
         .from('master_bills')
         .select('*', { count: 'exact' })
         .eq('user_id', user.id)
-        .not('payment_status', 'eq', 'paid');
+        .not('bill_status', 'eq', 'paid');
 
       // Apply filters
       if (filters.vendor) {
@@ -47,7 +48,7 @@ export const useBills = (params?: UseBillsParams) => {
       }
       
       if (filters.paymentStatus) {
-        query = query.eq('payment_status', filters.paymentStatus as any);
+        query = query.eq('bill_status', filters.paymentStatus as any);
       }
       
       if (filters.dueDateRange) {
