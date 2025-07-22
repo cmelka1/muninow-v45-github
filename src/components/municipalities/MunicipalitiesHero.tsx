@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import ResponsiveTypography from '@/components/ui/responsive-typography';
 import ResponsiveContainer from '@/components/ui/responsive-container';
+import OptimizedImage from '@/components/ui/optimized-image';
 
 const MunicipalitiesHero: React.FC = () => {
   return (
@@ -24,13 +26,20 @@ const MunicipalitiesHero: React.FC = () => {
               </Link>
             </div>
           </div>
-          <div className="rounded-lg overflow-hidden shadow-xl">
-            <img 
-              src="https://images.unsplash.com/photo-1449157291145-7efd050a4d0e" 
-              alt="Municipal City Hall Building" 
-              className="w-full h-auto"
-              loading="eager"
-            />
+          <div className="relative w-full h-full flex items-center justify-center">
+            <div className="w-full max-w-full aspect-[4/3] sm:aspect-[3/2] lg:aspect-[4/3] rounded-lg overflow-hidden shadow-xl border bg-card p-2 sm:p-4">
+              <OptimizedImage
+                src="https://images.unsplash.com/photo-1449157291145-7efd050a4d0e"
+                alt="Municipal City Hall Building"
+                width={600}
+                height={400}
+                className="w-full h-full object-cover rounded-lg transition-all duration-300 hover:scale-105"
+                priority={true}
+                quality="high"
+                loading="eager"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
+              />
+            </div>
           </div>
         </div>
       </ResponsiveContainer>
