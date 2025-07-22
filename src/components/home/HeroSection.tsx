@@ -14,30 +14,30 @@ const HeroSection: React.FC<HeroSectionProps> = ({ isMobile }) => {
   return (
     <section className="gradient-bg">
       <ResponsiveContainer variant="hero" maxWidth="4xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
           <div>
             <header>
-              <ResponsiveTypography variant="h1" className="mb-5">
+              <ResponsiveTypography variant="h1" className="mb-3">
                 <span className="gradient-text">Simplified Municipal Bill Pay</span> for Everyone
               </ResponsiveTypography>
-              <ResponsiveTypography variant="body" className="text-muted-foreground mb-6">
+              <ResponsiveTypography variant="body" className="text-muted-foreground mb-4">
                 One platform for all your bills, designed for residents, businesses, and administrators. 
                 Pay securely, schedule automatically, and never miss a payment again.
               </ResponsiveTypography>
             </header>
             
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Link to="/signup" aria-label="Sign up for MuniNow">
-                <Button size="lg" className="px-8">Get Started</Button>
+                <Button size="lg" className="px-6">Get Started</Button>
               </Link>
               <Link to="/contact" aria-label="Schedule a demo with MuniNow">
-                <Button size="lg" variant="outline" className="px-8">
+                <Button size="lg" variant="outline" className="px-6">
                   Schedule a Demo
                 </Button>
               </Link>
             </div>
             
-            <div className={`mt-6 grid grid-cols-2 ${isMobile ? 'gap-2' : 'gap-3'}`}>
+            <div className={`mt-4 grid grid-cols-2 ${isMobile ? 'gap-2' : 'gap-3'}`}>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="text-primary h-5 w-5" aria-hidden="true" />
                 <ResponsiveTypography variant="small" className="text-muted-foreground">
@@ -64,7 +64,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ isMobile }) => {
               </div>
             </div>
           </div>
-          <div className="bg-card p-4 rounded-xl shadow-lg border">
+          <div className="bg-card p-2 rounded-xl shadow-lg border">
             <OptimizedImage
               src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
               alt="MuniNow Dashboard showing simplified municipal bill payment interface"

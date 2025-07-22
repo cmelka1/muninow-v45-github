@@ -14,7 +14,7 @@ const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
   variant = 'container',
   children,
   className = '',
-  maxWidth = '4xl'
+  maxWidth = '6xl'
 }) => {
   const { isMobile } = useResponsiveNavigation();
   

@@ -59,18 +59,18 @@ export const typography = {
 
 export const contentSpacing = {
   mobile: {
-    section: 'py-8 px-4',
-    container: 'py-6 px-4',
-    card: 'p-4',
-    hero: 'py-12 px-4',
-    gap: 'gap-4'
+    section: 'py-4 px-3',
+    container: 'py-3 px-3',
+    card: 'p-3',
+    hero: 'py-6 px-3',
+    gap: 'gap-3'
   },
   desktop: {
-    section: 'py-16 px-6',
-    container: 'py-12 px-6', 
-    card: 'p-6',
-    hero: 'py-24 px-6',
-    gap: 'gap-6'
+    section: 'py-6 px-4',
+    container: 'py-4 px-4', 
+    card: 'p-4',
+    hero: 'py-8 px-4',
+    gap: 'gap-4'
   }
 };
 

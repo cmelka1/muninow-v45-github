@@ -9,20 +9,20 @@ const CTASection: React.FC = () => {
     <section className="bg-gradient-to-r from-primary/90 to-secondary/90 text-primary-foreground">
       <ResponsiveContainer variant="section" maxWidth="4xl">
         <div className="text-center">
-          <ResponsiveTypography variant="h2" className="mb-4 text-primary-foreground">
+          <ResponsiveTypography variant="h2" className="mb-3 text-primary-foreground">
             Ready to Simplify Your Municipal Bill Payments?
           </ResponsiveTypography>
-          <ResponsiveTypography variant="body" className="opacity-90 mb-6 max-w-2xl mx-auto text-primary-foreground">
+          <ResponsiveTypography variant="body" className="opacity-90 mb-4 max-w-2xl mx-auto text-primary-foreground">
             Join hundreds of municipalities and thousands of residents and businesses already using MuniNow for their bill pay needs.
           </ResponsiveTypography>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-3">
             <Link to="/signup" aria-label="Sign up for free MuniNow account">
-              <Button size="lg" variant="secondary" className="px-8">
+              <Button size="lg" variant="secondary" className="px-6">
                 Sign Up For Free
               </Button>
             </Link>
             <Link to="/contact" aria-label="Schedule a personalized demo">
-              <Button size="lg" variant="outline" className="px-8 bg-transparent text-primary-foreground border-primary-foreground hover:bg-background/10">
+              <Button size="lg" variant="outline" className="px-6 bg-transparent text-primary-foreground border-primary-foreground hover:bg-background/10">
                 Schedule a Demo
               </Button>
             </Link>
