@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,9 +10,9 @@ import municipalBuilding from '@/assets/municipal-building.jpg';
 const MunicipalitiesHero: React.FC = () => {
   return (
     <section className="bg-gradient-to-b from-primary/10 to-white">
-      <ResponsiveContainer variant="hero" maxWidth="6xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[250px] lg:min-h-[300px]">
-          <div>
+      <ResponsiveContainer variant="hero" maxWidth="4xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center min-h-[250px] lg:min-h-[300px]">
+          <div className="px-4 lg:px-6 max-w-lg mx-auto lg:mx-0">
             <ResponsiveTypography variant="h1" className="mb-6">
               Streamline Municipal Bill Collection
             </ResponsiveTypography>
@@ -26,7 +27,7 @@ const MunicipalitiesHero: React.FC = () => {
               </Link>
             </div>
           </div>
-          <div className="relative w-full h-[400px] lg:h-[500px] flex items-center justify-center">
+          <div className="relative w-full h-[400px] lg:h-[500px] flex items-center justify-center px-4 lg:px-6">
             <div className="w-full h-full rounded-lg overflow-hidden shadow-xl border bg-card p-1 sm:p-2">
               <OptimizedImage
                 src={municipalBuilding}
