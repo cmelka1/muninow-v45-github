@@ -10,7 +10,7 @@ const MunicipalitiesHero: React.FC = () => {
   return (
     <section className="bg-gradient-to-b from-primary/10 to-white">
       <ResponsiveContainer variant="hero" maxWidth="6xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[250px] lg:min-h-[300px] px-4 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[250px] lg:min-h-[300px] px-6 lg:px-12">
           <div>
             <ResponsiveTypography variant="h1" className="mb-6">
               Streamline Municipal Bill Collection
