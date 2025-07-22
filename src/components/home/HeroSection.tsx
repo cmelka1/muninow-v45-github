@@ -18,7 +18,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ isMobile }) => {
           <div>
             <header>
               <ResponsiveTypography variant="h1" className="mb-3">
-                <span className="gradient-text">Simplified Municipal Bill Pay</span> for Everyone
+                <span className="gradient-text">Simplified Municipal</span><br />
+                Bill Pay for Everyone
               </ResponsiveTypography>
               <ResponsiveTypography variant="body" className="text-muted-foreground mb-4">
                 One platform for all your bills, designed for residents, businesses, and administrators. 
