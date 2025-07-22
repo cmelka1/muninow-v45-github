@@ -7,14 +7,14 @@ interface ResponsiveContainerProps {
   variant?: 'section' | 'container' | 'card' | 'hero';
   children: React.ReactNode;
   className?: string;
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | 'full';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | '7xl' | 'full';
 }
 
 const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
   variant = 'container',
   children,
   className = '',
-  maxWidth = '6xl'
+  maxWidth = '7xl'
 }) => {
   const { isMobile } = useResponsiveNavigation();
   

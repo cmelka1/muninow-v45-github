@@ -13,7 +13,7 @@ interface HeroSectionProps {
 const HeroSection: React.FC<HeroSectionProps> = ({ isMobile }) => {
   return (
     <section className="gradient-bg">
-      <ResponsiveContainer variant="hero" maxWidth="4xl">
+      <ResponsiveContainer variant="hero" maxWidth="6xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
           <div>
             <header>
