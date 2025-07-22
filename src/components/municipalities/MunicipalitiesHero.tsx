@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import ResponsiveTypography from '@/components/ui/responsive-typography';
 import ResponsiveContainer from '@/components/ui/responsive-container';
 import OptimizedImage from '@/components/ui/optimized-image';
+import municipalBuilding from '@/assets/municipal-building.jpg';
 
 const MunicipalitiesHero: React.FC = () => {
   return (
@@ -29,7 +30,7 @@ const MunicipalitiesHero: React.FC = () => {
           <div className="relative w-full h-full flex items-center justify-center">
             <div className="w-full h-full rounded-lg overflow-hidden shadow-xl border bg-card p-1 sm:p-2">
               <OptimizedImage
-                src="https://images.unsplash.com/photo-1449157291145-7efd050a4d0e"
+                src={municipalBuilding}
                 alt="Municipal City Hall Building"
                 width={800}
                 height={550}
