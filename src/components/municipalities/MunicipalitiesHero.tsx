@@ -1,12 +1,14 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import ResponsiveTypography from '@/components/ui/responsive-typography';
 import ResponsiveContainer from '@/components/ui/responsive-container';
 import OptimizedImage from '@/components/ui/optimized-image';
-import municipalBuilding from '@/assets/municipal-building.jpg';
 
 const MunicipalitiesHero: React.FC = () => {
+  const cityHallImageUrl = "https://qcuiuubbaozcmejzvxje.supabase.co/storage/v1/object/public/city-hall/CIty%20Hall%20Stock%20Image.jpg";
+
   return (
     <section className="bg-gradient-to-b from-primary/10 to-white">
       <ResponsiveContainer variant="hero" maxWidth="6xl">
@@ -29,8 +31,8 @@ const MunicipalitiesHero: React.FC = () => {
           <div className="relative w-full h-[400px] lg:h-[500px] flex items-center justify-center">
             <div className="w-full h-full rounded-lg overflow-hidden shadow-xl border bg-card p-1 sm:p-2">
               <OptimizedImage
-                src={municipalBuilding}
-                alt="Municipal City Hall Building"
+                src={cityHallImageUrl}
+                alt="City Hall Stock Image"
                 width={800}
                 height={500}
                 className="w-full h-full object-cover rounded-lg"
