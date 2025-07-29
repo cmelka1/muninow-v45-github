@@ -180,26 +180,6 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
             <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
               <CardHeader className="pb-4">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <div className="w-2 h-2 bg-muted-foreground rounded-full"></div>
-                  Additional Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <p className="text-sm text-muted-foreground">
-                    Additional permit details will be collected here in the next step.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        );
-      case 2:
-        return (
-          <div className="space-y-6">
-            <Card className="animate-fade-in">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-base flex items-center gap-2">
                   <div className="w-2 h-2 bg-primary rounded-full"></div>
                   Property Information
                 </CardTitle>
@@ -258,6 +238,30 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                       />
                     </div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      case 2:
+        return (
+          <div className="space-y-6">
+            <Card className="animate-fade-in">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  Project Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="text-2xl">📋</div>
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">Coming Soon</h3>
+                  <p className="text-muted-foreground max-w-sm mx-auto">
+                    Additional permit information including project details, timeline, and documentation requirements will be collected here.
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -332,7 +336,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                 <div className="hidden sm:block">
                   <span className="text-sm font-medium">
                     {step === 1 && 'Basic Info'}
-                    {step === 2 && 'Property Info'}
+                    {step === 2 && 'Project Details'}
                     {step === 3 && 'Review & Submit'}
                   </span>
                 </div>
