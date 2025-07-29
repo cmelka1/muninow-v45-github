@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
 import { usePermitTypes, PermitType } from '@/hooks/usePermitTypes';
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
@@ -102,6 +103,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
       zip_code: ''
     }
   ]);
+  const [scopeOfWork, setScopeOfWork] = useState('');
   
   const { data: permitTypes, isLoading: isLoadingPermitTypes } = usePermitTypes();
   const { data: municipalQuestions, isLoading: isLoadingQuestions } = useMunicipalPermitQuestions(
@@ -146,6 +148,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
       state: '',
       zip_code: ''
     }]);
+    setScopeOfWork('');
     onOpenChange(false);
   };
 
@@ -708,6 +711,32 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                     <Plus className="h-4 w-4" />
                     Add Contractor
                   </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  Scope of Work
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div>
+                  <Label htmlFor="scope-of-work" className="text-sm font-medium text-foreground">
+                    Description of Work *
+                  </Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Provide a detailed description of the work to be performed
+                  </p>
+                  <Textarea
+                    id="scope-of-work"
+                    placeholder="Enter a detailed description of the construction work, materials to be used, and any other relevant details..."
+                    value={scopeOfWork}
+                    onChange={(e) => setScopeOfWork(e.target.value)}
+                    className="mt-1 min-h-[120px]"
+                  />
                 </div>
               </CardContent>
             </Card>
