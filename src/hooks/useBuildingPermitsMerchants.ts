@@ -7,6 +7,7 @@ interface BuildingPermitsMerchant {
   business_name: string;
   customer_city: string;
   customer_state: string;
+  customer_id: string;
 }
 
 export const useBuildingPermitsMerchants = (searchTerm: string) => {
@@ -27,7 +28,7 @@ export const useBuildingPermitsMerchants = (searchTerm: string) => {
       try {
         const { data, error: supabaseError } = await supabase
           .from('merchants')
-          .select('id, merchant_name, business_name, customer_city, customer_state')
+          .select('id, merchant_name, business_name, customer_city, customer_state, customer_id')
           .eq('subcategory', 'Building Permits')
           .ilike('merchant_name', `%${searchTerm}%`)
           .limit(10);

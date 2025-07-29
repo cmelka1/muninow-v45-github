@@ -28,6 +28,7 @@ interface SelectedMunicipality {
   business_name: string;
   customer_city: string;
   customer_state: string;
+  customer_id: string;
 }
 
 interface SelectedPermitType {
@@ -89,7 +90,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   
   const { data: permitTypes, isLoading: isLoadingPermitTypes } = usePermitTypes();
   const { data: municipalQuestions, isLoading: isLoadingQuestions } = useMunicipalPermitQuestions(
-    selectedMunicipality?.id,
+    selectedMunicipality?.customer_id,
     selectedMunicipality?.id
   );
   const { profile } = useAuth();

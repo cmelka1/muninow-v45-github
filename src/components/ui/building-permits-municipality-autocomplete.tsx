@@ -11,6 +11,7 @@ interface BuildingPermitsMerchant {
   business_name: string;
   customer_city: string;
   customer_state: string;
+  customer_id: string;
 }
 
 interface BuildingPermitsMunicipalityAutocompleteProps {
