@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { GooglePlacesAutocompleteV2 } from '@/components/ui/google-places-autocomplete-v2';
+import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
 import { Trash2 } from 'lucide-react';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
 
@@ -84,7 +84,7 @@ export const ContractorForm: React.FC<ContractorFormProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor={`contractor-type-${contractor.id}`}>
-            Contractor Type <span className="text-destructive">*</span>
+            Contractor Type
           </Label>
           <Select
             value={contractor.contractor_type}
@@ -105,7 +105,7 @@ export const ContractorForm: React.FC<ContractorFormProps> = ({
 
         <div className="space-y-2">
           <Label htmlFor={`contractor-name-${contractor.id}`}>
-            Name/Company <span className="text-destructive">*</span>
+            Name/Company
           </Label>
           <Input
             id={`contractor-name-${contractor.id}`}
@@ -118,7 +118,7 @@ export const ContractorForm: React.FC<ContractorFormProps> = ({
 
         <div className="space-y-2">
           <Label htmlFor={`contractor-phone-${contractor.id}`}>
-            Phone Number <span className="text-destructive">*</span>
+            Phone Number
           </Label>
           <Input
             id={`contractor-phone-${contractor.id}`}
@@ -132,7 +132,7 @@ export const ContractorForm: React.FC<ContractorFormProps> = ({
 
         <div className="space-y-2">
           <Label htmlFor={`contractor-email-${contractor.id}`}>
-            Email <span className="text-destructive">*</span>
+            Email
           </Label>
           <Input
             id={`contractor-email-${contractor.id}`}
@@ -145,18 +145,19 @@ export const ContractorForm: React.FC<ContractorFormProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label>Address <span className="text-destructive">*</span></Label>
-        <GooglePlacesAutocompleteV2
-          placeholder="Enter contractor address"
+        <Label htmlFor={`contractor-address-${contractor.id}`} className="text-sm font-medium text-foreground">
+          Address
+        </Label>
+        <p className="text-xs text-muted-foreground mb-2">
+          Enter the contractor's business address
+        </p>
+        <RestPlacesAutocomplete
+          placeholder="Start typing the contractor address..."
           onAddressSelect={handleAddressSelect}
           value={contractor.street_address}
           onChange={(value) => onUpdate(contractor.id, 'street_address', value)}
+          className="mt-1"
         />
-        {contractor.city && contractor.state && (
-          <div className="text-sm text-muted-foreground">
-            {contractor.city}, {contractor.state} {contractor.zip_code}
-          </div>
-        )}
       </div>
     </div>
   );
