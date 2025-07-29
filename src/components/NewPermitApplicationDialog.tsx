@@ -136,7 +136,39 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   const totalSteps = 3;
   const progress = (currentStep / totalSteps) * 100;
 
+  const validateStep1Fields = () => {
+    const errors: string[] = [];
+
+    if (!selectedMunicipality) errors.push('Municipality is required');
+    if (!selectedPermitType) errors.push('Permit type is required');
+    if (!propertyInfo.address) errors.push('Property address is required');
+    if (!propertyInfo.estimatedValue || propertyInfo.estimatedValue <= 0) errors.push('Estimated construction value is required');
+    if (!applicantInfo.nameOrCompany) errors.push('Applicant name/company is required');
+    if (!applicantInfo.phoneNumber) errors.push('Applicant phone number is required');
+    if (!applicantInfo.email) errors.push('Applicant email is required');
+    if (!applicantInfo.address) errors.push('Applicant address is required');
+    if (!propertyOwnerInfo.nameOrCompany) errors.push('Property owner name/company is required');
+    if (!propertyOwnerInfo.phoneNumber) errors.push('Property owner phone number is required');
+    if (!propertyOwnerInfo.email) errors.push('Property owner email is required');
+    if (!propertyOwnerInfo.address) errors.push('Property owner address is required');
+
+    return errors;
+  };
+
   const handleNext = () => {
+    if (currentStep === 1) {
+      // Validate step 1 mandatory fields before proceeding
+      const validationErrors = validateStep1Fields();
+      if (validationErrors.length > 0) {
+        toast({
+          title: "Required fields missing",
+          description: validationErrors.join(', '),
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
       // Scroll to top of dialog content
