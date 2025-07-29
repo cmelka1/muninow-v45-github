@@ -233,11 +233,6 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     if (!propertyOwnerInfo.email) errors.push('Property owner email is required');
     if (!propertyOwnerInfo.address) errors.push('Property owner address is required');
 
-    // Check if at least one contractor has required fields
-    const hasValidContractor = contractors.some(contractor => 
-      contractor.contractor_type && contractor.contractor_name
-    );
-    if (!hasValidContractor) errors.push('At least one contractor with type and name is required');
 
     // Check required municipal questions
     if (municipalQuestions) {
