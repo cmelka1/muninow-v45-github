@@ -7,6 +7,8 @@ import { BuildingPermitsMunicipalityAutocomplete } from '@/components/ui/buildin
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { usePermitTypes, PermitType } from '@/hooks/usePermitTypes';
 
 interface NewPermitApplicationDialogProps {
   open: boolean;
@@ -21,12 +23,24 @@ interface SelectedMunicipality {
   customer_state: string;
 }
 
+interface SelectedPermitType {
+  id: string;
+  name: string;
+  description: string;
+  base_fee_cents: number;
+  processing_days: number;
+  requires_inspection: boolean;
+}
+
 export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProps> = ({
   open,
   onOpenChange
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedMunicipality, setSelectedMunicipality] = useState<SelectedMunicipality | null>(null);
+  const [selectedPermitType, setSelectedPermitType] = useState<SelectedPermitType | null>(null);
+  
+  const { data: permitTypes, isLoading: isLoadingPermitTypes } = usePermitTypes();
 
   const totalSteps = 3;
   const progress = (currentStep / totalSteps) * 100;
@@ -46,11 +60,26 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   const handleClose = () => {
     setCurrentStep(1);
     setSelectedMunicipality(null);
+    setSelectedPermitType(null);
     onOpenChange(false);
   };
 
   const handleMunicipalitySelect = (municipality: SelectedMunicipality) => {
     setSelectedMunicipality(municipality);
+  };
+
+  const handlePermitTypeSelect = (permitTypeId: string) => {
+    const permitType = permitTypes?.find(pt => pt.id === permitTypeId);
+    if (permitType) {
+      setSelectedPermitType({
+        id: permitType.id,
+        name: permitType.name,
+        description: permitType.description,
+        base_fee_cents: permitType.base_fee_cents,
+        processing_days: permitType.processing_days,
+        requires_inspection: permitType.requires_inspection,
+      });
+    }
   };
 
   const renderStepContent = () => {
@@ -79,6 +108,30 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                       onSelect={handleMunicipalitySelect}
                       className="mt-1"
                     />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="permit-type" className="text-sm font-medium text-foreground">
+                      Permit Type *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Select the type of permit you need
+                    </p>
+                    <Select onValueChange={handlePermitTypeSelect} disabled={isLoadingPermitTypes}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder={isLoadingPermitTypes ? "Loading permit types..." : "Select a permit type"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {permitTypes?.map((permitType) => (
+                          <SelectItem key={permitType.id} value={permitType.id}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{permitType.name}</span>
+                              <span className="text-xs text-muted-foreground">{permitType.description}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </CardContent>
