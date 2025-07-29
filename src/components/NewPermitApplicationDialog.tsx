@@ -1184,38 +1184,6 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                 </div>
               </CardContent>
             </Card>
-
-            {/* Summary */}
-            <Card className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  Application Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Base Fee</p>
-                    <p className="text-lg font-semibold">
-                      {selectedPermitType ? formatCurrency(selectedPermitType.base_fee_cents / 100) : '$0.00'}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Processing Time</p>
-                    <p className="text-lg font-semibold">
-                      {selectedPermitType ? `${selectedPermitType.processing_days} days` : 'N/A'}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Inspection Required</p>
-                    <p className="text-lg font-semibold">
-                      {selectedPermitType ? (selectedPermitType.requires_inspection ? 'Yes' : 'No') : 'N/A'}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         );
       default:
