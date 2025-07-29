@@ -9,9 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
 import { usePermitTypes, PermitType } from '@/hooks/usePermitTypes';
 import { formatCurrency } from '@/lib/formatters';
+import { normalizePhoneInput } from '@/lib/phoneUtils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface NewPermitApplicationDialogProps {
   open: boolean;
@@ -41,6 +44,13 @@ interface PropertyInformation {
   estimatedValue: number;
 }
 
+interface ApplicantInformation {
+  nameOrCompany: string;
+  phoneNumber: string;
+  email: string;
+  address: string;
+}
+
 export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProps> = ({
   open,
   onOpenChange
@@ -53,8 +63,16 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     pinNumber: '',
     estimatedValue: 0
   });
+  const [applicantInfo, setApplicantInfo] = useState<ApplicantInformation>({
+    nameOrCompany: '',
+    phoneNumber: '',
+    email: '',
+    address: ''
+  });
+  const [useProfileInfo, setUseProfileInfo] = useState(false);
   
   const { data: permitTypes, isLoading: isLoadingPermitTypes } = usePermitTypes();
+  const { profile } = useAuth();
 
   const totalSteps = 3;
   const progress = (currentStep / totalSteps) * 100;
@@ -76,6 +94,8 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     setSelectedMunicipality(null);
     setSelectedPermitType(null);
     setPropertyInfo({ address: '', pinNumber: '', estimatedValue: 0 });
+    setApplicantInfo({ nameOrCompany: '', phoneNumber: '', email: '', address: '' });
+    setUseProfileInfo(false);
     onOpenChange(false);
   };
 
@@ -118,6 +138,40 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     // Remove all non-numeric characters and convert to number
     const numericValue = parseInt(value.replace(/[^\d]/g, '')) || 0;
     setPropertyInfo(prev => ({ ...prev, estimatedValue: numericValue }));
+  };
+
+  const handleUseProfileInfoToggle = (checked: boolean) => {
+    setUseProfileInfo(checked);
+    if (checked && profile) {
+      // Populate applicant info with profile data
+      const fullName = profile.first_name && profile.last_name 
+        ? `${profile.first_name} ${profile.last_name}` 
+        : profile.business_legal_name || '';
+      
+      const fullAddress = profile.street_address 
+        ? `${profile.street_address}${profile.city ? `, ${profile.city}` : ''}${profile.state ? `, ${profile.state}` : ''}${profile.zip_code ? ` ${profile.zip_code}` : ''}`
+        : '';
+
+      setApplicantInfo({
+        nameOrCompany: fullName,
+        phoneNumber: profile.phone || '',
+        email: profile.email || '',
+        address: fullAddress
+      });
+    } else if (!checked) {
+      // Clear applicant info when toggled off
+      setApplicantInfo({
+        nameOrCompany: '',
+        phoneNumber: '',
+        email: '',
+        address: ''
+      });
+    }
+  };
+
+  const handleApplicantAddressSelect = (addressComponents: any) => {
+    const fullAddress = `${addressComponents.streetAddress}, ${addressComponents.city}, ${addressComponents.state} ${addressComponents.zipCode}`;
+    setApplicantInfo(prev => ({ ...prev, address: fullAddress }));
   };
 
   const renderStepContent = () => {
@@ -235,6 +289,99 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                         className="pl-8"
                       />
                     </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  Applicant Information
+                </CardTitle>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="use-profile-info" className="text-sm text-muted-foreground">
+                    Use Profile Information
+                  </Label>
+                  <Switch
+                    id="use-profile-info"
+                    checked={useProfileInfo}
+                    onCheckedChange={handleUseProfileInfoToggle}
+                  />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="applicant-name" className="text-sm font-medium text-foreground">
+                      Name/Company *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter your full name or company name
+                    </p>
+                    <Input
+                      id="applicant-name"
+                      placeholder="Enter name or company"
+                      value={applicantInfo.nameOrCompany}
+                      onChange={(e) => setApplicantInfo(prev => ({ ...prev, nameOrCompany: e.target.value }))}
+                      className="mt-1"
+                      disabled={useProfileInfo}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="applicant-phone" className="text-sm font-medium text-foreground">
+                      Phone Number *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter your contact phone number
+                    </p>
+                    <Input
+                      id="applicant-phone"
+                      placeholder="(xxx) xxx-xxxx"
+                      value={applicantInfo.phoneNumber}
+                      onChange={(e) => {
+                        const normalized = normalizePhoneInput(e.target.value);
+                        setApplicantInfo(prev => ({ ...prev, phoneNumber: normalized }));
+                      }}
+                      className="mt-1"
+                      disabled={useProfileInfo}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="applicant-email" className="text-sm font-medium text-foreground">
+                      Email *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter your email address
+                    </p>
+                    <Input
+                      id="applicant-email"
+                      type="email"
+                      placeholder="Enter email address"
+                      value={applicantInfo.email}
+                      onChange={(e) => setApplicantInfo(prev => ({ ...prev, email: e.target.value }))}
+                      className="mt-1"
+                      disabled={useProfileInfo}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="applicant-address" className="text-sm font-medium text-foreground">
+                      Address *
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter your mailing address
+                    </p>
+                    <RestPlacesAutocomplete
+                      placeholder="Start typing your address..."
+                      onAddressSelect={useProfileInfo ? () => {} : handleApplicantAddressSelect}
+                      value={applicantInfo.address}
+                      onChange={useProfileInfo ? () => {} : (value) => setApplicantInfo(prev => ({ ...prev, address: value }))}
+                      className={`mt-1 ${useProfileInfo ? 'opacity-50 pointer-events-none' : ''}`}
+                    />
                   </div>
                 </div>
               </CardContent>
