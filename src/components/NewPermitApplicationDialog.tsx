@@ -1108,7 +1108,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                           <div key={question.id} className="flex justify-between">
                             <span className="text-sm">{question.question_text}</span>
                             <span className="text-sm font-medium">
-                              {questionResponses[question.id]?.toString() || 'Not answered'}
+                              {questionResponses[question.id] ? 'Yes' : 'No'}
                             </span>
                           </div>
                         ))}
