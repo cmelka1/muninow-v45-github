@@ -16,6 +16,8 @@ import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions
 import { formatCurrency } from '@/lib/formatters';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
 import { useAuth } from '@/contexts/AuthContext';
+import { ContractorForm, ContractorInfo } from '@/components/ContractorForm';
+import { Plus } from 'lucide-react';
 
 interface NewPermitApplicationDialogProps {
   open: boolean;
@@ -87,6 +89,19 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   });
   const [sameAsApplicant, setSameAsApplicant] = useState(false);
   const [questionResponses, setQuestionResponses] = useState<Record<string, string | boolean>>({});
+  const [contractors, setContractors] = useState<ContractorInfo[]>([
+    {
+      id: crypto.randomUUID(),
+      contractor_type: '',
+      contractor_name: '',
+      phone: '',
+      email: '',
+      street_address: '',
+      city: '',
+      state: '',
+      zip_code: ''
+    }
+  ]);
   
   const { data: permitTypes, isLoading: isLoadingPermitTypes } = usePermitTypes();
   const { data: municipalQuestions, isLoading: isLoadingQuestions } = useMunicipalPermitQuestions(
@@ -120,6 +135,17 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     setPropertyOwnerInfo({ nameOrCompany: '', phoneNumber: '', email: '', address: '' });
     setSameAsApplicant(false);
     setQuestionResponses({});
+    setContractors([{
+      id: crypto.randomUUID(),
+      contractor_type: '',
+      contractor_name: '',
+      phone: '',
+      email: '',
+      street_address: '',
+      city: '',
+      state: '',
+      zip_code: ''
+    }]);
     onOpenChange(false);
   };
 
@@ -255,6 +281,31 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
       ...prev,
       [questionId]: value
     }));
+  };
+
+  const handleContractorUpdate = (id: string, field: keyof ContractorInfo, value: string) => {
+    setContractors(prev => prev.map(contractor => 
+      contractor.id === id ? { ...contractor, [field]: value } : contractor
+    ));
+  };
+
+  const handleAddContractor = () => {
+    const newContractor: ContractorInfo = {
+      id: crypto.randomUUID(),
+      contractor_type: '',
+      contractor_name: '',
+      phone: '',
+      email: '',
+      street_address: '',
+      city: '',
+      state: '',
+      zip_code: ''
+    };
+    setContractors(prev => [...prev, newContractor]);
+  };
+
+  const handleRemoveContractor = (id: string) => {
+    setContractors(prev => prev.filter(contractor => contractor.id !== id));
   };
 
   const renderMunicipalQuestions = () => {
@@ -632,18 +683,31 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
               <CardHeader className="pb-4">
                 <CardTitle className="text-base flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  Project Details
+                  Contractor Information
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <div className="text-2xl">📋</div>
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Coming Soon</h3>
-                  <p className="text-muted-foreground max-w-sm mx-auto">
-                    Additional permit information including project details, timeline, and documentation requirements will be collected here.
-                  </p>
+                <div className="space-y-4">
+                  {contractors.map((contractor, index) => (
+                    <ContractorForm
+                      key={contractor.id}
+                      contractor={contractor}
+                      index={index}
+                      onUpdate={handleContractorUpdate}
+                      onRemove={handleRemoveContractor}
+                      canRemove={contractors.length > 1}
+                    />
+                  ))}
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddContractor}
+                    className="w-full flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Contractor
+                  </Button>
                 </div>
               </CardContent>
             </Card>

@@ -1895,6 +1895,7 @@ export type Database = {
         Row: {
           contractor_address: string | null
           contractor_email: string | null
+          contractor_name: string | null
           contractor_phone: string | null
           contractor_type: string
           created_at: string
@@ -1904,6 +1905,7 @@ export type Database = {
         Insert: {
           contractor_address?: string | null
           contractor_email?: string | null
+          contractor_name?: string | null
           contractor_phone?: string | null
           contractor_type: string
           created_at?: string
@@ -1913,6 +1915,7 @@ export type Database = {
         Update: {
           contractor_address?: string | null
           contractor_email?: string | null
+          contractor_name?: string | null
           contractor_phone?: string | null
           contractor_type?: string
           created_at?: string
