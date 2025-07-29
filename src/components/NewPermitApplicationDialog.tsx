@@ -79,16 +79,6 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                       onSelect={handleMunicipalitySelect}
                       className="mt-1"
                     />
-                    {selectedMunicipality && (
-                      <div className="mt-2 p-2 bg-muted rounded-md">
-                        <p className="text-xs font-medium text-foreground">
-                          Selected: {selectedMunicipality.merchant_name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {selectedMunicipality.customer_city}, {selectedMunicipality.customer_state}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </div>
               </CardContent>
