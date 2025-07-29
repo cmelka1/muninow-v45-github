@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -122,6 +122,8 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
   const [dragActive, setDragActive] = useState(false);
   
+  const dialogContentRef = useRef<HTMLDivElement>(null);
+  
   const { data: permitTypes, isLoading: isLoadingPermitTypes } = usePermitTypes();
   const { toast } = useToast();
   const { data: municipalQuestions, isLoading: isLoadingQuestions } = useMunicipalPermitQuestions(
@@ -136,12 +138,20 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   const handleNext = () => {
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
+      // Scroll to top of dialog content
+      if (dialogContentRef.current) {
+        dialogContentRef.current.scrollTop = 0;
+      }
     }
   };
 
   const handlePrevious = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+      // Scroll to top of dialog content
+      if (dialogContentRef.current) {
+        dialogContentRef.current.scrollTop = 0;
+      }
     }
   };
 
@@ -1215,7 +1225,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent ref={dialogContentRef} className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>New Permit Application</DialogTitle>
         </DialogHeader>
