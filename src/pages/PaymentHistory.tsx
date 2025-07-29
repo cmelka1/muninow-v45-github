@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import PaymentHistoryTable from '@/components/PaymentHistoryTable';
 import PaymentHistoryFilter, { PaymentHistoryFilters } from '@/components/PaymentHistoryFilter';
@@ -39,7 +38,7 @@ const PaymentHistory = () => {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <SidebarInset className="flex-1 bg-gray-100">
-          {/* Main Content */}
+          {/* Main Payment History Content */}
           <div className="p-8">
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -47,23 +46,8 @@ const PaymentHistory = () => {
               </h1>
             </div>
 
-            <Tabs defaultValue="payment-history" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="payment-history">Payment History</TabsTrigger>
-                <TabsTrigger value="permits">Permits</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="payment-history" className="space-y-6">
-                <PaymentHistoryFilter filters={filters} onFiltersChange={setFilters} />
-                <PaymentHistoryTable filters={filters} />
-              </TabsContent>
-              
-              <TabsContent value="permits" className="space-y-6">
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">Permits content coming soon...</p>
-                </div>
-              </TabsContent>
-            </Tabs>
+            <PaymentHistoryFilter filters={filters} onFiltersChange={setFilters} />
+            <PaymentHistoryTable filters={filters} />
           </div>
         </SidebarInset>
       </div>
