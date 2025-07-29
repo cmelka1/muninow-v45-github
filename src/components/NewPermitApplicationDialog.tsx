@@ -154,7 +154,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
 
       setApplicantInfo({
         nameOrCompany: fullName,
-        phoneNumber: profile.phone || '',
+        phoneNumber: profile.phone ? normalizePhoneInput(profile.phone) : '',
         email: profile.email || '',
         address: fullAddress
       });
