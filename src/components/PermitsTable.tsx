@@ -14,8 +14,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, Plus } from 'lucide-react';
 import { PermitFilters } from './PermitsFilter';
+import { NewPermitApplicationDialog } from '@/components/NewPermitApplicationDialog';
 
 interface Permit {
   permit_id: string;
@@ -92,6 +93,7 @@ const PermitsTable: React.FC<PermitsTableProps> = ({ filters = {}, onViewClick }
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [isLoading] = useState(false); // Mock loading state
+  const [isNewPermitDialogOpen, setIsNewPermitDialogOpen] = useState(false);
 
   // Filter mock data based on filters
   const filteredPermits = mockPermits.filter(permit => {
@@ -222,10 +224,20 @@ const PermitsTable: React.FC<PermitsTableProps> = ({ filters = {}, onViewClick }
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Permits ({totalCount})</CardTitle>
-      </CardHeader>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Permits ({totalCount})</CardTitle>
+            <Button 
+              onClick={() => setIsNewPermitDialogOpen(true)}
+              className="flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add New Permit</span>
+            </Button>
+          </div>
+        </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table>
@@ -334,6 +346,12 @@ const PermitsTable: React.FC<PermitsTableProps> = ({ filters = {}, onViewClick }
         )}
       </CardContent>
     </Card>
+
+    <NewPermitApplicationDialog
+      open={isNewPermitDialogOpen}
+      onOpenChange={setIsNewPermitDialogOpen}
+    />
+    </>
   );
 };
 
