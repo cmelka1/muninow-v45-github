@@ -272,9 +272,6 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
             <Label className="text-sm font-medium text-foreground">
               {question.question_text} {question.is_required && <span className="text-destructive">*</span>}
             </Label>
-            {question.help_text && (
-              <p className="text-xs text-muted-foreground">{question.help_text}</p>
-            )}
             
             {question.question_type === 'text' && (
               <Input
