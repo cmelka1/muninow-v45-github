@@ -215,7 +215,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
           </div>
 
           {/* Step Content */}
-          <div className="min-h-[400px] py-6">
+          <div className="min-h-[400px] py-2">
             {renderStepContent()}
           </div>
 
