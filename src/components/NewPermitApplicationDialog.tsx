@@ -121,6 +121,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   const [scopeOfWork, setScopeOfWork] = useState('');
   const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
   const [dragActive, setDragActive] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const dialogContentRef = useRef<HTMLDivElement>(null);
   
@@ -179,7 +180,151 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     setScopeOfWork('');
     setUploadedDocuments([]);
     setDragActive(false);
+    setIsSubmitting(false);
     onOpenChange(false);
+  };
+
+  // Validation functions
+  const validateRequiredFields = () => {
+    const errors: string[] = [];
+
+    if (!selectedMunicipality) errors.push('Municipality is required');
+    if (!selectedPermitType) errors.push('Permit type is required');
+    if (!propertyInfo.address) errors.push('Property address is required');
+    if (!propertyInfo.estimatedValue || propertyInfo.estimatedValue <= 0) errors.push('Estimated construction value is required');
+    if (!applicantInfo.nameOrCompany) errors.push('Applicant name/company is required');
+    if (!applicantInfo.phoneNumber) errors.push('Applicant phone number is required');
+    if (!applicantInfo.email) errors.push('Applicant email is required');
+    if (!applicantInfo.address) errors.push('Applicant address is required');
+    if (!propertyOwnerInfo.nameOrCompany) errors.push('Property owner name/company is required');
+    if (!propertyOwnerInfo.phoneNumber) errors.push('Property owner phone number is required');
+    if (!propertyOwnerInfo.email) errors.push('Property owner email is required');
+    if (!propertyOwnerInfo.address) errors.push('Property owner address is required');
+
+    // Check if at least one contractor has required fields
+    const hasValidContractor = contractors.some(contractor => 
+      contractor.contractor_type && contractor.contractor_name
+    );
+    if (!hasValidContractor) errors.push('At least one contractor with type and name is required');
+
+    // Check required municipal questions
+    if (municipalQuestions) {
+      for (const question of municipalQuestions) {
+        if (question.is_required && !questionResponses[question.id]) {
+          errors.push(`Required question "${question.question_text}" must be answered`);
+        }
+      }
+    }
+
+    return errors;
+  };
+
+  const handleSubmit = async () => {
+    if (!profile?.id) {
+      toast({
+        title: "Authentication required",
+        description: "You must be logged in to submit a permit application.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate required fields
+    const validationErrors = validateRequiredFields();
+    if (validationErrors.length > 0) {
+      toast({
+        title: "Validation errors",
+        description: validationErrors.join(', '),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Create the main permit application
+      const { data: permitApplication, error: permitError } = await supabase
+        .from('permit_applications')
+        .insert({
+          user_id: profile.id,
+          customer_id: selectedMunicipality!.customer_id,
+          merchant_id: selectedMunicipality!.id,
+          permit_type: selectedPermitType!.name,
+          property_address: propertyInfo.address,
+          property_pin: propertyInfo.pinNumber || null,
+          estimated_construction_value_cents: propertyInfo.estimatedValue * 100,
+          applicant_full_name: applicantInfo.nameOrCompany,
+          applicant_phone: applicantInfo.phoneNumber,
+          applicant_email: applicantInfo.email,
+          applicant_address: applicantInfo.address,
+          owner_full_name: propertyOwnerInfo.nameOrCompany,
+          owner_phone: propertyOwnerInfo.phoneNumber,
+          owner_email: propertyOwnerInfo.email,
+          owner_address: propertyOwnerInfo.address,
+          scope_of_work: scopeOfWork || null,
+          municipal_questions_responses: municipalQuestions && municipalQuestions.length > 0 ? questionResponses : null,
+          application_status: 'submitted',
+          submitted_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (permitError) throw permitError;
+
+      // Insert contractors
+      const contractorPromises = contractors
+        .filter(contractor => contractor.contractor_type && contractor.contractor_name)
+        .map(contractor => 
+          supabase.from('permit_contractors').insert({
+            permit_id: permitApplication.permit_id,
+            contractor_type: contractor.contractor_type,
+            contractor_name: contractor.contractor_name,
+            contractor_phone: contractor.phone || null,
+            contractor_email: contractor.email || null,
+            contractor_address: contractor.street_address ? `${contractor.street_address}, ${contractor.city}, ${contractor.state} ${contractor.zip_code}` : null
+          })
+        );
+
+      await Promise.all(contractorPromises);
+
+      // Link uploaded documents
+      const documentPromises = uploadedDocuments
+        .filter(doc => doc.uploadStatus === 'completed' && doc.filePath)
+        .map(doc => 
+          supabase.from('permit_documents').insert({
+            permit_id: permitApplication.permit_id,
+            user_id: profile.id,
+            customer_id: selectedMunicipality!.customer_id,
+            merchant_id: selectedMunicipality!.id,
+            merchant_name: selectedMunicipality!.merchant_name,
+            file_name: doc.name,
+            document_type: doc.documentType,
+            description: doc.description || null,
+            storage_path: doc.filePath!,
+            file_size: doc.size,
+            content_type: doc.type
+          })
+        );
+
+      await Promise.all(documentPromises);
+
+      toast({
+        title: "Application submitted successfully!",
+        description: `Your permit application ${permitApplication.permit_number} has been submitted for review.`,
+      });
+
+      handleClose();
+    } catch (error: any) {
+      console.error('Submission error:', error);
+      toast({
+        title: "Submission failed",
+        description: error.message || "An error occurred while submitting your application. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleMunicipalitySelect = (municipality: SelectedMunicipality) => {
@@ -1266,8 +1411,8 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               ) : (
-                <Button onClick={handleClose}>
-                  Submit Application
+                <Button onClick={handleSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? 'Submitting...' : 'Submit Application'}
                 </Button>
               )}
             </div>
