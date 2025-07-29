@@ -42,6 +42,7 @@ import MunicipalMerchantDetail from "./pages/MunicipalMerchantDetail";
 import MunicipalProfile from "./pages/MunicipalProfile";
 import MunicipalUserDetail from "./pages/MunicipalUserDetail";
 import MunicipalBillOverview from "./pages/MunicipalBillOverview";
+import Permits from "./pages/Permits";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MunicipalProtectedRoute } from "@/components/MunicipalProtectedRoute";
 import { MunicipalLayout } from "@/components/layouts/MunicipalLayout";
@@ -64,6 +65,7 @@ const App = () => (
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/payment-history" element={<PaymentHistory />} />
+                <Route path="/permits" element={<Permits />} />
                 <Route path="/bill/:billId" element={<BillOverview />} />
                 <Route path="/payment-confirmation/:paymentHistoryId" element={<PaymentConfirmation />} />
                 <Route path="/members" element={<Members />} />
