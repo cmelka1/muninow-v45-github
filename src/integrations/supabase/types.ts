@@ -1239,6 +1239,114 @@ export type Database = {
           },
         ]
       }
+      municipal_permit_merchants: {
+        Row: {
+          active: boolean
+          created_at: string
+          customer_id: string
+          id: string
+          merchant_id: string
+          permit_merchant_name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          customer_id: string
+          id?: string
+          merchant_id: string
+          permit_merchant_name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          customer_id?: string
+          id?: string
+          merchant_id?: string
+          permit_merchant_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "municipal_permit_merchants_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "municipal_permit_merchants_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      municipal_permit_questions: {
+        Row: {
+          created_at: string
+          customer_id: string
+          display_order: number
+          help_text: string | null
+          id: string
+          is_active: boolean
+          is_required: boolean
+          merchant_id: string | null
+          merchant_name: string | null
+          question_options: Json | null
+          question_text: string
+          question_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          display_order?: number
+          help_text?: string | null
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          merchant_id?: string | null
+          merchant_name?: string | null
+          question_options?: Json | null
+          question_text: string
+          question_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          display_order?: number
+          help_text?: string | null
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          merchant_id?: string | null
+          merchant_name?: string | null
+          question_options?: Json | null
+          question_text?: string
+          question_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "municipal_permit_questions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "municipal_permit_questions_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       municipal_team_members: {
         Row: {
           admin_id: string
@@ -1382,7 +1490,7 @@ export type Database = {
         Row: {
           amount_cents: number
           bank_last_four: string | null
-          bill_id: string
+          bill_id: string | null
           bill_status: string | null
           bill_type: string | null
           business_address_line1: string | null
@@ -1431,6 +1539,7 @@ export type Database = {
           original_amount_cents: number | null
           payment_status: string | null
           payment_type: string
+          permit_id: string | null
           raw_finix_response: Json | null
           service_fee_cents: number
           statement_descriptor: string | null
@@ -1443,7 +1552,7 @@ export type Database = {
         Insert: {
           amount_cents: number
           bank_last_four?: string | null
-          bill_id: string
+          bill_id?: string | null
           bill_status?: string | null
           bill_type?: string | null
           business_address_line1?: string | null
@@ -1492,6 +1601,7 @@ export type Database = {
           original_amount_cents?: number | null
           payment_status?: string | null
           payment_type: string
+          permit_id?: string | null
           raw_finix_response?: Json | null
           service_fee_cents: number
           statement_descriptor?: string | null
@@ -1504,7 +1614,7 @@ export type Database = {
         Update: {
           amount_cents?: number
           bank_last_four?: string | null
-          bill_id?: string
+          bill_id?: string | null
           bill_status?: string | null
           bill_type?: string | null
           business_address_line1?: string | null
@@ -1553,6 +1663,7 @@ export type Database = {
           original_amount_cents?: number | null
           payment_status?: string | null
           payment_type?: string
+          permit_id?: string | null
           raw_finix_response?: Json | null
           service_fee_cents?: number
           statement_descriptor?: string | null
@@ -1570,6 +1681,13 @@ export type Database = {
             referencedRelation: "master_bills"
             referencedColumns: ["bill_id"]
           },
+          {
+            foreignKeyName: "payment_history_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["permit_id"]
+          },
         ]
       }
       permit_applications: {
@@ -1578,9 +1696,10 @@ export type Database = {
           ach_fixed_fee: number | null
           applicant_address: string | null
           applicant_email: string | null
-          applicant_name: string | null
+          applicant_full_name: string | null
           applicant_phone: string | null
           application_status: Database["public"]["Enums"]["permit_status_enum"]
+          assigned_reviewer_id: string | null
           basis_points: number | null
           created_at: string
           customer_id: string
@@ -1588,6 +1707,7 @@ export type Database = {
           finix_identity_id: string | null
           finix_merchant_id: string | null
           finix_payout_profile_id: string | null
+          finix_transfer_id: string | null
           fixed_fee: number | null
           fraud_session_id: string | null
           idempotency_id: string | null
@@ -1599,21 +1719,35 @@ export type Database = {
           merchant_finix_identity_id: string | null
           merchant_id: string | null
           merchant_name: string | null
+          municipal_questions_responses: Json | null
+          municipal_review_status: string | null
           owner_address: string | null
           owner_email: string | null
-          owner_name: string | null
+          owner_full_name: string | null
           owner_phone: string | null
+          payment_amount_cents: number | null
+          payment_instrument_id: string | null
+          payment_method_type: string | null
+          payment_processed_at: string | null
+          payment_status: string | null
           permit_id: string
+          permit_merchant_id: string | null
           permit_number: string | null
           permit_type: string
           profile_id: string | null
           project_description: string | null
           property_address: string
           property_pin: string | null
+          review_completed_at: string | null
+          review_notes: string | null
+          review_started_at: string | null
           reviewed_at: string | null
           same_as_applicant: boolean
           scope_of_work: string
+          selected_municipality_id: string | null
+          service_fee_cents: number | null
           submitted_at: string | null
+          total_amount_cents: number | null
           updated_at: string
           use_personal_info: boolean
           user_id: string
@@ -1623,9 +1757,10 @@ export type Database = {
           ach_fixed_fee?: number | null
           applicant_address?: string | null
           applicant_email?: string | null
-          applicant_name?: string | null
+          applicant_full_name?: string | null
           applicant_phone?: string | null
           application_status?: Database["public"]["Enums"]["permit_status_enum"]
+          assigned_reviewer_id?: string | null
           basis_points?: number | null
           created_at?: string
           customer_id: string
@@ -1633,6 +1768,7 @@ export type Database = {
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
           finix_payout_profile_id?: string | null
+          finix_transfer_id?: string | null
           fixed_fee?: number | null
           fraud_session_id?: string | null
           idempotency_id?: string | null
@@ -1644,21 +1780,35 @@ export type Database = {
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
+          municipal_questions_responses?: Json | null
+          municipal_review_status?: string | null
           owner_address?: string | null
           owner_email?: string | null
-          owner_name?: string | null
+          owner_full_name?: string | null
           owner_phone?: string | null
+          payment_amount_cents?: number | null
+          payment_instrument_id?: string | null
+          payment_method_type?: string | null
+          payment_processed_at?: string | null
+          payment_status?: string | null
           permit_id?: string
+          permit_merchant_id?: string | null
           permit_number?: string | null
           permit_type: string
           profile_id?: string | null
           project_description?: string | null
           property_address: string
           property_pin?: string | null
+          review_completed_at?: string | null
+          review_notes?: string | null
+          review_started_at?: string | null
           reviewed_at?: string | null
           same_as_applicant?: boolean
           scope_of_work: string
+          selected_municipality_id?: string | null
+          service_fee_cents?: number | null
           submitted_at?: string | null
+          total_amount_cents?: number | null
           updated_at?: string
           use_personal_info?: boolean
           user_id: string
@@ -1668,9 +1818,10 @@ export type Database = {
           ach_fixed_fee?: number | null
           applicant_address?: string | null
           applicant_email?: string | null
-          applicant_name?: string | null
+          applicant_full_name?: string | null
           applicant_phone?: string | null
           application_status?: Database["public"]["Enums"]["permit_status_enum"]
+          assigned_reviewer_id?: string | null
           basis_points?: number | null
           created_at?: string
           customer_id?: string
@@ -1678,6 +1829,7 @@ export type Database = {
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
           finix_payout_profile_id?: string | null
+          finix_transfer_id?: string | null
           fixed_fee?: number | null
           fraud_session_id?: string | null
           idempotency_id?: string | null
@@ -1689,26 +1841,55 @@ export type Database = {
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
+          municipal_questions_responses?: Json | null
+          municipal_review_status?: string | null
           owner_address?: string | null
           owner_email?: string | null
-          owner_name?: string | null
+          owner_full_name?: string | null
           owner_phone?: string | null
+          payment_amount_cents?: number | null
+          payment_instrument_id?: string | null
+          payment_method_type?: string | null
+          payment_processed_at?: string | null
+          payment_status?: string | null
           permit_id?: string
+          permit_merchant_id?: string | null
           permit_number?: string | null
           permit_type?: string
           profile_id?: string | null
           project_description?: string | null
           property_address?: string
           property_pin?: string | null
+          review_completed_at?: string | null
+          review_notes?: string | null
+          review_started_at?: string | null
           reviewed_at?: string | null
           same_as_applicant?: boolean
           scope_of_work?: string
+          selected_municipality_id?: string | null
+          service_fee_cents?: number | null
           submitted_at?: string | null
+          total_amount_cents?: number | null
           updated_at?: string
           use_personal_info?: boolean
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "permit_applications_permit_merchant_id_fkey"
+            columns: ["permit_merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_selected_municipality_id_fkey"
+            columns: ["selected_municipality_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["customer_id"]
+          },
+        ]
       }
       permit_contractors: {
         Row: {
@@ -1741,6 +1922,182 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "permit_contractors_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["permit_id"]
+          },
+        ]
+      }
+      permit_documents: {
+        Row: {
+          content_type: string
+          created_at: string
+          customer_id: string
+          description: string | null
+          document_type: string
+          file_name: string
+          file_size: number
+          id: string
+          merchant_id: string | null
+          merchant_name: string | null
+          permit_id: string
+          storage_path: string
+          updated_at: string
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          document_type: string
+          file_name: string
+          file_size: number
+          id?: string
+          merchant_id?: string | null
+          merchant_name?: string | null
+          permit_id: string
+          storage_path: string
+          updated_at?: string
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          document_type?: string
+          file_name?: string
+          file_size?: number
+          id?: string
+          merchant_id?: string | null
+          merchant_name?: string | null
+          permit_id?: string
+          storage_path?: string
+          updated_at?: string
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_documents_permit_id"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["permit_id"]
+          },
+        ]
+      }
+      permit_review_comments: {
+        Row: {
+          comment_text: string
+          created_at: string
+          id: string
+          is_internal: boolean | null
+          permit_id: string
+          reviewer_id: string
+        }
+        Insert: {
+          comment_text: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean | null
+          permit_id: string
+          reviewer_id: string
+        }
+        Update: {
+          comment_text?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean | null
+          permit_id?: string
+          reviewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permit_review_comments_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["permit_id"]
+          },
+        ]
+      }
+      permit_review_requests: {
+        Row: {
+          created_at: string
+          due_date: string | null
+          id: string
+          permit_id: string
+          request_details: string
+          request_type: string
+          reviewer_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          permit_id: string
+          request_details: string
+          request_type: string
+          reviewer_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          permit_id?: string
+          request_details?: string
+          request_type?: string
+          reviewer_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permit_review_requests_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["permit_id"]
+          },
+        ]
+      }
+      permit_reviews: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          permit_id: string
+          review_action: string
+          reviewer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          permit_id: string
+          review_action: string
+          reviewer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          permit_id?: string
+          review_action?: string
+          reviewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permit_reviews_permit_id_fkey"
             columns: ["permit_id"]
             isOneToOne: false
             referencedRelation: "permit_applications"
@@ -2367,6 +2724,24 @@ export type Database = {
           user_id: string
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
           year: string
+        }[]
+      }
+      get_municipal_questions: {
+        Args: { p_customer_id: string; p_merchant_id?: string }
+        Returns: {
+          id: string
+          customer_id: string
+          merchant_id: string
+          merchant_name: string
+          question_text: string
+          question_type: string
+          question_options: Json
+          is_required: boolean
+          display_order: number
+          is_active: boolean
+          help_text: string
+          created_at: string
+          updated_at: string
         }[]
       }
       get_municipal_team_members: {
