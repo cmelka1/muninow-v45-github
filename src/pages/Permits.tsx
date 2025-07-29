@@ -1,12 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
+import PermitsFilter, { PermitFilters } from '@/components/PermitsFilter';
+import PermitsTable from '@/components/PermitsTable';
 
 const Permits = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
+  const [filters, setFilters] = useState<PermitFilters>({});
 
   // Redirect unauthenticated users
   useEffect(() => {
@@ -41,15 +44,14 @@ const Permits = () => {
                 Permits
               </h1>
             </div>
-            
-            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-              <h2 className="text-xl font-semibold text-gray-600 mb-2">
-                Permits Page
-              </h2>
-              <p className="text-gray-500">
-                This page is currently under development.
-              </p>
-            </div>
+
+            <PermitsFilter filters={filters} onFiltersChange={setFilters} />
+            <PermitsTable 
+              filters={filters} 
+              onViewClick={(permitId) => {
+                console.log('View permit:', permitId);
+              }}
+            />
           </div>
         </SidebarInset>
       </div>
