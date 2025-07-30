@@ -4,11 +4,13 @@ import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ServiceFee {
-  totalFee: number;
+  totalFee: number; // Legacy - same as serviceFeeToDisplay
   percentageFee: number;
   fixedFee: number;
   basisPoints: number;
   isCard: boolean;
+  totalAmountToCharge: number; // The grossed-up amount (T)
+  serviceFeeToDisplay: number; // The fee amount shown to user (T - A)
 }
 
 export const usePaymentMethods = (bill: any) => {
@@ -34,19 +36,37 @@ export const usePaymentMethods = (bill: any) => {
   const calculateServiceFee = (): ServiceFee | null => {
     if (!bill) return null;
     
+    const billAmount = bill.total_amount_cents; // A = original bill amount
+    
     // Handle Google Pay and Apple Pay as special cases - always use card fees
     if (selectedPaymentMethod === 'google-pay' || selectedPaymentMethod === 'apple-pay') {
       const basisPoints = bill.basis_points || 250;
-      const fixedFee = bill.fixed_fee || 50;
-      const percentageFee = Math.round((bill.total_amount_cents * basisPoints) / 10000);
-      const totalFee = percentageFee + fixedFee;
+      const fixedFeeCents = bill.fixed_fee || 50;
+      
+      // Convert basis points to decimal percentage (p)
+      const percentageDecimal = basisPoints / 10000;
+      
+      // Prevent division by zero or invalid percentages
+      if (percentageDecimal >= 1) {
+        console.error('Invalid percentage fee: cannot be 100% or higher');
+        return null;
+      }
+      
+      // Apply grossed-up formula: T = (A + f) / (1 - p)
+      const totalAmountToCharge = Math.round((billAmount + fixedFeeCents) / (1 - percentageDecimal));
+      const serviceFeeToDisplay = totalAmountToCharge - billAmount;
+      
+      // Calculate percentage fee for display purposes
+      const percentageFee = Math.round((billAmount * basisPoints) / 10000);
 
       return {
-        totalFee,
+        totalFee: serviceFeeToDisplay, // Legacy compatibility
         percentageFee,
-        fixedFee,
+        fixedFee: fixedFeeCents,
         basisPoints,
-        isCard: true
+        isCard: true,
+        totalAmountToCharge,
+        serviceFeeToDisplay
       };
     }
     
@@ -57,22 +77,37 @@ export const usePaymentMethods = (bill: any) => {
 
     const isCard = selectedInstrument.instrument_type === 'PAYMENT_CARD';
     const basisPoints = isCard ? (bill.basis_points || 250) : (bill.ach_basis_points || 20);
-    const fixedFee = isCard ? (bill.fixed_fee || 50) : (bill.ach_fixed_fee || 50);
-
-    const percentageFee = Math.round((bill.total_amount_cents * basisPoints) / 10000);
-    const totalFee = percentageFee + fixedFee;
+    const fixedFeeCents = isCard ? (bill.fixed_fee || 50) : (bill.ach_fixed_fee || 50);
+    
+    // Convert basis points to decimal percentage (p)
+    const percentageDecimal = basisPoints / 10000;
+    
+    // Prevent division by zero or invalid percentages
+    if (percentageDecimal >= 1) {
+      console.error('Invalid percentage fee: cannot be 100% or higher');
+      return null;
+    }
+    
+    // Apply grossed-up formula: T = (A + f) / (1 - p)
+    const totalAmountToCharge = Math.round((billAmount + fixedFeeCents) / (1 - percentageDecimal));
+    const serviceFeeToDisplay = totalAmountToCharge - billAmount;
+    
+    // Calculate percentage fee for display purposes
+    const percentageFee = Math.round((billAmount * basisPoints) / 10000);
 
     return {
-      totalFee,
+      totalFee: serviceFeeToDisplay, // Legacy compatibility
       percentageFee,
-      fixedFee,
+      fixedFee: fixedFeeCents,
       basisPoints,
-      isCard
+      isCard,
+      totalAmountToCharge,
+      serviceFeeToDisplay
     };
   };
 
   const serviceFee = calculateServiceFee();
-  const totalWithFee = bill ? bill.total_amount_cents + (serviceFee?.totalFee || 0) : 0;
+  const totalWithFee = serviceFee?.totalAmountToCharge || bill?.total_amount_cents || 0;
 
   // Auto-select default payment method when payment methods load
   useEffect(() => {

@@ -9,6 +9,8 @@ interface PaymentSummaryProps {
     fixedFee: number;
     basisPoints: number;
     isCard: boolean;
+    totalAmountToCharge: number;
+    serviceFeeToDisplay: number;
   } | null;
   selectedPaymentMethod: string | null;
   compact?: boolean;
@@ -21,8 +23,8 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   compact = false
 }) => {
   const baseAmountFormatted = formatCurrency(baseAmount / 100);
-  const serviceFeeFormatted = serviceFee ? formatCurrency(serviceFee.totalFee / 100) : formatCurrency(0);
-  const totalAmount = baseAmount + (serviceFee?.totalFee || 0);
+  const serviceFeeFormatted = serviceFee ? formatCurrency(serviceFee.serviceFeeToDisplay / 100) : formatCurrency(0);
+  const totalAmount = serviceFee?.totalAmountToCharge || baseAmount;
   const totalAmountFormatted = formatCurrency(totalAmount / 100);
 
   if (compact) {
