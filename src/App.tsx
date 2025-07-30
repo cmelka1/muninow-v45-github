@@ -38,6 +38,7 @@ import MunicipalDashboard from "./pages/MunicipalDashboard";
 import MunicipalSearch from "./pages/MunicipalSearch";
 import MunicipalMembers from "./pages/MunicipalMembers";
 import MunicipalPermits from "./pages/MunicipalPermits";
+import MunicipalPermitDetail from "./pages/MunicipalPermitDetail";
 import MunicipalMerchants from "./pages/MunicipalMerchants";
 import MunicipalMerchantDetail from "./pages/MunicipalMerchantDetail";
 import MunicipalProfile from "./pages/MunicipalProfile";
@@ -134,6 +135,13 @@ const App = () => (
                   <MunicipalProtectedRoute>
                     <MunicipalLayout>
                       <MunicipalPermits />
+                    </MunicipalLayout>
+                  </MunicipalProtectedRoute>
+                } />
+                <Route path="/municipal/permit/:permitId" element={
+                  <MunicipalProtectedRoute>
+                    <MunicipalLayout>
+                      <MunicipalPermitDetail />
                     </MunicipalLayout>
                   </MunicipalProtectedRoute>
                 } />

@@ -20,7 +20,7 @@ const MunicipalPermits = () => {
       <PermitsTable 
         filters={filters} 
         onViewClick={(permitId) => {
-          console.log('View permit:', permitId);
+          window.location.href = `/municipal/permit/${permitId}`;
         }}
       />
     </div>
