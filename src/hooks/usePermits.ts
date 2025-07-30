@@ -11,6 +11,7 @@ export interface Permit {
   applicant_full_name: string;
   property_address: string;
   total_amount_cents: number;
+  estimated_construction_value_cents: number;
   created_at: string;
   submitted_at: string | null;
   customer_id: string;
@@ -49,6 +50,7 @@ export const usePermits = ({ filters = {}, page = 1, pageSize = 10 }: UsePermits
           applicant_full_name,
           property_address,
           total_amount_cents,
+          estimated_construction_value_cents,
           created_at,
           submitted_at,
           customer_id,

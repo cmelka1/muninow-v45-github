@@ -175,8 +175,10 @@ const PermitsTable: React.FC<PermitsTableProps> = ({ filters = {}, onViewClick }
               <TableRow>
                 <TableHead className="hidden sm:table-cell">Date</TableHead>
                 <TableHead className="hidden md:table-cell">Permit #</TableHead>
+                <TableHead className="hidden lg:table-cell">Property Address</TableHead>
                 <TableHead>Applicant</TableHead>
-                <TableHead className="hidden lg:table-cell text-center">Type</TableHead>
+                <TableHead className="hidden xl:table-cell text-center">Type</TableHead>
+                <TableHead className="hidden 2xl:table-cell text-center">Construction Value</TableHead>
                 <TableHead className="text-center">Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -195,19 +197,24 @@ const PermitsTable: React.FC<PermitsTableProps> = ({ filters = {}, onViewClick }
                   <TableCell className="hidden md:table-cell py-2">
                     <span className="truncate font-mono text-sm">{permit.permit_number}</span>
                   </TableCell>
-                  <TableCell className="py-2">
-                    <div>
-                      <span className="truncate block max-w-[200px] font-medium" title={permit.applicant_full_name}>
-                        {permit.applicant_full_name}
-                      </span>
-                      <span className="truncate block max-w-[200px] text-sm text-muted-foreground" title={permit.property_address}>
-                        {permit.property_address}
-                      </span>
-                    </div>
+                  <TableCell className="hidden lg:table-cell py-2">
+                    <span className="truncate block max-w-[150px] text-sm" title={permit.property_address}>
+                      {permit.property_address}
+                    </span>
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell py-2 text-center">
-                    <span className="truncate block max-w-[100px] lg:max-w-[150px] xl:max-w-[200px] mx-auto" title={getPermitTypeLabel(permit.permit_type)}>
+                  <TableCell className="py-2">
+                    <span className="truncate block max-w-[150px] font-medium" title={permit.applicant_full_name}>
+                      {permit.applicant_full_name}
+                    </span>
+                  </TableCell>
+                  <TableCell className="hidden xl:table-cell py-2 text-center">
+                    <span className="truncate block max-w-[100px] mx-auto" title={getPermitTypeLabel(permit.permit_type)}>
                       {getPermitTypeLabel(permit.permit_type)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="hidden 2xl:table-cell py-2 text-center">
+                    <span className="text-sm font-medium">
+                      {formatAmount(Number(permit.estimated_construction_value_cents) / 100)}
                     </span>
                   </TableCell>
                   <TableCell className="text-center py-2">
