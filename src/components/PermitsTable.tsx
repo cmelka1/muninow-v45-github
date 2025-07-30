@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, Eye, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { PermitFilters } from './PermitsFilter';
 import { NewPermitApplicationDialog } from '@/components/NewPermitApplicationDialog';
 import { usePermits } from '@/hooks/usePermits';
@@ -109,10 +109,6 @@ const PermitsTable: React.FC<PermitsTableProps> = ({ filters = {}, onViewClick }
     navigate(`/permit/${permitId}`);
   };
 
-  const handleViewClick = (e: React.MouseEvent, permitId: string) => {
-    e.stopPropagation(); // Prevent row click navigation
-    navigate(`/permit/${permitId}`);
-  };
 
   if (error) {
     return (
@@ -182,7 +178,6 @@ const PermitsTable: React.FC<PermitsTableProps> = ({ filters = {}, onViewClick }
                 <TableHead className="hidden md:table-cell text-center">Type</TableHead>
                 <TableHead className="hidden lg:table-cell text-center">Status</TableHead>
                 <TableHead className="text-center">Fee</TableHead>
-                <TableHead className="w-[120px] text-center">View</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -215,16 +210,6 @@ const PermitsTable: React.FC<PermitsTableProps> = ({ filters = {}, onViewClick }
                   </TableCell>
                   <TableCell className="text-center font-medium py-2">
                     {formatAmount(Number(permit.total_amount_cents) / 100)}
-                  </TableCell>
-                  <TableCell className="text-center py-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      className="w-full h-8"
-                      onClick={(e) => handleViewClick(e, permit.permit_id)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
