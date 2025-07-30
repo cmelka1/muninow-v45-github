@@ -106,7 +106,11 @@ const PermitsTable: React.FC<PermitsTableProps> = ({ filters = {}, onViewClick }
   };
 
   const handleRowClick = (permitId: string) => {
-    navigate(`/permit/${permitId}`);
+    if (onViewClick) {
+      onViewClick(permitId);
+    } else {
+      navigate(`/permit/${permitId}`);
+    }
   };
 
 
