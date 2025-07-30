@@ -11,7 +11,9 @@ import {
   Users,
   Building,
   Download,
-  Eye
+  Eye,
+  CalendarIcon,
+  ClipboardList
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,6 +29,9 @@ import { PermitStatusChangeDialog } from '@/components/PermitStatusChangeDialog'
 import { getStatusDisplayName, getStatusDescription, PermitStatus } from '@/hooks/usePermitWorkflow';
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
 import { usePermitDocuments } from '@/hooks/usePermitDocuments';
+import { ScheduleInspectionDialog } from '@/components/ScheduleInspectionDialog';
+import { RequestInformationDialog } from '@/components/RequestInformationDialog';
+import { PermitCommunication } from '@/components/PermitCommunication';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { toast } from '@/hooks/use-toast';
@@ -36,6 +41,8 @@ const MunicipalPermitDetail = () => {
   const navigate = useNavigate();
   const [reviewNotes, setReviewNotes] = useState('');
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [isInspectionDialogOpen, setIsInspectionDialogOpen] = useState(false);
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [selectedAssignee, setSelectedAssignee] = useState('');
   
   const { data: permit, isLoading, error } = usePermit(permitId!);
@@ -415,10 +422,20 @@ const MunicipalPermitDetail = () => {
                 >
                   Update Status
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => setIsRequestDialogOpen(true)}
+                >
+                  <ClipboardList className="h-4 w-4 mr-2" />
                   Request Information
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => setIsInspectionDialogOpen(true)}
+                >
+                  <CalendarIcon className="h-4 w-4 mr-2" />
                   Schedule Inspection
                 </Button>
               </div>
@@ -504,8 +521,34 @@ const MunicipalPermitDetail = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Communication Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Communication & Updates
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PermitCommunication permitId={permitId!} isMunicipalUser={true} />
+            </CardContent>
+          </Card>
         </div>
       </div>
+
+      {/* Dialogs */}
+      <ScheduleInspectionDialog
+        open={isInspectionDialogOpen}
+        onOpenChange={setIsInspectionDialogOpen}
+        permitId={permitId!}
+      />
+
+      <RequestInformationDialog
+        open={isRequestDialogOpen}
+        onOpenChange={setIsRequestDialogOpen}
+        permitId={permitId!}
+      />
 
       {/* Status Change Dialog */}
       <PermitStatusChangeDialog

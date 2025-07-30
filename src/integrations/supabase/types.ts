@@ -2024,6 +2024,48 @@ export type Database = {
           },
         ]
       }
+      permit_inspections: {
+        Row: {
+          completed_date: string | null
+          created_at: string
+          id: string
+          inspection_type: string
+          inspector_id: string | null
+          notes: string | null
+          permit_id: string
+          result: string | null
+          scheduled_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_date?: string | null
+          created_at?: string
+          id?: string
+          inspection_type: string
+          inspector_id?: string | null
+          notes?: string | null
+          permit_id: string
+          result?: string | null
+          scheduled_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_date?: string | null
+          created_at?: string
+          id?: string
+          inspection_type?: string
+          inspector_id?: string | null
+          notes?: string | null
+          permit_id?: string
+          result?: string | null
+          scheduled_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       permit_notifications: {
         Row: {
           created_at: string
