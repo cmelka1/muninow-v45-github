@@ -26,6 +26,8 @@ import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 import { PermitStatusChangeDialog } from '@/components/PermitStatusChangeDialog';
 import { getStatusDisplayName, getStatusDescription, PermitStatus } from '@/hooks/usePermitWorkflow';
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
+import { usePermitDocuments } from '@/hooks/usePermitDocuments';
+import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 
 const MunicipalPermitDetail = () => {
@@ -40,6 +42,7 @@ const MunicipalPermitDetail = () => {
     permit?.customer_id,
     permit?.merchant_id
   );
+  const { data: documents } = usePermitDocuments(permitId!);
 
   const handleSaveNotes = () => {
     // TODO: Implement saving review notes
@@ -226,8 +229,8 @@ const MunicipalPermitDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Municipal Questions Responses */}
-          {permit.municipal_questions_responses && Object.keys(permit.municipal_questions_responses).length > 0 && (
+          {/* Municipal Questions */}
+          {questions && questions.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -236,16 +239,43 @@ const MunicipalPermitDetail = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {Object.entries(permit.municipal_questions_responses).map(([questionId, response]) => {
-                  const question = questions?.find(q => q.id === questionId);
+                {questions.map((question) => {
+                  const response = permit.municipal_questions_responses?.[question.id];
+                  const hasResponse = response !== undefined && response !== null;
+                  
                   return (
-                    <div key={questionId} className="space-y-2">
-                      <Label className="text-sm font-medium text-muted-foreground">
-                        {question?.question_text || questionId}
-                      </Label>
-                      <p className="text-base">
-                        {formatMunicipalQuestionResponse(questionId, response)}
-                      </p>
+                    <div key={question.id} className="space-y-2 p-4 border rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <Label className="text-sm font-medium">
+                            {question.question_text}
+                            {question.is_required && <span className="text-destructive ml-1">*</span>}
+                          </Label>
+                          {question.help_text && (
+                            <p className="text-xs text-muted-foreground mt-1">{question.help_text}</p>
+                          )}
+                        </div>
+                        {question.is_required && (
+                          <Badge variant={hasResponse ? "default" : "destructive"} className="text-xs">
+                            {question.is_required ? "Required" : "Optional"}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="mt-2">
+                        {hasResponse ? (
+                          <div className="flex items-center gap-2">
+                            <Badge variant={response === true || response === 'yes' ? "default" : "secondary"}>
+                              {response === true || response === 'yes' ? "Yes" : 
+                               response === false || response === 'no' ? "No" : 
+                               formatMunicipalQuestionResponse(question.id, response)}
+                            </Badge>
+                          </div>
+                        ) : (
+                          <Badge variant="outline" className="text-muted-foreground">
+                            Not Answered
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -258,45 +288,78 @@ const MunicipalPermitDetail = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                Documents
+                Documents ({documents?.length || 0})
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-muted-foreground">
-                <p>Document management functionality will be available soon.</p>
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-4 w-4" />
-                      <span className="text-sm">Site Plan.pdf</span>
-                      <Badge variant="outline" className="text-xs">Required</Badge>
+              {documents && documents.length > 0 ? (
+                <div className="space-y-3">
+                  {documents.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-3 flex-1">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium truncate">{doc.file_name}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {doc.document_type}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                            <span>{(doc.file_size / 1024).toFixed(1)} KB</span>
+                            <span>Uploaded: {formatDate(doc.uploaded_at)}</span>
+                          </div>
+                          {doc.description && (
+                            <p className="text-xs text-muted-foreground mt-1">{doc.description}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            const { data } = supabase.storage
+                              .from('permit-documents')
+                              .getPublicUrl(doc.storage_path);
+                            window.open(data.publicUrl, '_blank');
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={async () => {
+                            const { data } = await supabase.storage
+                              .from('permit-documents')
+                              .download(doc.storage_path);
+                            
+                            if (data) {
+                              const url = URL.createObjectURL(data);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = doc.file_name;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                              URL.revokeObjectURL(url);
+                            }
+                          }}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-4 w-4" />
-                      <span className="text-sm">Building Plans.pdf</span>
-                      <Badge variant="outline" className="text-xs">Required</Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                  <p className="text-sm">No documents uploaded yet</p>
+                  <p className="text-xs mt-1">Documents will appear here once uploaded by the applicant</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
