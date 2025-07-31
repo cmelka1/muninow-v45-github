@@ -51,7 +51,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         class: cn(
           'prose text-sm focus:outline-none min-h-[120px] p-3',
           'prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground',
-          'prose-strong:text-foreground prose-em:text-foreground'
+          'prose-strong:text-foreground prose-em:text-foreground',
+          '[&_ul]:list-disc [&_ol]:list-decimal [&_li]:marker:text-foreground'
         ),
       },
     },
