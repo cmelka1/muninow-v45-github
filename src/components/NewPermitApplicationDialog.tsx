@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
 import { usePermitTypes, PermitType } from '@/hooks/usePermitTypes';
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
@@ -1193,13 +1194,16 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                   <p className="text-xs text-muted-foreground mb-2">
                     Provide a detailed description of the work to be performed
                   </p>
-                  <Textarea
-                    id="scope-of-work"
+                  <RichTextEditor
+                    content={scopeOfWork}
+                    onChange={setScopeOfWork}
                     placeholder="Enter a detailed description of the construction work, materials to be used, and any other relevant details..."
-                    value={scopeOfWork}
-                    onChange={(e) => setScopeOfWork(e.target.value)}
-                    className="mt-1 min-h-[120px]"
+                    error={!!validationErrors.scopeOfWork}
+                    className="mt-1"
                   />
+                  {validationErrors.scopeOfWork && (
+                    <p className="text-sm text-red-600 mt-1">{validationErrors.scopeOfWork}</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1433,7 +1437,14 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
 
                 <div>
                   <Label className="text-xs text-muted-foreground">Scope of Work</Label>
-                  <p className="text-sm mt-1">{scopeOfWork || 'Not provided'}</p>
+                  {scopeOfWork ? (
+                    <div 
+                      className="text-sm mt-1 prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1"
+                      dangerouslySetInnerHTML={{ __html: scopeOfWork }}
+                    />
+                  ) : (
+                    <p className="text-sm mt-1 text-muted-foreground">Not provided</p>
+                  )}
                 </div>
 
                 <Separator />
