@@ -80,6 +80,7 @@ export default {
   },
   plugins: [
     require("tailwindcss-animate"),
+    require("@tailwindcss/typography"),
     plugin(function({ addBase }) {
       addBase({
         // Improve focus styles for better accessibility
