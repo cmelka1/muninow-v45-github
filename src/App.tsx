@@ -50,6 +50,8 @@ import Notifications from "./pages/Notifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MunicipalProtectedRoute } from "@/components/MunicipalProtectedRoute";
 import { MunicipalLayout } from "@/components/layouts/MunicipalLayout";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 
 const queryClient = new QueryClient();
 
@@ -68,7 +70,16 @@ const App = () => (
                 <Route path="/signin" element={<Auth />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/notifications" element={
+                  <SidebarProvider>
+                    <div className="min-h-screen flex w-full">
+                      <AppSidebar />
+                      <main className="flex-1 overflow-auto">
+                        <Notifications />
+                      </main>
+                    </div>
+                  </SidebarProvider>
+                } />
                 <Route path="/payment-history" element={<PaymentHistory />} />
                 <Route path="/permits" element={<Permits />} />
                 <Route path="/permit/:permitId" element={<PermitOverview />} />
