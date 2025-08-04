@@ -198,8 +198,8 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
                 const displayName = isCurrentUser 
                   ? 'You' 
                   : comment.reviewer 
-                    ? `${comment.reviewer.first_name} ${comment.reviewer.last_name}`
-                    : 'Municipal Staff';
+                    ? `${comment.reviewer.first_name} ${comment.reviewer.last_name} (${comment.reviewer.account_type === 'municipal' ? 'Municipal Staff' : 'Applicant'})`
+                    : 'Unknown User';
                 
                 return (
                   <div key={comment.id} className={`border rounded-lg p-4 space-y-2 ${commentBgClass}`}>
