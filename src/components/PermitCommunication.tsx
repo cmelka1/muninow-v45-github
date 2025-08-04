@@ -92,6 +92,27 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Add Comment */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Comments/Requests</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmitComment} className="space-y-4">
+            <Textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Add a comment or request..."
+              rows={3}
+            />
+
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Adding...' : 'Add Comment'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
       {/* Communication Timeline */}
       <Card>
         <CardHeader>
@@ -203,27 +224,6 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
               No communication history yet.
             </p>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Add Comment */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Comments/Requests</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmitComment} className="space-y-4">
-            <Textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Add a comment or request..."
-              rows={3}
-            />
-
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Adding...' : 'Add Comment'}
-            </Button>
-          </form>
         </CardContent>
       </Card>
     </div>
