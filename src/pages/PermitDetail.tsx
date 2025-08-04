@@ -186,10 +186,6 @@ const PermitDetail = () => {
                 <Label className="text-sm font-medium text-muted-foreground">Scope of Work</Label>
                 <p className="text-base">{permit.scope_of_work}</p>
               </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Estimated Construction Value</Label>
-                <p className="text-base">{formatCurrency(permit.estimated_construction_value_cents / 100)}</p>
-              </div>
             </CardContent>
           </Card>
 
