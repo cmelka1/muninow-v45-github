@@ -56,7 +56,7 @@ export default function Notifications() {
       case 'system':
         return '⚙️';
       default:
-        return '🔔';
+        return '📄';
     }
   };
 
