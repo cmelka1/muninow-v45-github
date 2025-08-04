@@ -2120,6 +2120,27 @@ export type Database = {
           },
         ]
       }
+      permit_number_sequences: {
+        Row: {
+          created_at: string | null
+          next_sequence: number
+          updated_at: string | null
+          year_code: string
+        }
+        Insert: {
+          created_at?: string | null
+          next_sequence?: number
+          updated_at?: string | null
+          year_code: string
+        }
+        Update: {
+          created_at?: string | null
+          next_sequence?: number
+          updated_at?: string | null
+          year_code?: string
+        }
+        Relationships: []
+      }
       permit_review_comments: {
         Row: {
           comment_text: string

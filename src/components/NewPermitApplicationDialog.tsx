@@ -354,106 +354,48 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
         }
       }
 
-      // Generate unique permit number
-      const { data: permitNumberData, error: permitNumberError } = await supabase
-        .rpc('generate_permit_number');
-      
-      if (permitNumberError) {
-        console.error('Error generating permit number:', permitNumberError);
-        throw new Error('Failed to generate permit number');
-      }
+      // Create the permit application - let the database trigger generate the permit number atomically
+      const { data: permitApplication, error: permitError } = await supabase
+        .from('permit_applications')
+        .insert({
+          user_id: profile.id,
+          customer_id: selectedMunicipality!.customer_id,
+          merchant_id: selectedMunicipality!.id,
+          permit_type: selectedPermitType!.name,
+          property_address: propertyInfo.address,
+          property_pin: propertyInfo.pinNumber || null,
+          estimated_construction_value_cents: propertyInfo.estimatedValue * 100,
+          applicant_full_name: applicantInfo.nameOrCompany,
+          applicant_phone: applicantInfo.phoneNumber,
+          applicant_email: applicantInfo.email,
+          applicant_address: applicantInfo.address,
+          owner_full_name: propertyOwnerInfo.nameOrCompany,
+          owner_phone: propertyOwnerInfo.phoneNumber,
+          owner_email: propertyOwnerInfo.email,
+          owner_address: propertyOwnerInfo.address,
+          scope_of_work: scopeOfWork || null,
+          municipal_questions_responses: municipalQuestions && municipalQuestions.length > 0 ? questionResponses : null,
+          application_status: 'submitted' as const,
+          submitted_at: new Date().toISOString(),
+          // Merchant data
+          merchant_name: merchantData.merchant_name,
+          finix_merchant_id: merchantData.finix_merchant_id,
+          merchant_finix_identity_id: merchantData.finix_identity_id,
+          // Fee profile data
+          merchant_fee_profile_id: feeProfile?.id,
+          basis_points: feeProfile?.basis_points,
+          fixed_fee: feeProfile?.fixed_fee,
+          ach_basis_points: feeProfile?.ach_basis_points,
+          ach_fixed_fee: feeProfile?.ach_fixed_fee,
+          // Payment data
+          payment_amount_cents: paymentAmountCents,
+          idempotency_id: idempotencyId,
+          fraud_session_id: fraudSessionId
+        })
+        .select()
+        .single();
 
-      let permitNumber = permitNumberData;
-      console.log('Generated permit number:', permitNumber);
-
-      // Create the main permit application with complete merchant and payment data
-      let permitApplication: any = null;
-      let retries = 3;
-      
-      while (retries > 0) {
-        try {
-          console.log(`Attempt ${4 - retries}: Inserting permit application with number:`, permitNumber);
-          const { data, error: permitError } = await supabase
-            .from('permit_applications')
-            .insert({
-              permit_number: permitNumber,
-              user_id: profile.id,
-              customer_id: selectedMunicipality!.customer_id,
-              merchant_id: selectedMunicipality!.id,
-              permit_type: selectedPermitType!.name,
-              property_address: propertyInfo.address,
-              property_pin: propertyInfo.pinNumber || null,
-              estimated_construction_value_cents: propertyInfo.estimatedValue * 100,
-              applicant_full_name: applicantInfo.nameOrCompany,
-              applicant_phone: applicantInfo.phoneNumber,
-              applicant_email: applicantInfo.email,
-              applicant_address: applicantInfo.address,
-              owner_full_name: propertyOwnerInfo.nameOrCompany,
-              owner_phone: propertyOwnerInfo.phoneNumber,
-              owner_email: propertyOwnerInfo.email,
-              owner_address: propertyOwnerInfo.address,
-              scope_of_work: scopeOfWork || null,
-              municipal_questions_responses: municipalQuestions && municipalQuestions.length > 0 ? questionResponses : null,
-              application_status: 'submitted' as const,
-              submitted_at: new Date().toISOString(),
-              // Merchant data
-              merchant_name: merchantData.merchant_name,
-              finix_merchant_id: merchantData.finix_merchant_id,
-              merchant_finix_identity_id: merchantData.finix_identity_id,
-              // Fee profile data
-              merchant_fee_profile_id: feeProfile?.id,
-              basis_points: feeProfile?.basis_points,
-              fixed_fee: feeProfile?.fixed_fee,
-              ach_basis_points: feeProfile?.ach_basis_points,
-              ach_fixed_fee: feeProfile?.ach_fixed_fee,
-              // Payment data
-              payment_amount_cents: paymentAmountCents,
-              idempotency_id: idempotencyId,
-              fraud_session_id: fraudSessionId
-            })
-            .select()
-            .single();
-
-          if (permitError) {
-            console.error(`Permit insertion error on attempt ${4 - retries}:`, permitError);
-            // Check if it's a duplicate permit number error
-            if (permitError.message?.includes('permit_applications_permit_number_key')) {
-              console.log(`Permit number ${permitNumber} already exists, retrying with new number...`);
-              // Generate a new permit number and retry
-              const { data: newPermitNumberData, error: newPermitNumberError } = await supabase
-                .rpc('generate_permit_number');
-              
-              if (newPermitNumberError) {
-                console.error('Error generating new permit number:', newPermitNumberError);
-                throw newPermitNumberError;
-              }
-              permitNumber = newPermitNumberData;
-              console.log('New permit number generated:', permitNumber);
-              retries--;
-              continue;
-            }
-            throw permitError;
-          }
-
-          console.log('Permit application created successfully:', data);
-          permitApplication = data;
-          break;
-        } catch (error) {
-          console.error(`Error on attempt ${4 - retries}:`, error);
-          retries--;
-          if (retries === 0) {
-            console.error('All retry attempts failed');
-            throw error;
-          }
-          console.log(`Retrying... ${retries} attempts remaining`);
-        }
-      }
-
-      // Ensure we have a valid permit application
-      if (!permitApplication) {
-        console.error('permitApplication is still null after retry loop');
-        throw new Error('Failed to create permit application after retries');
-      }
+      if (permitError) throw permitError;
 
       // Insert contractors
       const contractorPromises = contractors
