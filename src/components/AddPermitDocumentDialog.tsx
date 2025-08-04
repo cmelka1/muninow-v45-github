@@ -184,15 +184,37 @@ export const AddPermitDocumentDialog: React.FC<AddPermitDocumentDialogProps> = (
             <Label htmlFor="file-upload">Select File *</Label>
             {!selectedFile ? (
               <div className="mt-2">
+                <div 
+                  className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-primary/50 hover:bg-muted/25 transition-colors cursor-pointer"
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                >
+                  <Upload className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Click to upload a file</p>
+                    <p className="text-xs text-muted-foreground">
+                      PDF, DOC, DOCX, JPG, PNG, TIFF (max 50MB)
+                    </p>
+                  </div>
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    className="mt-3"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      document.getElementById('file-upload')?.click();
+                    }}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Choose File
+                  </Button>
+                </div>
                 <Input
                   id="file-upload"
                   type="file"
                   onChange={handleFileSelect}
                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.tiff,.tif"
+                  className="sr-only"
                 />
-                <p className="text-sm text-muted-foreground mt-1">
-                  Accepted formats: PDF, DOC, DOCX, JPG, PNG, TIFF (max 50MB)
-                </p>
               </div>
             ) : (
               <div className="mt-2 flex items-center justify-between p-3 border rounded-md bg-muted/50">
