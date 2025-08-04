@@ -113,12 +113,10 @@ export const PermitStatusChangeDialog: React.FC<PermitStatusChangeDialogProps> =
             </div>
           )}
 
-          {(requiresReason || selectedStatus === 'information_requested') && (
+          {requiresReason && (
             <div className="space-y-2">
               <Label htmlFor="reason">
-                {selectedStatus === 'denied' ? 'Denial Reason *' : 
-                 selectedStatus === 'withdrawn' ? 'Withdrawal Reason *' :
-                 'Additional Information Required'}
+                {selectedStatus === 'denied' ? 'Denial Reason *' : 'Withdrawal Reason *'}
               </Label>
               <Textarea
                 id="reason"
@@ -126,8 +124,7 @@ export const PermitStatusChangeDialog: React.FC<PermitStatusChangeDialogProps> =
                 onChange={(e) => setReason(e.target.value)}
                 placeholder={
                   selectedStatus === 'denied' ? 'Explain why the permit was denied...' :
-                  selectedStatus === 'withdrawn' ? 'Reason for withdrawal...' :
-                  'Describe what additional information is needed...'
+                  'Reason for withdrawal...'
                 }
                 rows={3}
               />

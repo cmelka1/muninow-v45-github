@@ -12,8 +12,7 @@ import {
   Building,
   Download,
   Eye,
-  CalendarIcon,
-  ClipboardList
+  CalendarIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +29,8 @@ import { getStatusDisplayName, getStatusDescription, PermitStatus } from '@/hook
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
 import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { ScheduleInspectionDialog } from '@/components/ScheduleInspectionDialog';
-import { RequestInformationDialog } from '@/components/RequestInformationDialog';
+import { PermitCommunication } from '@/components/PermitCommunication';
+
 
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, formatDate } from '@/lib/formatters';
@@ -42,7 +42,7 @@ const MunicipalPermitDetail = () => {
   const [reviewNotes, setReviewNotes] = useState('');
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isInspectionDialogOpen, setIsInspectionDialogOpen] = useState(false);
-  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+  
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   
@@ -458,14 +458,6 @@ const MunicipalPermitDetail = () => {
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => setIsRequestDialogOpen(true)}
-                >
-                  <ClipboardList className="h-4 w-4 mr-2" />
-                  Request Information
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
                   onClick={() => setIsInspectionDialogOpen(true)}
                 >
                   <CalendarIcon className="h-4 w-4 mr-2" />
@@ -475,39 +467,16 @@ const MunicipalPermitDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Review Notes */}
+          {/* Communication */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
-                Review Notes
+                Communication
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="notes">Internal Notes</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Add your review notes here..."
-                  value={reviewNotes}
-                  onChange={(e) => setReviewNotes(e.target.value)}
-                  className="mt-1 min-h-[100px]"
-                />
-              </div>
-              <Button 
-                onClick={handleSaveNotes} 
-                className="w-full" 
-                disabled={isSavingNotes || !reviewNotes.trim()}
-              >
-                {isSavingNotes ? "Saving..." : "Save Notes"}
-              </Button>
-              
-              {permit.review_notes && (
-                <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                  <Label className="text-sm font-medium">Previous Notes</Label>
-                  <p className="text-sm mt-1">{permit.review_notes}</p>
-                </div>
-              )}
+            <CardContent>
+              <PermitCommunication permitId={permitId!} isMunicipalUser={true} />
             </CardContent>
           </Card>
 
@@ -574,11 +543,6 @@ const MunicipalPermitDetail = () => {
         permitId={permitId!}
       />
 
-      <RequestInformationDialog
-        open={isRequestDialogOpen}
-        onOpenChange={setIsRequestDialogOpen}
-        permitId={permitId!}
-      />
 
       {/* Status Change Dialog */}
       <PermitStatusChangeDialog

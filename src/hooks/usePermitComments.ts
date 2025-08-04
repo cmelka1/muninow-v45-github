@@ -23,14 +23,32 @@ export const usePermitComments = (permitId: string) => {
   return useQuery({
     queryKey: ['permit_comments', permitId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Get comments first
+      const { data: comments, error: commentsError } = await supabase
         .from('permit_review_comments')
         .select('*')
         .eq('permit_id', permitId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
-      return data as PermitComment[];
+      if (commentsError) throw commentsError;
+
+      // Get reviewer profiles for each comment
+      const commentsWithReviewers = await Promise.all(
+        comments?.map(async (comment) => {
+          const { data: reviewer } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, email, account_type')
+            .eq('id', comment.reviewer_id)
+            .single();
+
+          return {
+            ...comment,
+            reviewer
+          };
+        }) || []
+      );
+
+      return commentsWithReviewers as PermitComment[];
     },
     enabled: !!permitId && !!profile,
   });

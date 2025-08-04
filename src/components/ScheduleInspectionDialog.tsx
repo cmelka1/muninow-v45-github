@@ -145,16 +145,6 @@ export const ScheduleInspectionDialog: React.FC<ScheduleInspectionDialogProps> =
             </Popover>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add any notes or special instructions..."
-              rows={3}
-            />
-          </div>
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

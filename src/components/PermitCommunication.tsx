@@ -171,27 +171,37 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
               <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
                 Comments
               </h4>
-              {comments.map((comment) => (
-                <div key={comment.id} className="border rounded-lg p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      <span className="text-sm font-medium">
-                        {comment.reviewer_id === profile?.id ? 'You' : 'Municipal Reviewer'}
-                      </span>
-                      {comment.is_internal && isMunicipalUser && (
-                        <Badge variant="secondary" className="text-xs">
-                          Internal
-                        </Badge>
-                      )}
+              {comments.map((comment) => {
+                const isCurrentUser = comment.reviewer_id === profile?.id;
+                const commentBgClass = isMunicipalUser 
+                  ? (isCurrentUser ? 'bg-gray-100' : 'bg-amber-50')
+                  : (isCurrentUser ? 'bg-amber-50' : 'bg-gray-100');
+                
+                const displayName = isCurrentUser 
+                  ? 'You' 
+                  : comment.reviewer 
+                    ? `${comment.reviewer.first_name} ${comment.reviewer.last_name}`
+                    : 'Unknown User';
+                
+                return (
+                  <div key={comment.id} className={`border rounded-lg p-4 space-y-2 ${commentBgClass}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        <span className="text-sm font-medium">
+                          {displayName} - {format(new Date(comment.created_at), 'PPP')}
+                        </span>
+                        {comment.is_internal && isMunicipalUser && (
+                          <Badge variant="secondary" className="text-xs">
+                            Internal
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      {format(new Date(comment.created_at), 'PPp')}
-                    </span>
+                    <p className="text-sm">{comment.comment_text}</p>
                   </div>
-                  <p className="text-sm">{comment.comment_text}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -206,14 +216,14 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
       {/* Add Comment */}
       <Card>
         <CardHeader>
-          <CardTitle>Add Comment</CardTitle>
+          <CardTitle>Comments/Requests</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmitComment} className="space-y-4">
             <Textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Add a comment..."
+              placeholder="Add a comment or request..."
               rows={3}
             />
             
