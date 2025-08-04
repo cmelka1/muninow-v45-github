@@ -297,6 +297,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
         .select(`
           *,
           merchant_fee_profiles (
+            id,
             finix_fee_profile_id,
             basis_points,
             fixed_fee,
@@ -327,6 +328,10 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
       console.log('merchant_finix_identity_id:', merchantData.finix_identity_id, 'Type:', typeof merchantData.finix_identity_id);
       console.log('Full selectedMunicipality object:', selectedMunicipality);
       console.log('Full merchantData object:', merchantData);
+      if (feeProfile) {
+        console.log('feeProfile.id (UUID for merchant_fee_profile_id):', feeProfile.id, 'Type:', typeof feeProfile.id);
+        console.log('feeProfile.finix_fee_profile_id (Finix ID):', feeProfile.finix_fee_profile_id, 'Type:', typeof feeProfile.finix_fee_profile_id);
+      }
       console.log('===========================');
 
       // Validate UUID fields before insertion
@@ -377,7 +382,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
           finix_merchant_id: merchantData.finix_merchant_id,
           merchant_finix_identity_id: merchantData.finix_identity_id,
           // Fee profile data
-          merchant_fee_profile_id: feeProfile?.finix_fee_profile_id,
+          merchant_fee_profile_id: feeProfile?.id,
           basis_points: feeProfile?.basis_points,
           fixed_fee: feeProfile?.fixed_fee,
           ach_basis_points: feeProfile?.ach_basis_points,
