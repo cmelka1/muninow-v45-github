@@ -22,7 +22,6 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
   isMunicipalUser = false,
 }) => {
   const [newComment, setNewComment] = useState('');
-  const [isInternal, setIsInternal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { profile } = useAuth();
@@ -51,11 +50,10 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
       await createComment.mutateAsync({
         permit_id: permitId,
         comment_text: newComment,
-        is_internal: isMunicipalUser && isInternal,
+        is_internal: false,
       });
 
       setNewComment('');
-      setIsInternal(false);
       
       toast({
         title: 'Success',
@@ -191,11 +189,6 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
                         <span className="text-sm font-medium">
                           {displayName} - {format(new Date(comment.created_at), 'PPP')}
                         </span>
-                        {comment.is_internal && isMunicipalUser && (
-                          <Badge variant="secondary" className="text-xs">
-                            Internal
-                          </Badge>
-                        )}
                       </div>
                     </div>
                     <p className="text-sm">{comment.comment_text}</p>
@@ -226,21 +219,6 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
               placeholder="Add a comment or request..."
               rows={3}
             />
-            
-            {isMunicipalUser && (
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="internal"
-                  checked={isInternal}
-                  onChange={(e) => setIsInternal(e.target.checked)}
-                  className="rounded"
-                />
-                <label htmlFor="internal" className="text-sm">
-                  Internal comment (only visible to municipal staff)
-                </label>
-              </div>
-            )}
 
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Adding...' : 'Add Comment'}
