@@ -116,8 +116,7 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
       {/* Communication Timeline */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
+          <CardTitle>
             Communication History
           </CardTitle>
         </CardHeader>
