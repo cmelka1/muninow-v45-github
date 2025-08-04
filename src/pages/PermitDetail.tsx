@@ -349,13 +349,24 @@ const PermitDetail = () => {
                 </div>
               </div>
               
-              {permit.application_status === 'approved' || permit.application_status === 'issued' ? (
+              {permit.application_status === 'approved' && permit.payment_status !== 'paid' ? (
                 <div className="pt-2">
-                  <Button className="w-full" disabled>
-                    Payment Processing Available
+                  <Button className="w-full">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Pay Permit Fee
                   </Button>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Payment functionality will be integrated here
+                    Complete payment to receive your permit
+                  </p>
+                </div>
+              ) : permit.payment_status === 'paid' ? (
+                <div className="pt-2">
+                  <Button className="w-full" disabled variant="outline">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Payment Complete
+                  </Button>
+                  <p className="text-xs text-green-600 mt-2">
+                    Your permit fee has been paid
                   </p>
                 </div>
               ) : (
