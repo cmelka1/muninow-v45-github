@@ -177,9 +177,6 @@ export default function Notifications() {
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
-                  <div className="text-2xl flex-shrink-0">
-                    {getNotificationIcon(notification.notification_type)}
-                  </div>
                   <div className="flex-1 space-y-2">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
