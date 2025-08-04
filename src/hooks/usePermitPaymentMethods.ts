@@ -193,7 +193,7 @@ export const usePermitPaymentMethods = (permit: any) => {
     fetchGooglePayMerchantId();
   }, []);
 
-  const handlePayment = async () => {
+  const handlePayment = async (): Promise<void> => {
     if (!selectedPaymentMethod || !permit) {
       toast({
         title: "Error",
@@ -257,15 +257,12 @@ export const usePermitPaymentMethods = (permit: any) => {
           title: "Payment Successful",
           description: "Your permit payment has been processed successfully.",
         });
-        
-        return { success: true, ...data };
       } else {
         toast({
           title: "Payment Failed",
           description: data.error || "Payment processing failed. Please try again.",
           variant: "destructive",
         });
-        return { success: false };
       }
     } catch (error) {
       console.error('Payment error:', error);
@@ -274,13 +271,12 @@ export const usePermitPaymentMethods = (permit: any) => {
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-      return { success: false };
     } finally {
       setIsProcessingPayment(false);
     }
   };
 
-  const handleGooglePayment = async () => {
+  const handleGooglePayment = async (): Promise<void> => {
     try {
       setIsProcessingPayment(true);
 
@@ -373,7 +369,6 @@ export const usePermitPaymentMethods = (permit: any) => {
           title: "Payment Successful",
           description: "Your Google Pay permit payment has been processed successfully.",
         });
-        return { success: true, ...data };
       } else {
         throw new Error(data?.error || 'Payment failed');
       }
@@ -411,13 +406,12 @@ export const usePermitPaymentMethods = (permit: any) => {
           variant: "destructive",
         });
       }
-      return { success: false };
     } finally {
       setIsProcessingPayment(false);
     }
   };
 
-  const handleApplePayment = async () => {
+  const handleApplePayment = async (): Promise<void> => {
     try {
       setIsProcessingPayment(true);
 
@@ -427,7 +421,6 @@ export const usePermitPaymentMethods = (permit: any) => {
         title: "Payment Successful",
         description: "Your Apple Pay permit payment has been processed successfully.",
       });
-      return { success: true };
 
     } catch (error) {
       console.error('Apple Pay payment error:', error);
@@ -436,7 +429,6 @@ export const usePermitPaymentMethods = (permit: any) => {
         description: "Apple Pay permit payment failed. Please try again.",
         variant: "destructive",
       });
-      return { success: false };
     } finally {
       setIsProcessingPayment(false);
     }

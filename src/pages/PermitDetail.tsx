@@ -9,9 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { usePermit } from '@/hooks/usePermit';
 import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
+import { usePermitPaymentMethods } from '@/hooks/usePermitPaymentMethods';
 import { AddPermitDocumentDialog } from '@/components/AddPermitDocumentDialog';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 import { PermitCommunication } from '@/components/PermitCommunication';
+import PermitPaymentSummary from '@/components/PermitPaymentSummary';
+import PaymentMethodSelector from '@/components/PaymentMethodSelector';
+import PermitPaymentButtons from '@/components/PermitPaymentButtons';
 import { getStatusDescription, PermitStatus } from '@/hooks/usePermitWorkflow';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,12 +25,25 @@ const PermitDetail = () => {
   const navigate = useNavigate();
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
   
-  const { data: permit, isLoading, error } = usePermit(permitId!);
+  const { data: permit, isLoading, error, refetch: refetchPermit } = usePermit(permitId!);
   const { data: documents = [], isLoading: documentsLoading, refetch: refetchDocuments } = usePermitDocuments(permitId!);
   const { data: questions } = useMunicipalPermitQuestions(
     permit?.customer_id,
     permit?.merchant_id
   );
+
+  // Payment methods hook
+  const {
+    selectedPaymentMethod,
+    serviceFee,
+    paymentInstruments,
+    isProcessingPayment,
+    totalWithFee,
+    handlePayment,
+    handleGooglePayment,
+    handleApplePayment,
+    setSelectedPaymentMethod
+  } = usePermitPaymentMethods(permit);
 
   const handleDocumentView = async (document: any) => {
     try {
@@ -327,10 +344,6 @@ const PermitDetail = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Permit Fee</Label>
-                  <p className="text-lg font-semibold">{formatCurrency((permit.base_fee_cents || permit.total_amount_cents || 0) / 100)}</p>
-                </div>
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-medium text-muted-foreground">Payment Status</Label>
                   <Badge 
@@ -350,12 +363,51 @@ const PermitDetail = () => {
               </div>
               
               {permit.application_status === 'approved' && permit.payment_status !== 'paid' ? (
-                <div className="pt-2">
-                  <Button className="w-full">
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Pay Permit Fee
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
+                <div className="space-y-4">
+                  {/* Payment Summary */}
+                  <PermitPaymentSummary 
+                    baseAmount={(permit.base_fee_cents || permit.total_amount_cents || 0)}
+                    serviceFee={serviceFee}
+                    selectedPaymentMethod={selectedPaymentMethod}
+                    compact={true}
+                  />
+                  
+                  {/* Payment Method Selection */}
+                  {paymentInstruments.length > 0 && (
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">Payment Method</Label>
+                      <PaymentMethodSelector
+                        paymentInstruments={paymentInstruments}
+                        selectedPaymentMethod={selectedPaymentMethod}
+                        onSelectPaymentMethod={setSelectedPaymentMethod}
+                        maxMethods={2}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Payment Buttons */}
+                  <div className="space-y-2">
+                    {selectedPaymentMethod && (
+                      <Button 
+                        className="w-full" 
+                        onClick={handlePayment}
+                        disabled={isProcessingPayment}
+                      >
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        {isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency((totalWithFee || 0) / 100)}`}
+                      </Button>
+                    )}
+                    
+                    <PermitPaymentButtons
+                      permit={permit}
+                      totalAmount={totalWithFee || 0}
+                      onGooglePayment={handleGooglePayment}
+                      onApplePayment={handleApplePayment}
+                      isDisabled={isProcessingPayment}
+                    />
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground">
                     Complete payment to receive your permit
                   </p>
                 </div>
