@@ -367,7 +367,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
       console.log('Generated permit number:', permitNumber);
 
       // Create the main permit application with complete merchant and payment data
-      let permitApplication;
+      let permitApplication: any = null;
       let retries = 3;
       
       while (retries > 0) {
@@ -435,6 +435,11 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
           if (retries === 1) throw error;
           retries--;
         }
+      }
+
+      // Ensure we have a valid permit application
+      if (!permitApplication) {
+        throw new Error('Failed to create permit application after retries');
       }
 
       // Insert contractors
