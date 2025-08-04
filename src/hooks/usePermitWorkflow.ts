@@ -66,6 +66,24 @@ export const getValidStatusTransitions = (currentStatus: PermitStatus): PermitSt
   return transitions[currentStatus] || [];
 };
 
+// Map application status to valid municipal review status
+const mapToMunicipalReviewStatus = (applicationStatus: PermitStatus): string => {
+  const statusMap: Record<PermitStatus, string> = {
+    draft: 'pending',
+    submitted: 'pending',
+    under_review: 'under_review',
+    information_requested: 'needs_revision',
+    resubmitted: 'under_review',
+    approved: 'approved',
+    denied: 'rejected',
+    withdrawn: 'rejected',
+    expired: 'rejected',
+    rejected: 'rejected',
+    issued: 'approved'
+  };
+  return statusMap[applicationStatus] || 'pending';
+};
+
 export const usePermitWorkflow = () => {
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -78,7 +96,7 @@ export const usePermitWorkflow = () => {
     try {
       const updateData: any = {
         application_status: newStatus,
-        municipal_review_status: newStatus,
+        municipal_review_status: mapToMunicipalReviewStatus(newStatus),
         updated_at: new Date().toISOString()
       };
 
@@ -95,7 +113,10 @@ export const usePermitWorkflow = () => {
         .update(updateData)
         .eq('permit_id', permitId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error details:', error);
+        throw error;
+      }
 
       toast({
         title: "Status Updated",
@@ -103,11 +124,19 @@ export const usePermitWorkflow = () => {
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating permit status:', error);
+      
+      let errorMessage = "Failed to update permit status";
+      if (error?.message?.includes('check constraint')) {
+        errorMessage = "Invalid status transition. Please try a different status.";
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to update permit status",
+        description: errorMessage,
         variant: "destructive",
       });
       return false;
