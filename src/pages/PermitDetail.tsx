@@ -1,12 +1,14 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, MapPin, User, Clock, MessageSquare, Download, Eye } from 'lucide-react';
+import { ArrowLeft, FileText, MapPin, User, Clock, MessageSquare, Download, Eye, CreditCard, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { usePermit } from '@/hooks/usePermit';
 import { usePermitDocuments } from '@/hooks/usePermitDocuments';
+import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 import { PermitCommunication } from '@/components/PermitCommunication';
 import { getStatusDescription, PermitStatus } from '@/hooks/usePermitWorkflow';
@@ -19,6 +21,10 @@ const PermitDetail = () => {
   
   const { data: permit, isLoading, error } = usePermit(permitId!);
   const { data: documents = [], isLoading: documentsLoading } = usePermitDocuments(permitId!);
+  const { data: questions } = useMunicipalPermitQuestions(
+    permit?.customer_id,
+    permit?.merchant_id
+  );
 
   const handleDocumentView = async (document: any) => {
     try {
@@ -62,8 +68,8 @@ const PermitDetail = () => {
           <Skeleton className="h-10 w-24" />
           <Skeleton className="h-8 w-48" />
         </div>
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
             <Skeleton className="h-64 w-full" />
             <Skeleton className="h-48 w-full" />
             <Skeleton className="h-32 w-full" />
@@ -111,10 +117,10 @@ const PermitDetail = () => {
         </div>
       </div>
 
-      {/* Three Column Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Main Content - 2/3 width */}
-        <div className="xl:col-span-2 space-y-6">
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Main Content */}
+        <div className="lg:col-span-2 space-y-6">
           {/* Permit Overview */}
           <Card>
             <CardHeader>
@@ -124,7 +130,7 @@ const PermitDetail = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Permit Number</Label>
                   <p className="text-base font-mono">{permit.permit_number}</p>
@@ -144,17 +150,17 @@ const PermitDetail = () => {
                   <p className="text-base">{formatDate(permit.submitted_at)}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Permit Fee</Label>
-                  <p className="text-base">{formatCurrency(permit.total_amount_cents / 100)}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">Construction Value</Label>
+                  <p className="text-base">{formatCurrency(permit.estimated_construction_value_cents / 100)}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Payment Status</Label>
-                  <p className="text-base">{permit.payment_status}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">Permit Fee</Label>
+                  <p className="text-base">{formatCurrency((permit.base_fee_cents || permit.total_amount_cents || 0) / 100)}</p>
                 </div>
               </div>
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Status Description</Label>
-                <p className="text-base text-muted-foreground mt-1">
+                <p className="text-base text-muted-foreground">
                   {getStatusDescription(permit.application_status as PermitStatus)}
                 </p>
               </div>
@@ -215,12 +221,40 @@ const PermitDetail = () => {
             </CardContent>
           </Card>
 
+          {/* Municipal Questions */}
+          {questions && questions.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building className="h-5 w-5" />
+                  Municipal Questions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {questions.map((question) => {
+                  const response = permit.municipal_questions_responses?.[question.id];
+                  const hasResponse = response !== undefined && response !== null;
+                  const isYes = hasResponse && (response === true || response === 'yes');
+                  
+                  return (
+                    <div key={question.id} className="flex items-center justify-between py-2">
+                      <span className="text-sm">{question.question_text}</span>
+                      <Badge variant={isYes ? "default" : "outline"}>
+                        {isYes ? "Yes" : "No"}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Documents Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                Documents
+                Documents ({documents?.length || 0})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -229,23 +263,30 @@ const PermitDetail = () => {
                   <Skeleton className="h-12 w-full" />
                   <Skeleton className="h-12 w-full" />
                 </div>
-              ) : documents.length > 0 ? (
-                <div className="space-y-2">
+              ) : documents && documents.length > 0 ? (
+                <div className="space-y-3">
                   {documents.map((doc) => (
                     <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{doc.file_name}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{doc.document_type}</p>
-                        {doc.description && (
-                          <p className="text-xs text-muted-foreground mt-1">{doc.description}</p>
-                        )}
+                      <div className="flex items-center gap-3 flex-1">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium truncate">{doc.file_name}</span>
+                          </div>
+                          <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                            <span>{(doc.file_size / 1024).toFixed(1)} KB</span>
+                            <span>Uploaded: {formatDate(doc.uploaded_at)}</span>
+                          </div>
+                          {doc.description && (
+                            <p className="text-xs text-muted-foreground mt-1">{doc.description}</p>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 ml-4">
+                      <div className="flex items-center gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDocumentView(doc)}
-                          className="h-8 w-8 p-0"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -253,7 +294,6 @@ const PermitDetail = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDocumentDownload(doc)}
-                          className="h-8 w-8 p-0"
                         >
                           <Download className="h-4 w-4" />
                         </Button>
@@ -262,14 +302,62 @@ const PermitDetail = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">No documents uploaded yet.</p>
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                  <p className="text-sm">No documents uploaded yet</p>
+                  <p className="text-xs mt-1">Documents will appear here once uploaded</p>
+                </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Sidebar - 1/3 width */}
+        {/* Right Column - Sidebar */}
         <div className="space-y-6">
+          {/* Payment Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Payment Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Permit Fee</Label>
+                  <p className="text-lg font-semibold">{formatCurrency((permit.base_fee_cents || permit.total_amount_cents || 0) / 100)}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Payment Status</Label>
+                  <Badge variant={permit.payment_status === 'paid' ? 'default' : 'secondary'}>
+                    {permit.payment_status || 'Pending'}
+                  </Badge>
+                </div>
+              </div>
+              
+              {permit.application_status === 'approved' || permit.application_status === 'issued' ? (
+                <div className="pt-2">
+                  <Button className="w-full" disabled>
+                    Payment Processing Available
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Payment functionality will be integrated here
+                  </p>
+                </div>
+              ) : (
+                <div className="pt-2">
+                  <Button className="w-full" disabled variant="outline">
+                    Payment Unavailable
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Payment processing will be available once your permit is approved
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Compact Timeline */}
           <Card>
             <CardHeader>
