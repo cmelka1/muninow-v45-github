@@ -14,16 +14,22 @@ import {
   SidebarMenuButton,
   SidebarSeparator
 } from '@/components/ui/sidebar';
-import { Home, Users, User, LogOut, Shield, History, FileText } from 'lucide-react';
+import { Home, Users, User, LogOut, Shield, History, FileText, Bell } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
+import { NotificationDropdown } from '@/components/NotificationDropdown';
 
 const navigationItems = [
   {
     title: 'Dashboard',
     icon: Home,
     url: '/dashboard'
+  },
+  {
+    title: 'Notifications',
+    icon: Bell,
+    url: '/notifications'
   },
   {
     title: 'Payment History',
@@ -76,14 +82,17 @@ export function AppSidebar() {
     <Sidebar className="w-64 bg-background border-r border-border">
       {/* Header */}
       <SidebarHeader className="px-6 py-8">
-        <NavLink to="/dashboard" className="block hover:opacity-80 transition-opacity">
-          <img 
-            src={logoUrl} 
-            alt="MuniNow" 
-            className="h-10 w-auto object-contain"
-            style={{ imageRendering: 'crisp-edges' }}
-          />
-        </NavLink>
+        <div className="flex items-center justify-between">
+          <NavLink to="/dashboard" className="block hover:opacity-80 transition-opacity">
+            <img 
+              src={logoUrl} 
+              alt="MuniNow" 
+              className="h-10 w-auto object-contain"
+              style={{ imageRendering: 'crisp-edges' }}
+            />
+          </NavLink>
+          <NotificationDropdown />
+        </div>
       </SidebarHeader>
 
       {/* Navigation */}
