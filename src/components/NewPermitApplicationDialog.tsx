@@ -287,6 +287,10 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     setIsSubmitting(true);
 
     try {
+      // Debug logging to identify the issue
+      console.log('Selected municipality data:', selectedMunicipality);
+      console.log('Municipality ID being used:', selectedMunicipality!.id);
+      
       // Fetch merchant and fee profile data
       const { data: merchantData, error: merchantError } = await supabase
         .from('merchants')
