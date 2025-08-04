@@ -206,12 +206,6 @@ const MunicipalPermitDetail = () => {
                    <p className="text-base">{formatCurrency((permit.base_fee_cents || 0) / 100)}</p>
                  </div>
               </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Status Description</Label>
-                <p className="text-base text-muted-foreground">
-                  {getStatusDescription(permit.application_status as PermitStatus)}
-                </p>
-              </div>
             </CardContent>
           </Card>
 
