@@ -197,10 +197,6 @@ const PermitOverview = () => {
                     <p className="text-base">{permit.property_address || 'N/A'}</p>
                   </div>
                   <div className="col-span-2">
-                    <label className="text-sm font-medium text-muted-foreground">Project Description</label>
-                    <p className="text-base">{permit.project_description || 'N/A'}</p>
-                  </div>
-                  <div className="col-span-2">
                     <label className="text-sm font-medium text-muted-foreground">Scope of Work</label>
                     <p className="text-base">{permit.scope_of_work || 'N/A'}</p>
                   </div>
@@ -265,9 +261,14 @@ const PermitOverview = () => {
                     </div>
                   )}
                   {permit.information_requested_at && (
-                    <div className="flex justify-between items-center p-3 bg-muted/30 rounded">
-                      <span className="font-medium">Information Requested</span>
-                      <span className="text-sm text-muted-foreground">{formatDate(permit.information_requested_at)}</span>
+                    <div className="p-3 bg-orange-50 border border-orange-200 rounded space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-orange-700">Information Requested</span>
+                        <span className="text-sm text-orange-600">{formatDate(permit.information_requested_at)}</span>
+                      </div>
+                      {permit.review_notes && (
+                        <p className="text-xs text-orange-600 italic">"{permit.review_notes}"</p>
+                      )}
                     </div>
                   )}
                   {permit.approved_at && (

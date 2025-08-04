@@ -197,10 +197,6 @@ const MunicipalPermitDetail = () => {
                 <p className="text-base">{permit.property_address}</p>
               </div>
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Project Description</Label>
-                <p className="text-base">{permit.project_description}</p>
-              </div>
-              <div>
                 <Label className="text-sm font-medium text-muted-foreground">Scope of Work</Label>
                 <p className="text-base">{permit.scope_of_work}</p>
               </div>
@@ -496,9 +492,14 @@ const MunicipalPermitDetail = () => {
                 </div>
               )}
               {permit.information_requested_at && (
-                <div className="flex justify-between items-center p-2 bg-orange-50 border border-orange-200 rounded">
-                  <span className="text-sm font-medium text-orange-700">Info Requested</span>
-                  <span className="text-xs text-orange-600">{formatDate(permit.information_requested_at)}</span>
+                <div className="p-2 bg-orange-50 border border-orange-200 rounded space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-orange-700">Info Requested</span>
+                    <span className="text-xs text-orange-600">{formatDate(permit.information_requested_at)}</span>
+                  </div>
+                  {permit.review_notes && (
+                    <p className="text-xs text-orange-600 italic">"{permit.review_notes}"</p>
+                  )}
                 </div>
               )}
               {permit.approved_at && (
