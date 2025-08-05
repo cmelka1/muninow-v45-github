@@ -30,7 +30,7 @@ import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions
 import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { ScheduleInspectionDialog } from '@/components/ScheduleInspectionDialog';
 import { PermitCommunication } from '@/components/PermitCommunication';
-
+import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, formatDate } from '@/lib/formatters';
@@ -224,7 +224,11 @@ const MunicipalPermitDetail = () => {
               </div>
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Scope of Work</Label>
-                <p className="text-base">{permit.scope_of_work}</p>
+                <SafeHtmlRenderer 
+                  content={permit.scope_of_work} 
+                  className="mt-1"
+                  fallback="No scope of work provided"
+                />
               </div>
             </CardContent>
           </Card>
