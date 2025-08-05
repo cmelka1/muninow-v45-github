@@ -141,30 +141,14 @@ const MunicipalPermitsTable: React.FC<MunicipalPermitsTableProps> = ({ filters =
 
   if (!permits || permits.length === 0) {
     return (
-      <>
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Municipal Permits ({totalCount})</CardTitle>
-              <Button 
-                onClick={() => setIsNewPermitDialogOpen(true)}
-                className="flex items-center space-x-2"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add New Permit</span>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">No permits found.</p>
-          </CardContent>
-        </Card>
-
-        <NewPermitApplicationDialog
-          open={isNewPermitDialogOpen}
-          onOpenChange={setIsNewPermitDialogOpen}
-        />
-      </>
+      <Card>
+        <CardHeader>
+          <CardTitle>Municipal Permits ({totalCount})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">No permits found.</p>
+        </CardContent>
+      </Card>
     );
   }
 
