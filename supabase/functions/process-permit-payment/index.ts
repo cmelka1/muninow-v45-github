@@ -297,19 +297,33 @@ serve(async (req) => {
 
     // If transfer succeeded, update the permit
     if (finixResponse.ok && finixData.state === 'SUCCEEDED') {
-      await supabaseService
-        .from("permit_applications")
-        .update({
-          service_fee_cents: calculatedServiceFee,
-          total_amount_cents: total_amount_cents,
-          payment_status: 'paid',
-          payment_processed_at: new Date().toISOString(),
-          payment_reference: finixData.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq("permit_id", permit_id);
+      try {
+        const { error: permitUpdateError } = await supabaseService
+          .from("permit_applications")
+          .update({
+            service_fee_cents: calculatedServiceFee,
+            total_amount_cents: total_amount_cents,
+            payment_status: 'paid',
+            application_status: 'issued',
+            finix_transfer_id: finixData.id,
+            payment_processed_at: new Date().toISOString(),
+            payment_method_type: paymentType,
+            payment_instrument_id: payment_instrument_id,
+            updated_at: new Date().toISOString()
+          })
+          .eq("permit_id", permit_id);
 
-      console.log("Permit updated successfully for payment:", finixData.id);
+        if (permitUpdateError) {
+          console.error("Error updating permit:", permitUpdateError);
+          throw new Error("Failed to update permit status");
+        }
+
+        console.log("Permit updated successfully for payment:", finixData.id);
+      } catch (error) {
+        console.error("Permit update failed:", error);
+        // Note: Payment was successful, but permit update failed
+        // This should be handled by manual review
+      }
     }
 
     // Return response

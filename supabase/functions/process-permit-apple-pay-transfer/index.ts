@@ -386,19 +386,32 @@ serve(async (req) => {
 
     // If transfer succeeded, update the permit
     if (transferResponse.ok && transferData.state === 'SUCCEEDED') {
-      await supabaseService
-        .from("permit_applications")
-        .update({
-          service_fee_cents: calculatedServiceFee,
-          total_amount_cents: total_amount_cents,
-          payment_status: 'paid',
-          payment_processed_at: new Date().toISOString(),
-          payment_reference: transferData.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq("permit_id", permit_id);
+      try {
+        const { error: permitUpdateError } = await supabaseService
+          .from("permit_applications")
+          .update({
+            service_fee_cents: calculatedServiceFee,
+            total_amount_cents: total_amount_cents,
+            payment_status: 'paid',
+            application_status: 'issued',
+            finix_transfer_id: transferData.id,
+            payment_processed_at: new Date().toISOString(),
+            payment_method_type: 'Apple Pay',
+            updated_at: new Date().toISOString()
+          })
+          .eq("permit_id", permit_id);
 
-      console.log("Permit updated successfully for Apple Pay payment:", transferData.id);
+        if (permitUpdateError) {
+          console.error("Error updating permit:", permitUpdateError);
+          throw new Error("Failed to update permit status");
+        }
+
+        console.log("Permit updated successfully for Apple Pay payment:", transferData.id);
+      } catch (error) {
+        console.error("Permit update failed:", error);
+        // Note: Payment was successful, but permit update failed
+        // This should be handled by manual review
+      }
     }
 
     // Return response
