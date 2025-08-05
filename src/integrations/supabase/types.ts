@@ -1716,12 +1716,9 @@ export type Database = {
           fixed_fee: number | null
           fraud_session_id: string | null
           idempotency_id: string | null
-          in_robbins_park_historical_district: boolean
           information_request_reason: string | null
           information_requested_at: string | null
-          is_older_than_50_years: boolean
           issued_at: string | null
-          listed_in_hod: boolean
           merchant_fee_profile_id: string | null
           merchant_finix_identity_id: string | null
           merchant_id: string | null
@@ -1742,7 +1739,6 @@ export type Database = {
           permit_number: string | null
           permit_type: string
           profile_id: string | null
-          project_description: string | null
           property_address: string
           property_pin: string | null
           resubmitted_at: string | null
@@ -1788,12 +1784,9 @@ export type Database = {
           fixed_fee?: number | null
           fraud_session_id?: string | null
           idempotency_id?: string | null
-          in_robbins_park_historical_district?: boolean
           information_request_reason?: string | null
           information_requested_at?: string | null
-          is_older_than_50_years?: boolean
           issued_at?: string | null
-          listed_in_hod?: boolean
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
@@ -1814,7 +1807,6 @@ export type Database = {
           permit_number?: string | null
           permit_type: string
           profile_id?: string | null
-          project_description?: string | null
           property_address: string
           property_pin?: string | null
           resubmitted_at?: string | null
@@ -1860,12 +1852,9 @@ export type Database = {
           fixed_fee?: number | null
           fraud_session_id?: string | null
           idempotency_id?: string | null
-          in_robbins_park_historical_district?: boolean
           information_request_reason?: string | null
           information_requested_at?: string | null
-          is_older_than_50_years?: boolean
           issued_at?: string | null
-          listed_in_hod?: boolean
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
@@ -1886,7 +1875,6 @@ export type Database = {
           permit_number?: string | null
           permit_type?: string
           profile_id?: string | null
-          project_description?: string | null
           property_address?: string
           property_pin?: string | null
           resubmitted_at?: string | null
@@ -2983,6 +2971,46 @@ export type Database = {
           p_bank_last_four: string
         }
         Returns: string
+      }
+      get_permit_with_details: {
+        Args: { p_permit_id: string }
+        Returns: {
+          permit_id: string
+          permit_number: string
+          permit_type: string
+          application_status: string
+          applicant_full_name: string
+          applicant_email: string
+          applicant_phone: string
+          property_address: string
+          property_apt_number: string
+          property_city: string
+          property_state: string
+          property_zip_code: string
+          project_description: string
+          estimated_construction_value_cents: number
+          total_amount_cents: number
+          created_at: string
+          submitted_at: string
+          under_review_at: string
+          information_requested_at: string
+          approved_at: string
+          denied_at: string
+          issued_at: string
+          withdrawn_at: string
+          expired_at: string
+          resubmitted_at: string
+          user_id: string
+          customer_id: string
+          merchant_id: string
+          merchant_name: string
+          assigned_reviewer_id: string
+          review_notes: string
+          municipal_questions_responses: Json
+          base_fee_cents: number
+          processing_days: number
+          requires_inspection: boolean
+        }[]
       }
       get_role_id_by_name: {
         Args: { _role_name: string }

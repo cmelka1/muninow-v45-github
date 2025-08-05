@@ -10,14 +10,14 @@ export interface PermitDetail {
   applicant_full_name: string;
   applicant_email: string;
   applicant_phone: string;
-  applicant_address: string;
+  applicant_address: string | null;
   property_address: string;
-  project_description: string;
-  scope_of_work: string;
+  project_description: string | null;
+  scope_of_work: string | null;
   estimated_construction_value_cents: number;
   total_amount_cents: number;
-  payment_amount_cents: number;
-  payment_status: string;
+  payment_amount_cents: number | null;
+  payment_status: string | null;
   submitted_at: string | null;
   under_review_at: string | null;
   information_requested_at: string | null;
@@ -80,7 +80,7 @@ export const usePermit = (permitId: string) => {
         base_fee_cents: permitTypeData?.base_fee_cents || null
       };
       
-      return combinedData as PermitDetail;
+      return combinedData as unknown as PermitDetail;
     },
     enabled: !!profile && !!permitId
   });
