@@ -38,17 +38,23 @@ export const usePermitPaymentMethods = (permit: any) => {
     
     const permitAmount = permit.base_fee_cents || permit.total_amount_cents || 0; // A = original permit amount
     
-    // Get merchant fee profile from permit
-    const merchant = permit.municipal_permit_merchants?.merchants;
-    if (!merchant) return null;
+    // Use fee data directly from permit (primary source)
+    // Fee data is available directly in permit_applications table
+    const basisPoints = permit.basis_points;
+    const fixedFee = permit.fixed_fee; 
+    const achBasisPoints = permit.ach_basis_points;
+    const achFixedFee = permit.ach_fixed_fee;
+    
+    // If no fee data available, we can't calculate service fees
+    if (!basisPoints && !achBasisPoints) return null;
     
     // Handle Google Pay and Apple Pay as special cases - always use card fees
     if (selectedPaymentMethod === 'google-pay' || selectedPaymentMethod === 'apple-pay') {
-      const basisPoints = merchant.basis_points || 250;
-      const fixedFeeCents = merchant.fixed_fee || 50;
+      const cardBasisPoints = basisPoints || 250;
+      const cardFixedFee = fixedFee || 50;
       
       // Convert basis points to decimal percentage (p)
-      const percentageDecimal = basisPoints / 10000;
+      const percentageDecimal = cardBasisPoints / 10000;
       
       // Prevent division by zero or invalid percentages
       if (percentageDecimal >= 1) {
@@ -57,17 +63,17 @@ export const usePermitPaymentMethods = (permit: any) => {
       }
       
       // Apply grossed-up formula: T = (A + f) / (1 - p)
-      const totalAmountToCharge = Math.round((permitAmount + fixedFeeCents) / (1 - percentageDecimal));
+      const totalAmountToCharge = Math.round((permitAmount + cardFixedFee) / (1 - percentageDecimal));
       const serviceFeeToDisplay = totalAmountToCharge - permitAmount;
       
       // Calculate percentage fee for display purposes
-      const percentageFee = Math.round((permitAmount * basisPoints) / 10000);
+      const percentageFee = Math.round((permitAmount * cardBasisPoints) / 10000);
 
       return {
         totalFee: serviceFeeToDisplay, // Legacy compatibility
         percentageFee,
-        fixedFee: fixedFeeCents,
-        basisPoints,
+        fixedFee: cardFixedFee,
+        basisPoints: cardBasisPoints,
         isCard: true,
         totalAmountToCharge,
         serviceFeeToDisplay
@@ -80,11 +86,11 @@ export const usePermitPaymentMethods = (permit: any) => {
     if (!selectedInstrument) return null;
 
     const isCard = selectedInstrument.instrument_type === 'PAYMENT_CARD';
-    const basisPoints = isCard ? (merchant.basis_points || 250) : (merchant.ach_basis_points || 20);
-    const fixedFeeCents = isCard ? (merchant.fixed_fee || 50) : (merchant.ach_fixed_fee || 50);
+    const instrumentBasisPoints = isCard ? (basisPoints || 250) : (achBasisPoints || 20);
+    const instrumentFixedFee = isCard ? (fixedFee || 50) : (achFixedFee || 50);
     
     // Convert basis points to decimal percentage (p)
-    const percentageDecimal = basisPoints / 10000;
+    const percentageDecimal = instrumentBasisPoints / 10000;
     
     // Prevent division by zero or invalid percentages
     if (percentageDecimal >= 1) {
@@ -93,17 +99,17 @@ export const usePermitPaymentMethods = (permit: any) => {
     }
     
     // Apply grossed-up formula: T = (A + f) / (1 - p)
-    const totalAmountToCharge = Math.round((permitAmount + fixedFeeCents) / (1 - percentageDecimal));
+    const totalAmountToCharge = Math.round((permitAmount + instrumentFixedFee) / (1 - percentageDecimal));
     const serviceFeeToDisplay = totalAmountToCharge - permitAmount;
     
     // Calculate percentage fee for display purposes
-    const percentageFee = Math.round((permitAmount * basisPoints) / 10000);
+    const percentageFee = Math.round((permitAmount * instrumentBasisPoints) / 10000);
 
     return {
       totalFee: serviceFeeToDisplay, // Legacy compatibility
       percentageFee,
-      fixedFee: fixedFeeCents,
-      basisPoints,
+      fixedFee: instrumentFixedFee,
+      basisPoints: instrumentBasisPoints,
       isCard,
       totalAmountToCharge,
       serviceFeeToDisplay
