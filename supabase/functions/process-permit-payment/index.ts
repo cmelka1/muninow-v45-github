@@ -11,7 +11,7 @@ interface ProcessPermitPaymentRequest {
   payment_instrument_id: string;
   total_amount_cents: number;
   idempotency_id: string;
-  fraud_session_id?: string;
+  fraud_session_id: string;
 }
 
 interface FinixTransferRequest {
@@ -91,7 +91,7 @@ serve(async (req) => {
     });
 
     // Validate input
-    if (!permit_id || !payment_instrument_id || !total_amount_cents || !idempotency_id) {
+    if (!permit_id || !payment_instrument_id || !total_amount_cents || !idempotency_id || !fraud_session_id) {
       throw new Error("Missing required parameters");
     }
 

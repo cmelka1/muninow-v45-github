@@ -133,9 +133,9 @@ export const usePermitPaymentMethods = (permit: any) => {
   useEffect(() => {
     const initializeFinixAuth = () => {
       // Check if Finix library is loaded and permit has merchant data
-      if (typeof window !== 'undefined' && window.Finix && permit?.municipal_permit_merchants?.merchants?.finix_merchant_id) {
+      if (typeof window !== 'undefined' && window.Finix && permit?.finix_merchant_id) {
         try {
-          const finixMerchantId = permit.municipal_permit_merchants.merchants.finix_merchant_id;
+          const finixMerchantId = permit.finix_merchant_id;
           console.log('Initializing Finix Auth with merchant ID:', finixMerchantId);
           
           const auth = window.Finix.Auth(
@@ -172,7 +172,7 @@ export const usePermitPaymentMethods = (permit: any) => {
       const retryTimeout = setTimeout(initializeFinixAuth, 1000);
       return () => clearTimeout(retryTimeout);
     }
-  }, [permit?.municipal_permit_merchants?.merchants?.finix_merchant_id]);
+  }, [permit?.finix_merchant_id]);
 
   // Fetch Google Pay merchant ID
   useEffect(() => {
@@ -236,6 +236,16 @@ export const usePermitPaymentMethods = (permit: any) => {
         }
       }
 
+      // Validate fraud session ID is available
+      if (!currentFraudSessionId) {
+        toast({
+          title: "Error",
+          description: "Fraud protection is not available. Please refresh the page and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       console.log('Processing permit payment with fraud session ID:', currentFraudSessionId);
 
       const { data, error } = await supabase.functions.invoke('process-permit-payment', {
@@ -292,8 +302,7 @@ export const usePermitPaymentMethods = (permit: any) => {
       }
 
       // Validate required merchant IDs
-      const merchant = permit?.municipal_permit_merchants?.merchants;
-      if (!merchant?.finix_identity_id) {
+      if (!permit?.merchant_finix_identity_id) {
         throw new Error('Merchant identity ID not available for this permit');
       }
 
@@ -302,7 +311,7 @@ export const usePermitPaymentMethods = (permit: any) => {
       }
 
       console.log('Google Pay configuration:', {
-        gatewayMerchantId: merchant.finix_identity_id,
+        gatewayMerchantId: permit.merchant_finix_identity_id,
         merchantId: googlePayMerchantId
       });
 
@@ -323,7 +332,7 @@ export const usePermitPaymentMethods = (permit: any) => {
             type: "PAYMENT_GATEWAY" as const,
             parameters: {
               gateway: "finix" as const,
-              gatewayMerchantId: merchant.finix_identity_id,
+              gatewayMerchantId: permit.merchant_finix_identity_id,
             },
           },
         }],
@@ -335,7 +344,7 @@ export const usePermitPaymentMethods = (permit: any) => {
         },
         merchantInfo: {
           merchantId: googlePayMerchantId,
-          merchantName: merchant.merchant_name || permit.municipal_permit_merchants?.permit_merchant_name || 'Municipal Services',
+          merchantName: permit.merchant_name || 'Municipal Services',
         },
       };
 
