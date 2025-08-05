@@ -117,14 +117,7 @@ serve(async (req) => {
     // Get permit details and validate ownership
     const { data: permit, error: permitError } = await supabaseService
       .from("permit_applications")
-      .select(`
-        *,
-        municipal_permit_merchants!inner(
-          merchant_id,
-          permit_merchant_name,
-          merchants!inner(finix_merchant_id, merchant_name, basis_points, fixed_fee, ach_basis_points, ach_fixed_fee)
-        )
-      `)
+      .select("*")
       .eq("permit_id", permit_id)
       .eq("user_id", user.id)
       .eq("application_status", "approved")
@@ -148,10 +141,9 @@ serve(async (req) => {
     }
 
     // Calculate service fee based on payment instrument type
-    const merchant = permit.municipal_permit_merchants?.merchants;
     const isCard = paymentInstrument.instrument_type === 'PAYMENT_CARD';
-    const basisPoints = isCard ? (merchant?.basis_points || 250) : (merchant?.ach_basis_points || 20);
-    const fixedFee = isCard ? (merchant?.fixed_fee || 50) : (merchant?.ach_fixed_fee || 50);
+    const basisPoints = isCard ? (permit.basis_points || 250) : (permit.ach_basis_points || 20);
+    const fixedFee = isCard ? (permit.fixed_fee || 50) : (permit.ach_fixed_fee || 50);
     
     const baseAmount = permit.payment_amount_cents || permit.total_amount_cents || 0;
     const percentageFee = Math.round((baseAmount * basisPoints) / 10000);
@@ -163,8 +155,8 @@ serve(async (req) => {
       throw new Error(`Total amount mismatch. Expected: ${expectedTotal}, Received: ${total_amount_cents}`);
     }
 
-    // Get Finix merchant ID from the permit's merchant
-    const finixMerchantId = merchant?.finix_merchant_id;
+    // Get Finix merchant ID from the permit
+    const finixMerchantId = permit.finix_merchant_id;
     if (!finixMerchantId) {
       throw new Error("Merchant not configured with Finix");
     }
@@ -200,11 +192,11 @@ serve(async (req) => {
         card_last_four: paymentInstrument.card_last_four,
         bank_last_four: paymentInstrument.bank_last_four,
         // Merchant Information
-        merchant_name: merchant?.merchant_name || permit.municipal_permit_merchants?.permit_merchant_name,
+        merchant_name: permit.merchant_name,
         category: 'Property-Related',
         subcategory: 'Building Permits',
-        doing_business_as: permit.municipal_permit_merchants?.permit_merchant_name,
-        statement_descriptor: permit.municipal_permit_merchants?.permit_merchant_name,
+        doing_business_as: permit.merchant_name,
+        statement_descriptor: permit.merchant_name,
         // Customer Information from user profile
         customer_first_name: userProfile?.first_name,
         customer_last_name: userProfile?.last_name,
