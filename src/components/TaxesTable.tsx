@@ -41,6 +41,13 @@ const TaxesTable: React.FC<TaxesTableProps> = ({ filters = {}, onViewClick }) =>
   const [pageSize, setPageSize] = useState(5);
   const [isPayTaxDialogOpen, setIsPayTaxDialogOpen] = useState(false);
 
+  const handlePayTaxClick = () => {
+    console.log('Pay Tax button clicked');
+    console.log('Current isPayTaxDialogOpen:', isPayTaxDialogOpen);
+    setIsPayTaxDialogOpen(true);
+    console.log('Setting isPayTaxDialogOpen to true');
+  };
+
   // Mock data for now - replace with actual hook when ready
   const mockTaxes: Tax[] = [];
   const isLoading = false;
@@ -146,7 +153,7 @@ const TaxesTable: React.FC<TaxesTableProps> = ({ filters = {}, onViewClick }) =>
           <div className="flex justify-between items-center">
             <CardTitle>Taxes ({totalCount})</CardTitle>
             <Button 
-              onClick={() => setIsPayTaxDialogOpen(true)}
+              onClick={handlePayTaxClick}
               className="flex items-center space-x-2"
             >
               <Plus className="w-4 h-4" />
@@ -167,7 +174,7 @@ const TaxesTable: React.FC<TaxesTableProps> = ({ filters = {}, onViewClick }) =>
         <div className="flex justify-between items-center">
           <CardTitle>Taxes ({totalCount})</CardTitle>
           <Button 
-            onClick={() => setIsPayTaxDialogOpen(true)}
+            onClick={handlePayTaxClick}
             className="flex items-center space-x-2"
           >
             <Plus className="w-4 h-4" />
