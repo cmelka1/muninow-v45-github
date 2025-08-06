@@ -205,10 +205,6 @@
   animation: fadeIn 0.5s ease-out forwards;
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
-}
-
 /* Transitions */
 .transition-all {
   transition: all 0.3s ease;

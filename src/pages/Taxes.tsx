@@ -50,6 +50,9 @@ const Taxes = () => {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 Taxes
               </h1>
+              <p className="text-gray-600">
+                View and manage your tax obligations
+              </p>
             </div>
 
             <TaxesFilter filters={filters} onFiltersChange={setFilters} />

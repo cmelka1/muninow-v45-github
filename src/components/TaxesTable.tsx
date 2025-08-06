@@ -14,9 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, DollarSign } from 'lucide-react';
 import { TaxFilters } from './TaxesFilter';
-import { PayTaxDialog } from './PayTaxDialog';
 
 interface Tax {
   tax_id: string;
@@ -148,8 +147,9 @@ const TaxesTable: React.FC<TaxesTableProps> = ({ filters = {}, onViewClick }) =>
             <Button 
               onClick={() => setIsPayTaxDialogOpen(true)}
               className="flex items-center space-x-2"
+              disabled
             >
-              <Plus className="w-4 h-4" />
+              <DollarSign className="w-4 h-4" />
               <span>Pay Tax</span>
             </Button>
           </div>
@@ -169,8 +169,9 @@ const TaxesTable: React.FC<TaxesTableProps> = ({ filters = {}, onViewClick }) =>
           <Button 
             onClick={() => setIsPayTaxDialogOpen(true)}
             className="flex items-center space-x-2"
+            disabled
           >
-            <Plus className="w-4 h-4" />
+            <DollarSign className="w-4 h-4" />
             <span>Pay Tax</span>
           </Button>
         </div>
@@ -280,11 +281,6 @@ const TaxesTable: React.FC<TaxesTableProps> = ({ filters = {}, onViewClick }) =>
           </div>
         )}
       </CardContent>
-
-      <PayTaxDialog
-        open={isPayTaxDialogOpen}
-        onOpenChange={setIsPayTaxDialogOpen}
-      />
     </Card>
   );
 };
