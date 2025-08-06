@@ -12,7 +12,6 @@ export interface PermitDetail {
   applicant_phone: string;
   applicant_address: string;
   property_address: string;
-  project_description: string;
   scope_of_work: string;
   estimated_construction_value_cents: number;
   total_amount_cents: number;

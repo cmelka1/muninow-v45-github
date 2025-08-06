@@ -42,11 +42,6 @@ const navigationItems = [
     url: '/municipal/members'
   },
   {
-    title: 'Notifications',
-    icon: Bell,
-    url: '/municipal/notifications'
-  },
-  {
     title: 'Profile',
     icon: User,
     url: '/municipal/profile'

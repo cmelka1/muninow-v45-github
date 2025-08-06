@@ -27,11 +27,6 @@ const navigationItems = [
     url: '/dashboard'
   },
   {
-    title: 'Notifications',
-    icon: Bell,
-    url: '/notifications'
-  },
-  {
     title: 'Payment History',
     icon: History,
     url: '/payment-history'

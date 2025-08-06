@@ -26,11 +26,6 @@ const navigationItems = [
     url: '/superadmin/customers'
   },
   {
-    title: 'Notifications',
-    icon: Bell,
-    url: '/superadmin/notifications'
-  },
-  {
     title: 'Profile',
     icon: User,
     url: '/superadmin/profile'
