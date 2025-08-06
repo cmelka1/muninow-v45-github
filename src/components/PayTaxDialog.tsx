@@ -201,7 +201,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
         ref={dialogContentRef}
