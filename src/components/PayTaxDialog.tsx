@@ -12,9 +12,6 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Switch } from '@/components/ui/switch';
-import { useAuth } from '@/contexts/AuthContext';
-import { normalizePhoneInput } from '@/lib/phoneUtils';
 
 
 interface PayTaxDialogProps {
@@ -42,7 +39,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   const { toast } = useToast();
 
   // Step management
-  const totalSteps = 2;
+  const totalSteps = 3;
   const [currentStep, setCurrentStep] = useState(1);
   const progress = (currentStep / totalSteps) * 100;
   const contentRef = useRef<HTMLDivElement>(null);
@@ -59,8 +56,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   const [payerEmail, setPayerEmail] = useState('');
   const [payerPhone, setPayerPhone] = useState('');
   const [payerAddress, setPayerAddress] = useState<AddressComponents | null>(null);
-  const [useProfileInfo, setUseProfileInfo] = useState(false);
-  const { profile } = useAuth();
 
   // Submission state and errors
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,6 +69,12 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     const e: Record<string, string> = {};
     if (!selectedMunicipality) e.municipality = 'Municipality is required';
     if (!taxType) e.taxType = 'Tax type is required';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const e: Record<string, string> = {};
     if (!payerName.trim()) e.payerName = 'Full name is required';
     if (!payerEmail.trim()) e.payerEmail = 'Email is required';
     if (!payerPhone.trim()) e.payerPhone = 'Phone is required';
@@ -82,9 +83,9 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     return Object.keys(e).length === 0;
   };
 
-
   const handleNext = () => {
     if (currentStep === 1 && !validateStep1()) return;
+    if (currentStep === 2 && !validateStep2()) return;
     if (currentStep < totalSteps) {
       setCurrentStep((s) => s + 1);
       scrollTop();
@@ -109,38 +110,12 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     setPayerEmail('');
     setPayerPhone('');
     setPayerAddress(null);
-    setUseProfileInfo(false);
     setErrors({});
     setIsSubmitting(false);
   };
 
-  const handleUseProfileInfoToggle = (checked: boolean) => {
-    setUseProfileInfo(checked);
-    if (checked && profile) {
-      const fullName = (profile.first_name && profile.last_name)
-        ? `${profile.first_name} ${profile.last_name}`
-        : (profile.business_legal_name || '');
-      const phone = profile.phone ? normalizePhoneInput(profile.phone) : '';
-      const addressComponents: AddressComponents = {
-        streetAddress: profile.street_address || '',
-        city: profile.city || '',
-        state: profile.state || '',
-        zipCode: profile.zip_code || '',
-      };
-      setPayerName(fullName);
-      setPayerPhone(phone);
-      setPayerEmail(profile.email || '');
-      setPayerAddress(addressComponents);
-    } else if (!checked) {
-      setPayerName('');
-      setPayerPhone('');
-      setPayerEmail('');
-      setPayerAddress(null);
-    }
-  };
-
   const handleSubmit = async () => {
-    if (!validateStep1()) {
+    if (!validateStep1() || !validateStep2()) {
       scrollTop();
       return;
     }
@@ -187,7 +162,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
           </div>
 
           <div className="flex justify-between py-4">
-            {[1, 2].map((step) => (
+            {[1, 2, 3].map((step) => (
               <div
                 key={step}
                 className={`flex items-center space-x-3 ${
@@ -208,7 +183,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                 <div className="hidden sm:block">
                   <span className="text-sm font-medium">
                     {step === 1 && 'Tax Info'}
-                    {step === 2 && 'Review & Confirm'}
+                    {step === 2 && 'Payer Info'}
+                    {step === 3 && 'Review & Confirm'}
                   </span>
                 </div>
               </div>
@@ -254,49 +230,34 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
               {currentStep === 2 && (
                 <Card>
-                    <CardHeader className="pb-4 flex flex-row items-center justify-between">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        Payer Information
-                      </CardTitle>
-                      <div className="flex items-center space-x-2">
-                        <Label htmlFor="use-profile-info" className="text-sm text-muted-foreground">
-                          Use Profile Information
-                        </Label>
-                        <Switch
-                          id="use-profile-info"
-                          checked={useProfileInfo}
-                          onCheckedChange={handleUseProfileInfoToggle}
-                        />
-                      </div>
-                    </CardHeader>
+                  <CardHeader>
+                    <CardTitle>Payer Information</CardTitle>
+                  </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Name/Company</Label>
-                        <Input value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder="Enter name or company" disabled={useProfileInfo} />
+                        <Label>Full Name</Label>
+                        <Input value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder="Jane Doe" />
                         {errors.payerName && <p className="text-sm text-destructive">{errors.payerName}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label>Email</Label>
-                        <Input type="email" value={payerEmail} onChange={(e) => setPayerEmail(e.target.value)} placeholder="jane@example.com" disabled={useProfileInfo} />
+                        <Input type="email" value={payerEmail} onChange={(e) => setPayerEmail(e.target.value)} placeholder="jane@example.com" />
                         {errors.payerEmail && <p className="text-sm text-destructive">{errors.payerEmail}</p>}
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Phone Number</Label>
-                        <Input type="tel" value={payerPhone} onChange={(e) => setPayerPhone(normalizePhoneInput(e.target.value))} placeholder="(xxx) xxx-xxxx" disabled={useProfileInfo} />
+                        <Label>Phone</Label>
+                        <Input type="tel" value={payerPhone} onChange={(e) => setPayerPhone(e.target.value)} placeholder="(555) 123-4567" />
                         {errors.payerPhone && <p className="text-sm text-destructive">{errors.payerPhone}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label>Address</Label>
                         <RestPlacesAutocomplete
-                          onAddressSelect={useProfileInfo ? () => {} : (address) => setPayerAddress(address)}
-                          placeholder="Start typing your address..."
-                          value={useProfileInfo ? `${payerAddress?.streetAddress || ''}${payerAddress?.city ? `, ${payerAddress.city}` : ''}${payerAddress?.state ? `, ${payerAddress.state}` : ''}${payerAddress?.zipCode ? ` ${payerAddress.zipCode}` : ''}` : undefined}
-                          className={`${useProfileInfo ? 'opacity-50 pointer-events-none' : ''}`}
+                          onAddressSelect={(address) => setPayerAddress(address)}
+                          placeholder="Search address"
                         />
                         {errors.payerAddress && <p className="text-sm text-destructive">{errors.payerAddress}</p>}
                       </div>
