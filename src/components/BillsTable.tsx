@@ -28,9 +28,11 @@ interface BillFilters {
 interface BillsTableProps {
   filters?: BillFilters;
   onPayClick?: (billId: string) => void;
+  title?: string;
+  headerAction?: React.ReactNode;
 }
 
-const BillsTable: React.FC<BillsTableProps> = ({ filters = {}, onPayClick }) => {
+const BillsTable: React.FC<BillsTableProps> = ({ filters = {}, onPayClick, title = 'Outstanding Bills', headerAction }) => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
@@ -99,9 +101,12 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {}, onPayClick }) => 
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Outstanding Bills</CardTitle>
-        </CardHeader>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <CardTitle>{title}</CardTitle>
+          {headerAction}
+        </div>
+      </CardHeader>
         <CardContent>
           <div className="space-y-2">
             {[...Array(pageSize)].map((_, i) => (
@@ -117,7 +122,10 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {}, onPayClick }) => 
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Outstanding Bills</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>{title}</CardTitle>
+            {headerAction}
+          </div>
         </CardHeader>
         <CardContent>
           <p className="text-destructive">Error loading bills. Please try again.</p>
@@ -130,7 +138,10 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {}, onPayClick }) => 
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Outstanding Bills</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>{title}</CardTitle>
+            {headerAction}
+          </div>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">No outstanding bills found.</p>
@@ -142,7 +153,10 @@ const BillsTable: React.FC<BillsTableProps> = ({ filters = {}, onPayClick }) => 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Outstanding Bills</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle>{title}</CardTitle>
+          {headerAction}
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">

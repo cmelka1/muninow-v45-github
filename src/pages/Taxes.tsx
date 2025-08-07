@@ -55,22 +55,21 @@ const Taxes = () => {
         <SidebarInset className="flex-1 bg-muted">
           <div className="p-8">
             <header className="mb-8">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold text-foreground mb-2">Taxes</h1>
-                  <p className="text-muted-foreground">Manage and pay your tax bills</p>
-                </div>
-                <Button onClick={() => setIsPayTaxOpen(true)} className="flex items-center space-x-2">
-                  <Plus className="w-4 h-4" />
-                  <span>Pay Tax</span>
-                </Button>
-              </div>
+              <h1 className="text-3xl font-bold text-foreground mb-2">Taxes</h1>
+              <p className="text-muted-foreground">Manage and pay your tax bills</p>
             </header>
 
             <BillsFilter filters={filters} onFiltersChange={setFilters} />
             <BillsTable 
               filters={filters}
               onPayClick={(billId) => navigate(`/bill/${billId}`)}
+              title="Taxes"
+              headerAction={
+                <Button onClick={() => setIsPayTaxOpen(true)} className="flex items-center space-x-2">
+                  <Plus className="w-4 h-4" />
+                  <span>Pay Tax</span>
+                </Button>
+              }
             />
 
             <PayTaxDialog open={isPayTaxOpen} onOpenChange={setIsPayTaxOpen} />
