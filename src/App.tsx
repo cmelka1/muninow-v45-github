@@ -45,6 +45,7 @@ import MunicipalProfile from "./pages/MunicipalProfile";
 import MunicipalUserDetail from "./pages/MunicipalUserDetail";
 import MunicipalBillOverview from "./pages/MunicipalBillOverview";
 import Permits from "./pages/Permits";
+import Taxes from "./pages/Taxes";
 import PermitOverview from "./pages/PermitOverview";
 import PermitDetail from "./pages/PermitDetail";
 import Notifications from "./pages/Notifications";
@@ -83,6 +84,7 @@ const App = () => (
                 } />
                 <Route path="/payment-history" element={<PaymentHistory />} />
                 <Route path="/permits" element={<Permits />} />
+                <Route path="/taxes" element={<Taxes />} />
                 <Route path="/permit/:permitId" element={<PermitDetail />} />
                 <Route path="/bill/:billId" element={<BillOverview />} />
                 <Route path="/payment-confirmation/:paymentHistoryId" element={<PaymentConfirmation />} />

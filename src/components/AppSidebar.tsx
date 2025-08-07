@@ -14,7 +14,7 @@ import {
   SidebarMenuButton,
   SidebarSeparator
 } from '@/components/ui/sidebar';
-import { Home, Users, User, LogOut, Shield, History, FileText, Bell } from 'lucide-react';
+import { Home, Users, User, LogOut, Shield, History, FileText, Bell, Receipt } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -35,6 +35,11 @@ const navigationItems = [
     title: 'Permits',
     icon: FileText,
     url: '/permits'
+  },
+  {
+    title: 'Taxes',
+    icon: Receipt,
+    url: '/taxes'
   },
   {
     title: 'Members',
