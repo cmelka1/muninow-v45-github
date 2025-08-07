@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { MunicipalityAutocomplete } from '@/components/ui/municipality-autocomplete';
+import { BuildingPermitsMunicipalityAutocomplete } from '@/components/ui/building-permits-municipality-autocomplete';
+import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface PayTaxDialogProps {
@@ -13,25 +19,55 @@ interface PayTaxDialogProps {
 }
 
 interface SelectedMunicipality {
+  id: string;
+  merchant_name: string;
+  business_name: string;
+  customer_city: string;
+  customer_state: string;
   customer_id: string;
-  legal_entity_name: string;
-  doing_business_as: string;
-  business_city: string;
-  business_state: string;
+}
+
+interface AddressComponents {
+  streetAddress: string;
+  city: string;
+  state: string;
+  zipCode: string;
 }
 
 export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }) => {
   const { toast } = useToast();
+
+  // Step management
+  const totalSteps = 3;
+  const [currentStep, setCurrentStep] = useState(1);
+  const progress = (currentStep / totalSteps) * 100;
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Step 1: Tax Information
   const [selectedMunicipality, setSelectedMunicipality] = useState<SelectedMunicipality | null>(null);
+  const [taxType, setTaxType] = useState<string>('');
   const [accountNumber, setAccountNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [memo, setMemo] = useState('');
+
+  // Step 2: Payer Information
+  const [payerName, setPayerName] = useState('');
+  const [payerEmail, setPayerEmail] = useState('');
+  const [payerPhone, setPayerPhone] = useState('');
+  const [payerAddress, setPayerAddress] = useState<AddressComponents | null>(null);
+
+  // Submission state and errors
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const validate = () => {
+  const scrollTop = () => {
+    if (contentRef.current) contentRef.current.scrollTop = 0;
+  };
+
+  const validateStep1 = () => {
     const e: Record<string, string> = {};
     if (!selectedMunicipality) e.municipality = 'Municipality is required';
+    if (!taxType) e.taxType = 'Tax type is required';
     if (!accountNumber.trim()) e.accountNumber = 'Account or tax number is required';
     const amt = Number(amount);
     if (!amount || isNaN(amt) || amt <= 0) e.amount = 'Enter a valid amount greater than 0';
@@ -39,22 +75,61 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     return Object.keys(e).length === 0;
   };
 
+  const validateStep2 = () => {
+    const e: Record<string, string> = {};
+    if (!payerName.trim()) e.payerName = 'Full name is required';
+    if (!payerEmail.trim()) e.payerEmail = 'Email is required';
+    if (!payerPhone.trim()) e.payerPhone = 'Phone is required';
+    if (!payerAddress) e.payerAddress = 'Address is required';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleNext = () => {
+    if (currentStep === 1 && !validateStep1()) return;
+    if (currentStep === 2 && !validateStep2()) return;
+    if (currentStep < totalSteps) {
+      setCurrentStep((s) => s + 1);
+      scrollTop();
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      setCurrentStep((s) => s - 1);
+      scrollTop();
+    }
+  };
+
+  const resetForm = () => {
+    setCurrentStep(1);
+    setSelectedMunicipality(null);
+    setTaxType('');
+    setAccountNumber('');
+    setAmount('');
+    setMemo('');
+    setPayerName('');
+    setPayerEmail('');
+    setPayerPhone('');
+    setPayerAddress(null);
+    setErrors({});
+    setIsSubmitting(false);
+  };
+
   const handleSubmit = async () => {
-    if (!validate()) return;
+    if (!validateStep1() || !validateStep2()) {
+      scrollTop();
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // Placeholder for future payment flow
       toast({
         title: 'Pay Tax form ready',
         description: 'Payment flow will be connected next. Your details are captured.',
       });
+      resetForm();
       onOpenChange(false);
-      // Reset form
-      setSelectedMunicipality(null);
-      setAccountNumber('');
-      setAmount('');
-      setMemo('');
-      setErrors({});
     } catch (err: any) {
       toast({ title: 'Submission failed', description: err?.message || 'Please try again', variant: 'destructive' });
     } finally {
@@ -62,49 +137,211 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     }
   };
 
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      resetForm();
+      onOpenChange(false);
+    } else {
+      onOpenChange(true);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
+      <DialogContent className="sm:max-w-2xl" ref={contentRef}>
         <DialogHeader>
           <DialogTitle>Pay Tax</DialogTitle>
-          <DialogDescription>Enter your details to proceed with a tax payment.</DialogDescription>
+          <DialogDescription>Complete the steps below to submit your tax payment.</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label>Municipality</Label>
-            <MunicipalityAutocomplete
-              onSelect={(m) => setSelectedMunicipality(m as SelectedMunicipality)}
-              placeholder="Search your municipality"
-            />
-            {errors.municipality && <p className="text-sm text-destructive">{errors.municipality}</p>}
+        <div className="space-y-4">
+          <Progress value={progress} className="w-full" />
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>Step {currentStep} of {totalSteps}</span>
           </div>
 
-          <div className="space-y-2">
-            <Label>Account / Tax Number</Label>
-            <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="e.g., Property ID, Tax ID" />
-            {errors.accountNumber && <p className="text-sm text-destructive">{errors.accountNumber}</p>}
-          </div>
+          {currentStep === 1 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Tax Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Municipality</Label>
+                  <BuildingPermitsMunicipalityAutocomplete
+                    onSelect={(m) => setSelectedMunicipality(m as SelectedMunicipality)}
+                    placeholder="Search your municipality"
+                  />
+                  {errors.municipality && <p className="text-sm text-destructive">{errors.municipality}</p>}
+                </div>
 
-          <div className="space-y-2">
-            <Label>Amount (USD)</Label>
-            <Input type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
-            {errors.amount && <p className="text-sm text-destructive">{errors.amount}</p>}
-          </div>
+                <div className="space-y-2">
+                  <Label>Tax Type</Label>
+                  <Select value={taxType} onValueChange={setTaxType}>
+                    <SelectTrigger aria-label="Tax type">
+                      <SelectValue placeholder="Select tax type" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50 bg-popover">
+                      <SelectItem value="Food & Beverage">Food &amp; Beverage</SelectItem>
+                      <SelectItem value="Hotel & Motel">Hotel &amp; Motel</SelectItem>
+                      <SelectItem value="Amusement">Amusement</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.taxType && <p className="text-sm text-destructive">{errors.taxType}</p>}
+                </div>
 
-          <div className="space-y-2">
-            <Label>Memo (optional)</Label>
-            <Textarea value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="Add any notes for this payment" />
-          </div>
+                <div className="space-y-2">
+                  <Label>Account / Tax Number</Label>
+                  <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="e.g., Property ID, Tax ID" />
+                  {errors.accountNumber && <p className="text-sm text-destructive">{errors.accountNumber}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Amount (USD)</Label>
+                  <Input type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+                  {errors.amount && <p className="text-sm text-destructive">{errors.amount}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Memo (optional)</Label>
+                  <Textarea value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="Add any notes for this payment" />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {currentStep === 2 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Payer Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Full Name</Label>
+                    <Input value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder="Jane Doe" />
+                    {errors.payerName && <p className="text-sm text-destructive">{errors.payerName}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <Input type="email" value={payerEmail} onChange={(e) => setPayerEmail(e.target.value)} placeholder="jane@example.com" />
+                    {errors.payerEmail && <p className="text-sm text-destructive">{errors.payerEmail}</p>}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Phone</Label>
+                    <Input type="tel" value={payerPhone} onChange={(e) => setPayerPhone(e.target.value)} placeholder="(555) 123-4567" />
+                    {errors.payerPhone && <p className="text-sm text-destructive">{errors.payerPhone}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Address</Label>
+                    <RestPlacesAutocomplete
+                      onAddressSelect={(address) => setPayerAddress(address)}
+                      placeholder="Search address"
+                    />
+                    {errors.payerAddress && <p className="text-sm text-destructive">{errors.payerAddress}</p>}
+                  </div>
+                </div>
+
+                {payerAddress && (
+                  <div className="text-sm text-muted-foreground">
+                    <span>
+                      {payerAddress.streetAddress}, {payerAddress.city}, {payerAddress.state} {payerAddress.zipCode}
+                    </span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {currentStep === 3 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Review &amp; Confirm</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h4 className="font-medium">Tax Details</h4>
+                  <Separator className="my-2" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Municipality</span>
+                      <div>{selectedMunicipality ? `${selectedMunicipality.merchant_name || selectedMunicipality.business_name} • ${selectedMunicipality.customer_city}, ${selectedMunicipality.customer_state}` : '-'}</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Tax Type</span>
+                      <div>{taxType || '-'}</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Account / Tax #</span>
+                      <div>{accountNumber || '-'}</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Amount</span>
+                      <div>{amount ? `$${Number(amount).toFixed(2)}` : '-'}</div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <span className="text-muted-foreground">Memo</span>
+                      <div>{memo || '-'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium">Payer Details</h4>
+                  <Separator className="my-2" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Full Name</span>
+                      <div>{payerName || '-'}</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Email</span>
+                      <div>{payerEmail || '-'}</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Phone</span>
+                      <div>{payerPhone || '-'}</div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <span className="text-muted-foreground">Address</span>
+                      <div>
+                        {payerAddress ? (
+                          `${payerAddress.streetAddress}, ${payerAddress.city}, ${payerAddress.state} ${payerAddress.zipCode}`
+                        ) : '-'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? 'Processing...' : 'Continue'}
-          </Button>
+        <DialogFooter className="flex items-center justify-between gap-2">
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => handleDialogOpenChange(false)} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            {currentStep > 1 && (
+              <Button variant="outline" onClick={handlePrevious} disabled={isSubmitting}>
+                <ChevronLeft className="mr-1 h-4 w-4" /> Back
+              </Button>
+            )}
+          </div>
+          <div>
+            {currentStep < totalSteps ? (
+              <Button onClick={handleNext} disabled={isSubmitting}>
+                Continue <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            ) : (
+              <Button onClick={handleSubmit} disabled={isSubmitting}>
+                {isSubmitting ? 'Processing...' : 'Confirm'}
+              </Button>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
