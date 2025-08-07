@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 
 interface PayTaxDialogProps {
   open: boolean;
@@ -149,205 +149,247 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="sm:max-w-2xl" ref={contentRef}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" ref={contentRef}>
         <DialogHeader>
           <DialogTitle>Pay Tax</DialogTitle>
           <DialogDescription>Complete the steps below to submit your tax payment.</DialogDescription>
         </DialogHeader>
 
-<div className="space-y-4">
-  <Progress value={progress} className="w-full" />
-  <div className="flex items-center justify-between text-sm text-muted-foreground">
-    <span>Step {currentStep} of {totalSteps}</span>
-  </div>
-</div>
-
-<ScrollArea className="max-h-[60vh] pr-4">
-  <div className="space-y-4">
-    {currentStep === 1 && (
-      <Card>
-        <CardHeader>
-          <CardTitle>Tax Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Municipality</Label>
-            <BuildingPermitsMunicipalityAutocomplete
-              onSelect={(m) => setSelectedMunicipality(m as SelectedMunicipality)}
-              placeholder="Search your municipality"
-            />
-            {errors.municipality && <p className="text-sm text-destructive">{errors.municipality}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Tax Type</Label>
-            <Select value={taxType} onValueChange={setTaxType}>
-              <SelectTrigger aria-label="Tax type">
-                <SelectValue placeholder="Select tax type" />
-              </SelectTrigger>
-              <SelectContent className="z-50 bg-popover">
-                <SelectItem value="Food & Beverage">Food &amp; Beverage</SelectItem>
-                <SelectItem value="Hotel & Motel">Hotel &amp; Motel</SelectItem>
-                <SelectItem value="Amusement">Amusement</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.taxType && <p className="text-sm text-destructive">{errors.taxType}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Account / Tax Number</Label>
-            <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="e.g., Property ID, Tax ID" />
-            {errors.accountNumber && <p className="text-sm text-destructive">{errors.accountNumber}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Amount (USD)</Label>
-            <Input type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
-            {errors.amount && <p className="text-sm text-destructive">{errors.amount}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Memo (optional)</Label>
-            <Textarea value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="Add any notes for this payment" />
-          </div>
-        </CardContent>
-      </Card>
-    )}
-
-    {currentStep === 2 && (
-      <Card>
-        <CardHeader>
-          <CardTitle>Payer Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Full Name</Label>
-              <Input value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder="Jane Doe" />
-              {errors.payerName && <p className="text-sm text-destructive">{errors.payerName}</p>}
+        <div className="space-y-6">
+          <div className="space-y-4 pb-6 border-b">
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Step {currentStep} of {totalSteps}</span>
+              <span>{Math.round(progress)}% Complete</span>
             </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" value={payerEmail} onChange={(e) => setPayerEmail(e.target.value)} placeholder="jane@example.com" />
-              {errors.payerEmail && <p className="text-sm text-destructive">{errors.payerEmail}</p>}
-            </div>
+            <Progress value={progress} className="h-2" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Phone</Label>
-              <Input type="tel" value={payerPhone} onChange={(e) => setPayerPhone(e.target.value)} placeholder="(555) 123-4567" />
-              {errors.payerPhone && <p className="text-sm text-destructive">{errors.payerPhone}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label>Address</Label>
-              <RestPlacesAutocomplete
-                onAddressSelect={(address) => setPayerAddress(address)}
-                placeholder="Search address"
-              />
-              {errors.payerAddress && <p className="text-sm text-destructive">{errors.payerAddress}</p>}
-            </div>
-          </div>
-
-          {payerAddress && (
-            <div className="text-sm text-muted-foreground">
-              <span>
-                {payerAddress.streetAddress}, {payerAddress.city}, {payerAddress.state} {payerAddress.zipCode}
-              </span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    )}
-
-    {currentStep === 3 && (
-      <Card>
-        <CardHeader>
-          <CardTitle>Review &amp; Confirm</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-medium">Tax Details</h4>
-            <Separator className="my-2" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-muted-foreground">Municipality</span>
-                <div>{selectedMunicipality ? `${selectedMunicipality.merchant_name || selectedMunicipality.business_name} • ${selectedMunicipality.customer_city}, ${selectedMunicipality.customer_state}` : '-'}</div>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Tax Type</span>
-                <div>{taxType || '-'}</div>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Account / Tax #</span>
-                <div>{accountNumber || '-'}</div>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Amount</span>
-                <div>{amount ? `$${Number(amount).toFixed(2)}` : '-'}</div>
-              </div>
-              <div className="md:col-span-2">
-                <span className="text-muted-foreground">Memo</span>
-                <div>{memo || '-'}</div>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="font-medium">Payer Details</h4>
-            <Separator className="my-2" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-muted-foreground">Full Name</span>
-                <div>{payerName || '-'}</div>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Email</span>
-                <div>{payerEmail || '-'}</div>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Phone</span>
-                <div>{payerPhone || '-'}</div>
-              </div>
-              <div className="md:col-span-2">
-                <span className="text-muted-foreground">Address</span>
-                <div>
-                  {payerAddress ? (
-                    `${payerAddress.streetAddress}, ${payerAddress.city}, ${payerAddress.state} ${payerAddress.zipCode}`
-                  ) : '-'}
+          <div className="flex justify-between py-4">
+            {[1, 2, 3].map((step) => (
+              <div
+                key={step}
+                className={`flex items-center space-x-3 ${
+                  step <= currentStep ? 'text-primary' : 'text-muted-foreground'
+                }`}
+              >
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 ${
+                    step < currentStep
+                      ? 'bg-primary text-primary-foreground'
+                      : step === currentStep
+                      ? 'bg-primary text-primary-foreground ring-4 ring-primary/20'
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  {step < currentStep ? '✓' : step}
+                </div>
+                <div className="hidden sm:block">
+                  <span className="text-sm font-medium">
+                    {step === 1 && 'Tax Info'}
+                    {step === 2 && 'Payer Info'}
+                    {step === 3 && 'Review & Confirm'}
+                  </span>
                 </div>
               </div>
+            ))}
+          </div>
+
+          <div className="min-h-[400px] py-2">
+            {/* Step Content */}
+            <div className="space-y-4">
+              {currentStep === 1 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Tax Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Municipality</Label>
+                      <BuildingPermitsMunicipalityAutocomplete
+                        onSelect={(m) => setSelectedMunicipality(m as SelectedMunicipality)}
+                        placeholder="Search your municipality"
+                      />
+                      {errors.municipality && <p className="text-sm text-destructive">{errors.municipality}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Tax Type</Label>
+                      <Select value={taxType} onValueChange={setTaxType}>
+                        <SelectTrigger aria-label="Tax type">
+                          <SelectValue placeholder="Select tax type" />
+                        </SelectTrigger>
+                        <SelectContent className="z-50 bg-popover">
+                          <SelectItem value="Food & Beverage">Food &amp; Beverage</SelectItem>
+                          <SelectItem value="Hotel & Motel">Hotel &amp; Motel</SelectItem>
+                          <SelectItem value="Amusement">Amusement</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.taxType && <p className="text-sm text-destructive">{errors.taxType}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Account / Tax Number</Label>
+                      <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="e.g., Property ID, Tax ID" />
+                      {errors.accountNumber && <p className="text-sm text-destructive">{errors.accountNumber}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Amount (USD)</Label>
+                      <Input type="number" min="0.01" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+                      {errors.amount && <p className="text-sm text-destructive">{errors.amount}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Memo (optional)</Label>
+                      <Textarea value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="Add any notes for this payment" />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {currentStep === 2 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Payer Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Full Name</Label>
+                        <Input value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder="Jane Doe" />
+                        {errors.payerName && <p className="text-sm text-destructive">{errors.payerName}</p>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Email</Label>
+                        <Input type="email" value={payerEmail} onChange={(e) => setPayerEmail(e.target.value)} placeholder="jane@example.com" />
+                        {errors.payerEmail && <p className="text-sm text-destructive">{errors.payerEmail}</p>}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Phone</Label>
+                        <Input type="tel" value={payerPhone} onChange={(e) => setPayerPhone(e.target.value)} placeholder="(555) 123-4567" />
+                        {errors.payerPhone && <p className="text-sm text-destructive">{errors.payerPhone}</p>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Address</Label>
+                        <RestPlacesAutocomplete
+                          onAddressSelect={(address) => setPayerAddress(address)}
+                          placeholder="Search address"
+                        />
+                        {errors.payerAddress && <p className="text-sm text-destructive">{errors.payerAddress}</p>}
+                      </div>
+                    </div>
+
+                    {payerAddress && (
+                      <div className="text-sm text-muted-foreground">
+                        <span>
+                          {payerAddress.streetAddress}, {payerAddress.city}, {payerAddress.state} {payerAddress.zipCode}
+                        </span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {currentStep === 3 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Review &amp; Confirm</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <h4 className="font-medium">Tax Details</h4>
+                      <Separator className="my-2" />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Municipality</span>
+                          <div>
+                            {selectedMunicipality
+                              ? `${selectedMunicipality.merchant_name || selectedMunicipality.business_name} • ${selectedMunicipality.customer_city}, ${selectedMunicipality.customer_state}`
+                              : '-'}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Tax Type</span>
+                          <div>{taxType || '-'}</div>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Account / Tax #</span>
+                          <div>{accountNumber || '-'}</div>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Amount</span>
+                          <div>{amount ? `$${Number(amount).toFixed(2)}` : '-'}</div>
+                        </div>
+                        <div className="md:col-span-2">
+                          <span className="text-muted-foreground">Memo</span>
+                          <div>{memo || '-'}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-medium">Payer Details</h4>
+                      <Separator className="my-2" />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Full Name</span>
+                          <div>{payerName || '-'}</div>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Email</span>
+                          <div>{payerEmail || '-'}</div>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Phone</span>
+                          <div>{payerPhone || '-'}</div>
+                        </div>
+                        <div className="md:col-span-2">
+                          <span className="text-muted-foreground">Address</span>
+                          <div>
+                            {payerAddress
+                              ? `${payerAddress.streetAddress}, ${payerAddress.city}, ${payerAddress.state} ${payerAddress.zipCode}`
+                              : '-'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
-        </CardContent>
-      </Card>
-    )}
-  </div>
-</ScrollArea>
 
-        <DialogFooter className="flex items-center justify-between gap-2">
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => handleDialogOpenChange(false)} disabled={isSubmitting}>
-              Cancel
+          <div className="flex justify-between pt-6 border-t bg-muted/20 -mx-6 px-6 -mb-6 pb-6 rounded-b-lg">
+            <Button
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={currentStep === 1}
+              className="flex items-center space-x-2"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>Previous</span>
             </Button>
-            {currentStep > 1 && (
-              <Button variant="outline" onClick={handlePrevious} disabled={isSubmitting}>
-                <ChevronLeft className="mr-1 h-4 w-4" /> Back
+
+            <div className="flex space-x-2">
+              <Button variant="outline" onClick={() => handleDialogOpenChange(false)}>
+                Cancel
               </Button>
-            )}
+              {currentStep < totalSteps ? (
+                <Button onClick={handleNext} className="flex items-center space-x-2">
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              ) : (
+                <Button onClick={handleSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? 'Processing...' : 'Confirm'}
+                </Button>
+              )}
+            </div>
           </div>
-          <div>
-            {currentStep < totalSteps ? (
-              <Button onClick={handleNext} disabled={isSubmitting}>
-                Continue <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
-            ) : (
-              <Button onClick={handleSubmit} disabled={isSubmitting}>
-                {isSubmitting ? 'Processing...' : 'Confirm'}
-              </Button>
-            )}
-          </div>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
