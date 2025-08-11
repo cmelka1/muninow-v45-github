@@ -93,12 +93,11 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   });
 
   const [amusementTaxData, setAmusementTaxData] = useState({
-    grossReceipts: '',
-    exemptReceipts: '',
+    netReceipts: '',
+    deductions: '',
     taxableReceipts: '0.00',
     tax: '0.00',
-    penalty: '',
-    interest: '',
+    commission: '0.00',
     totalDue: '0.00'
   });
 
@@ -244,12 +243,11 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     });
     
     setAmusementTaxData({
-      grossReceipts: '',
-      exemptReceipts: '',
+      netReceipts: '',
+      deductions: '',
       taxableReceipts: '0.00',
       tax: '0.00',
-      penalty: '',
-      interest: '',
+      commission: '0.00',
       totalDue: '0.00'
     });
     

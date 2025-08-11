@@ -5,12 +5,11 @@ import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/formatters';
 
 interface AmusementTaxData {
-  grossReceipts: string;
-  exemptReceipts: string;
+  netReceipts: string;
+  deductions: string;
   taxableReceipts: string;
   tax: string;
-  penalty: string;
-  interest: string;
+  commission: string;
   totalDue: string;
 }
 
@@ -30,22 +29,23 @@ export const AmusementTaxForm: React.FC<AmusementTaxFormProps> = ({
     const newData = { ...data, [field]: numericValue };
     
     // Auto-calculate dependent fields
-    const grossReceipts = parseFloat(newData.grossReceipts) || 0;
-    const exemptReceipts = parseFloat(newData.exemptReceipts) || 0;
+    const netReceipts = parseFloat(newData.netReceipts) || 0;
+    const deductions = parseFloat(newData.deductions) || 0;
     
-    // Calculate taxable receipts: Gross Receipts - Exempt Receipts
-    const taxableReceipts = Math.max(0, grossReceipts - exemptReceipts);
+    // Line 3: Calculate taxable receipts: Net Receipts - Deductions
+    const taxableReceipts = Math.max(0, netReceipts - deductions);
     newData.taxableReceipts = taxableReceipts.toFixed(2);
     
-    // Calculate tax: Taxable Receipts × 0.10 (10%)
-    const tax = taxableReceipts * 0.10;
+    // Line 4: Calculate tax: Taxable Receipts × 0.05 (5%)
+    const tax = taxableReceipts * 0.05;
     newData.tax = tax.toFixed(2);
     
-    const penalty = parseFloat(newData.penalty) || 0;
-    const interest = parseFloat(newData.interest) || 0;
+    // Line 5: Calculate commission: Tax × 0.01 (1% if paid on time)
+    const commission = tax * 0.01;
+    newData.commission = commission.toFixed(2);
     
-    // Calculate total due: Tax + Penalty + Interest
-    const totalDue = tax + penalty + interest;
+    // Line 6: Calculate total due: Tax - Commission
+    const totalDue = tax - commission;
     newData.totalDue = totalDue.toFixed(2);
     
     onChange(newData);
@@ -59,30 +59,30 @@ export const AmusementTaxForm: React.FC<AmusementTaxFormProps> = ({
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="gross-receipts" className="text-sm font-medium">
-              Gross Receipts ($)
+            <Label htmlFor="net-receipts" className="text-sm font-medium">
+              Net Receipts from Amusement Activities ($)
             </Label>
             <Input
-              id="gross-receipts"
+              id="net-receipts"
               type="text"
               placeholder="0.00"
-              value={data.grossReceipts}
-              onChange={(e) => handleInputChange('grossReceipts', e.target.value)}
+              value={data.netReceipts}
+              onChange={(e) => handleInputChange('netReceipts', e.target.value)}
               disabled={disabled}
               className="mt-1"
             />
           </div>
           
           <div>
-            <Label htmlFor="exempt-receipts" className="text-sm font-medium">
-              Exempt Receipts ($)
+            <Label htmlFor="deductions" className="text-sm font-medium">
+              Deductions of Sales Not Subject to Tax ($)
             </Label>
             <Input
-              id="exempt-receipts"
+              id="deductions"
               type="text"
               placeholder="0.00"
-              value={data.exemptReceipts}
-              onChange={(e) => handleInputChange('exemptReceipts', e.target.value)}
+              value={data.deductions}
+              onChange={(e) => handleInputChange('deductions', e.target.value)}
               disabled={disabled}
               className="mt-1"
             />
@@ -103,7 +103,7 @@ export const AmusementTaxForm: React.FC<AmusementTaxFormProps> = ({
           
           <div>
             <Label htmlFor="tax-amount" className="text-sm font-medium">
-              Tax (10%) ($)
+              Amount of Tax (5% of Taxable Receipts) ($)
             </Label>
             <Input
               id="tax-amount"
@@ -115,38 +115,21 @@ export const AmusementTaxForm: React.FC<AmusementTaxFormProps> = ({
           </div>
           
           <div>
-            <Label htmlFor="penalty" className="text-sm font-medium">
-              Penalty ($)
+            <Label htmlFor="commission" className="text-sm font-medium">
+              Commission (1% of Tax Amount if Paid on Time) ($)
             </Label>
             <Input
-              id="penalty"
+              id="commission"
               type="text"
-              placeholder="0.00"
-              value={data.penalty}
-              onChange={(e) => handleInputChange('penalty', e.target.value)}
-              disabled={disabled}
-              className="mt-1"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="interest" className="text-sm font-medium">
-              Interest ($)
-            </Label>
-            <Input
-              id="interest"
-              type="text"
-              placeholder="0.00"
-              value={data.interest}
-              onChange={(e) => handleInputChange('interest', e.target.value)}
-              disabled={disabled}
-              className="mt-1"
+              value={data.commission}
+              disabled
+              className="mt-1 bg-muted"
             />
           </div>
           
           <div className="md:col-span-2">
             <Label htmlFor="total-due" className="text-sm font-medium">
-              Total Due ($)
+              Total Payment Due ($)
             </Label>
             <Input
               id="total-due"
