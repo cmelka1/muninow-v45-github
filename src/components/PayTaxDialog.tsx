@@ -39,7 +39,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   const { toast } = useToast();
 
   // Step management
-  const totalSteps = 3;
+  const totalSteps = 2;
   const [currentStep, setCurrentStep] = useState(1);
   const progress = (currentStep / totalSteps) * 100;
   const contentRef = useRef<HTMLDivElement>(null);
@@ -69,12 +69,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     const e: Record<string, string> = {};
     if (!selectedMunicipality) e.municipality = 'Municipality is required';
     if (!taxType) e.taxType = 'Tax type is required';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const validateStep2 = () => {
-    const e: Record<string, string> = {};
     if (!payerName.trim()) e.payerName = 'Full name is required';
     if (!payerEmail.trim()) e.payerEmail = 'Email is required';
     if (!payerPhone.trim()) e.payerPhone = 'Phone is required';
@@ -85,7 +79,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
   const handleNext = () => {
     if (currentStep === 1 && !validateStep1()) return;
-    if (currentStep === 2 && !validateStep2()) return;
     if (currentStep < totalSteps) {
       setCurrentStep((s) => s + 1);
       scrollTop();
@@ -115,7 +108,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   };
 
   const handleSubmit = async () => {
-    if (!validateStep1() || !validateStep2()) {
+    if (!validateStep1()) {
       scrollTop();
       return;
     }
@@ -162,7 +155,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
           </div>
 
           <div className="flex justify-between py-4">
-            {[1, 2, 3].map((step) => (
+            {[1, 2].map((step) => (
               <div
                 key={step}
                 className={`flex items-center space-x-3 ${
@@ -182,9 +175,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                 </div>
                 <div className="hidden sm:block">
                   <span className="text-sm font-medium">
-                    {step === 1 && 'Tax Info'}
-                    {step === 2 && 'Payer Info'}
-                    {step === 3 && 'Review & Confirm'}
+                    {step === 1 && 'Tax & Payer Info'}
+                    {step === 2 && 'Review & Confirm'}
                   </span>
                 </div>
               </div>
@@ -195,86 +187,85 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
             {/* Step Content */}
             <div className="space-y-4">
               {currentStep === 1 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Tax Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Municipality</Label>
-                      <BuildingPermitsMunicipalityAutocomplete
-                        onSelect={(m) => setSelectedMunicipality(m as SelectedMunicipality)}
-                        placeholder="Search your municipality"
-                      />
-                      {errors.municipality && <p className="text-sm text-destructive">{errors.municipality}</p>}
-                    </div>
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Tax Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Municipality</Label>
+                        <BuildingPermitsMunicipalityAutocomplete
+                          onSelect={(m) => setSelectedMunicipality(m as SelectedMunicipality)}
+                          placeholder="Search your municipality"
+                        />
+                        {errors.municipality && <p className="text-sm text-destructive">{errors.municipality}</p>}
+                      </div>
 
-                    <div className="space-y-2">
-                      <Label>Tax Type</Label>
-                      <Select value={taxType} onValueChange={setTaxType}>
-                        <SelectTrigger aria-label="Tax type">
-                          <SelectValue placeholder="Select tax type" />
-                        </SelectTrigger>
-                        <SelectContent className="z-50 bg-popover">
-                          <SelectItem value="Food & Beverage">Food &amp; Beverage</SelectItem>
-                          <SelectItem value="Hotel & Motel">Hotel &amp; Motel</SelectItem>
-                          <SelectItem value="Amusement">Amusement</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {errors.taxType && <p className="text-sm text-destructive">{errors.taxType}</p>}
-                    </div>
+                      <div className="space-y-2">
+                        <Label>Tax Type</Label>
+                        <Select value={taxType} onValueChange={setTaxType}>
+                          <SelectTrigger aria-label="Tax type">
+                            <SelectValue placeholder="Select tax type" />
+                          </SelectTrigger>
+                          <SelectContent className="z-50 bg-popover">
+                            <SelectItem value="Food & Beverage">Food &amp; Beverage</SelectItem>
+                            <SelectItem value="Hotel & Motel">Hotel &amp; Motel</SelectItem>
+                            <SelectItem value="Amusement">Amusement</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {errors.taxType && <p className="text-sm text-destructive">{errors.taxType}</p>}
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                  </CardContent>
-                </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Payer Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Full Name</Label>
+                          <Input value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder="Jane Doe" />
+                          {errors.payerName && <p className="text-sm text-destructive">{errors.payerName}</p>}
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Email</Label>
+                          <Input type="email" value={payerEmail} onChange={(e) => setPayerEmail(e.target.value)} placeholder="jane@example.com" />
+                          {errors.payerEmail && <p className="text-sm text-destructive">{errors.payerEmail}</p>}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Phone</Label>
+                          <Input type="tel" value={payerPhone} onChange={(e) => setPayerPhone(e.target.value)} placeholder="(555) 123-4567" />
+                          {errors.payerPhone && <p className="text-sm text-destructive">{errors.payerPhone}</p>}
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Address</Label>
+                          <RestPlacesAutocomplete
+                            onAddressSelect={(address) => setPayerAddress(address)}
+                            placeholder="Search address"
+                          />
+                          {errors.payerAddress && <p className="text-sm text-destructive">{errors.payerAddress}</p>}
+                        </div>
+                      </div>
+
+                      {payerAddress && (
+                        <div className="text-sm text-muted-foreground">
+                          <span>
+                            {payerAddress.streetAddress}, {payerAddress.city}, {payerAddress.state} {payerAddress.zipCode}
+                          </span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
               )}
 
               {currentStep === 2 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Payer Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Full Name</Label>
-                        <Input value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder="Jane Doe" />
-                        {errors.payerName && <p className="text-sm text-destructive">{errors.payerName}</p>}
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Email</Label>
-                        <Input type="email" value={payerEmail} onChange={(e) => setPayerEmail(e.target.value)} placeholder="jane@example.com" />
-                        {errors.payerEmail && <p className="text-sm text-destructive">{errors.payerEmail}</p>}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Phone</Label>
-                        <Input type="tel" value={payerPhone} onChange={(e) => setPayerPhone(e.target.value)} placeholder="(555) 123-4567" />
-                        {errors.payerPhone && <p className="text-sm text-destructive">{errors.payerPhone}</p>}
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Address</Label>
-                        <RestPlacesAutocomplete
-                          onAddressSelect={(address) => setPayerAddress(address)}
-                          placeholder="Search address"
-                        />
-                        {errors.payerAddress && <p className="text-sm text-destructive">{errors.payerAddress}</p>}
-                      </div>
-                    </div>
-
-                    {payerAddress && (
-                      <div className="text-sm text-muted-foreground">
-                        <span>
-                          {payerAddress.streetAddress}, {payerAddress.city}, {payerAddress.state} {payerAddress.zipCode}
-                        </span>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-
-              {currentStep === 3 && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Review &amp; Confirm</CardTitle>
