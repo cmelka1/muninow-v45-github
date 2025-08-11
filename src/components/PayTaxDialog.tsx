@@ -70,12 +70,10 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   // Tax Calculation Data
   const [foodBeverageTaxData, setFoodBeverageTaxData] = useState({
     grossSales: '',
-    exemptSales: '',
     deductions: '',
     taxableReceipts: '0.00',
     tax: '0.00',
-    penalty: '',
-    interest: '',
+    commission: '0.00',
     totalDue: '0.00'
   });
 
@@ -223,12 +221,10 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     // Reset tax calculation data
     setFoodBeverageTaxData({
       grossSales: '',
-      exemptSales: '',
       deductions: '',
       taxableReceipts: '0.00',
       tax: '0.00',
-      penalty: '',
-      interest: '',
+      commission: '0.00',
       totalDue: '0.00'
     });
     
