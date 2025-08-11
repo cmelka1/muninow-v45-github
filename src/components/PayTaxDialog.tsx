@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 
 import { BuildingPermitsMunicipalityAutocomplete } from '@/components/ui/building-permits-municipality-autocomplete';
 import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
@@ -12,6 +13,8 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { normalizePhoneInput } from '@/lib/phoneUtils';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 interface PayTaxDialogProps {
@@ -37,6 +40,7 @@ interface AddressComponents {
 
 export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }) => {
   const { toast } = useToast();
+  const { profile } = useAuth();
 
   // Step management
   const totalSteps = 2;
@@ -51,11 +55,13 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   const [amount, setAmount] = useState('');
   const [memo, setMemo] = useState('');
 
-  // Step 2: Payer Information
+  // Payer Information
   const [payerName, setPayerName] = useState('');
   const [payerEmail, setPayerEmail] = useState('');
   const [payerPhone, setPayerPhone] = useState('');
   const [payerAddress, setPayerAddress] = useState<AddressComponents | null>(null);
+  const [payerAddressDisplay, setPayerAddressDisplay] = useState('');
+  const [useProfileInfoForPayer, setUseProfileInfoForPayer] = useState(false);
 
   // Submission state and errors
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,6 +69,57 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
   const scrollTop = () => {
     if (contentRef.current) contentRef.current.scrollTop = 0;
+  };
+
+  const clearFieldError = (fieldName: string) => {
+    setErrors(prev => {
+      const updated = { ...prev };
+      delete updated[fieldName];
+      return updated;
+    });
+  };
+
+  const handleUseProfileInfoForPayerToggle = (checked: boolean) => {
+    setUseProfileInfoForPayer(checked);
+    if (checked && profile) {
+      // Populate payer info with profile data
+      const fullName = profile.first_name && profile.last_name 
+        ? `${profile.first_name} ${profile.last_name}` 
+        : profile.business_legal_name || '';
+      
+      const fullAddress = profile.street_address 
+        ? `${profile.street_address}${profile.city ? `, ${profile.city}` : ''}${profile.state ? `, ${profile.state}` : ''}${profile.zip_code ? ` ${profile.zip_code}` : ''}`
+        : '';
+
+      setPayerName(fullName);
+      setPayerPhone(profile.phone ? normalizePhoneInput(profile.phone) : '');
+      setPayerEmail(profile.email || '');
+      setPayerAddressDisplay(fullAddress);
+      
+      if (profile.street_address) {
+        setPayerAddress({
+          streetAddress: profile.street_address,
+          city: profile.city || '',
+          state: profile.state || '',
+          zipCode: profile.zip_code || ''
+        });
+      }
+    } else if (!checked) {
+      // Clear payer info when toggled off
+      setPayerName('');
+      setPayerPhone('');
+      setPayerEmail('');
+      setPayerAddress(null);
+      setPayerAddressDisplay('');
+    }
+  };
+
+  const handlePayerAddressSelect = (addressComponents: AddressComponents) => {
+    setPayerAddress(addressComponents);
+    setPayerAddressDisplay(
+      `${addressComponents.streetAddress}, ${addressComponents.city}, ${addressComponents.state} ${addressComponents.zipCode}`
+    );
+    clearFieldError('payerAddress');
   };
 
   const validateStep1 = () => {
@@ -103,6 +160,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     setPayerEmail('');
     setPayerPhone('');
     setPayerAddress(null);
+    setPayerAddressDisplay('');
+    setUseProfileInfoForPayer(false);
     setErrors({});
     setIsSubmitting(false);
   };
@@ -219,47 +278,122 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     </CardContent>
                   </Card>
 
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Payer Information</CardTitle>
+                  <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                    <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        Payer Information
+                      </CardTitle>
+                      <div className="flex items-center space-x-2">
+                        <Label htmlFor="use-profile-info-payer" className="text-sm text-muted-foreground">
+                          Use Profile Information
+                        </Label>
+                        <Switch
+                          id="use-profile-info-payer"
+                          checked={useProfileInfoForPayer}
+                          onCheckedChange={handleUseProfileInfoForPayerToggle}
+                        />
+                      </div>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Full Name</Label>
-                          <Input value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder="Jane Doe" />
-                          {errors.payerName && <p className="text-sm text-destructive">{errors.payerName}</p>}
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Email</Label>
-                          <Input type="email" value={payerEmail} onChange={(e) => setPayerEmail(e.target.value)} placeholder="jane@example.com" />
-                          {errors.payerEmail && <p className="text-sm text-destructive">{errors.payerEmail}</p>}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Phone</Label>
-                          <Input type="tel" value={payerPhone} onChange={(e) => setPayerPhone(e.target.value)} placeholder="(555) 123-4567" />
-                          {errors.payerPhone && <p className="text-sm text-destructive">{errors.payerPhone}</p>}
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Address</Label>
-                          <RestPlacesAutocomplete
-                            onAddressSelect={(address) => setPayerAddress(address)}
-                            placeholder="Search address"
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="payer-name" className="text-sm font-medium text-foreground">
+                            Name/Company *
+                          </Label>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Enter your full name or company name
+                          </p>
+                          <Input
+                            id="payer-name"
+                            placeholder="Enter name or company"
+                            value={payerName}
+                            onChange={(e) => {
+                              setPayerName(e.target.value);
+                              if (e.target.value) clearFieldError('payerName');
+                            }}
+                            className={`mt-1 ${useProfileInfoForPayer ? 'opacity-50 pointer-events-none' : ''} ${errors.payerName ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                            disabled={useProfileInfoForPayer}
+                            data-error={!!errors.payerName}
                           />
-                          {errors.payerAddress && <p className="text-sm text-destructive">{errors.payerAddress}</p>}
+                          {errors.payerName && (
+                            <p className="text-sm text-destructive mt-1">{errors.payerName}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="payer-phone" className="text-sm font-medium text-foreground">
+                            Phone Number *
+                          </Label>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Enter your contact phone number
+                          </p>
+                          <Input
+                            id="payer-phone"
+                            placeholder="(xxx) xxx-xxxx"
+                            value={payerPhone}
+                            onChange={(e) => {
+                              const normalized = normalizePhoneInput(e.target.value);
+                              setPayerPhone(normalized);
+                              if (normalized) clearFieldError('payerPhone');
+                            }}
+                            className={`mt-1 ${useProfileInfoForPayer ? 'opacity-50 pointer-events-none' : ''} ${errors.payerPhone ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                            disabled={useProfileInfoForPayer}
+                            data-error={!!errors.payerPhone}
+                          />
+                          {errors.payerPhone && (
+                            <p className="text-sm text-destructive mt-1">{errors.payerPhone}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="payer-email" className="text-sm font-medium text-foreground">
+                            Email *
+                          </Label>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Enter your email address
+                          </p>
+                          <Input
+                            id="payer-email"
+                            type="email"
+                            placeholder="Enter email address"
+                            value={payerEmail}
+                            onChange={(e) => {
+                              setPayerEmail(e.target.value);
+                              if (e.target.value) clearFieldError('payerEmail');
+                            }}
+                            className={`mt-1 ${useProfileInfoForPayer ? 'opacity-50 pointer-events-none' : ''} ${errors.payerEmail ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                            disabled={useProfileInfoForPayer}
+                            data-error={!!errors.payerEmail}
+                          />
+                          {errors.payerEmail && (
+                            <p className="text-sm text-destructive mt-1">{errors.payerEmail}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="payer-address" className="text-sm font-medium text-foreground">
+                            Address *
+                          </Label>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Enter your mailing address
+                          </p>
+                          <RestPlacesAutocomplete
+                            placeholder="Start typing your address..."
+                            onAddressSelect={useProfileInfoForPayer ? () => {} : handlePayerAddressSelect}
+                            value={payerAddressDisplay}
+                            onChange={useProfileInfoForPayer ? () => {} : (value) => {
+                              setPayerAddressDisplay(value);
+                              if (value) clearFieldError('payerAddress');
+                            }}
+                            className={`mt-1 ${useProfileInfoForPayer ? 'opacity-50 pointer-events-none' : ''} ${errors.payerAddress ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                            data-error={!!errors.payerAddress}
+                          />
+                          {errors.payerAddress && (
+                            <p className="text-sm text-destructive mt-1">{errors.payerAddress}</p>
+                          )}
                         </div>
                       </div>
-
-                      {payerAddress && (
-                        <div className="text-sm text-muted-foreground">
-                          <span>
-                            {payerAddress.streetAddress}, {payerAddress.city}, {payerAddress.state} {payerAddress.zipCode}
-                          </span>
-                        </div>
-                      )}
                     </CardContent>
                   </Card>
                 </div>
