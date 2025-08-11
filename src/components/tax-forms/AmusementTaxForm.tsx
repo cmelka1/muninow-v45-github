@@ -95,7 +95,7 @@ export const AmusementTaxForm: React.FC<AmusementTaxFormProps> = ({
             <Input
               id="taxable-receipts"
               type="text"
-              value={data.taxableReceipts}
+              value={formatCurrency(parseFloat(data.taxableReceipts) || 0)}
               disabled
               className="mt-1 bg-muted"
             />
@@ -108,7 +108,7 @@ export const AmusementTaxForm: React.FC<AmusementTaxFormProps> = ({
             <Input
               id="tax-amount"
               type="text"
-              value={data.tax}
+              value={formatCurrency(parseFloat(data.tax) || 0)}
               disabled
               className="mt-1 bg-muted"
             />
@@ -121,7 +121,7 @@ export const AmusementTaxForm: React.FC<AmusementTaxFormProps> = ({
             <Input
               id="commission"
               type="text"
-              value={data.commission}
+              value={formatCurrency(parseFloat(data.commission) || 0)}
               disabled
               className="mt-1 bg-muted"
             />
@@ -134,7 +134,7 @@ export const AmusementTaxForm: React.FC<AmusementTaxFormProps> = ({
             <Input
               id="total-due"
               type="text"
-              value={data.totalDue}
+              value={formatCurrency(parseFloat(data.totalDue) || 0)}
               disabled
               className="mt-1 bg-muted font-semibold"
             />
