@@ -80,13 +80,18 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   });
 
   const [hotelMotelTaxData, setHotelMotelTaxData] = useState({
-    totalReceipts: '',
-    exemptReceipts: '',
-    netReceipts: '0.00',
-    tax: '0.00',
-    penalty: '',
-    interest: '',
-    totalDue: '0.00'
+    line1: '', // Total Monthly Receipts
+    stateTax: '', // State Tax Deduction
+    miscReceipts: '', // Misc Receipts Deduction
+    monthsLate: '', // Months Late (0-12)
+    creditsAttached: '', // Credits Attached
+    // Calculated fields
+    line2Total: '0.00', // Total Deduction
+    line3: '0.00', // Net Receipts
+    line4: '0.00', // Municipal Tax
+    line5: '0.00', // Penalty
+    line6: '0.00', // Total Tax including Penalty
+    line8: '0.00' // Total Payment Due
   });
 
   const [amusementTaxData, setAmusementTaxData] = useState({
@@ -228,13 +233,18 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     });
     
     setHotelMotelTaxData({
-      totalReceipts: '',
-      exemptReceipts: '',
-      netReceipts: '0.00',
-      tax: '0.00',
-      penalty: '',
-      interest: '',
-      totalDue: '0.00'
+      line1: '', // Total Monthly Receipts
+      stateTax: '', // State Tax Deduction
+      miscReceipts: '', // Misc Receipts Deduction
+      monthsLate: '', // Months Late (0-12)
+      creditsAttached: '', // Credits Attached
+      // Calculated fields
+      line2Total: '0.00', // Total Deduction
+      line3: '0.00', // Net Receipts
+      line4: '0.00', // Municipal Tax
+      line5: '0.00', // Penalty
+      line6: '0.00', // Total Tax including Penalty
+      line8: '0.00' // Total Payment Due
     });
     
     setAmusementTaxData({
@@ -580,8 +590,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                               {taxType === 'Hotel & Motel' && (
                                 <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
                                   <div className="flex justify-between">
-                                    <span>Total Due:</span>
-                                    <span className="font-semibold">${hotelMotelTaxData.totalDue}</span>
+                                    <span>Total Payment Due:</span>
+                                    <span className="font-semibold">${hotelMotelTaxData.line8}</span>
                                   </div>
                                 </div>
                               )}
