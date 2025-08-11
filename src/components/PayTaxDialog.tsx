@@ -57,6 +57,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
   // Payer Information
   const [payerName, setPayerName] = useState('');
+  const [payerEin, setPayerEin] = useState('');
   const [payerEmail, setPayerEmail] = useState('');
   const [payerPhone, setPayerPhone] = useState('');
   const [payerAddress, setPayerAddress] = useState<AddressComponents | null>(null);
@@ -79,6 +80,19 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     });
   };
 
+  const formatEin = (value: string) => {
+    // Remove all non-digits
+    const digitsOnly = value.replace(/\D/g, '');
+    
+    // Format as XX-XXXXXXX
+    if (digitsOnly.length >= 3) {
+      return `${digitsOnly.slice(0, 2)}-${digitsOnly.slice(2, 9)}`;
+    } else if (digitsOnly.length >= 1) {
+      return digitsOnly;
+    }
+    return '';
+  };
+
   const handleUseProfileInfoForPayerToggle = (checked: boolean) => {
     setUseProfileInfoForPayer(checked);
     if (checked && profile) {
@@ -92,6 +106,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
         : '';
 
       setPayerName(fullName);
+      setPayerEin(''); // EIN not stored in profile, leave empty
       setPayerPhone(profile.phone ? normalizePhoneInput(profile.phone) : '');
       setPayerEmail(profile.email || '');
       setPayerAddressDisplay(fullAddress);
@@ -107,6 +122,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     } else if (!checked) {
       // Clear payer info when toggled off
       setPayerName('');
+      setPayerEin('');
       setPayerPhone('');
       setPayerEmail('');
       setPayerAddress(null);
@@ -156,11 +172,12 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     setAccountNumber('');
     setAmount('');
     setMemo('');
-    setPayerName('');
-    setPayerEmail('');
-    setPayerPhone('');
-    setPayerAddress(null);
-    setPayerAddressDisplay('');
+      setPayerName('');
+      setPayerEin('');
+      setPayerEmail('');
+      setPayerPhone('');
+      setPayerAddress(null);
+      setPayerAddressDisplay('');
     setUseProfileInfoForPayer(false);
     setErrors({});
     setIsSubmitting(false);
@@ -322,12 +339,33 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                           {errors.payerName && (
                             <p className="text-sm text-destructive mt-1">{errors.payerName}</p>
                           )}
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="payer-phone" className="text-sm font-medium text-foreground">
-                            Phone Number *
-                          </Label>
+                         </div>
+                         
+                         <div>
+                           <Label htmlFor="payer-ein" className="text-sm font-medium text-foreground">
+                             Employer Identification Number (EIN)
+                           </Label>
+                           <p className="text-xs text-muted-foreground mb-2">
+                             Enter your EIN in XX-XXXXXXX format
+                           </p>
+                           <Input
+                             id="payer-ein"
+                             placeholder="XX-XXXXXXX"
+                             value={payerEin}
+                             onChange={(e) => {
+                               const formatted = formatEin(e.target.value);
+                               setPayerEin(formatted);
+                             }}
+                             className={`mt-1 ${useProfileInfoForPayer ? 'opacity-50 pointer-events-none' : ''}`}
+                             disabled={useProfileInfoForPayer}
+                             maxLength={10}
+                           />
+                         </div>
+                         
+                         <div>
+                           <Label htmlFor="payer-phone" className="text-sm font-medium text-foreground">
+                             Phone Number *
+                           </Label>
                           <p className="text-xs text-muted-foreground mb-2">
                             Enter your contact phone number
                           </p>
