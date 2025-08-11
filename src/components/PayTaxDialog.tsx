@@ -247,9 +247,12 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
             <div className="space-y-4">
               {currentStep === 1 && (
                 <div className="space-y-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Tax Information</CardTitle>
+                  <Card className="animate-fade-in">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        Tax Information
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
