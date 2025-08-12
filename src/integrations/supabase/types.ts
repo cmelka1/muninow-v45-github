@@ -1544,6 +1544,7 @@ export type Database = {
           service_fee_cents: number
           statement_descriptor: string | null
           subcategory: string | null
+          tax_submission_id: string | null
           total_amount_cents: number
           transfer_state: string
           updated_at: string
@@ -1606,6 +1607,7 @@ export type Database = {
           service_fee_cents: number
           statement_descriptor?: string | null
           subcategory?: string | null
+          tax_submission_id?: string | null
           total_amount_cents: number
           transfer_state?: string
           updated_at?: string
@@ -1668,6 +1670,7 @@ export type Database = {
           service_fee_cents?: number
           statement_descriptor?: string | null
           subcategory?: string | null
+          tax_submission_id?: string | null
           total_amount_cents?: number
           transfer_state?: string
           updated_at?: string
@@ -1687,6 +1690,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "permit_applications"
             referencedColumns: ["permit_id"]
+          },
+          {
+            foreignKeyName: "payment_history_tax_submission_id_fkey"
+            columns: ["tax_submission_id"]
+            isOneToOne: false
+            referencedRelation: "tax_submissions"
+            referencedColumns: ["id"]
           },
         ]
       }
