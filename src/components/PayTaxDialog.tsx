@@ -884,8 +884,28 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     </Card>
                   )}
 
-                  {/* Payment Method Selection */}
+                  {/* Payment Summary */}
                   <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        Payment Summary
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <PaymentSummary
+                        baseAmount={getTaxAmountInCents()}
+                        serviceFee={serviceFee}
+                        selectedPaymentMethod={selectedPaymentMethod || "card"}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {/* Separator */}
+                  <div className="border-t border-border"></div>
+
+                  {/* Payment Method Selection */}
+                  <Card className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
                     <CardHeader className="pb-4">
                       <CardTitle className="text-base flex items-center gap-2">
                         <div className="w-2 h-2 bg-primary rounded-full"></div>
@@ -929,26 +949,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                   {/* Separator */}
                   <div className="border-t border-border"></div>
 
-                  {/* Payment Summary */}
-                  <Card className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        Payment Summary
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <PaymentSummary
-                        baseAmount={getTaxAmountInCents()}
-                        serviceFee={serviceFee}
-                        selectedPaymentMethod={selectedPaymentMethod || "card"}
-                      />
-                    </CardContent>
-                  </Card>
-
-                  {/* Separator */}
-                  <div className="border-t border-border"></div>
-
                   {/* Pay Now Section */}
                   <div className="space-y-3">
                     <Button 
@@ -960,7 +960,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                       {isProcessingPayment ? 'Processing...' : 
                        selectedPaymentMethod === 'google-pay' ? 'Use Google Pay button above' : 
                        selectedPaymentMethod === 'apple-pay' ? 'Use Apple Pay button above' :
-                       `Pay ${formatCurrency(totalWithFee)}`}
+                       `Pay ${formatCurrency(totalWithFee / 100)}`}
                     </Button>
                    
                     <Button 
@@ -997,14 +997,10 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
               <Button variant="outline" onClick={() => handleDialogOpenChange(false)}>
                 Cancel
               </Button>
-              {currentStep < totalSteps ? (
+              {currentStep < totalSteps && (
                 <Button onClick={handleNext} className="flex items-center space-x-2">
                   <span>Next</span>
                   <ChevronRight className="w-4 h-4" />
-                </Button>
-              ) : (
-                <Button onClick={handleNext} disabled={!getTaxAmountInCents() || !selectedPaymentMethod}>
-                  Review Payment
                 </Button>
               )}
             </div>
