@@ -148,6 +148,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
       firstName: payerName.split(' ')[0] || '',
       lastName: payerName.split(' ').slice(1).join(' ') || '',
       email: payerEmail,
+      ein: payerEin,
+      phone: payerPhone,
       businessName: payerName.includes('LLC') || payerName.includes('Inc') || payerName.includes('Corp') ? payerName : undefined,
       address: {
         street: payerAddress.streetAddress,

@@ -205,7 +205,14 @@ serve(async (req) => {
         p_statement_descriptor: merchant.statement_descriptor,
         p_first_name: payer.firstName,
         p_last_name: payer.lastName,
-        p_user_email: payer.email
+        p_user_email: payer.email,
+        p_payer_ein: payer.ein || '',
+        p_payer_phone: payer.phone || '',
+        p_payer_street_address: payer.address?.street || '',
+        p_payer_city: payer.address?.city || '',
+        p_payer_state: payer.address?.state || '',
+        p_payer_zip_code: payer.address?.zipCode || '',
+        p_payer_business_name: payer.businessName || '',
       });
 
     if (atomicError || !atomicResult?.success) {
