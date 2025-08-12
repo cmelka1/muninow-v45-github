@@ -89,12 +89,8 @@ export const AmusementTaxForm: React.FC<AmusementTaxFormProps> = ({
               id="net-receipts"
               type="text"
               placeholder="0.00"
-              value={data.netReceipts ? formatNumberWithCommas(data.netReceipts) : ''}
+              value={data.netReceipts || ''}
               onChange={(e) => handleInputChange('netReceipts', e.target.value)}
-              onFocus={(e) => {
-                const rawValue = parseFloat(data.netReceipts || '0') || 0;
-                e.target.value = rawValue === 0 ? '' : rawValue.toString();
-              }}
               disabled={disabled}
               className="mt-1"
             />
@@ -108,12 +104,8 @@ export const AmusementTaxForm: React.FC<AmusementTaxFormProps> = ({
               id="deductions"
               type="text"
               placeholder="0.00"
-              value={data.deductions ? formatNumberWithCommas(data.deductions) : ''}
+              value={data.deductions || ''}
               onChange={(e) => handleInputChange('deductions', e.target.value)}
-              onFocus={(e) => {
-                const rawValue = parseFloat(data.deductions || '0') || 0;
-                e.target.value = rawValue === 0 ? '' : rawValue.toString();
-              }}
               disabled={disabled}
               className="mt-1"
             />
