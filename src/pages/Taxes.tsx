@@ -4,15 +4,15 @@ import { Helmet } from 'react-helmet-async';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
-import BillsFilter, { BillFilters } from '@/components/BillsFilter';
-import BillsTable from '@/components/BillsTable';
+import TaxSubmissionsFilter, { TaxSubmissionFilters } from '@/components/TaxSubmissionsFilter';
+import TaxSubmissionsTable from '@/components/TaxSubmissionsTable';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { PayTaxDialog } from '@/components/PayTaxDialog';
 const Taxes = () => {
   const navigate = useNavigate();
   const { user, profile, isLoading } = useAuth();
-  const [filters, setFilters] = useState<BillFilters>({});
+  const [filters, setFilters] = useState<TaxSubmissionFilters>({});
   const [isPayTaxOpen, setIsPayTaxOpen] = useState(false);
   // Redirect unauthenticated users or municipal users
   useEffect(() => {
@@ -59,11 +59,10 @@ const Taxes = () => {
               <p className="text-muted-foreground">Manage and pay your tax bills</p>
             </header>
 
-            <BillsFilter filters={filters} onFiltersChange={setFilters} />
-            <BillsTable 
+            <TaxSubmissionsFilter filters={filters} onFiltersChange={setFilters} />
+            <TaxSubmissionsTable 
               filters={filters}
-              onPayClick={(billId) => navigate(`/bill/${billId}`)}
-              title="Taxes"
+              title="Paid Taxes"
               headerAction={
                 <Button onClick={() => setIsPayTaxOpen(true)} className="flex items-center space-x-2">
                   <Plus className="w-4 h-4" />
