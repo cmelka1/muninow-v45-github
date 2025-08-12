@@ -130,6 +130,50 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     return 0;
   };
 
+  const getCurrentTaxCalculationData = () => {
+    if (taxType === 'Food & Beverage') {
+      return foodBeverageTaxData;
+    } else if (taxType === 'Hotel & Motel') {
+      return hotelMotelTaxData;
+    } else if (taxType === 'Amusement') {
+      return amusementTaxData;
+    }
+    return {};
+  };
+
+  const getPayerData = () => {
+    if (!payerAddress) return null;
+    
+    return {
+      firstName: payerName.split(' ')[0] || '',
+      lastName: payerName.split(' ').slice(1).join(' ') || '',
+      email: payerEmail,
+      businessName: payerName.includes('LLC') || payerName.includes('Inc') || payerName.includes('Corp') ? payerName : undefined,
+      address: {
+        street: payerAddress.streetAddress,
+        city: payerAddress.city,
+        state: payerAddress.state,
+        zipCode: payerAddress.zipCode
+      }
+    };
+  };
+
+  const getCurrentTaxPeriodStart = () => {
+    // For now, default to current year start - can be made configurable later
+    const now = new Date();
+    return `${now.getFullYear()}-01-01`;
+  };
+
+  const getCurrentTaxPeriodEnd = () => {
+    // For now, default to current year end - can be made configurable later  
+    const now = new Date();
+    return `${now.getFullYear()}-12-31`;
+  };
+
+  const getCurrentTaxYear = () => {
+    return new Date().getFullYear();
+  };
+
   // Payment methods integration
   const {
     selectedPaymentMethod,
@@ -148,7 +192,12 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   } = useTaxPaymentMethods({
     municipality: selectedMunicipality,
     taxType,
-    amount: getTaxAmountInCents()
+    amount: getTaxAmountInCents(),
+    calculationData: getCurrentTaxCalculationData(),
+    payer: getPayerData(),
+    taxPeriodStart: getCurrentTaxPeriodStart(),
+    taxPeriodEnd: getCurrentTaxPeriodEnd(),
+    taxYear: getCurrentTaxYear()
   });
 
   const scrollTop = () => {

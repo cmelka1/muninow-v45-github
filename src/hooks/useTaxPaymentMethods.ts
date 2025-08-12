@@ -10,6 +10,11 @@ export const useTaxPaymentMethods = (taxData: {
   municipality: any;
   taxType: string;
   amount: number; // in cents
+  calculationData?: any;
+  payer?: any;
+  taxPeriodStart?: string;
+  taxPeriodEnd?: string;
+  taxYear?: number;
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -138,14 +143,16 @@ export const useTaxPaymentMethods = (taxData: {
     try {
       const paymentData = {
         taxType: taxData.taxType,
-        municipality: taxData.municipality,
-        amount: taxData.amount,
-        serviceFee: serviceFee.totalFee,
-        totalAmount: totalWithFee,
+        taxPeriodStart: taxData.taxPeriodStart,
+        taxPeriodEnd: taxData.taxPeriodEnd,
+        taxYear: taxData.taxYear,
+        customerId: taxData.municipality?.customer_id,
+        merchantId: taxData.municipality?.id,
         paymentInstrumentId: selectedPaymentMethod,
+        idempotencyId: generateIdempotencyId('tax'),
         fraudSessionId,
-        finixFingerprint,
-        idempotencyId: `tax-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        calculationData: taxData.calculationData,
+        payer: taxData.payer
       };
 
       const { data, error } = await supabase.functions.invoke('process-tax-payment', {

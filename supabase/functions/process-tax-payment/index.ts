@@ -36,8 +36,9 @@ interface FinixTransferRequest {
   currency: string;
   destination: string;
   source: string;
+  idempotency_id: string;  // REQUIRED by Finix
+  fraud_session_id?: string; // REQUIRED by Finix when available
   tags?: Record<string, string>;
-  fraud_session_id?: string;
 }
 
 interface FinixTransferResponse {
@@ -219,6 +220,7 @@ serve(async (req) => {
       currency: 'USD',
       destination: merchant.finix_merchant_id,
       source: paymentInstrument.finix_payment_instrument_id,
+      idempotency_id: idempotencyId,  // Required by Finix
       tags: {
         tax_submission_id: taxSubmissionId,
         payment_history_id: paymentHistoryId,
