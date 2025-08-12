@@ -30,10 +30,28 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
   onChange,
   disabled = false
 }) => {
+  const validateDecimalInput = (value: string): string => {
+    // Remove all non-digit and non-decimal characters
+    let cleaned = value.replace(/[^\d.]/g, '');
+    
+    // Handle multiple decimal points - keep only the first one
+    const parts = cleaned.split('.');
+    if (parts.length > 2) {
+      cleaned = parts[0] + '.' + parts.slice(1).join('');
+    }
+    
+    // Limit to 2 decimal places
+    if (parts[1] && parts[1].length > 2) {
+      cleaned = parts[0] + '.' + parts[1].substring(0, 2);
+    }
+    
+    return cleaned;
+  };
+
   const formatNumberWithCommas = (value: string) => {
-    const numericValue = value.replace(/[^\d.]/g, '');
+    const numericValue = validateDecimalInput(value);
     const number = parseFloat(numericValue) || 0;
-    return number.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    return number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   const handleInputChange = (field: keyof HotelMotelTaxData, value: string) => {
@@ -45,8 +63,8 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
       const numValue = parseInt(intValue) || 0;
       processedValue = Math.min(12, Math.max(0, numValue)).toString();
     } else {
-      // For currency fields, remove non-numeric characters except decimal
-      processedValue = value.replace(/[^0-9.]/g, '');
+      // For currency fields, use decimal validation
+      processedValue = validateDecimalInput(value);
     }
     
     const newData = { ...data, [field]: processedValue };
