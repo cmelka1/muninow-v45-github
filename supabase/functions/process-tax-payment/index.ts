@@ -148,11 +148,12 @@ serve(async (req) => {
       throw new Error('Merchant fee profile not found');
     }
 
-    // Calculate tax amount from calculation data
-    const baseAmount = calculationData.totalDue || calculationData.tax || 0;
-    if (!baseAmount || baseAmount <= 0) {
-      throw new Error('Invalid tax amount');
+    // Calculate tax amount from calculation data - convert from dollars to cents
+    const baseAmountDollars = parseFloat(calculationData.totalDue || calculationData.tax || calculationData.line8 || "0");
+    if (isNaN(baseAmountDollars) || baseAmountDollars <= 0) {
+      throw new Error('Invalid tax amount in calculation data');
     }
+    const baseAmount = Math.round(baseAmountDollars * 100); // Convert dollars to cents
 
     // Calculate service fees using grossed-up method
     let serviceFee: number;
