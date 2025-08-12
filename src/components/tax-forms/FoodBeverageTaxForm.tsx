@@ -24,8 +24,14 @@ export const FoodBeverageTaxForm: React.FC<FoodBeverageTaxFormProps> = ({
   onChange,
   disabled = false
 }) => {
+  const formatNumberWithCommas = (value: string) => {
+    const numericValue = value.replace(/[^\d.]/g, '');
+    const number = parseFloat(numericValue) || 0;
+    return number.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  };
+
   const handleInputChange = (field: keyof FoodBeverageTaxData, value: string) => {
-    const numericValue = value.replace(/[^0-9.]/g, '');
+    const numericValue = value.replace(/[^\d.]/g, '');
     const newData = { ...data, [field]: numericValue };
     
     // Auto-calculate dependent fields
@@ -66,7 +72,7 @@ export const FoodBeverageTaxForm: React.FC<FoodBeverageTaxFormProps> = ({
               id="gross-sales"
               type="text"
               placeholder="0.00"
-              value={data.grossSales}
+              value={data.grossSales ? formatNumberWithCommas(data.grossSales) : ''}
               onChange={(e) => handleInputChange('grossSales', e.target.value)}
               disabled={disabled}
               className="mt-1"
@@ -81,7 +87,7 @@ export const FoodBeverageTaxForm: React.FC<FoodBeverageTaxFormProps> = ({
               id="deductions"
               type="text"
               placeholder="0.00"
-              value={data.deductions}
+              value={data.deductions ? formatNumberWithCommas(data.deductions) : ''}
               onChange={(e) => handleInputChange('deductions', e.target.value)}
               disabled={disabled}
               className="mt-1"

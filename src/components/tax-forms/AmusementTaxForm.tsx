@@ -24,8 +24,14 @@ export const AmusementTaxForm: React.FC<AmusementTaxFormProps> = ({
   onChange,
   disabled = false
 }) => {
+  const formatNumberWithCommas = (value: string) => {
+    const numericValue = value.replace(/[^\d.]/g, '');
+    const number = parseFloat(numericValue) || 0;
+    return number.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  };
+
   const handleInputChange = (field: keyof AmusementTaxData, value: string) => {
-    const numericValue = value.replace(/[^0-9.]/g, '');
+    const numericValue = value.replace(/[^\d.]/g, '');
     const newData = { ...data, [field]: numericValue };
     
     // Auto-calculate dependent fields
@@ -66,7 +72,7 @@ export const AmusementTaxForm: React.FC<AmusementTaxFormProps> = ({
               id="net-receipts"
               type="text"
               placeholder="0.00"
-              value={data.netReceipts}
+              value={data.netReceipts ? formatNumberWithCommas(data.netReceipts) : ''}
               onChange={(e) => handleInputChange('netReceipts', e.target.value)}
               disabled={disabled}
               className="mt-1"
@@ -81,7 +87,7 @@ export const AmusementTaxForm: React.FC<AmusementTaxFormProps> = ({
               id="deductions"
               type="text"
               placeholder="0.00"
-              value={data.deductions}
+              value={data.deductions ? formatNumberWithCommas(data.deductions) : ''}
               onChange={(e) => handleInputChange('deductions', e.target.value)}
               disabled={disabled}
               className="mt-1"

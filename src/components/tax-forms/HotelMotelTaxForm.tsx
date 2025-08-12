@@ -30,6 +30,12 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
   onChange,
   disabled = false
 }) => {
+  const formatNumberWithCommas = (value: string) => {
+    const numericValue = value.replace(/[^\d.]/g, '');
+    const number = parseFloat(numericValue) || 0;
+    return number.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  };
+
   const handleInputChange = (field: keyof HotelMotelTaxData, value: string) => {
     let processedValue = value;
     
@@ -97,8 +103,8 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
                 id="line1"
                 type="text"
                 placeholder="0.00"
-                value={data.line1}
-                onChange={(e) => handleInputChange('line1', e.target.value)}
+              value={data.line1 ? formatNumberWithCommas(data.line1) : ''}
+              onChange={(e) => handleInputChange('line1', e.target.value)}
                 disabled={disabled}
                 className="mt-1"
               />
@@ -112,8 +118,8 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
                 id="stateTax"
                 type="text"
                 placeholder="0.00"
-                value={data.stateTax}
-                onChange={(e) => handleInputChange('stateTax', e.target.value)}
+              value={data.stateTax ? formatNumberWithCommas(data.stateTax) : ''}
+              onChange={(e) => handleInputChange('stateTax', e.target.value)}
                 disabled={disabled}
                 className="mt-1"
               />
@@ -127,8 +133,8 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
                 id="miscReceipts"
                 type="text"
                 placeholder="0.00"
-                value={data.miscReceipts}
-                onChange={(e) => handleInputChange('miscReceipts', e.target.value)}
+              value={data.miscReceipts ? formatNumberWithCommas(data.miscReceipts) : ''}
+              onChange={(e) => handleInputChange('miscReceipts', e.target.value)}
                 disabled={disabled}
                 className="mt-1"
               />
@@ -158,8 +164,8 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
                 id="creditsAttached"
                 type="text"
                 placeholder="0.00"
-                value={data.creditsAttached}
-                onChange={(e) => handleInputChange('creditsAttached', e.target.value)}
+              value={data.creditsAttached ? formatNumberWithCommas(data.creditsAttached) : ''}
+              onChange={(e) => handleInputChange('creditsAttached', e.target.value)}
                 disabled={disabled}
                 className="mt-1"
               />
