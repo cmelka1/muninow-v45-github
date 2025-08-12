@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -49,10 +48,8 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
     return cleaned;
   };
 
-  const formatDisplayValue = (value: string) => {
-    if (!value) return '';
-    const number = parseFloat(value);
-    if (isNaN(number)) return value;
+  const formatNumberWithCommas = (value: string) => {
+    const number = parseFloat(value) || 0;
     return number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
@@ -105,14 +102,6 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
     onChange(newData);
   };
 
-  const handleInputBlur = (field: keyof HotelMotelTaxData, value: string) => {
-    if (field !== 'monthsLate' && value && !isNaN(parseFloat(value))) {
-      const formattedValue = parseFloat(value).toFixed(2);
-      const newData = { ...data, [field]: formattedValue };
-      onChange(newData);
-    }
-  };
-
   return (
     <Card className="mt-4">
       <CardHeader>
@@ -131,9 +120,8 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
                 id="line1"
                 type="text"
                 placeholder="0.00"
-                value={data.line1 || ''}
-                onChange={(e) => handleInputChange('line1', e.target.value)}
-                onBlur={(e) => handleInputBlur('line1', e.target.value)}
+              value={data.line1 || ''}
+              onChange={(e) => handleInputChange('line1', e.target.value)}
                 disabled={disabled}
                 className="mt-1"
               />
@@ -147,9 +135,8 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
                 id="stateTax"
                 type="text"
                 placeholder="0.00"
-                value={data.stateTax || ''}
-                onChange={(e) => handleInputChange('stateTax', e.target.value)}
-                onBlur={(e) => handleInputBlur('stateTax', e.target.value)}
+              value={data.stateTax || ''}
+              onChange={(e) => handleInputChange('stateTax', e.target.value)}
                 disabled={disabled}
                 className="mt-1"
               />
@@ -163,9 +150,8 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
                 id="miscReceipts"
                 type="text"
                 placeholder="0.00"
-                value={data.miscReceipts || ''}
-                onChange={(e) => handleInputChange('miscReceipts', e.target.value)}
-                onBlur={(e) => handleInputBlur('miscReceipts', e.target.value)}
+              value={data.miscReceipts || ''}
+              onChange={(e) => handleInputChange('miscReceipts', e.target.value)}
                 disabled={disabled}
                 className="mt-1"
               />
@@ -195,9 +181,8 @@ export const HotelMotelTaxForm: React.FC<HotelMotelTaxFormProps> = ({
                 id="creditsAttached"
                 type="text"
                 placeholder="0.00"
-                value={data.creditsAttached || ''}
-                onChange={(e) => handleInputChange('creditsAttached', e.target.value)}
-                onBlur={(e) => handleInputBlur('creditsAttached', e.target.value)}
+              value={data.creditsAttached || ''}
+              onChange={(e) => handleInputChange('creditsAttached', e.target.value)}
                 disabled={disabled}
                 className="mt-1"
               />
