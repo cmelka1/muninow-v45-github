@@ -53,6 +53,26 @@ interface FinixTransferResponse {
   [key: string]: any;
 }
 
+// Tax type mapping function
+function normalizeTaxType(displayTaxType: string): string {
+  const taxTypeMap: Record<string, string> = {
+    'Food & Beverage': 'food_beverage',
+    'Hotel & Motel': 'hotel_motel',
+    'Amusement': 'amusement',
+    // Also support technical names in case they're already normalized
+    'food_beverage': 'food_beverage',
+    'hotel_motel': 'hotel_motel',
+    'amusement': 'amusement'
+  };
+  
+  const normalized = taxTypeMap[displayTaxType];
+  if (!normalized) {
+    throw new Error(`Invalid tax type: ${displayTaxType}. Supported types: Food & Beverage, Hotel & Motel, Amusement`);
+  }
+  
+  return normalized;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -88,7 +108,9 @@ serve(async (req) => {
       paymentInstrumentId, idempotencyId, fraudSessionId, calculationData, payer 
     }: ProcessTaxPaymentRequest = await req.json();
 
-    console.log('Processing tax payment:', { taxType, paymentInstrumentId, idempotencyId });
+    // Normalize tax type to database format
+    const normalizedTaxType = normalizeTaxType(taxType);
+    console.log('Processing tax payment:', { taxType, normalizedTaxType, paymentInstrumentId, idempotencyId });
 
     // Check for duplicate idempotency ID
     const { data: existingPayment } = await supabaseServiceRole
@@ -183,7 +205,7 @@ serve(async (req) => {
         p_user_id: user.id,
         p_customer_id: customerId,
         p_merchant_id: merchantId,
-        p_tax_type: taxType,
+        p_tax_type: normalizedTaxType,
         p_tax_period_start: taxPeriodStart,
         p_tax_period_end: taxPeriodEnd,
         p_tax_year: taxYear,
