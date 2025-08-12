@@ -2473,6 +2473,232 @@ export type Database = {
         }
         Relationships: []
       }
+      tax_calculations: {
+        Row: {
+          calculation_data: Json
+          commission_cents: number | null
+          created_at: string
+          deductions_cents: number | null
+          gross_receipts_cents: number | null
+          id: string
+          tax_amount_cents: number | null
+          tax_rate: number | null
+          tax_submission_id: string
+          taxable_receipts_cents: number | null
+          updated_at: string
+        }
+        Insert: {
+          calculation_data: Json
+          commission_cents?: number | null
+          created_at?: string
+          deductions_cents?: number | null
+          gross_receipts_cents?: number | null
+          id?: string
+          tax_amount_cents?: number | null
+          tax_rate?: number | null
+          tax_submission_id: string
+          taxable_receipts_cents?: number | null
+          updated_at?: string
+        }
+        Update: {
+          calculation_data?: Json
+          commission_cents?: number | null
+          created_at?: string
+          deductions_cents?: number | null
+          gross_receipts_cents?: number | null
+          id?: string
+          tax_amount_cents?: number | null
+          tax_rate?: number | null
+          tax_submission_id?: string
+          taxable_receipts_cents?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_calculations_tax_submission_id_fkey"
+            columns: ["tax_submission_id"]
+            isOneToOne: false
+            referencedRelation: "tax_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_documents: {
+        Row: {
+          created_at: string
+          customer_id: string
+          document_type: string
+          file_path: string
+          file_size: number
+          file_type: string
+          filename: string
+          id: string
+          tax_submission_id: string
+          updated_at: string
+          upload_date: string
+          upload_status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          document_type: string
+          file_path: string
+          file_size: number
+          file_type: string
+          filename: string
+          id?: string
+          tax_submission_id: string
+          updated_at?: string
+          upload_date?: string
+          upload_status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          document_type?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          filename?: string
+          id?: string
+          tax_submission_id?: string
+          updated_at?: string
+          upload_date?: string
+          upload_status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_documents_tax_submission_id_fkey"
+            columns: ["tax_submission_id"]
+            isOneToOne: false
+            referencedRelation: "tax_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_submissions: {
+        Row: {
+          ach_basis_points: number | null
+          ach_fixed_fee: number | null
+          amount_cents: number
+          basis_points: number | null
+          category: string | null
+          created_at: string
+          customer_id: string
+          due_date: string | null
+          failure_code: string | null
+          failure_message: string | null
+          finix_identity_id: string | null
+          finix_merchant_id: string | null
+          finix_transfer_id: string | null
+          fixed_fee: number | null
+          fraud_session_id: string | null
+          id: string
+          idempotency_id: string | null
+          merchant_id: string | null
+          merchant_name: string | null
+          paid_at: string | null
+          payment_status: string | null
+          payment_type: string | null
+          raw_finix_response: Json | null
+          service_fee_cents: number | null
+          statement_descriptor: string | null
+          subcategory: string | null
+          submission_date: string
+          submission_status: string
+          submitted_at: string | null
+          tax_period_end: string
+          tax_period_start: string
+          tax_type: string
+          tax_year: number
+          total_amount_cents: number
+          transfer_state: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ach_basis_points?: number | null
+          ach_fixed_fee?: number | null
+          amount_cents: number
+          basis_points?: number | null
+          category?: string | null
+          created_at?: string
+          customer_id: string
+          due_date?: string | null
+          failure_code?: string | null
+          failure_message?: string | null
+          finix_identity_id?: string | null
+          finix_merchant_id?: string | null
+          finix_transfer_id?: string | null
+          fixed_fee?: number | null
+          fraud_session_id?: string | null
+          id?: string
+          idempotency_id?: string | null
+          merchant_id?: string | null
+          merchant_name?: string | null
+          paid_at?: string | null
+          payment_status?: string | null
+          payment_type?: string | null
+          raw_finix_response?: Json | null
+          service_fee_cents?: number | null
+          statement_descriptor?: string | null
+          subcategory?: string | null
+          submission_date?: string
+          submission_status?: string
+          submitted_at?: string | null
+          tax_period_end: string
+          tax_period_start: string
+          tax_type: string
+          tax_year: number
+          total_amount_cents: number
+          transfer_state?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ach_basis_points?: number | null
+          ach_fixed_fee?: number | null
+          amount_cents?: number
+          basis_points?: number | null
+          category?: string | null
+          created_at?: string
+          customer_id?: string
+          due_date?: string | null
+          failure_code?: string | null
+          failure_message?: string | null
+          finix_identity_id?: string | null
+          finix_merchant_id?: string | null
+          finix_transfer_id?: string | null
+          fixed_fee?: number | null
+          fraud_session_id?: string | null
+          id?: string
+          idempotency_id?: string | null
+          merchant_id?: string | null
+          merchant_name?: string | null
+          paid_at?: string | null
+          payment_status?: string | null
+          payment_type?: string | null
+          raw_finix_response?: Json | null
+          service_fee_cents?: number | null
+          statement_descriptor?: string | null
+          subcategory?: string | null
+          submission_date?: string
+          submission_status?: string
+          submitted_at?: string | null
+          tax_period_end?: string
+          tax_period_start?: string
+          tax_type?: string
+          tax_year?: number
+          total_amount_cents?: number
+          transfer_state?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_notification_preferences: {
         Row: {
           created_at: string
@@ -3143,6 +3369,10 @@ export type Database = {
       }
       validate_merchant_category_subcategory: {
         Args: { p_category: string; p_subcategory: string }
+        Returns: boolean
+      }
+      validate_tax_calculation: {
+        Args: { p_tax_type: string; p_calculation_data: Json }
         Returns: boolean
       }
     }
