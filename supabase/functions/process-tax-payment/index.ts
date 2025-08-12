@@ -137,6 +137,11 @@ serve(async (req) => {
       throw new Error('Merchant not found');
     }
 
+    // Validate finix_merchant_id is present
+    if (!merchant.finix_merchant_id) {
+      throw new Error('Merchant is not configured for Finix payment processing');
+    }
+
     const feeProfile = merchant.merchant_fee_profiles[0];
     if (!feeProfile) {
       throw new Error('Merchant fee profile not found');
@@ -218,7 +223,9 @@ serve(async (req) => {
         tax_submission_id: taxSubmissionId,
         payment_history_id: paymentHistoryId,
         tax_type: taxType,
-        user_id: user.id
+        user_id: user.id,
+        finix_merchant_id: merchant.finix_merchant_id,
+        merchant_name: merchant.merchant_name
       }
     };
 
