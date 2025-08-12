@@ -24,14 +24,31 @@ export const FoodBeverageTaxForm: React.FC<FoodBeverageTaxFormProps> = ({
   onChange,
   disabled = false
 }) => {
+  const validateDecimalInput = (value: string) => {
+    // Remove all non-numeric characters except decimal point
+    let cleaned = value.replace(/[^\d.]/g, '');
+    
+    // Ensure only one decimal point
+    const decimalParts = cleaned.split('.');
+    if (decimalParts.length > 2) {
+      cleaned = decimalParts[0] + '.' + decimalParts.slice(1).join('');
+    }
+    
+    // Limit to 2 decimal places
+    if (decimalParts.length === 2 && decimalParts[1].length > 2) {
+      cleaned = decimalParts[0] + '.' + decimalParts[1].substring(0, 2);
+    }
+    
+    return cleaned;
+  };
+
   const formatNumberWithCommas = (value: string) => {
-    const numericValue = value.replace(/[^\d.]/g, '');
-    const number = parseFloat(numericValue) || 0;
-    return number.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    const number = parseFloat(value) || 0;
+    return number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   const handleInputChange = (field: keyof FoodBeverageTaxData, value: string) => {
-    const numericValue = value.replace(/[^\d.]/g, '');
+    const numericValue = validateDecimalInput(value);
     const newData = { ...data, [field]: numericValue };
     
     // Auto-calculate dependent fields
