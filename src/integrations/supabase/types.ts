@@ -2589,15 +2589,18 @@ export type Database = {
           created_at: string
           customer_id: string
           due_date: string | null
+          email: string | null
           failure_code: string | null
           failure_message: string | null
           finix_identity_id: string | null
           finix_merchant_id: string | null
           finix_transfer_id: string | null
+          first_name: string | null
           fixed_fee: number | null
           fraud_session_id: string | null
           id: string
           idempotency_id: string | null
+          last_name: string | null
           merchant_id: string | null
           merchant_name: string | null
           paid_at: string | null
@@ -2635,15 +2638,18 @@ export type Database = {
           created_at?: string
           customer_id: string
           due_date?: string | null
+          email?: string | null
           failure_code?: string | null
           failure_message?: string | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
           finix_transfer_id?: string | null
+          first_name?: string | null
           fixed_fee?: number | null
           fraud_session_id?: string | null
           id?: string
           idempotency_id?: string | null
+          last_name?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
           paid_at?: string | null
@@ -2681,15 +2687,18 @@ export type Database = {
           created_at?: string
           customer_id?: string
           due_date?: string | null
+          email?: string | null
           failure_code?: string | null
           failure_message?: string | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
           finix_transfer_id?: string | null
+          first_name?: string | null
           fixed_fee?: number | null
           fraud_session_id?: string | null
           id?: string
           idempotency_id?: string | null
+          last_name?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
           paid_at?: string | null
