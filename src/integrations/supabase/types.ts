@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -3110,7 +3110,7 @@ export type Database = {
         Returns: boolean
       }
       assign_role_to_user: {
-        Args: { _user_id: string; _role_name: string; _entity_id?: string }
+        Args: { _entity_id?: string; _role_name: string; _user_id: string }
         Returns: boolean
       }
       can_view_profile_for_permits: {
@@ -3119,11 +3119,11 @@ export type Database = {
       }
       check_address_duplicate: {
         Args: {
-          street_input: string
+          apt_input?: string
           city_input: string
           state_input: string
+          street_input: string
           zip_input: string
-          apt_input?: string
         }
         Returns: boolean
       }
@@ -3150,75 +3150,75 @@ export type Database = {
       create_organization_invitation: {
         Args: {
           p_invitation_email: string
-          p_role: string
           p_organization_type: string
+          p_role: string
         }
         Returns: string
       }
       create_tax_submission_with_payment: {
         Args:
           | {
-              p_user_id: string
-              p_customer_id: string
-              p_merchant_id: string
-              p_tax_type: string
-              p_tax_period_start: string
-              p_tax_period_end: string
-              p_tax_year: number
               p_amount_cents: number
+              p_bank_last_four?: string
               p_calculation_data: Json
-              p_payment_instrument_id: string
-              p_finix_merchant_id: string
-              p_service_fee_cents: number
-              p_total_amount_cents: number
-              p_payment_type: string
-              p_idempotency_id: string
-              p_fraud_session_id?: string
               p_card_brand?: string
               p_card_last_four?: string
-              p_bank_last_four?: string
-              p_merchant_name?: string
               p_category?: string
-              p_subcategory?: string
-              p_statement_descriptor?: string
-              p_first_name?: string
-              p_last_name?: string
-              p_user_email?: string
-            }
-          | {
-              p_user_id: string
               p_customer_id: string
-              p_merchant_id: string
-              p_tax_type: string
-              p_tax_period_start: string
-              p_tax_period_end: string
-              p_tax_year: number
-              p_amount_cents: number
-              p_calculation_data: Json
-              p_payment_instrument_id: string
               p_finix_merchant_id: string
-              p_service_fee_cents: number
-              p_total_amount_cents: number
-              p_payment_type: string
-              p_idempotency_id: string
-              p_fraud_session_id?: string
-              p_card_brand?: string
-              p_card_last_four?: string
-              p_bank_last_four?: string
-              p_merchant_name?: string
-              p_category?: string
-              p_subcategory?: string
-              p_statement_descriptor?: string
               p_first_name?: string
+              p_fraud_session_id?: string
+              p_idempotency_id: string
               p_last_name?: string
-              p_user_email?: string
+              p_merchant_id: string
+              p_merchant_name?: string
+              p_payer_business_name?: string
+              p_payer_city?: string
               p_payer_ein?: string
               p_payer_phone?: string
-              p_payer_street_address?: string
-              p_payer_city?: string
               p_payer_state?: string
+              p_payer_street_address?: string
               p_payer_zip_code?: string
-              p_payer_business_name?: string
+              p_payment_instrument_id: string
+              p_payment_type: string
+              p_service_fee_cents: number
+              p_statement_descriptor?: string
+              p_subcategory?: string
+              p_tax_period_end: string
+              p_tax_period_start: string
+              p_tax_type: string
+              p_tax_year: number
+              p_total_amount_cents: number
+              p_user_email?: string
+              p_user_id: string
+            }
+          | {
+              p_amount_cents: number
+              p_bank_last_four?: string
+              p_calculation_data: Json
+              p_card_brand?: string
+              p_card_last_four?: string
+              p_category?: string
+              p_customer_id: string
+              p_finix_merchant_id: string
+              p_first_name?: string
+              p_fraud_session_id?: string
+              p_idempotency_id: string
+              p_last_name?: string
+              p_merchant_id: string
+              p_merchant_name?: string
+              p_payment_instrument_id: string
+              p_payment_type: string
+              p_service_fee_cents: number
+              p_statement_descriptor?: string
+              p_subcategory?: string
+              p_tax_period_end: string
+              p_tax_period_start: string
+              p_tax_type: string
+              p_tax_year: number
+              p_total_amount_cents: number
+              p_user_email?: string
+              p_user_id: string
             }
         Returns: Json
       }
@@ -3253,55 +3253,55 @@ export type Database = {
       get_municipal_questions: {
         Args: { p_customer_id: string; p_merchant_id?: string }
         Returns: {
-          id: string
+          created_at: string
           customer_id: string
+          display_order: number
+          help_text: string
+          id: string
+          is_active: boolean
+          is_required: boolean
           merchant_id: string
           merchant_name: string
+          question_options: Json
           question_text: string
           question_type: string
-          question_options: Json
-          is_required: boolean
-          display_order: number
-          is_active: boolean
-          help_text: string
-          created_at: string
           updated_at: string
         }[]
       }
       get_municipal_team_members: {
         Args: { p_customer_id: string }
         Returns: {
-          id: string
-          member_id: string
-          role: string
-          joined_at: string
-          first_name: string
-          last_name: string
           email: string
+          first_name: string
+          id: string
+          joined_at: string
+          last_name: string
+          member_id: string
           phone: string
+          role: string
         }[]
       }
       get_organization_members: {
         Args: { user_id: string }
         Returns: {
-          id: string
-          member_id: string
-          role: string
-          organization_type: string
-          joined_at: string
-          first_name: string
-          last_name: string
           email: string
+          first_name: string
+          id: string
+          joined_at: string
+          last_name: string
+          member_id: string
+          organization_type: string
           phone: string
+          role: string
         }[]
       }
       get_payment_instrument_display_name: {
         Args: {
-          p_nickname: string
-          p_instrument_type: string
+          p_bank_last_four: string
           p_card_brand: string
           p_card_last_four: string
-          p_bank_last_four: string
+          p_instrument_type: string
+          p_nickname: string
         }
         Returns: string
       }
@@ -3312,75 +3312,75 @@ export type Database = {
       get_user_bill_summary_for_municipal: {
         Args: { p_user_id: string }
         Returns: {
-          user_id: string
-          first_name: string
-          last_name: string
-          email: string
-          phone: string
-          street_address: string
-          apt_number: string
-          city: string
-          state: string
-          zip_code: string
           account_type: string
+          apt_number: string
           business_legal_name: string
+          city: string
           created_at: string
-          updated_at: string
-          unpaid_bill_count: number
-          total_amount_due_cents: number
+          email: string
+          first_name: string
           has_bills: boolean
+          last_name: string
+          phone: string
+          state: string
+          street_address: string
+          total_amount_due_cents: number
+          unpaid_bill_count: number
+          updated_at: string
+          user_id: string
+          zip_code: string
         }[]
       }
       get_user_payment_instruments_with_display_names: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
-          user_id: string
-          finix_payment_instrument_id: string
-          instrument_type: string
-          nickname: string
-          display_name: string
-          is_default: boolean
-          enabled: boolean
-          status: string
-          card_brand: string
-          card_last_four: string
-          card_expiration_month: number
-          card_expiration_year: number
           bank_account_type: string
           bank_last_four: string
           billing_address_line1: string
           billing_city: string
-          billing_region: string
           billing_postal_code: string
+          billing_region: string
+          card_brand: string
+          card_expiration_month: number
+          card_expiration_year: number
+          card_last_four: string
           created_at: string
+          display_name: string
+          enabled: boolean
+          finix_payment_instrument_id: string
+          id: string
+          instrument_type: string
+          is_default: boolean
+          nickname: string
+          status: string
           updated_at: string
+          user_id: string
         }[]
       }
       get_user_profile_for_municipal: {
         Args: { p_user_id: string }
         Returns: {
-          id: string
-          first_name: string
-          last_name: string
-          email: string
-          phone: string
-          street_address: string
-          apt_number: string
-          city: string
-          state: string
-          zip_code: string
           account_type: string
+          apt_number: string
           business_legal_name: string
+          city: string
           created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string
+          state: string
+          street_address: string
           updated_at: string
+          zip_code: string
         }[]
       }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: {
-          role: string
           entity_id: string
+          role: string
         }[]
       }
       gtrgm_compress: {
@@ -3404,11 +3404,11 @@ export type Database = {
         Returns: unknown
       }
       has_permission: {
-        Args: { _user_id: string; _permission: string; _entity_id?: string }
+        Args: { _entity_id?: string; _permission: string; _user_id: string }
         Returns: boolean
       }
       has_role: {
-        Args: { _user_id: string; _role: string; _entity_id?: string }
+        Args: { _entity_id?: string; _role: string; _user_id: string }
         Returns: boolean
       }
       is_business_admin: {
@@ -3429,11 +3429,11 @@ export type Database = {
       }
       log_address2_event: {
         Args: {
+          p_component_type?: string
+          p_confidence_level?: string
           p_event_type: string
           p_original_value: string
           p_standardized_value?: string
-          p_component_type?: string
-          p_confidence_level?: string
           p_user_id?: string
         }
         Returns: boolean
@@ -3447,7 +3447,7 @@ export type Database = {
         Returns: boolean
       }
       remove_role_from_user: {
-        Args: { _user_id: string; _role_name: string; _entity_id?: string }
+        Args: { _entity_id?: string; _role_name: string; _user_id: string }
         Returns: boolean
       }
       set_default_user_payment_instrument: {
@@ -3479,7 +3479,7 @@ export type Database = {
         Returns: boolean
       }
       validate_tax_calculation: {
-        Args: { p_tax_type: string; p_calculation_data: Json }
+        Args: { p_calculation_data: Json; p_tax_type: string }
         Returns: boolean
       }
     }
