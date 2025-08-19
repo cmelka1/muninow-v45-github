@@ -208,7 +208,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                     value={formData.amount_cents ? (formData.amount_cents / 100).toString() : ''}
                     onChange={(e) => handleInputChange('amount_cents', Math.round(parseFloat(e.target.value || '0') * 100))}
                     placeholder="0.00"
-                    className="pl-8"
+                    className="pl-8 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                     required
                   />
                 </div>
