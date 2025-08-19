@@ -14,7 +14,7 @@ import {
   SidebarMenuButton,
   SidebarSeparator
 } from '@/components/ui/sidebar';
-import { Home, Users, User, LogOut, Shield, History, FileText, Bell, Receipt, Settings, Building2 } from 'lucide-react';
+import { Home, Users, User, LogOut, Shield, History, FileText, Bell, Receipt, Settings, Wrench } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -33,7 +33,7 @@ const navigationItems = [
   },
   {
     title: 'Building Permits',
-    icon: Building2,
+    icon: Wrench,
     url: '/permits'
   },
   {
