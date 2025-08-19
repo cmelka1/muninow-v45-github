@@ -194,7 +194,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                   <div>
                     <h3 className="text-sm font-medium mb-1">Official Form Available</h3>
                     <p className="text-sm text-muted-foreground">
-                      Download and review the official PDF form before completing this application.
+                      View the official PDF form which will open in a new tab. You can download it from there if needed.
                     </p>
                   </div>
                   <Button 
@@ -203,34 +203,29 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                     size="sm"
                     onClick={() => {
                       try {
-                        // Create a temporary link for better browser compatibility
-                        const link = document.createElement('a');
-                        link.href = tile.pdf_form_url;
-                        link.target = '_blank';
-                        link.rel = 'noopener noreferrer';
-                        link.download = `${tile.title.replace(/[^a-z0-9]/gi, '_')}_form.pdf`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
+                        if (!tile.pdf_form_url) {
+                          throw new Error('PDF form URL not available');
+                        }
                         
-                        // Show success message
+                        window.open(tile.pdf_form_url, '_blank', 'noopener,noreferrer');
+                        
                         toast({
-                          title: "PDF Downloaded",
-                          description: "The official form has been opened in a new tab.",
+                          title: "Opening PDF Form",
+                          description: "The official form is opening in a new tab.",
                         });
                       } catch (error) {
-                        console.error('Error downloading PDF:', error);
+                        console.error('Error opening PDF:', error);
                         toast({
-                          title: "Download Error",
-                          description: "Unable to download the PDF form. Please try again.",
+                          title: "Error Opening PDF",
+                          description: "Unable to open the PDF form. Please try again.",
                           variant: "destructive",
                         });
                       }
                     }}
                     className="w-fit"
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download PDF Form
+                    <FileText className="h-4 w-4 mr-2" />
+                    View PDF Form
                   </Button>
                 </div>
               </div>
