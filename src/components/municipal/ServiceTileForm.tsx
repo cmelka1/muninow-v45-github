@@ -59,7 +59,7 @@ const STANDARD_FORM_FIELDS = [
   },
   {
     id: 'additional_information',
-    label: 'Application Information',
+    label: 'Additional Information',
     type: 'textarea' as const,
     required: false,
     placeholder: 'Please provide any additional details or information relevant to your request...'
