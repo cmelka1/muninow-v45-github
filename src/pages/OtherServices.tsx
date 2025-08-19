@@ -80,12 +80,6 @@ const OtherServices: React.FC = () => {
                   {selectedMunicipality && (
                     <div className="mt-4 p-4 bg-muted/50 rounded-lg">
                       <p className="font-medium">{selectedMunicipality.legal_entity_name}</p>
-                      {selectedMunicipality.doing_business_as && 
-                        selectedMunicipality.doing_business_as !== selectedMunicipality.legal_entity_name && (
-                        <p className="text-sm text-muted-foreground">
-                          DBA: {selectedMunicipality.doing_business_as}
-                        </p>
-                      )}
                       <p className="text-sm text-muted-foreground">
                         {selectedMunicipality.business_city}, {selectedMunicipality.business_state}
                       </p>
