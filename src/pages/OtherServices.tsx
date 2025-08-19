@@ -76,15 +76,14 @@ const OtherServices: React.FC = () => {
           {/* Main Other Services Content */}
           <div className="p-8">
             {/* Header Section */}
-            <div className="text-center mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <div></div>
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-2">
                 <h1 className="text-3xl font-bold text-gray-900">
                   Other Municipal Services
                 </h1>
                 <MigratePDFButton />
               </div>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-muted-foreground">
                 Search for your municipality to access additional services and applications not covered by standard utilities, permits, or taxes.
               </p>
             </div>
