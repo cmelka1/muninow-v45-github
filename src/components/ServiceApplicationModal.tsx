@@ -38,6 +38,10 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       // Initialize form data
       const initialData: Record<string, any> = {};
       
+      // Debug logging
+      console.log('ServiceApplicationModal - useAutoPopulate:', useAutoPopulate);
+      console.log('ServiceApplicationModal - profile:', profile);
+      
       // Auto-populate user info if enabled
       if (useAutoPopulate && profile) {
         initialData.first_name = profile.first_name || '';
@@ -66,6 +70,10 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       });
       
       setFormData(initialData);
+      
+      // Debug logging for form data
+      console.log('ServiceApplicationModal - initialData:', initialData);
+      console.log('ServiceApplicationModal - formData after setFormData:', initialData);
     }
   }, [tile, isOpen, useAutoPopulate, profile]);
 
