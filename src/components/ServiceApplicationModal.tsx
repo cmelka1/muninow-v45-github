@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { FileText, Download, User, Copy, ExternalLink, AlertCircle } from 'lucide-react';
@@ -297,29 +297,26 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             </div>
           )}
 
-          {/* Auto-populate Toggle */}
-          {tile.auto_populate_user_info && (
-            <div className="border rounded-lg p-4">
-              <div className="flex items-center space-x-3">
-                <Checkbox
-                  id="auto-populate"
-                  checked={useAutoPopulate}
-                  onCheckedChange={(checked) => setUseAutoPopulate(checked as boolean)}
-                />
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <Label htmlFor="auto-populate" className="text-sm font-normal cursor-pointer">
-                    Use information from my profile
-                  </Label>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Dynamic Form Fields */}
           {tile.form_fields && tile.form_fields.length > 0 && (
             <div className="border rounded-lg p-6 space-y-6">
-              <h3 className="text-sm font-medium">Application Information</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium">Application Information</h3>
+                {tile.auto_populate_user_info && (
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="auto-populate" className="text-sm font-normal cursor-pointer">
+                      Use profile info
+                    </Label>
+                    <Switch
+                      id="auto-populate"
+                      checked={useAutoPopulate}
+                      onCheckedChange={(checked) => setUseAutoPopulate(checked)}
+                    />
+                  </div>
+                )}
+              </div>
               <div className="space-y-5">
                 {tile.form_fields?.map((field) => (
                   <div key={field.id} className="space-y-2">
