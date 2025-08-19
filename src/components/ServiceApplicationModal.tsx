@@ -307,18 +307,16 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                   <div className="w-2 h-2 bg-primary rounded-full"></div>
                   Application Information
                 </CardTitle>
-                {tile.auto_populate_user_info && (
-                  <div className="flex items-center space-x-2">
-                    <Label htmlFor="auto-populate" className="text-sm text-muted-foreground">
-                      Use Profile Information
-                    </Label>
-                    <Switch
-                      id="auto-populate"
-                      checked={useAutoPopulate}
-                      onCheckedChange={(checked) => setUseAutoPopulate(checked)}
-                    />
-                  </div>
-                )}
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="auto-populate" className="text-sm text-muted-foreground">
+                    Use Profile Information
+                  </Label>
+                  <Switch
+                    id="auto-populate"
+                    checked={useAutoPopulate}
+                    onCheckedChange={(checked) => setUseAutoPopulate(checked)}
+                  />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-5">
