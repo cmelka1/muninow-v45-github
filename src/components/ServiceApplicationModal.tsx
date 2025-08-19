@@ -194,14 +194,39 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                   <div>
                     <h3 className="text-sm font-medium mb-1">Official Form Available</h3>
                     <p className="text-sm text-muted-foreground">
-                      Download and review the official form before completing this application.
+                      Download and review the official PDF form before completing this application.
                     </p>
                   </div>
                   <Button 
                     type="button" 
                     variant="outline" 
                     size="sm"
-                    onClick={() => window.open(tile.pdf_form_url, '_blank')}
+                    onClick={() => {
+                      try {
+                        // Create a temporary link for better browser compatibility
+                        const link = document.createElement('a');
+                        link.href = tile.pdf_form_url;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        link.download = `${tile.title.replace(/[^a-z0-9]/gi, '_')}_form.pdf`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        // Show success message
+                        toast({
+                          title: "PDF Downloaded",
+                          description: "The official form has been opened in a new tab.",
+                        });
+                      } catch (error) {
+                        console.error('Error downloading PDF:', error);
+                        toast({
+                          title: "Download Error",
+                          description: "Unable to download the PDF form. Please try again.",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
                     className="w-fit"
                   >
                     <Download className="h-4 w-4 mr-2" />
