@@ -443,6 +443,21 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           </DialogDescription>
         </DialogHeader>
 
+        {/* Guidance Text Box */}
+        <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-3">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+            <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+              <p>
+                Please review the attached PDF carefully and provide responses to any applicable questions in the Additional Information text area. Be clear and thorough in your responses to help municipal officials process your application efficiently and avoid the need for follow-up inquiries.
+              </p>
+              <p>
+                If your payment amount is variable, please calculate the amount due and enter both the total and the calculation reasoning as the final item in the Additional Information text area.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-8 pt-6">
           {/* PDF Form Section */}
           {tile.pdf_form_url && (
