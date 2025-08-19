@@ -9,7 +9,7 @@ import {
   SidebarFooter,
   SidebarGroup
 } from '@/components/ui/sidebar';
-import { Home, Search, Users, User, Bell, LogOut, Building2, FileText } from 'lucide-react';
+import { Home, Search, Users, User, Bell, LogOut, Building2, FileText, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomer } from '@/hooks/useCustomer';
@@ -30,6 +30,11 @@ const navigationItems = [
     title: 'Permits',
     icon: FileText,
     url: '/municipal/permits'
+  },
+  {
+    title: 'Other Services',
+    icon: Settings,
+    url: '/municipal/other-services'
   },
   {
     title: 'Merchants',

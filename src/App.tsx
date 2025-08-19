@@ -43,6 +43,7 @@ import MunicipalMerchants from "./pages/MunicipalMerchants";
 import MunicipalMerchantDetail from "./pages/MunicipalMerchantDetail";
 import MunicipalProfile from "./pages/MunicipalProfile";
 import MunicipalUserDetail from "./pages/MunicipalUserDetail";
+import MunicipalOtherServices from "./pages/MunicipalOtherServices";
 import MunicipalBillOverview from "./pages/MunicipalBillOverview";
 import Permits from "./pages/Permits";
 import Taxes from "./pages/Taxes";
@@ -200,6 +201,13 @@ const App = () => (
                   <MunicipalProtectedRoute>
                     <MunicipalLayout>
                       <Notifications />
+                    </MunicipalLayout>
+                  </MunicipalProtectedRoute>
+                } />
+                <Route path="/municipal/other-services" element={
+                  <MunicipalProtectedRoute>
+                    <MunicipalLayout>
+                      <MunicipalOtherServices />
                     </MunicipalLayout>
                   </MunicipalProtectedRoute>
                 } />
