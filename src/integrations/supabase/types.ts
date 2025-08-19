@@ -1347,6 +1347,122 @@ export type Database = {
           },
         ]
       }
+      municipal_service_applications: {
+        Row: {
+          created_at: string
+          customer_id: string
+          form_data: Json | null
+          fraud_session_id: string | null
+          id: string
+          idempotency_id: string | null
+          payment_id: string | null
+          review_date: string | null
+          review_notes: string | null
+          reviewed_by: string | null
+          status: string
+          tile_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          form_data?: Json | null
+          fraud_session_id?: string | null
+          id?: string
+          idempotency_id?: string | null
+          payment_id?: string | null
+          review_date?: string | null
+          review_notes?: string | null
+          reviewed_by?: string | null
+          status?: string
+          tile_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          form_data?: Json | null
+          fraud_session_id?: string | null
+          id?: string
+          idempotency_id?: string | null
+          payment_id?: string | null
+          review_date?: string | null
+          review_notes?: string | null
+          reviewed_by?: string | null
+          status?: string
+          tile_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "municipal_service_applications_tile_id_fkey"
+            columns: ["tile_id"]
+            isOneToOne: false
+            referencedRelation: "municipal_service_tiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      municipal_service_tiles: {
+        Row: {
+          amount_cents: number
+          auto_populate_user_info: boolean
+          created_at: string
+          created_by: string
+          customer_id: string
+          description: string | null
+          finix_merchant_id: string | null
+          form_fields: Json | null
+          id: string
+          is_active: boolean
+          merchant_fee_profile_id: string | null
+          merchant_id: string | null
+          pdf_form_url: string | null
+          requires_review: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents?: number
+          auto_populate_user_info?: boolean
+          created_at?: string
+          created_by: string
+          customer_id: string
+          description?: string | null
+          finix_merchant_id?: string | null
+          form_fields?: Json | null
+          id?: string
+          is_active?: boolean
+          merchant_fee_profile_id?: string | null
+          merchant_id?: string | null
+          pdf_form_url?: string | null
+          requires_review?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          auto_populate_user_info?: boolean
+          created_at?: string
+          created_by?: string
+          customer_id?: string
+          description?: string | null
+          finix_merchant_id?: string | null
+          form_fields?: Json | null
+          id?: string
+          is_active?: boolean
+          merchant_fee_profile_id?: string | null
+          merchant_id?: string | null
+          pdf_form_url?: string | null
+          requires_review?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       municipal_team_members: {
         Row: {
           admin_id: string
