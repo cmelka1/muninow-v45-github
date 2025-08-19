@@ -140,7 +140,7 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
                 value={amountDollars}
                 onChange={(e) => setAmountDollars(e.target.value)}
                 placeholder="0.00"
-                className="pl-10"
+                className="pl-10 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                 required
               />
             </div>
