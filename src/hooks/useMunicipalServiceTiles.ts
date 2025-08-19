@@ -113,3 +113,33 @@ export const useUpdateServiceTile = () => {
     },
   });
 };
+
+export const useDeleteServiceTile = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('municipal_service_tiles')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['municipal-service-tiles'] });
+      toast({
+        title: 'Success',
+        description: 'Service tile deleted successfully',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete service tile',
+        variant: 'destructive',
+      });
+    },
+  });
+};

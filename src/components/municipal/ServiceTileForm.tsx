@@ -7,8 +7,8 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, X, Upload, FileText, DollarSign } from 'lucide-react';
-import { MunicipalServiceTile, useCreateServiceTile, useUpdateServiceTile } from '@/hooks/useMunicipalServiceTiles';
+import { Plus, X, Upload, FileText, DollarSign, Trash2 } from 'lucide-react';
+import { MunicipalServiceTile, useCreateServiceTile, useUpdateServiceTile, useDeleteServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { useMerchants } from '@/hooks/useMerchants';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -71,6 +71,7 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
   const { merchants, isLoading, fetchMerchantsByCustomer } = useMerchants();
   const createServiceTile = useCreateServiceTile();
   const updateServiceTile = useUpdateServiceTile();
+  const deleteServiceTile = useDeleteServiceTile();
   
   // Form state
   const [title, setTitle] = useState(tile?.title || '');
@@ -83,6 +84,7 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
   const [pdfFormUrl, setPdfFormUrl] = useState(tile?.pdf_form_url || '');
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Fetch merchants for this municipality on mount
   useEffect(() => {
@@ -198,6 +200,17 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
       onClose();
     } catch (error) {
       console.error('Error saving service tile:', error);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!tile) return;
+    
+    try {
+      await deleteServiceTile.mutateAsync(tile.id);
+      onClose();
+    } catch (error) {
+      console.error('Error deleting service tile:', error);
     }
   };
 
@@ -390,21 +403,62 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
       </Card>
 
       {/* Form Actions */}
-      <div className="flex justify-end gap-3">
-        <Button type="button" variant="outline" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button 
-          type="submit" 
-          disabled={createServiceTile.isPending || updateServiceTile.isPending || isUploadingPdf}
-        >
-          {isUploadingPdf 
-            ? 'Uploading PDF...'
-            : createServiceTile.isPending || updateServiceTile.isPending 
-              ? 'Saving...' 
-              : tile ? 'Update Service' : 'Create Service'
-          }
-        </Button>
+      <div className="flex justify-between">
+        {/* Delete Button (only show when editing existing tile) */}
+        <div>
+          {tile && (
+            showDeleteConfirm ? (
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-muted-foreground">Are you sure?</p>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={deleteServiceTile.isPending}
+                >
+                  {deleteServiceTile.isPending ? 'Deleting...' : 'Yes, Delete'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="flex items-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete Service
+              </Button>
+            )
+          )}
+        </div>
+
+        {/* Save/Cancel Actions */}
+        <div className="flex gap-3">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={createServiceTile.isPending || updateServiceTile.isPending || isUploadingPdf}
+          >
+            {isUploadingPdf 
+              ? 'Uploading PDF...'
+              : createServiceTile.isPending || updateServiceTile.isPending 
+                ? 'Saving...' 
+                : tile ? 'Update Service' : 'Create Service'
+            }
+          </Button>
+        </div>
       </div>
     </form>
   );
