@@ -18,6 +18,7 @@ import PaymentMethodSelector from '@/components/PaymentMethodSelector';
 import PaymentButtonsContainer from '@/components/PaymentButtonsContainer';
 import { getStatusDescription, PermitStatus } from '@/hooks/usePermitWorkflow';
 import { formatCurrency, formatDate } from '@/lib/formatters';
+import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { supabase } from '@/integrations/supabase/client';
 
 const PermitDetail = () => {
@@ -195,7 +196,7 @@ const PermitDetail = () => {
               </div>
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Scope of Work</Label>
-                <p className="text-base">{permit.scope_of_work}</p>
+                <SafeHtmlRenderer content={permit.scope_of_work} className="mt-1" fallback="No scope of work provided" />
               </div>
             </CardContent>
           </Card>

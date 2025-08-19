@@ -15,6 +15,7 @@ import { getStatusDisplayName, getStatusDescription, PermitStatus } from '@/hook
 import PaymentButtonsContainer from '@/components/PaymentButtonsContainer';
 import PaymentMethodSelector from '@/components/PaymentMethodSelector';
 import PaymentSummary from '@/components/PaymentSummary';
+import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 
 const PermitOverview = () => {
   const { permitId } = useParams<{ permitId: string }>();
@@ -198,7 +199,7 @@ const PermitOverview = () => {
                   </div>
                   <div className="col-span-2">
                     <label className="text-sm font-medium text-muted-foreground">Scope of Work</label>
-                    <p className="text-base">{permit.scope_of_work || 'N/A'}</p>
+                    <SafeHtmlRenderer content={permit.scope_of_work} className="mt-1" fallback="No scope of work provided" />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Estimated Construction Value</label>
