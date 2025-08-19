@@ -5,10 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MunicipalityAutocomplete } from '@/components/ui/municipality-autocomplete';
-import ServiceTileCard from '@/components/ServiceTileCard';
-import ServiceApplicationModal from '@/components/ServiceApplicationModal';
-import { useMunicipalServiceTiles, MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
-import { useUserServiceApplications } from '@/hooks/useServiceApplications';
 import ResponsiveContainer from '@/components/ui/responsive-container';
 import ResponsiveTypography from '@/components/ui/responsive-typography';
 
@@ -23,28 +19,6 @@ interface Municipality {
 const OtherServices: React.FC = () => {
   const [selectedMunicipality, setSelectedMunicipality] = useState<Municipality | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTile, setSelectedTile] = useState<MunicipalServiceTile | null>(null);
-  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
-
-  const { data: serviceTiles, isLoading: tilesLoading } = useMunicipalServiceTiles(
-    selectedMunicipality?.customer_id
-  );
-  
-  const { data: userApplications } = useUserServiceApplications();
-
-  const filteredTiles = serviceTiles?.filter(tile => 
-    tile.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tile.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
-
-  const handleApplyForService = (tile: MunicipalServiceTile) => {
-    setSelectedTile(tile);
-    setIsApplicationModalOpen(true);
-  };
-
-  const getApplicationStatus = (tileId: string) => {
-    return userApplications?.find(app => app.tile_id === tileId)?.status;
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -94,7 +68,7 @@ const OtherServices: React.FC = () => {
         </Card>
 
         {/* Services Section */}
-        {selectedMunicipality && (
+        {selectedMunicipality ? (
           <>
             {/* Search Bar for Services */}
             <div className="mb-6">
@@ -109,78 +83,21 @@ const OtherServices: React.FC = () => {
               </div>
             </div>
 
-            {/* Services Grid */}
-            {tilesLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <Card key={i} className="h-48 animate-pulse">
-                    <CardContent className="p-6">
-                      <div className="space-y-3">
-                        <div className="h-4 bg-muted rounded w-3/4"></div>
-                        <div className="h-3 bg-muted rounded w-full"></div>
-                        <div className="h-3 bg-muted rounded w-2/3"></div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : filteredTiles.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredTiles.map((tile) => {
-                  const applicationStatus = getApplicationStatus(tile.id);
-                  return (
-                    <div key={tile.id} className="relative">
-                      <ServiceTileCard
-                        tile={tile}
-                        onApply={handleApplyForService}
-                      />
-                      {applicationStatus && (
-                        <Badge 
-                          className="absolute top-2 left-2" 
-                          variant={
-                            applicationStatus === 'paid' ? 'default' :
-                            applicationStatus === 'approved' ? 'secondary' :
-                            applicationStatus === 'denied' ? 'destructive' :
-                            'outline'
-                          }
-                        >
-                          {applicationStatus.charAt(0).toUpperCase() + applicationStatus.slice(1)}
-                        </Badge>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <Card className="text-center py-12">
-                <CardContent>
-                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <ResponsiveTypography variant="h3" className="mb-2">
-                    No Services Available
-                  </ResponsiveTypography>
-                  <p className="text-muted-foreground">
-                    {searchTerm 
-                      ? `No services found matching "${searchTerm}"` 
-                      : 'This municipality has not configured any additional services yet.'
-                    }
-                  </p>
-                  {searchTerm && (
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setSearchTerm('')}
-                      className="mt-4"
-                    >
-                      Clear Search
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+            {/* Services Grid - Placeholder for now */}
+            <Card className="text-center py-12">
+              <CardContent>
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <ResponsiveTypography variant="h3" className="mb-2">
+                  Services Coming Soon
+                </ResponsiveTypography>
+                <p className="text-muted-foreground">
+                  Municipal service tiles will be available once this municipality configures their services.
+                </p>
+              </CardContent>
+            </Card>
           </>
-        )}
-
-        {/* Instructions when no municipality selected */}
-        {!selectedMunicipality && (
+        ) : (
+          /* Instructions when no municipality selected */
           <Card className="text-center py-12">
             <CardContent>
               <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -193,16 +110,6 @@ const OtherServices: React.FC = () => {
             </CardContent>
           </Card>
         )}
-
-        {/* Application Modal */}
-        <ServiceApplicationModal
-          tile={selectedTile}
-          isOpen={isApplicationModalOpen}
-          onClose={() => {
-            setIsApplicationModalOpen(false);
-            setSelectedTile(null);
-          }}
-        />
       </ResponsiveContainer>
     </div>
   );
