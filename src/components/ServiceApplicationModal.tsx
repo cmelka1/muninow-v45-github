@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { FileText, Download, User, Copy, ExternalLink, AlertCircle } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
@@ -300,14 +301,16 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
 
           {/* Dynamic Form Fields */}
           {tile.form_fields && tile.form_fields.length > 0 && (
-            <div className="border rounded-lg p-6 space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium">Application Information</h3>
+            <Card className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  Application Information
+                </CardTitle>
                 {tile.auto_populate_user_info && (
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <Label htmlFor="auto-populate" className="text-sm font-normal cursor-pointer">
-                      Use profile info
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor="auto-populate" className="text-sm text-muted-foreground">
+                      Use Profile Information
                     </Label>
                     <Switch
                       id="auto-populate"
@@ -316,19 +319,21 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                     />
                   </div>
                 )}
-              </div>
-              <div className="space-y-5">
-                {tile.form_fields?.map((field) => (
-                  <div key={field.id} className="space-y-2">
-                    <Label htmlFor={field.id} className="flex items-center gap-1 text-sm">
-                      {field.label}
-                      {field.required && <span className="text-destructive">*</span>}
-                    </Label>
-                    {renderFormField(field)}
-                  </div>
-                ))}
-              </div>
-            </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-5">
+                  {tile.form_fields?.map((field) => (
+                    <div key={field.id} className="space-y-2">
+                      <Label htmlFor={field.id} className="flex items-center gap-1 text-sm">
+                        {field.label}
+                        {field.required && <span className="text-destructive">*</span>}
+                      </Label>
+                      {renderFormField(field)}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* User-Defined Amount Section */}
