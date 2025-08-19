@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
-import { FileText, Download, User } from 'lucide-react';
+import { FileText, Download, User, Copy, ExternalLink, AlertCircle } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { useCreateServiceApplication } from '@/hooks/useServiceApplications';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -27,6 +27,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [useAutoPopulate, setUseAutoPopulate] = useState(true);
+  const [pdfAccessBlocked, setPdfAccessBlocked] = useState(false);
   
   const { data: userProfile } = useUserProfile();
   const createApplication = useCreateServiceApplication();
@@ -197,36 +198,100 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                       View the official PDF form which will open in a new tab. You can download it from there if needed.
                     </p>
                   </div>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      try {
-                        if (!tile.pdf_form_url) {
-                          throw new Error('PDF form URL not available');
+                  
+                  <div className="flex flex-wrap gap-2">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        try {
+                          if (!tile.pdf_form_url) {
+                            throw new Error('PDF form URL not available');
+                          }
+                          
+                          const newWindow = window.open(tile.pdf_form_url, '_blank', 'noopener,noreferrer');
+                          
+                          // Check if popup was blocked
+                          setTimeout(() => {
+                            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                              setPdfAccessBlocked(true);
+                              toast({
+                                title: "Popup Blocked",
+                                description: "Please allow popups for this site or use the direct link below.",
+                                variant: "destructive",
+                              });
+                            } else {
+                              setPdfAccessBlocked(false);
+                              toast({
+                                title: "Opening PDF Form",
+                                description: "The official form is opening in a new tab.",
+                              });
+                            }
+                          }, 100);
+                        } catch (error) {
+                          console.error('Error opening PDF:', error);
+                          setPdfAccessBlocked(true);
+                          toast({
+                            title: "Error Opening PDF",
+                            description: "Unable to open the PDF form. Please use the direct link below.",
+                            variant: "destructive",
+                          });
                         }
-                        
-                        window.open(tile.pdf_form_url, '_blank', 'noopener,noreferrer');
-                        
-                        toast({
-                          title: "Opening PDF Form",
-                          description: "The official form is opening in a new tab.",
+                      }}
+                      className="w-fit"
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open PDF Form
+                    </Button>
+                    
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(tile.pdf_form_url!).then(() => {
+                          toast({
+                            title: "Link Copied",
+                            description: "PDF form link copied to clipboard.",
+                          });
+                        }).catch(() => {
+                          toast({
+                            title: "Copy Failed",
+                            description: "Unable to copy link. Please manually copy the URL below.",
+                            variant: "destructive",
+                          });
                         });
-                      } catch (error) {
-                        console.error('Error opening PDF:', error);
-                        toast({
-                          title: "Error Opening PDF",
-                          description: "Unable to open the PDF form. Please try again.",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                    className="w-fit"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    View PDF Form
-                  </Button>
+                      }}
+                      className="w-fit"
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy Link
+                    </Button>
+                  </div>
+                  
+                  {/* Fallback options when popup is blocked */}
+                  {pdfAccessBlocked && (
+                    <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                        <div className="space-y-2">
+                          <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                            Having trouble accessing the PDF?
+                          </p>
+                          <p className="text-xs text-amber-700 dark:text-amber-300">
+                            • Try allowing popups for this site in your browser settings
+                          </p>
+                          <p className="text-xs text-amber-700 dark:text-amber-300">
+                            • Or copy this direct link: 
+                            <code className="ml-1 px-1 bg-amber-100 dark:bg-amber-900 rounded text-xs break-all">
+                              {tile.pdf_form_url}
+                            </code>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
