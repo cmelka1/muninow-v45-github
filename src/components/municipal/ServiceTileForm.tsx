@@ -70,7 +70,7 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
   const [amountDollars, setAmountDollars] = useState(tile ? (tile.amount_cents / 100).toString() : '0');
   const [requiresReview, setRequiresReview] = useState(tile?.requires_review || false);
   const [isActive, setIsActive] = useState(tile?.is_active !== false);
-  const [autoPopulateUserInfo, setAutoPopulateUserInfo] = useState(tile?.auto_populate_user_info !== false);
+  
   const [selectedMerchantId, setSelectedMerchantId] = useState(tile?.merchant_id || '');
   const [pdfFormUrl, setPdfFormUrl] = useState(tile?.pdf_form_url || '');
 
@@ -105,7 +105,7 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
       amount_cents: amountCents,
       requires_review: requiresReview,
       is_active: isActive,
-      auto_populate_user_info: autoPopulateUserInfo,
+      auto_populate_user_info: false,
       merchant_id: selectedMerchantId || undefined,
       finix_merchant_id: selectedMerchant?.finix_merchant_id || undefined,
       // merchant_fee_profile_id will be set via merchant relationship
@@ -238,20 +238,6 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
               id="requires-review"
               checked={requiresReview}
               onCheckedChange={setRequiresReview}
-            />
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="auto-populate">Auto-populate User Information</Label>
-              <p className="text-sm text-muted-foreground">
-                Pre-fill form with user's profile data
-              </p>
-            </div>
-            <Switch
-              id="auto-populate"
-              checked={autoPopulateUserInfo}
-              onCheckedChange={setAutoPopulateUserInfo}
             />
           </div>
           
