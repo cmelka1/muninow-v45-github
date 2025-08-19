@@ -7,6 +7,9 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { MunicipalityAutocomplete } from '@/components/ui/municipality-autocomplete';
+import { useMunicipalServiceTiles } from '@/hooks/useMunicipalServiceTiles';
+import ServiceTileCard from '@/components/ServiceTileCard';
+import ServiceApplicationModal from '@/components/ServiceApplicationModal';
 
 interface Municipality {
   customer_id: string;
@@ -21,6 +24,26 @@ const OtherServices: React.FC = () => {
   const { user, isLoading } = useAuth();
   const [selectedMunicipality, setSelectedMunicipality] = useState<Municipality | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
+  const [selectedTile, setSelectedTile] = useState(null);
+
+  // Fetch service tiles for the selected municipality
+  const { 
+    data: serviceTiles = [], 
+    isLoading: tilesLoading, 
+    error: tilesError 
+  } = useMunicipalServiceTiles(selectedMunicipality?.customer_id);
+
+  // Filter tiles based on search term
+  const filteredTiles = serviceTiles.filter(tile =>
+    tile.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (tile.description && tile.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const handleTileApply = (tile) => {
+    setSelectedTile(tile);
+    setIsApplicationModalOpen(true);
+  };
 
   // Redirect unauthenticated users
   useEffect(() => {
@@ -105,18 +128,57 @@ const OtherServices: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Services Grid - Placeholder for now */}
-                <Card className="text-center py-12">
-                  <CardContent>
-                    <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">
-                      Services Coming Soon
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Municipal service tiles will be available once this municipality configures their services.
-                    </p>
-                  </CardContent>
-                </Card>
+                {/* Services Grid */}
+                {tilesLoading ? (
+                  <Card className="text-center py-12">
+                    <CardContent>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                      <p className="text-muted-foreground">Loading services...</p>
+                    </CardContent>
+                  </Card>
+                ) : tilesError ? (
+                  <Card className="text-center py-12">
+                    <CardContent>
+                      <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold mb-2">Error Loading Services</h3>
+                      <p className="text-muted-foreground">
+                        There was an error loading the services. Please try again later.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : filteredTiles.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredTiles.map((tile) => (
+                      <ServiceTileCard
+                        key={tile.id}
+                        tile={tile}
+                        onApply={handleTileApply}
+                      />
+                    ))}
+                  </div>
+                ) : searchTerm ? (
+                  <Card className="text-center py-12">
+                    <CardContent>
+                      <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold mb-2">No Services Found</h3>
+                      <p className="text-muted-foreground">
+                        No services match your search term "{searchTerm}". Try different keywords.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="text-center py-12">
+                    <CardContent>
+                      <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold mb-2">
+                        No Services Available
+                      </h3>
+                      <p className="text-muted-foreground">
+                        This municipality hasn't configured any services yet. Check back later.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
               </>
             ) : (
               /* Instructions when no municipality selected */
@@ -131,6 +193,18 @@ const OtherServices: React.FC = () => {
                   </p>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Service Application Modal */}
+            {selectedTile && (
+              <ServiceApplicationModal
+                tile={selectedTile}
+                isOpen={isApplicationModalOpen}
+                onClose={() => {
+                  setIsApplicationModalOpen(false);
+                  setSelectedTile(null);
+                }}
+              />
             )}
           </div>
         </SidebarInset>
