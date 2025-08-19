@@ -175,8 +175,28 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
                 placeholder="0.00"
                 className="pl-10 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                 required
+                disabled={allowUserDefinedAmount}
               />
             </div>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="allow-user-defined-amount">Allow User-Defined Amount</Label>
+              <p className="text-sm text-muted-foreground">
+                Let users enter their own service fee amount (useful for variable fees like vehicle registration)
+              </p>
+            </div>
+            <Switch
+              id="allow-user-defined-amount"
+              checked={allowUserDefinedAmount}
+              onCheckedChange={(checked) => {
+                setAllowUserDefinedAmount(checked);
+                if (checked) {
+                  setAmountDollars('0');
+                }
+              }}
+            />
           </div>
         </CardContent>
       </Card>
@@ -239,20 +259,6 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
               id="requires-review"
               checked={requiresReview}
               onCheckedChange={setRequiresReview}
-            />
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="allow-user-defined-amount">Allow User-Defined Amount</Label>
-              <p className="text-sm text-muted-foreground">
-                Let users enter their own service fee amount (useful for variable fees like vehicle registration)
-              </p>
-            </div>
-            <Switch
-              id="allow-user-defined-amount"
-              checked={allowUserDefinedAmount}
-              onCheckedChange={setAllowUserDefinedAmount}
             />
           </div>
           
