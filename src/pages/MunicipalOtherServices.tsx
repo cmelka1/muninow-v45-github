@@ -105,10 +105,10 @@ const MunicipalOtherServices = () => {
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="services" className="space-y-6">
+      <Tabs defaultValue="applications" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="services">Service Management</TabsTrigger>
           <TabsTrigger value="applications">Application History</TabsTrigger>
+          <TabsTrigger value="services">Service Management</TabsTrigger>
         </TabsList>
         
         <TabsContent value="services" className="space-y-4">
