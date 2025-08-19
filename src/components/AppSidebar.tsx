@@ -32,7 +32,7 @@ const navigationItems = [
     url: '/payment-history'
   },
   {
-    title: 'Permits',
+    title: 'Building Permits',
     icon: FileText,
     url: '/permits'
   },
