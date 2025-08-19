@@ -12,6 +12,7 @@ import { MunicipalServiceTile, useCreateServiceTile, useUpdateServiceTile } from
 import { useMerchants } from '@/hooks/useMerchants';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ServiceTileFormProps {
   tile?: MunicipalServiceTile | null;
@@ -80,6 +81,8 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
   const [allowUserDefinedAmount, setAllowUserDefinedAmount] = useState(tile?.allow_user_defined_amount || false);
   const [selectedMerchantId, setSelectedMerchantId] = useState(tile?.merchant_id || '');
   const [pdfFormUrl, setPdfFormUrl] = useState(tile?.pdf_form_url || '');
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
 
   // Fetch merchants for this municipality on mount
   useEffect(() => {
@@ -91,6 +94,48 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
   }, [customerId, profile?.customer_id]);
 
   const selectedMerchant = merchants?.find(m => m.id === selectedMerchantId);
+
+  const handlePdfFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        toast({
+          title: 'Error',
+          description: 'Only PDF files are allowed',
+          variant: 'destructive',
+        });
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: 'Error', 
+          description: 'File size must be less than 10MB',
+          variant: 'destructive',
+        });
+        return;
+      }
+      setPdfFile(file);
+    }
+  };
+
+  const uploadPdfFile = async (file: File, customerId: string): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${customerId}/${Date.now()}.${fileExt}`;
+    
+    const { data, error } = await supabase.storage
+      .from('municipal-service-forms')
+      .upload(fileName, file);
+
+    if (error) {
+      throw new Error(`Upload failed: ${error.message}`);
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('municipal-service-forms')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,6 +151,27 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
 
     const amountCents = Math.round(parseFloat(amountDollars || '0') * 100);
     
+    let finalPdfUrl = pdfFormUrl.trim() || undefined;
+    
+    // Upload new PDF file if selected
+    if (pdfFile) {
+      try {
+        setIsUploadingPdf(true);
+        const customerIdToUse = customerId || profile?.customer_id!;
+        finalPdfUrl = await uploadPdfFile(pdfFile, customerIdToUse);
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to upload PDF file',
+          variant: 'destructive',
+        });
+        setIsUploadingPdf(false);
+        return;
+      } finally {
+        setIsUploadingPdf(false);
+      }
+    }
+    
     const serviceData = {
       title: title.trim(),
       description: description.trim() || undefined,
@@ -117,7 +183,7 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
       merchant_id: selectedMerchantId || undefined,
       finix_merchant_id: selectedMerchant?.finix_merchant_id || undefined,
       // merchant_fee_profile_id will be set via merchant relationship
-      pdf_form_url: pdfFormUrl.trim() || undefined,
+      pdf_form_url: finalPdfUrl,
       form_fields: STANDARD_FORM_FIELDS,
       customer_id: customerId || profile?.customer_id!,
       created_by: profile?.id!,
@@ -283,17 +349,42 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
             />
           </div>
           
-          <div>
-            <Label htmlFor="pdf-form">PDF Form URL (Optional)</Label>
-            <Input
-              id="pdf-form"
-              value={pdfFormUrl}
-              onChange={(e) => setPdfFormUrl(e.target.value)}
-              placeholder="https://example.com/form.pdf"
-            />
-            <p className="text-sm text-muted-foreground mt-1">
-              Link to a downloadable PDF form for this service
-            </p>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="pdf-upload">Upload PDF Form (Optional)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="pdf-upload"
+                  type="file"
+                  accept=".pdf"
+                  onChange={handlePdfFileChange}
+                  className="flex-1"
+                />
+                <Upload className="h-4 w-4 text-muted-foreground" />
+              </div>
+              {pdfFile && (
+                <p className="text-sm text-green-600 mt-1">
+                  Selected: {pdfFile.name}
+                </p>
+              )}
+              <p className="text-sm text-muted-foreground mt-1">
+                Upload a PDF form file (max 10MB). This will replace any existing PDF URL.
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="pdf-form">Or enter PDF Form URL</Label>
+              <Input
+                id="pdf-form"
+                value={pdfFormUrl}
+                onChange={(e) => setPdfFormUrl(e.target.value)}
+                placeholder="https://example.com/form.pdf"
+                disabled={!!pdfFile}
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                {pdfFile ? 'Clear file selection to enter a URL' : 'Link to a downloadable PDF form for this service'}
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -305,11 +396,13 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
         </Button>
         <Button 
           type="submit" 
-          disabled={createServiceTile.isPending || updateServiceTile.isPending}
+          disabled={createServiceTile.isPending || updateServiceTile.isPending || isUploadingPdf}
         >
-          {createServiceTile.isPending || updateServiceTile.isPending 
-            ? 'Saving...' 
-            : tile ? 'Update Service' : 'Create Service'
+          {isUploadingPdf 
+            ? 'Uploading PDF...'
+            : createServiceTile.isPending || updateServiceTile.isPending 
+              ? 'Saving...' 
+              : tile ? 'Update Service' : 'Create Service'
           }
         </Button>
       </div>

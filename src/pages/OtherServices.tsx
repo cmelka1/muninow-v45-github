@@ -10,6 +10,7 @@ import { MunicipalityAutocomplete } from '@/components/ui/municipality-autocompl
 import { useMunicipalServiceTiles } from '@/hooks/useMunicipalServiceTiles';
 import ServiceTileCard from '@/components/ServiceTileCard';
 import ServiceApplicationModal from '@/components/ServiceApplicationModal';
+import { MigratePDFButton } from '@/components/MigratePDFButton';
 
 interface Municipality {
   customer_id: string;
@@ -76,9 +77,13 @@ const OtherServices: React.FC = () => {
           <div className="p-8">
             {/* Header Section */}
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                Other Municipal Services
-              </h1>
+              <div className="flex items-center justify-between mb-4">
+                <div></div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  Other Municipal Services
+                </h1>
+                <MigratePDFButton />
+              </div>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Search for your municipality to access additional services and applications not covered by standard utilities, permits, or taxes.
               </p>
