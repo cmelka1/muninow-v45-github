@@ -12,7 +12,7 @@ import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { FileText, Download, User, Copy, ExternalLink, AlertCircle } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { useCreateServiceApplication } from '@/hooks/useServiceApplications';
-import { useUserProfile } from '@/hooks/useUserProfile';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 
 interface ServiceApplicationModalProps {
@@ -30,7 +30,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   const [useAutoPopulate, setUseAutoPopulate] = useState(true);
   const [pdfAccessBlocked, setPdfAccessBlocked] = useState(false);
   
-  const { data: userProfile } = useUserProfile();
+  const { profile } = useAuth();
   const createApplication = useCreateServiceApplication();
 
   useEffect(() => {
@@ -39,22 +39,22 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       const initialData: Record<string, any> = {};
       
       // Auto-populate user info if enabled
-      if (useAutoPopulate && userProfile) {
-        initialData.first_name = userProfile.first_name || '';
-        initialData.last_name = userProfile.last_name || '';
-        initialData.business_legal_name = userProfile.business_legal_name || '';
-        initialData.email = userProfile.email || '';
-        initialData.phone = userProfile.phone || '';
-        initialData.street_address = userProfile.street_address || '';
-        initialData.apt_number = userProfile.apt_number || '';
-        initialData.city = userProfile.city || '';
-        initialData.state = userProfile.state || '';
-        initialData.zip_code = userProfile.zip_code || '';
+      if (useAutoPopulate && profile) {
+        initialData.first_name = profile.first_name || '';
+        initialData.last_name = profile.last_name || '';
+        initialData.business_legal_name = profile.business_legal_name || '';
+        initialData.email = profile.email || '';
+        initialData.phone = profile.phone || '';
+        initialData.street_address = profile.street_address || '';
+        initialData.apt_number = (profile as any).apt_number || '';
+        initialData.city = profile.city || '';
+        initialData.state = profile.state || '';
+        initialData.zip_code = profile.zip_code || '';
       }
       
       // Initialize form fields (preserve existing values if not auto-populating)
       tile.form_fields?.forEach(field => {
-        if (useAutoPopulate && userProfile) {
+        if (useAutoPopulate && profile) {
           // Use auto-populated value if available, otherwise use default
           if (!initialData.hasOwnProperty(field.id)) {
             initialData[field.id] = field.type === 'number' ? 0 : '';
@@ -67,7 +67,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       
       setFormData(initialData);
     }
-  }, [tile, isOpen, useAutoPopulate, userProfile]);
+  }, [tile, isOpen, useAutoPopulate, profile]);
 
   const handleInputChange = (fieldId: string, value: any) => {
     setFormData(prev => ({
@@ -103,7 +103,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     try {
       await createApplication.mutateAsync({
         tile_id: tile.id,
-        user_id: userProfile?.id || '',
+        user_id: profile?.id || '',
         customer_id: tile.customer_id,
         form_data: formData,
         status: 'submitted',
