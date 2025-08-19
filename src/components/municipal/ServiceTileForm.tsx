@@ -49,8 +49,14 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
   // Fetch merchants for this municipality on mount
   useEffect(() => {
     const customerIdToUse = customerId || profile?.customer_id;
+    console.log('ServiceTileForm: Customer ID to use:', customerIdToUse);
+    console.log('ServiceTileForm: Profile:', profile);
+    
     if (customerIdToUse) {
+      console.log('ServiceTileForm: Calling fetchMerchantsByCustomer with:', customerIdToUse);
       fetchMerchantsByCustomer(customerIdToUse);
+    } else {
+      console.warn('ServiceTileForm: No customer ID available');
     }
   }, [customerId, profile?.customer_id, fetchMerchantsByCustomer]);
 

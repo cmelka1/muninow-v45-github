@@ -23,6 +23,7 @@ interface Merchant {
   bank_account_holder_name: string | null;
   bank_masked_account_number: string | null;
   bank_routing_number: string | null;
+  customer_id: string;
 }
 
 export const useMerchants = () => {
@@ -92,8 +93,12 @@ export const useMerchants = () => {
   };
 
   const fetchMerchantsByCustomer = async (customerId: string, page = 1, pageSize = 10) => {
-    if (!user) return { data: [], count: 0 };
+    if (!user) {
+      console.log('No user found, cannot fetch merchants');
+      return { data: [], count: 0 };
+    }
     
+    console.log('Fetching merchants for customer ID:', customerId);
     setIsLoading(true);
     setError(null);
     
@@ -109,11 +114,18 @@ export const useMerchants = () => {
         .order('created_at', { ascending: false })
         .range(from, to);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error fetching merchants:', error);
+        throw error;
+      }
 
+      console.log('Successfully fetched merchants:', data?.length || 0, 'merchants found');
+      console.log('Merchants data:', data);
+      
       setMerchants(data || []);
       return { data: data || [], count: count || 0 };
     } catch (err: any) {
+      console.error('Error in fetchMerchantsByCustomer:', err);
       setError(err.message);
       toast({
         title: "Error",
