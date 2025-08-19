@@ -139,7 +139,7 @@ export function ServiceTileManager({ serviceTiles, isLoading, customerId }: Serv
                 
                 <div className="flex items-center justify-between">
                   <div className="text-lg font-semibold text-primary">
-                    {formatCurrency(tile.amount_cents)}
+                    {tile.allow_user_defined_amount ? 'Varies' : formatCurrency(tile.amount_cents)}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {tile.form_fields?.length || 0} form fields
