@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Upload, X, FileText, Image, FileCheck } from 'lucide-react';
 import { BuildingPermitsMunicipalityAutocomplete } from '@/components/ui/building-permits-municipality-autocomplete';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +40,20 @@ interface BusinessInformation {
   businessEIN: string;
   businessDescription: string;
   additionalDetails: string;
+  uploadedDocuments: UploadedDocument[];
+}
+
+interface UploadedDocument {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  documentType: string;
+  description?: string;
+  uploadProgress: number;
+  uploadStatus: 'pending' | 'uploading' | 'completed' | 'error';
+  filePath?: string;
+  error?: string;
 }
 
 export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> = ({
@@ -57,10 +71,12 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
     businessAddress: '',
     businessEIN: '',
     businessDescription: '',
-    additionalDetails: ''
+    additionalDetails: '',
+    uploadedDocuments: []
   });
   const [useBusinessProfileInfo, setUseBusinessProfileInfo] = useState(false);
   const [isDifferentPropertyOwner, setIsDifferentPropertyOwner] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
   const [propertyOwnerInfo, setPropertyOwnerInfo] = useState({
     name: '',
     phone: '',
@@ -158,7 +174,8 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
       businessAddress: '',
       businessEIN: '',
       businessDescription: '',
-      additionalDetails: ''
+      additionalDetails: '',
+      uploadedDocuments: []
     });
     setUseBusinessProfileInfo(false);
     setIsDifferentPropertyOwner(false);
@@ -203,10 +220,129 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
         businessAddress: prev.businessAddress || fullAddress,
         businessEIN: prev.businessEIN || '',
         businessDescription: prev.businessDescription || '',
-        additionalDetails: prev.additionalDetails || ''
+        additionalDetails: prev.additionalDetails || '',
+        uploadedDocuments: prev.uploadedDocuments || []
       }));
     }
     // Note: We no longer clear fields when toggled off to preserve user input
+  };
+
+  // Document upload handlers
+  const validateFile = (file: File): string | null => {
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif'
+    ];
+
+    if (file.size > maxSize) {
+      return 'File size must be less than 10MB';
+    }
+
+    if (!allowedTypes.includes(file.type)) {
+      return 'File type not supported. Please upload PDF, DOC, DOCX, JPG, PNG, or GIF files.';
+    }
+
+    return null;
+  };
+
+  const handleFileSelect = async (files: FileList) => {
+    const fileArray = Array.from(files);
+    
+    for (const file of fileArray) {
+      const validationError = validateFile(file);
+      if (validationError) {
+        toast({
+          title: "File Upload Error",
+          description: validationError,
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      const documentId = crypto.randomUUID();
+      const newDocument: UploadedDocument = {
+        id: documentId,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        documentType: 'general',
+        uploadProgress: 100,
+        uploadStatus: 'completed' // For now, set as completed since we're not actually uploading
+      };
+
+      setBusinessInfo(prev => ({
+        ...prev,
+        uploadedDocuments: [...prev.uploadedDocuments, newDocument]
+      }));
+    }
+  };
+
+  const handleRemoveDocument = (documentId: string) => {
+    setBusinessInfo(prev => ({
+      ...prev,
+      uploadedDocuments: prev.uploadedDocuments.filter(doc => doc.id !== documentId)
+    }));
+  };
+
+  const handleDocumentTypeChange = (documentId: string, documentType: string) => {
+    setBusinessInfo(prev => ({
+      ...prev,
+      uploadedDocuments: prev.uploadedDocuments.map(doc => 
+        doc.id === documentId ? { ...doc, documentType } : doc
+      )
+    }));
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleFileSelect(files);
+    }
+  };
+
+  const getFileIcon = (fileType: string) => {
+    if (fileType.startsWith('image/')) {
+      return <Image className="h-4 w-4" />;
+    } else if (fileType === 'application/pdf') {
+      return <FileText className="h-4 w-4" />;
+    } else {
+      return <FileCheck className="h-4 w-4" />;
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const handleBusinessAddressSelect = (addressComponents: any) => {
@@ -684,6 +820,119 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
 • Any other relevant information:"
                     className="min-h-[200px]"
                   />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  Document Upload
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium text-foreground">
+                      Supporting Documents <span className="text-muted-foreground">(Optional)</span>
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Upload business-related documents such as business plan, insurance certificates, or zoning approvals
+                    </p>
+                    
+                    {/* File Upload Zone */}
+                    <div
+                      className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                        dragActive 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-muted-foreground/25 hover:border-muted-foreground/50'
+                      }`}
+                      onDragEnter={handleDragEnter}
+                      onDragLeave={handleDragLeave}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                    >
+                      <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                      <div className="text-sm">
+                        <label htmlFor="file-upload" className="text-primary hover:text-primary/80 cursor-pointer font-medium">
+                          Click to upload
+                        </label>
+                        <span className="text-muted-foreground"> or drag and drop</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        PDF, DOC, DOCX, JPG, PNG, GIF up to 10MB each
+                      </p>
+                      <input
+                        id="file-upload"
+                        type="file"
+                        multiple
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+                        onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
+                        className="hidden"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Uploaded Files List */}
+                  {businessInfo.uploadedDocuments.length > 0 && (
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium text-foreground">
+                        Uploaded Files ({businessInfo.uploadedDocuments.length})
+                      </Label>
+                      {businessInfo.uploadedDocuments.map((doc) => (
+                        <div key={doc.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                          <div className="flex-shrink-0">
+                            {getFileIcon(doc.type)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {doc.name}
+                            </p>
+                            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                              <span>{formatFileSize(doc.size)}</span>
+                              {doc.uploadStatus === 'uploading' && (
+                                <span className="text-blue-600">Uploading...</span>
+                              )}
+                              {doc.uploadStatus === 'completed' && (
+                                <span className="text-green-600">✓ Uploaded</span>
+                              )}
+                              {doc.uploadStatus === 'error' && (
+                                <span className="text-red-600">Error: {doc.error}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Select
+                              defaultValue={doc.documentType}
+                              onValueChange={(value) => handleDocumentTypeChange(doc.id, value)}
+                            >
+                              <SelectTrigger className="w-32 h-8">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="general">General</SelectItem>
+                                <SelectItem value="business-plan">Business Plan</SelectItem>
+                                <SelectItem value="financial">Financial Documents</SelectItem>
+                                <SelectItem value="insurance">Insurance Certificate</SelectItem>
+                                <SelectItem value="zoning">Zoning Approval</SelectItem>
+                                <SelectItem value="fire-dept">Fire Department</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveDocument(doc.id)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
