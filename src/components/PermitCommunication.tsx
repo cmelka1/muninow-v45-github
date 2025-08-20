@@ -4,18 +4,26 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { MessageSquare, Clock, User, Calendar, CheckCircle, AlertCircle, Bell } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { MessageSquare, Clock, User, Calendar, CheckCircle, AlertCircle, Bell, Send } from 'lucide-react';
 import { usePermitComments, useCreateComment } from '@/hooks/usePermitComments';
 import { usePermitRequests } from '@/hooks/usePermitRequests';
 import { usePermitInspections } from '@/hooks/usePermitInspections';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 
 interface PermitCommunicationProps {
   permitId: string;
   isMunicipalUser?: boolean;
 }
+
+type CommunicationItem = {
+  type: 'request' | 'inspection' | 'comment';
+  id: string;
+  date: Date;
+  data: any;
+};
 
 export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
   permitId,
@@ -25,24 +33,14 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { profile } = useAuth();
-  const { toast } = useToast();
 
   const { data: comments = [], isLoading: commentsLoading } = usePermitComments(permitId);
   const { data: requests = [], isLoading: requestsLoading } = usePermitRequests(permitId);
   const { data: inspections = [], isLoading: inspectionsLoading } = usePermitInspections(permitId);
   const createComment = useCreateComment();
 
-  const handleSubmitComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!newComment.trim()) {
-      toast({
-        title: 'Error',
-        description: 'Please enter a comment.',
-        variant: 'destructive',
-      });
-      return;
-    }
+  const handleSubmitComment = async () => {
+    if (!newComment.trim()) return;
 
     setIsSubmitting(true);
 
@@ -54,18 +52,10 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
       });
 
       setNewComment('');
-      
-      toast({
-        title: 'Success',
-        description: 'Comment added successfully.',
-      });
+      toast.success('Comment added successfully');
     } catch (error) {
       console.error('Error adding comment:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to add comment. Please try again.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to add comment');
     } finally {
       setIsSubmitting(false);
     }
@@ -87,144 +77,172 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
   };
 
   if (commentsLoading || requestsLoading || inspectionsLoading) {
-    return <div>Loading communication history...</div>;
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Add Comment */}
+    return (
       <Card>
         <CardHeader>
-          <CardTitle>Comments/Requests</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmitComment} className="space-y-4">
-            <Textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Add a comment or request..."
-              rows={3}
-            />
-
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Adding...' : 'Add Comment'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Communication Timeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Communication History
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Communication
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Information Requests */}
-          {requests.length > 0 && (
-            <div className="space-y-3">
-              <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                Information Requests
-              </h4>
-              {requests.map((request) => (
-                <div key={request.id} className="border rounded-lg p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Badge className={getStatusColor(request.status)}>
-                      {request.status}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      {format(new Date(request.created_at), 'PPp')}
-                    </span>
-                  </div>
-                  <p className="font-medium">{request.request_type.replace('_', ' ').toUpperCase()}</p>
-                  <p className="text-sm">{request.request_details}</p>
-                  {request.due_date && (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      Due: {format(new Date(request.due_date), 'PPP')}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Inspections */}
-          {inspections.length > 0 && (
-            <div className="space-y-3">
-              <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                Inspections
-              </h4>
-              {inspections.map((inspection) => (
-                <div key={inspection.id} className="border rounded-lg p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Badge className={getStatusColor(inspection.status)}>
-                      {inspection.status}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      {inspection.scheduled_date && format(new Date(inspection.scheduled_date), 'PPp')}
-                    </span>
-                  </div>
-                  <p className="font-medium">{inspection.inspection_type}</p>
-                  {inspection.notes && <p className="text-sm">{inspection.notes}</p>}
-                  {inspection.result && (
-                    <div className="flex items-center gap-1">
-                      {inspection.result === 'passed' ? (
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      ) : (
-                        <AlertCircle className="h-4 w-4 text-red-600" />
-                      )}
-                      <span className="text-sm font-medium capitalize">{inspection.result}</span>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Comments */}
-          {comments.length > 0 && (
-            <div className="space-y-3">
-              <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                Comments
-              </h4>
-              {comments.map((comment) => {
-                const isCurrentUser = comment.reviewer_id === profile?.id;
-                const commentBgClass = isMunicipalUser 
-                  ? (isCurrentUser ? 'bg-gray-100' : 'bg-amber-50')
-                  : (isCurrentUser ? 'bg-amber-50' : 'bg-gray-100');
-                
-                const displayName = isCurrentUser 
-                  ? 'You' 
-                  : comment.reviewer 
-                    ? `${comment.reviewer.first_name} ${comment.reviewer.last_name} (${comment.reviewer.account_type === 'municipal' ? 'Municipal Staff' : 'Applicant'})`
-                    : 'Unknown User';
-                
-                return (
-                  <div key={comment.id} className={`border rounded-lg p-4 space-y-2 ${commentBgClass}`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <span className="text-sm font-medium">
-                          {displayName} - {format(new Date(comment.created_at), 'MM/dd/yyyy')}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-sm">{comment.comment_text}</p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {comments.length === 0 && requests.length === 0 && inspections.length === 0 && (
-            <p className="text-center text-muted-foreground py-8">
-              No communication history yet.
-            </p>
-          )}
+        <CardContent>
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
         </CardContent>
       </Card>
-    </div>
+    );
+  }
+
+  // Combine all communication items with proper typing
+  const allCommunication: CommunicationItem[] = [
+    ...requests.map(request => ({
+      type: 'request' as const,
+      id: `request-${request.id}`,
+      date: new Date(request.created_at),
+      data: request
+    })),
+    ...inspections.map(inspection => ({
+      type: 'inspection' as const,
+      id: `inspection-${inspection.id}`,
+      date: new Date(inspection.scheduled_date || inspection.created_at),
+      data: inspection
+    })),
+    ...comments.map(comment => ({
+      type: 'comment' as const,
+      id: `comment-${comment.id}`,
+      date: new Date(comment.created_at),
+      data: comment
+    }))
+  ].sort((a, b) => b.date.getTime() - a.date.getTime());
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <MessageSquare className="h-5 w-5" />
+          Communication
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Communication History */}
+        <ScrollArea className="h-96">
+          <div className="space-y-4">
+            {allCommunication.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p>No communication yet</p>
+                <p className="text-sm">Comments and updates will appear here</p>
+              </div>
+            ) : (
+              allCommunication.map((item, index) => (
+                <div key={item.id}>
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      {item.type === 'request' && <Bell className="h-4 w-4" />}
+                      {item.type === 'inspection' && <Calendar className="h-4 w-4" />}
+                      {item.type === 'comment' && <User className="h-4 w-4" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        {item.type === 'request' && (
+                          <>
+                            <span className="font-medium text-sm">Information Request</span>
+                            <Badge className={getStatusColor(item.data.status)}>
+                              {item.data.status}
+                            </Badge>
+                          </>
+                        )}
+                        {item.type === 'inspection' && (
+                          <>
+                            <span className="font-medium text-sm">{item.data.inspection_type}</span>
+                            <Badge className={getStatusColor(item.data.status)}>
+                              {item.data.status}
+                            </Badge>
+                          </>
+                        )}
+                        {item.type === 'comment' && (
+                          <>
+                            <span className="font-medium text-sm">
+                              {item.data.reviewer?.first_name} {item.data.reviewer?.last_name}
+                            </span>
+                            <Badge variant="outline" className="text-xs">
+                              {item.data.reviewer?.account_type === 'municipal' ? 'Municipal Staff' : 'Applicant'}
+                            </Badge>
+                          </>
+                        )}
+                        <span className="text-xs text-gray-500">
+                          {format(item.date, 'MMM d, yyyy h:mm a')}
+                        </span>
+                      </div>
+                      
+                      {item.type === 'request' && (
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium">{item.data.request_type?.replace('_', ' ').toUpperCase()}</p>
+                          <p className="text-sm text-gray-700">{item.data.request_details}</p>
+                          {item.data.due_date && (
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Calendar className="h-3 w-3" />
+                              Due: {format(new Date(item.data.due_date), 'MMM d, yyyy')}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {item.type === 'inspection' && (
+                        <div className="space-y-1">
+                          {item.data.notes && <p className="text-sm text-gray-700">{item.data.notes}</p>}
+                          {item.data.result && (
+                            <div className="flex items-center gap-1 text-sm">
+                              {item.data.result === 'passed' ? (
+                                <CheckCircle className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <AlertCircle className="h-4 w-4 text-red-600" />
+                              )}
+                              <span className="font-medium capitalize">{item.data.result}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {item.type === 'comment' && (
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                          {item.data.comment_text}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {index < allCommunication.length - 1 && (
+                    <Separator className="my-4" />
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </ScrollArea>
+
+        {/* Add Comment Form */}
+        <div className="space-y-3 pt-4 border-t">
+          <Textarea
+            placeholder="Add a comment..."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            className="min-h-[80px]"
+          />
+          
+          <div className="flex items-center justify-end">
+            <Button
+              onClick={handleSubmitComment}
+              disabled={!newComment.trim() || isSubmitting}
+              size="sm"
+            >
+              <Send className="h-4 w-4 mr-2" />
+              {isSubmitting ? 'Sending...' : 'Send'}
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
