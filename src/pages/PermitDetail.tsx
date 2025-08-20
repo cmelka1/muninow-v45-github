@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileText, MapPin, User, Clock, MessageSquare, Download, Eye, CreditCard, Building, Plus } from 'lucide-react';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/AppSidebar';
+import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,11 +23,15 @@ import { getStatusDescription, PermitStatus } from '@/hooks/usePermitWorkflow';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const PermitDetail = () => {
   const { permitId } = useParams<{ permitId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
+  
+  const isMunicipalUser = user?.user_metadata?.account_type === 'municipal';
   
   const { data: permit, isLoading, error, refetch: refetchPermit } = usePermit(permitId!);
   const { data: documents = [], isLoading: documentsLoading, refetch: refetchDocuments } = usePermitDocuments(permitId!);
@@ -83,57 +90,108 @@ const PermitDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6">
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-10 w-24" />
-          <Skeleton className="h-8 w-48" />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <Skeleton className="h-64 w-full" />
-            <Skeleton className="h-48 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </div>
-          <div className="space-y-6">
-            <Skeleton className="h-48 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-100">
+        {isMunicipalUser ? (
+          <MunicipalLayout>
+            <div className="p-6">
+              <div className="animate-pulse space-y-6">
+                <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 space-y-6">
+                    <div className="h-48 bg-gray-200 rounded"></div>
+                    <div className="h-48 bg-gray-200 rounded"></div>
+                  </div>
+                  <div className="space-y-6">
+                    <div className="h-32 bg-gray-200 rounded"></div>
+                    <div className="h-48 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </MunicipalLayout>
+        ) : (
+          <SidebarProvider>
+            <div className="min-h-screen flex w-full">
+              <AppSidebar />
+              <main className="flex-1 overflow-auto bg-gray-100">
+                <div className="p-6">
+                  <div className="animate-pulse space-y-6">
+                    <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      <div className="lg:col-span-2 space-y-6">
+                        <div className="h-48 bg-gray-200 rounded"></div>
+                        <div className="h-48 bg-gray-200 rounded"></div>
+                      </div>
+                      <div className="space-y-6">
+                        <div className="h-32 bg-gray-200 rounded"></div>
+                        <div className="h-48 bg-gray-200 rounded"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </main>
+            </div>
+          </SidebarProvider>
+        )}
       </div>
     );
   }
 
   if (error || !permit) {
     return (
-      <div className="p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="outline" onClick={() => navigate('/permits')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Permits
-          </Button>
-        </div>
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-destructive">Error loading permit details. Please try again.</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gray-100">
+        {isMunicipalUser ? (
+          <MunicipalLayout>
+            <div className="p-6">
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <p className="text-destructive">Error loading permit details. Please try again.</p>
+                </CardContent>
+              </Card>
+            </div>
+          </MunicipalLayout>
+        ) : (
+          <SidebarProvider>
+            <div className="min-h-screen flex w-full">
+              <AppSidebar />
+              <main className="flex-1 overflow-auto bg-gray-100">
+                <div className="p-6">
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <p className="text-destructive">Error loading permit details. Please try again.</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </main>
+            </div>
+          </SidebarProvider>
+        )}
       </div>
     );
   }
 
-  return (
-    <div className="p-6 space-y-6">
+  const PageContent = () => (
+    <div className="p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate('/permits')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Permits
+      <div className="mb-6">
+        <div className="flex items-center gap-4 mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/permits')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
           </Button>
+        </div>
+        
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Permit Application</h1>
-            <p className="text-muted-foreground">{permit.permit_number}</p>
+            <h1 className="text-2xl font-bold text-gray-900">Permit Application</h1>
+            <p className="text-gray-600">{permit.permit_number}</p>
           </div>
+          <PermitStatusBadge status={permit.application_status as PermitStatus} />
         </div>
       </div>
 
@@ -501,6 +559,25 @@ const PermitDetail = () => {
         merchantName={permit.merchant_name}
         onSuccess={() => refetchDocuments()}
       />
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      {isMunicipalUser ? (
+        <MunicipalLayout>
+          <PageContent />
+        </MunicipalLayout>
+      ) : (
+        <SidebarProvider>
+          <div className="min-h-screen flex w-full">
+            <AppSidebar />
+            <main className="flex-1 overflow-auto bg-gray-100">
+              <PageContent />
+            </main>
+          </div>
+        </SidebarProvider>
+      )}
     </div>
   );
 };
