@@ -902,24 +902,7 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <Select
-                              defaultValue={doc.documentType}
-                              onValueChange={(value) => handleDocumentTypeChange(doc.id, value)}
-                            >
-                              <SelectTrigger className="w-32 h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="general">General</SelectItem>
-                                <SelectItem value="business-plan">Business Plan</SelectItem>
-                                <SelectItem value="financial">Financial Documents</SelectItem>
-                                <SelectItem value="insurance">Insurance Certificate</SelectItem>
-                                <SelectItem value="zoning">Zoning Approval</SelectItem>
-                                <SelectItem value="fire-dept">Fire Department</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
+                          <div className="flex items-center">
                             <Button
                               variant="ghost"
                               size="sm"
