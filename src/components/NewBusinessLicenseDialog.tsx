@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
 import { normalizeEINInput, formatEINForStorage } from '@/lib/formatters';
@@ -36,6 +37,7 @@ interface BusinessInformation {
   businessOwnerEmail: string;
   businessAddress: string;
   businessEIN: string;
+  businessDescription: string;
 }
 
 export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> = ({
@@ -51,7 +53,8 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
     businessOwnerPhone: '',
     businessOwnerEmail: '',
     businessAddress: '',
-    businessEIN: ''
+    businessEIN: '',
+    businessDescription: ''
   });
   const [useBusinessProfileInfo, setUseBusinessProfileInfo] = useState(false);
   const [isDifferentPropertyOwner, setIsDifferentPropertyOwner] = useState(false);
@@ -150,7 +153,8 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
       businessOwnerPhone: '',
       businessOwnerEmail: '',
       businessAddress: '',
-      businessEIN: ''
+      businessEIN: '',
+      businessDescription: ''
     });
     setUseBusinessProfileInfo(false);
     setIsDifferentPropertyOwner(false);
@@ -193,7 +197,8 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
         businessOwnerPhone: prev.businessOwnerPhone || (profile.phone ? normalizePhoneInput(profile.phone) : ''),
         businessOwnerEmail: prev.businessOwnerEmail || profile.email || '',
         businessAddress: prev.businessAddress || fullAddress,
-        businessEIN: prev.businessEIN || ''
+        businessEIN: prev.businessEIN || '',
+        businessDescription: prev.businessDescription || ''
       }));
     }
     // Note: We no longer clear fields when toggled off to preserve user input
@@ -602,13 +607,30 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
               <CardHeader className="pb-4">
                 <CardTitle className="text-base flex items-center gap-2">
                   <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  Step 2 - Coming Soon
+                  Business Description
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Additional form fields will be added here.</p>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="business-description" className="text-sm font-medium">
+                    Business Description
+                  </Label>
+                  <Textarea
+                    id="business-description"
+                    placeholder="Please provide a detailed description of your business, including the type of services or products you offer, your target customers, and any other relevant information..."
+                    value={businessInfo.businessDescription}
+                    onChange={(e) => {
+                      setBusinessInfo(prev => ({ ...prev, businessDescription: e.target.value }));
+                    }}
+                    className="min-h-[120px] resize-none"
+                    rows={6}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {businessInfo.businessDescription.length} characters
+                  </p>
+                </div>
               </CardContent>
-            </Card>
+            </Card>    
           </div>
         );
       case 3:
