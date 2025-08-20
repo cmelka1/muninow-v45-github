@@ -1,6 +1,5 @@
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
@@ -22,10 +21,57 @@ const BusinessLicenseFilter: React.FC<BusinessLicenseFilterProps> = ({
   filters,
   onFiltersChange
 }) => {
+  const licenseTypeOptions = [
+    { value: 'business_license', label: 'Business License' },
+    { value: 'food_service', label: 'Food Service' },
+    { value: 'liquor_license', label: 'Liquor License' },
+    { value: 'retail_license', label: 'Retail License' },
+    { value: 'professional_service', label: 'Professional Service' },
+    { value: 'home_occupation', label: 'Home Occupation' },
+    { value: 'special_event', label: 'Special Event' },
+  ];
+
+  const statusOptions = [
+    { value: 'draft', label: 'Draft' },
+    { value: 'submitted', label: 'Submitted' },
+    { value: 'under_review', label: 'Under Review' },
+    { value: 'approved', label: 'Approved' },
+    { value: 'active', label: 'Active' },
+    { value: 'expired', label: 'Expired' },
+    { value: 'suspended', label: 'Suspended' },
+    { value: 'denied', label: 'Denied' },
+  ];
+
+  const dateRangeOptions = [
+    { value: 'last_30_days', label: 'Last 30 days' },
+    { value: 'last_3_months', label: 'Last 3 months' },
+    { value: 'last_6_months', label: 'Last 6 months' },
+    { value: 'last_year', label: 'Last year' },
+  ];
+
+  const categoryOptions = [
+    { value: 'restaurant', label: 'Restaurant' },
+    { value: 'retail', label: 'Retail Store' },
+    { value: 'office', label: 'Office' },
+    { value: 'healthcare', label: 'Healthcare' },
+    { value: 'automotive', label: 'Automotive' },
+    { value: 'personal_service', label: 'Personal Service' },
+    { value: 'entertainment', label: 'Entertainment' },
+    { value: 'construction', label: 'Construction' },
+  ];
+
+  const feeRangeOptions = [
+    { value: '0-50', label: '$0 - $50' },
+    { value: '51-100', label: '$51 - $100' },
+    { value: '101-250', label: '$101 - $250' },
+    { value: '251-500', label: '$251 - $500' },
+    { value: '500+', label: '$500+' },
+  ];
+
   const updateFilter = (key: keyof BusinessLicenseFilters, value: string | undefined) => {
     onFiltersChange({
       ...filters,
-      [key]: value
+      [key]: value === 'all' ? undefined : value,
     });
   };
 
@@ -33,140 +79,117 @@ const BusinessLicenseFilter: React.FC<BusinessLicenseFilterProps> = ({
     onFiltersChange({});
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => value);
+  const hasActiveFilters = Object.values(filters).some(filter => filter !== undefined);
 
   return (
     <Card className="mb-6">
-      <CardContent className="p-6">
-        <div className="flex flex-wrap gap-4 items-end">
-          {/* Status Filter */}
-          <div className="min-w-[200px]">
-            <Label htmlFor="status" className="text-sm font-medium">
-              Status
-            </Label>
-            <Select
-              value={filters.status || ''}
-              onValueChange={(value) => updateFilter('status', value || undefined)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="All statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="submitted">Submitted</SelectItem>
-                <SelectItem value="under_review">Under Review</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="expired">Expired</SelectItem>
-                <SelectItem value="suspended">Suspended</SelectItem>
-                <SelectItem value="denied">Denied</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Date Range Filter */}
-          <div className="min-w-[200px]">
-            <Label htmlFor="dateRange" className="text-sm font-medium">
-              Date Range
-            </Label>
-            <Select
-              value={filters.dateRange || ''}
-              onValueChange={(value) => updateFilter('dateRange', value || undefined)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="All time" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="last_30_days">Last 30 days</SelectItem>
-                <SelectItem value="last_3_months">Last 3 months</SelectItem>
-                <SelectItem value="last_6_months">Last 6 months</SelectItem>
-                <SelectItem value="last_year">Last year</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* License Type Filter - Hidden on mobile */}
-          <div className="min-w-[200px] hidden sm:block">
-            <Label htmlFor="licenseType" className="text-sm font-medium">
-              License Type
-            </Label>
-            <Select
-              value={filters.licenseType || ''}
-              onValueChange={(value) => updateFilter('licenseType', value || undefined)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="All types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="business_license">Business License</SelectItem>
-                <SelectItem value="food_service">Food Service</SelectItem>
-                <SelectItem value="liquor_license">Liquor License</SelectItem>
-                <SelectItem value="retail_license">Retail License</SelectItem>
-                <SelectItem value="professional_service">Professional Service</SelectItem>
-                <SelectItem value="home_occupation">Home Occupation</SelectItem>
-                <SelectItem value="special_event">Special Event</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Business Category Filter - Hidden on mobile */}
-          <div className="min-w-[200px] hidden md:block">
-            <Label htmlFor="category" className="text-sm font-medium">
-              Business Category
-            </Label>
-            <Select
-              value={filters.category || ''}
-              onValueChange={(value) => updateFilter('category', value || undefined)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="All categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="restaurant">Restaurant</SelectItem>
-                <SelectItem value="retail">Retail Store</SelectItem>
-                <SelectItem value="office">Office</SelectItem>
-                <SelectItem value="healthcare">Healthcare</SelectItem>
-                <SelectItem value="automotive">Automotive</SelectItem>
-                <SelectItem value="personal_service">Personal Service</SelectItem>
-                <SelectItem value="entertainment">Entertainment</SelectItem>
-                <SelectItem value="construction">Construction</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Fee Range Filter - Hidden on mobile */}
-          <div className="min-w-[200px] hidden lg:block">
-            <Label htmlFor="feeRange" className="text-sm font-medium">
-              License Fee
-            </Label>
-            <Select
-              value={filters.feeRange || ''}
-              onValueChange={(value) => updateFilter('feeRange', value || undefined)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="All fees" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0-50">$0 - $50</SelectItem>
-                <SelectItem value="51-100">$51 - $100</SelectItem>
-                <SelectItem value="101-250">$101 - $250</SelectItem>
-                <SelectItem value="251-500">$251 - $500</SelectItem>
-                <SelectItem value="500+">$500+</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Clear All Button */}
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-medium">Filter Business Licenses</CardTitle>
           {hasActiveFilters && (
             <Button
-              variant="outline"
+              variant="ghost"
+              size="sm"
               onClick={clearAllFilters}
-              className="flex items-center gap-2"
+              className="h-8 px-2 text-muted-foreground hover:text-foreground"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4 mr-1" />
               Clear All
             </Button>
           )}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          {/* Status - Always visible (Priority 1) */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">Status</label>
+            <Select value={filters.status || 'all'} onValueChange={(value) => updateFilter('status', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                {statusOptions.map((status) => (
+                  <SelectItem key={status.value} value={status.value}>
+                    {status.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Date Range - Always visible (Priority 1) */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">Date Range</label>
+            <Select value={filters.dateRange || 'all'} onValueChange={(value) => updateFilter('dateRange', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Date Range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Time</SelectItem>
+                {dateRangeOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* License Type - Hidden on mobile (Priority 2) */}
+          <div className="hidden sm:block space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">License Type</label>
+            <Select value={filters.licenseType || 'all'} onValueChange={(value) => updateFilter('licenseType', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                {licenseTypeOptions.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Business Category - Hidden on mobile (Priority 2) */}
+          <div className="hidden sm:block space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">Category</label>
+            <Select value={filters.category || 'all'} onValueChange={(value) => updateFilter('category', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categoryOptions.map((category) => (
+                  <SelectItem key={category.value} value={category.value}>
+                    {category.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Fee Range - Hidden on mobile (Priority 3) */}
+          <div className="hidden sm:block space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">Fee</label>
+            <Select value={filters.feeRange || 'all'} onValueChange={(value) => updateFilter('feeRange', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Fee" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Fees</SelectItem>
+                {feeRangeOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </CardContent>
     </Card>

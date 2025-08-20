@@ -44,7 +44,7 @@ const BusinessLicenses = () => {
                 Business Licenses
               </h1>
               <p className="text-gray-600">
-                Manage your business license applications and renewals
+                Apply for and manage your business license applications and renewals
               </p>
             </div>
 

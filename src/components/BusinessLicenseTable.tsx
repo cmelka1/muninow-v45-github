@@ -1,87 +1,92 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { BusinessLicenseFilters } from '@/components/BusinessLicenseFilter';
-import { useBusinessLicenses } from '@/hooks/useBusinessLicenses';
+import { useNavigate } from 'react-router-dom';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { BusinessLicenseFilters } from './BusinessLicenseFilter';
 import NewBusinessLicenseDialog from '@/components/NewBusinessLicenseDialog';
+import { useBusinessLicenses } from '@/hooks/useBusinessLicenses';
 
 interface BusinessLicenseTableProps {
   filters?: BusinessLicenseFilters;
   onViewClick?: (licenseId: string) => void;
 }
 
-const BusinessLicenseTable: React.FC<BusinessLicenseTableProps> = ({ filters, onViewClick }) => {
+const BusinessLicenseTable: React.FC<BusinessLicenseTableProps> = ({ filters = {}, onViewClick }) => {
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
   const [isNewLicenseDialogOpen, setIsNewLicenseDialogOpen] = useState(false);
 
+  // Fetch business licenses using the hook
   const { data, isLoading, error } = useBusinessLicenses({
     filters,
     page: currentPage,
-    pageSize
+    pageSize,
   });
 
+  const licenses = data?.licenses || [];
+  const totalCount = data?.totalCount || 0;
+  const totalPages = data?.totalPages || 0;
+
   // Reset to first page when filters change
-  useEffect(() => {
+  React.useEffect(() => {
     setCurrentPage(1);
   }, [filters]);
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      'draft': { label: 'Draft', variant: 'secondary' as const },
-      'submitted': { label: 'Submitted', variant: 'default' as const },
-      'under_review': { label: 'Under Review', variant: 'default' as const },
-      'approved': { label: 'Approved', variant: 'default' as const },
-      'active': { label: 'Active', variant: 'default' as const },
-      'expired': { label: 'Expired', variant: 'destructive' as const },
-      'suspended': { label: 'Suspended', variant: 'destructive' as const },
-      'denied': { label: 'Denied', variant: 'destructive' as const }
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig] || { 
-      label: status, 
-      variant: 'secondary' as const 
-    };
-
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    switch (status) {
+      case 'draft':
+        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Draft</Badge>;
+      case 'submitted':
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Submitted</Badge>;
+      case 'under_review':
+        return <Badge variant="secondary" className="bg-purple-100 text-purple-800">Under Review</Badge>;
+      case 'approved':
+        return <Badge variant="secondary" className="bg-green-100 text-green-800">Approved</Badge>;
+      case 'active':
+        return <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">Active</Badge>;
+      case 'expired':
+        return <Badge variant="secondary" className="bg-red-100 text-red-800">Expired</Badge>;
+      case 'suspended':
+        return <Badge variant="destructive">Suspended</Badge>;
+      case 'denied':
+        return <Badge variant="destructive">Denied</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
 
   const getLicenseTypeLabel = (type: string) => {
-    return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    // Capitalize first letter and handle common types
+    return type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
   };
 
-  const formatAmount = (amountCents: number) => {
+  const formatAmount = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
-    }).format(amountCents / 100);
+      currency: 'USD',
+    }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'MMM dd, yyyy');
+  const formatDate = (date: string) => {
+    return format(new Date(date), 'MMM dd, yyyy');
   };
 
   const handlePageSizeChange = (newPageSize: string) => {
-    setPageSize(parseInt(newPageSize));
+    setPageSize(Number(newPageSize));
     setCurrentPage(1);
   };
 
@@ -90,24 +95,25 @@ const BusinessLicenseTable: React.FC<BusinessLicenseTableProps> = ({ filters, on
   };
 
   const handleNextPage = () => {
-    if (data && currentPage < data.totalPages) {
-      setCurrentPage(prev => prev + 1);
-    }
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
   };
 
   const handleRowClick = (licenseId: string) => {
     if (onViewClick) {
       onViewClick(licenseId);
+    } else {
+      navigate(`/business-license/${licenseId}`);
     }
   };
 
   if (error) {
     return (
       <Card>
-        <CardContent className="p-6">
-          <div className="text-center text-red-500">
-            Error loading business licenses. Please try again.
-          </div>
+        <CardHeader>
+          <CardTitle>Business Licenses</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-destructive">Error loading business licenses: {error.message}</p>
         </CardContent>
       </Card>
     );
@@ -117,14 +123,11 @@ const BusinessLicenseTable: React.FC<BusinessLicenseTableProps> = ({ filters, on
     return (
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Business Licenses</CardTitle>
-            <Skeleton className="h-10 w-40" />
-          </div>
+          <CardTitle>Business Licenses</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
+          <div className="space-y-2">
+            {[...Array(pageSize)].map((_, i) => (
               <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
@@ -133,108 +136,100 @@ const BusinessLicenseTable: React.FC<BusinessLicenseTableProps> = ({ filters, on
     );
   }
 
-  if (!data?.licenses?.length) {
+  if (!licenses || licenses.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Business Licenses</CardTitle>
-            <Button 
-              onClick={() => setIsNewLicenseDialogOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              New License Application
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="text-center py-12">
-            <div className="text-gray-500 mb-4">
-              <div className="mx-auto h-12 w-12 text-gray-400 mb-4">📋</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No business licenses found</h3>
-              <p className="text-gray-500">
-                Get started by applying for your first business license.
-              </p>
+      <>
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Business Licenses ({totalCount})</CardTitle>
+              <Button 
+                onClick={() => setIsNewLicenseDialogOpen(true)}
+                className="flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add New License</span>
+              </Button>
             </div>
-            <Button 
-              onClick={() => setIsNewLicenseDialogOpen(true)}
-              className="mt-4"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Apply for License
-            </Button>
-          </div>
-        </CardContent>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">No business licenses found.</p>
+          </CardContent>
+        </Card>
+
         <NewBusinessLicenseDialog
           open={isNewLicenseDialogOpen}
           onOpenChange={setIsNewLicenseDialogOpen}
         />
-      </Card>
+      </>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle>Business Licenses</CardTitle>
-          <Button 
-            onClick={() => setIsNewLicenseDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            New License Application
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="rounded-md border">
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Business Licenses ({totalCount})</CardTitle>
+            <Button 
+              onClick={() => setIsNewLicenseDialogOpen(true)}
+              className="flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add New License</span>
+            </Button>
+          </div>
+        </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-muted/50">
               <TableRow>
-                <TableHead>Date Applied</TableHead>
-                <TableHead>License Number</TableHead>
+                <TableHead className="hidden sm:table-cell">Date Applied</TableHead>
+                <TableHead className="hidden md:table-cell">License #</TableHead>
                 <TableHead>Business Name</TableHead>
-                <TableHead className="hidden md:table-cell">Business Address</TableHead>
-                <TableHead className="hidden sm:table-cell">License Type</TableHead>
-                <TableHead className="hidden lg:table-cell">License Fee</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead className="hidden lg:table-cell">Address</TableHead>
+                <TableHead className="hidden xl:table-cell text-center">Type</TableHead>
+                <TableHead className="hidden 2xl:table-cell text-center">Fee</TableHead>
+                <TableHead className="text-center">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.licenses.map((license) => (
+              {licenses.map((license) => (
                 <TableRow 
-                  key={license.license_id}
-                  className="cursor-pointer hover:bg-muted/50"
+                  key={license.license_id} 
+                  className="h-12 cursor-pointer hover:bg-muted/50" 
                   onClick={() => handleRowClick(license.license_id)}
                 >
-                  <TableCell>
-                    {formatDate(license.submitted_at)}
+                  <TableCell className="hidden sm:table-cell py-2">
+                    <span className="text-sm text-muted-foreground">
+                      {formatDate(license.submitted_at)}
+                    </span>
                   </TableCell>
-                  <TableCell className="font-medium">
-                    {license.license_number}
+                  <TableCell className="hidden md:table-cell py-2">
+                    <span className="truncate font-mono text-sm">{license.license_number}</span>
                   </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{license.business_name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {license.applicant_name}
-                      </div>
-                    </div>
+                  <TableCell className="py-2">
+                    <span className="truncate block max-w-[150px] font-medium" title={license.business_name}>
+                      {license.business_name}
+                    </span>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="text-sm">
+                  <TableCell className="hidden lg:table-cell py-2">
+                    <span className="truncate block max-w-[150px] text-sm" title={license.business_address}>
                       {license.business_address}
-                    </div>
+                    </span>
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    {getLicenseTypeLabel(license.license_type)}
+                  <TableCell className="hidden xl:table-cell py-2 text-center">
+                    <span className="truncate block max-w-[100px] mx-auto" title={getLicenseTypeLabel(license.license_type)}>
+                      {getLicenseTypeLabel(license.license_type)}
+                    </span>
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {formatAmount(license.license_fee_cents)}
+                  <TableCell className="hidden 2xl:table-cell py-2 text-center">
+                    <span className="text-sm font-medium">
+                      {formatAmount(license.license_fee_cents / 100)}
+                    </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center py-2">
                     {getStatusBadge(license.status)}
                   </TableCell>
                 </TableRow>
@@ -242,59 +237,61 @@ const BusinessLicenseTable: React.FC<BusinessLicenseTableProps> = ({ filters, on
             </TableBody>
           </Table>
         </div>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between space-x-2 py-4">
-          <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
-            <Select
-              value={pageSize.toString()}
-              onValueChange={handlePageSizeChange}
-            >
-              <SelectTrigger className="h-8 w-[70px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent side="top">
-                {[10, 20, 30, 40, 50].map((size) => (
-                  <SelectItem key={size} value={size.toString()}>
-                    {size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">
-              Page {currentPage} of {data.totalPages} ({data.totalCount} total)
-            </p>
+        
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium">Show:</span>
+              <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                <SelectTrigger className="w-16 h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handlePreviousPage}
                 disabled={currentPage === 1}
+                className="h-8 px-3"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
               </Button>
+              
+              <span className="text-sm font-medium px-2">
+                {currentPage} of {totalPages}
+              </span>
+              
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleNextPage}
-                disabled={currentPage === data.totalPages}
+                disabled={currentPage === totalPages}
+                className="h-8 px-3"
               >
-                <ChevronRight className="h-4 w-4" />
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
           </div>
-        </div>
+        )}
       </CardContent>
-
-      <NewBusinessLicenseDialog
-        open={isNewLicenseDialogOpen}
-        onOpenChange={setIsNewLicenseDialogOpen}
-      />
     </Card>
+
+    <NewBusinessLicenseDialog
+      open={isNewLicenseDialogOpen}
+      onOpenChange={setIsNewLicenseDialogOpen}
+    />
+    </>
   );
 };
 
