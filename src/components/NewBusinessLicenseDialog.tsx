@@ -475,9 +475,10 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                   Property Information
                 </CardTitle>
                 <div className="flex items-center space-x-2">
-                  <Label htmlFor="different-property-owner" className="text-sm text-muted-foreground">
-                    If Property Owner is Different than Business Owner
-                  </Label>
+                  <div className="text-sm text-muted-foreground cursor-pointer" onClick={() => setIsDifferentPropertyOwner(!isDifferentPropertyOwner)}>
+                    <div>If Property Owner is Different</div>
+                    <div>than Business Owner</div>
+                  </div>
                   <Switch
                     id="different-property-owner"
                     checked={isDifferentPropertyOwner}
