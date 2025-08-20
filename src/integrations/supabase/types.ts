@@ -163,6 +163,316 @@ export type Database = {
         }
         Relationships: []
       }
+      business_license_applications: {
+        Row: {
+          additional_info: Json | null
+          application_status:
+            | Database["public"]["Enums"]["business_license_status_enum"]
+            | null
+          approved_at: string | null
+          assigned_reviewer_id: string | null
+          base_fee_cents: number | null
+          business_apt_number: string | null
+          business_city: string
+          business_country: string | null
+          business_description: string | null
+          business_email: string | null
+          business_legal_name: string
+          business_phone: string | null
+          business_state: string
+          business_street_address: string
+          business_type: string
+          business_zip_code: string
+          created_at: string
+          customer_id: string
+          denial_reason: string | null
+          denied_at: string | null
+          doing_business_as: string | null
+          expired_at: string | null
+          federal_ein: string | null
+          finix_fee_profile_id: string | null
+          finix_merchant_id: string | null
+          form_responses: Json | null
+          fraud_session_id: string | null
+          id: string
+          idempotency_id: string | null
+          information_requested_at: string | null
+          issued_at: string | null
+          license_number: string | null
+          license_type_id: string | null
+          merchant_fee_profile_id: string | null
+          merchant_finix_identity_id: string | null
+          merchant_id: string | null
+          owner_apt_number: string | null
+          owner_city: string
+          owner_country: string | null
+          owner_email: string | null
+          owner_first_name: string
+          owner_last_name: string
+          owner_phone: string | null
+          owner_state: string
+          owner_street_address: string
+          owner_title: string | null
+          owner_zip_code: string
+          payment_status: string | null
+          payment_type: string | null
+          resubmitted_at: string | null
+          review_notes: string | null
+          reviewer_comments: string | null
+          service_fee_cents: number | null
+          state_tax_id: string | null
+          submitted_at: string | null
+          total_amount_cents: number | null
+          total_fee_cents: number | null
+          transfer_state: string | null
+          under_review_at: string | null
+          updated_at: string
+          user_id: string
+          withdrawn_at: string | null
+        }
+        Insert: {
+          additional_info?: Json | null
+          application_status?:
+            | Database["public"]["Enums"]["business_license_status_enum"]
+            | null
+          approved_at?: string | null
+          assigned_reviewer_id?: string | null
+          base_fee_cents?: number | null
+          business_apt_number?: string | null
+          business_city: string
+          business_country?: string | null
+          business_description?: string | null
+          business_email?: string | null
+          business_legal_name: string
+          business_phone?: string | null
+          business_state: string
+          business_street_address: string
+          business_type: string
+          business_zip_code: string
+          created_at?: string
+          customer_id: string
+          denial_reason?: string | null
+          denied_at?: string | null
+          doing_business_as?: string | null
+          expired_at?: string | null
+          federal_ein?: string | null
+          finix_fee_profile_id?: string | null
+          finix_merchant_id?: string | null
+          form_responses?: Json | null
+          fraud_session_id?: string | null
+          id?: string
+          idempotency_id?: string | null
+          information_requested_at?: string | null
+          issued_at?: string | null
+          license_number?: string | null
+          license_type_id?: string | null
+          merchant_fee_profile_id?: string | null
+          merchant_finix_identity_id?: string | null
+          merchant_id?: string | null
+          owner_apt_number?: string | null
+          owner_city: string
+          owner_country?: string | null
+          owner_email?: string | null
+          owner_first_name: string
+          owner_last_name: string
+          owner_phone?: string | null
+          owner_state: string
+          owner_street_address: string
+          owner_title?: string | null
+          owner_zip_code: string
+          payment_status?: string | null
+          payment_type?: string | null
+          resubmitted_at?: string | null
+          review_notes?: string | null
+          reviewer_comments?: string | null
+          service_fee_cents?: number | null
+          state_tax_id?: string | null
+          submitted_at?: string | null
+          total_amount_cents?: number | null
+          total_fee_cents?: number | null
+          transfer_state?: string | null
+          under_review_at?: string | null
+          updated_at?: string
+          user_id: string
+          withdrawn_at?: string | null
+        }
+        Update: {
+          additional_info?: Json | null
+          application_status?:
+            | Database["public"]["Enums"]["business_license_status_enum"]
+            | null
+          approved_at?: string | null
+          assigned_reviewer_id?: string | null
+          base_fee_cents?: number | null
+          business_apt_number?: string | null
+          business_city?: string
+          business_country?: string | null
+          business_description?: string | null
+          business_email?: string | null
+          business_legal_name?: string
+          business_phone?: string | null
+          business_state?: string
+          business_street_address?: string
+          business_type?: string
+          business_zip_code?: string
+          created_at?: string
+          customer_id?: string
+          denial_reason?: string | null
+          denied_at?: string | null
+          doing_business_as?: string | null
+          expired_at?: string | null
+          federal_ein?: string | null
+          finix_fee_profile_id?: string | null
+          finix_merchant_id?: string | null
+          form_responses?: Json | null
+          fraud_session_id?: string | null
+          id?: string
+          idempotency_id?: string | null
+          information_requested_at?: string | null
+          issued_at?: string | null
+          license_number?: string | null
+          license_type_id?: string | null
+          merchant_fee_profile_id?: string | null
+          merchant_finix_identity_id?: string | null
+          merchant_id?: string | null
+          owner_apt_number?: string | null
+          owner_city?: string
+          owner_country?: string | null
+          owner_email?: string | null
+          owner_first_name?: string
+          owner_last_name?: string
+          owner_phone?: string | null
+          owner_state?: string
+          owner_street_address?: string
+          owner_title?: string | null
+          owner_zip_code?: string
+          payment_status?: string | null
+          payment_type?: string | null
+          resubmitted_at?: string | null
+          review_notes?: string | null
+          reviewer_comments?: string | null
+          service_fee_cents?: number | null
+          state_tax_id?: string | null
+          submitted_at?: string | null
+          total_amount_cents?: number | null
+          total_fee_cents?: number | null
+          transfer_state?: string | null
+          under_review_at?: string | null
+          updated_at?: string
+          user_id?: string
+          withdrawn_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_license_applications_license_type_id_fkey"
+            columns: ["license_type_id"]
+            isOneToOne: false
+            referencedRelation: "business_license_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_license_documents: {
+        Row: {
+          content_type: string
+          created_at: string
+          customer_id: string
+          description: string | null
+          document_type: string
+          file_name: string
+          file_size: number
+          id: string
+          license_id: string
+          merchant_id: string | null
+          merchant_name: string | null
+          storage_path: string
+          updated_at: string
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          document_type: string
+          file_name: string
+          file_size: number
+          id?: string
+          license_id: string
+          merchant_id?: string | null
+          merchant_name?: string | null
+          storage_path: string
+          updated_at?: string
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          document_type?: string
+          file_name?: string
+          file_size?: number
+          id?: string
+          license_id?: string
+          merchant_id?: string | null
+          merchant_name?: string | null
+          storage_path?: string
+          updated_at?: string
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_license_documents_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "business_license_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_license_types: {
+        Row: {
+          base_fee_cents: number
+          created_at: string
+          customer_id: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          processing_days: number | null
+          requires_inspection: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          base_fee_cents?: number
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          processing_days?: number | null
+          requires_inspection?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          base_fee_cents?: number
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          processing_days?: number | null
+          requires_inspection?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           annual_ach_volume: number | null
@@ -1618,6 +1928,7 @@ export type Database = {
           business_address_line1: string | null
           business_city: string | null
           business_legal_name: string | null
+          business_license_id: string | null
           business_state: string | null
           business_zip_code: string | null
           card_brand: string | null
@@ -1681,6 +1992,7 @@ export type Database = {
           business_address_line1?: string | null
           business_city?: string | null
           business_legal_name?: string | null
+          business_license_id?: string | null
           business_state?: string | null
           business_zip_code?: string | null
           card_brand?: string | null
@@ -1744,6 +2056,7 @@ export type Database = {
           business_address_line1?: string | null
           business_city?: string | null
           business_legal_name?: string | null
+          business_license_id?: string | null
           business_state?: string | null
           business_zip_code?: string | null
           card_brand?: string | null
@@ -1805,6 +2118,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "master_bills"
             referencedColumns: ["bill_id"]
+          },
+          {
+            foreignKeyName: "payment_history_business_license_id_fkey"
+            columns: ["business_license_id"]
+            isOneToOne: false
+            referencedRelation: "business_license_applications"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "payment_history_permit_id_fkey"
@@ -3396,6 +3716,10 @@ export type Database = {
         Args: { p_id: string }
         Returns: undefined
       }
+      generate_license_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       generate_permit_number: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -3671,6 +3995,17 @@ export type Database = {
         | "cancelled"
         | "disputed"
         | "refunded"
+      business_license_status_enum:
+        | "draft"
+        | "submitted"
+        | "under_review"
+        | "information_requested"
+        | "resubmitted"
+        | "approved"
+        | "denied"
+        | "withdrawn"
+        | "expired"
+        | "issued"
       data_quality_status_enum:
         | "validated"
         | "pending_validation"
@@ -3842,6 +4177,18 @@ export const Constants = {
         "cancelled",
         "disputed",
         "refunded",
+      ],
+      business_license_status_enum: [
+        "draft",
+        "submitted",
+        "under_review",
+        "information_requested",
+        "resubmitted",
+        "approved",
+        "denied",
+        "withdrawn",
+        "expired",
+        "issued",
       ],
       data_quality_status_enum: [
         "validated",
