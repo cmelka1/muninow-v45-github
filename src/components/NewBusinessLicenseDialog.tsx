@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Upload, X, FileText, Image, FileCheck } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Upload, X, FileText, Image, FileCheck, Edit } from 'lucide-react';
 import { BuildingPermitsMunicipalityAutocomplete } from '@/components/ui/building-permits-municipality-autocomplete';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,8 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
+import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
+import { Separator } from '@/components/ui/separator';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
 import { normalizeEINInput, formatEINForStorage } from '@/lib/formatters';
 import { useAuth } from '@/contexts/AuthContext';
@@ -343,6 +345,30 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatBusinessType = (businessType: string) => {
+    const typeMapping: Record<string, string> = {
+      'retail_trade': 'Retail & Trade',
+      'professional_services': 'Professional Services',
+      'construction_contracting': 'Construction & Contracting',
+      'industrial_manufacturing': 'Industrial & Manufacturing',
+      'personal_services': 'Personal Services',
+      'hospitality_lodging': 'Hospitality & Lodging',
+      'other': 'Other'
+    };
+    return typeMapping[businessType] || businessType;
+  };
+
+  const formatEINForDisplay = (ein: string) => {
+    if (!ein) return 'Not provided';
+    // Remove any existing formatting
+    const cleaned = ein.replace(/\D/g, '');
+    // Format as XX-XXXXXXX
+    if (cleaned.length === 9) {
+      return `${cleaned.slice(0, 2)}-${cleaned.slice(2)}`;
+    }
+    return ein;
   };
 
   const handleBusinessAddressSelect = (addressComponents: any) => {
@@ -924,15 +950,228 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
       case 3:
         return (
           <div className="space-y-4">
+            {/* License & Business Information Card */}
             <Card className="animate-fade-in">
+              <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  License & Business Information
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentStep(1)}
+                  className="flex items-center gap-2 text-primary hover:text-primary/80"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Municipality</Label>
+                      <p className="text-sm font-medium">{selectedMunicipality?.business_name || 'Not selected'}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Business Type</Label>
+                      <p className="text-sm font-medium">{formatBusinessType(selectedBusinessType)}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Business Legal Name</Label>
+                      <p className="text-sm font-medium">{businessInfo.businessLegalName}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Business Owner</Label>
+                      <p className="text-sm font-medium">{businessInfo.businessOwner}</p>
+                      <p className="text-xs text-muted-foreground">{businessInfo.businessOwnerPhone}</p>
+                      <p className="text-xs text-muted-foreground">{businessInfo.businessOwnerEmail}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Business Address</Label>
+                      <p className="text-sm font-medium">{businessInfo.businessAddress}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Business EIN</Label>
+                      <p className="text-sm font-medium">{formatEINForDisplay(businessInfo.businessEIN)}</p>
+                    </div>
+                    {isDifferentPropertyOwner && (
+                      <div>
+                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Property Owner</Label>
+                        <p className="text-sm font-medium">{propertyOwnerInfo.name}</p>
+                        <p className="text-xs text-muted-foreground">{propertyOwnerInfo.phone}</p>
+                        <p className="text-xs text-muted-foreground">{propertyOwnerInfo.email}</p>
+                        <p className="text-xs text-muted-foreground">{propertyOwnerInfo.address}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Business Details Card */}
+            <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  Business Details
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentStep(2)}
+                  className="flex items-center gap-2 text-primary hover:text-primary/80"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {businessInfo.businessDescription && (
+                  <div>
+                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Business Description</Label>
+                    <div className="mt-1 text-sm">
+                      {businessInfo.businessDescription.length > 200 ? (
+                        <div>
+                          <p>{businessInfo.businessDescription.substring(0, 200)}...</p>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="p-0 h-auto text-primary hover:text-primary/80"
+                            onClick={() => {
+                              // TODO: Implement expand/collapse functionality
+                            }}
+                          >
+                            View Full Description
+                          </Button>
+                        </div>
+                      ) : (
+                        <p>{businessInfo.businessDescription}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {businessInfo.additionalDetails && (
+                  <div>
+                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Additional Business Details</Label>
+                    <div className="mt-1 text-sm border rounded-lg p-3 bg-muted/20">
+                      <SafeHtmlRenderer 
+                        content={businessInfo.additionalDetails}
+                        className="prose-sm"
+                        fallback="No additional details provided"
+                      />
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Supporting Documents Card */}
+            <Card className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  Supporting Documents
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentStep(2)}
+                  className="flex items-center gap-2 text-primary hover:text-primary/80"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Document Count
+                    </Label>
+                    <p className="text-sm font-medium">
+                      {businessInfo.uploadedDocuments.length} {businessInfo.uploadedDocuments.length === 1 ? 'document' : 'documents'} uploaded
+                    </p>
+                  </div>
+                  
+                  {businessInfo.uploadedDocuments.length > 0 ? (
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        Document List
+                      </Label>
+                      <div className="space-y-2">
+                        {businessInfo.uploadedDocuments.map((doc, index) => (
+                          <div key={doc.id} className="flex items-center space-x-3 p-2 border rounded-lg bg-muted/10">
+                            <div className="flex-shrink-0">
+                              {getFileIcon(doc.type)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{doc.name}</p>
+                              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                                <span>{formatFileSize(doc.size)}</span>
+                                <span>•</span>
+                                <span className="text-green-600">✓ Ready</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">
+                      <Upload className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No documents uploaded</p>
+                      <p className="text-xs">Documents are optional for this application</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Application Summary Card */}
+            <Card className="animate-fade-in border-primary/20 bg-primary/5" style={{ animationDelay: '0.3s' }}>
               <CardHeader className="pb-4">
                 <CardTitle className="text-base flex items-center gap-2">
                   <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  Step 3 - Coming Soon
+                  Application Summary
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">Review and submission will be added here.</p>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Application Type:</span>
+                    <span className="text-sm font-medium">New Business License</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Municipality:</span>
+                    <span className="text-sm font-medium">{selectedMunicipality?.business_name || 'Not selected'}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Business:</span>
+                    <span className="text-sm font-medium">{businessInfo.businessLegalName}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Category:</span>
+                    <span className="text-sm font-medium">{formatBusinessType(selectedBusinessType)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Documents:</span>
+                    <span className="text-sm font-medium">
+                      {businessInfo.uploadedDocuments.length} uploaded
+                    </span>
+                  </div>
+                  <Separator />
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p>• All information will be reviewed by the municipality</p>
+                    <p>• You will receive email updates about your application status</p>
+                    <p>• Processing time may vary depending on municipality requirements</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
