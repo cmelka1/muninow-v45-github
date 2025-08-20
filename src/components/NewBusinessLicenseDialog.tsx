@@ -411,6 +411,10 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
     setIsSubmitting(true);
 
     try {
+      console.log('🚀 Starting business license application submission...');
+      console.log('📋 Selected Municipality:', selectedMunicipality);
+      console.log('🏢 Selected Business Type ID:', selectedBusinessType);
+      
       // Parse the business address
       const addressParts = businessInfo.businessAddress.split(', ');
       const [streetAddress, city, stateZip] = addressParts;
@@ -423,6 +427,7 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
 
       // Find selected license type
       const selectedLicenseType = licenseTypes.find(type => type.id === selectedBusinessType);
+      console.log('📜 Selected License Type:', selectedLicenseType);
 
       // Create the application
       const applicationData = {
@@ -456,19 +461,24 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
         }
       };
 
+      console.log('📝 Application Data:', applicationData);
       const result = await createApplication.mutateAsync(applicationData);
+      console.log('✅ Application created successfully:', result);
 
       // Upload documents if any
       for (const doc of businessInfo.uploadedDocuments) {
         if (doc.uploadStatus === 'completed') {
           // Note: In a real implementation, you'd need to store the actual file
           // For now, we'll skip the document upload part since we can't access the file
-          console.log('Document upload would happen here:', doc);
+          console.log('📎 Document upload would happen here:', doc);
         }
       }
 
       // Submit the application
+      console.log('🚀 Submitting application with ID:', result.id);
       await submitApplication.mutateAsync(result.id);
+
+      console.log('✅ Application submitted successfully!');
 
       toast({
         title: "Application submitted successfully!",
@@ -477,7 +487,12 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
 
       handleClose();
     } catch (error: any) {
-      console.error('Submission error:', error);
+      console.error('❌ Submission error:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        stack: error.stack,
+        cause: error.cause
+      });
       toast({
         title: "Submission failed",
         description: error.message || "An error occurred while submitting your application. Please try again.",
