@@ -104,26 +104,11 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Business Licenses</CardTitle>
-            <Button 
-              onClick={() => setShowNewLicenseDialog(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add New License
-            </Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">No business licenses found</p>
-            <Button 
-              onClick={() => setShowNewLicenseDialog(true)}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add New License
-            </Button>
+            <p className="text-muted-foreground">No business licenses found</p>
           </div>
         </CardContent>
         <NewBusinessLicenseDialog
@@ -140,13 +125,6 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Business Licenses ({data.totalCount})</CardTitle>
-            <Button 
-              onClick={() => setShowNewLicenseDialog(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add New License
-            </Button>
           </div>
         </CardHeader>
         <CardContent>
