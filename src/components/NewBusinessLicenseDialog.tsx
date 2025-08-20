@@ -254,81 +254,81 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
   const stepLabels = ['Basic Info', 'Business Details', 'Review & Submit'];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0"
-        ref={dialogContentRef}
-      >
-        <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="text-xl font-semibold">New Business License Application</DialogTitle>
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent ref={dialogContentRef} className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>New Business License Application</DialogTitle>
         </DialogHeader>
 
-        {/* Progress Section */}
-        <div className="px-6 py-4 space-y-6">
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Step {currentStep} of {totalSteps}</span>
-              <span className="text-sm text-muted-foreground">{Math.round(progress)}% Complete</span>
+        <div className="space-y-6">
+          {/* Progress Section */}
+          <div className="space-y-4 pb-6 border-b">
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Step {currentStep} of {totalSteps}</span>
+              <span>{Math.round(progress)}% Complete</span>
             </div>
             <Progress value={progress} className="h-2" />
           </div>
-          
+
           {/* Step Indicators */}
-          <div className="flex justify-between">
-            {Array.from({ length: totalSteps }, (_, i) => (
-              <div key={i} className="flex flex-col items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 ${
-                  i + 1 < currentStep 
-                    ? 'bg-primary text-primary-foreground' 
-                    : i + 1 === currentStep 
-                      ? 'bg-primary text-primary-foreground ring-4 ring-primary/20' 
+          <div className="flex justify-between py-4">
+            {[1, 2, 3].map((step) => (
+              <div
+                key={step}
+                className={`flex items-center space-x-3 ${
+                  step <= currentStep ? 'text-primary' : 'text-muted-foreground'
+                }`}
+              >
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 ${
+                    step < currentStep
+                      ? 'bg-primary text-primary-foreground'
+                      : step === currentStep
+                      ? 'bg-primary text-primary-foreground ring-4 ring-primary/20'
                       : 'bg-muted text-muted-foreground'
-                }`}>
-                  {i + 1 < currentStep ? '✓' : i + 1}
+                  }`}
+                >
+                  {step < currentStep ? '✓' : step}
                 </div>
-                <span className={`text-xs mt-2 text-center max-w-20 ${
-                  i + 1 === currentStep ? 'text-primary font-medium' : 'text-muted-foreground'
-                }`}>
-                  {stepLabels[i]}
-                </span>
+                <div className="hidden sm:block">
+                  <span className="text-sm font-medium">
+                    {step === 1 && 'Basic Info'}
+                    {step === 2 && 'Business Details'}
+                    {step === 3 && 'Review & Submit'}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
-        </div>
 
-        <div className="border-t" />
-
-        <div className="flex-1 overflow-y-auto px-6 py-6">
-          <div className="min-h-[400px]">
+          {/* Step Content */}
+          <div className="min-h-[400px] py-2">
             {renderStepContent()}
           </div>
-        </div>
 
-        {/* Navigation Footer */}
-        <div className="bg-muted/20 -mx-0 -mb-0 px-6 py-4 rounded-b-lg">
-          <div className="flex justify-between">
+          {/* Navigation Section */}
+          <div className="flex justify-between pt-6 border-t bg-muted/20 -mx-6 px-6 -mb-6 pb-6 rounded-b-lg">
             <Button
               variant="outline"
               onClick={handlePrevious}
               disabled={currentStep === 1}
-              className="flex items-center gap-2"
+              className="flex items-center space-x-2"
             >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
+              <ChevronLeft className="w-4 h-4" />
+              <span>Previous</span>
             </Button>
-            
-            <div className="flex gap-2">
+
+            <div className="flex space-x-2">
               <Button variant="outline" onClick={handleClose}>
                 Cancel
               </Button>
-              
               {currentStep < totalSteps ? (
-                <Button onClick={handleNext} className="flex items-center gap-2">
-                  Next
-                  <ChevronRight className="h-4 w-4" />
+                <Button onClick={handleNext} className="flex items-center space-x-2">
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4" />
                 </Button>
               ) : (
-                <Button onClick={handleSubmit} className="flex items-center gap-2" disabled={isSubmitting}>
+                <Button onClick={handleSubmit} disabled={isSubmitting}>
                   {isSubmitting ? 'Submitting...' : 'Submit Application'}
                 </Button>
               )}
