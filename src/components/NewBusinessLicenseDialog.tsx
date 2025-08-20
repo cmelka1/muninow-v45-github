@@ -1131,49 +1131,6 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                 </div>
               </CardContent>
             </Card>
-
-            {/* Application Summary Card */}
-            <Card className="animate-fade-in border-primary/20 bg-primary/5" style={{ animationDelay: '0.3s' }}>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  Application Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Application Type:</span>
-                    <span className="text-sm font-medium">New Business License</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Municipality:</span>
-                    <span className="text-sm font-medium">{selectedMunicipality?.business_name || 'Not selected'}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Business:</span>
-                    <span className="text-sm font-medium">{businessInfo.businessLegalName}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Category:</span>
-                    <span className="text-sm font-medium">{formatBusinessType(selectedBusinessType)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Documents:</span>
-                    <span className="text-sm font-medium">
-                      {businessInfo.uploadedDocuments.length} uploaded
-                    </span>
-                  </div>
-                  <Separator />
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <p>• All information will be reviewed by the municipality</p>
-                    <p>• You will receive email updates about your application status</p>
-                    <p>• Processing time may vary depending on municipality requirements</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         );
       default:
