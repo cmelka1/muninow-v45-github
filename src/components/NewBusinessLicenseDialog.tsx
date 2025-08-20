@@ -155,7 +155,7 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
   const handleUseBusinessProfileInfoToggle = (checked: boolean) => {
     setUseBusinessProfileInfo(checked);
     if (checked && profile) {
-      // Populate business info with profile data
+      // Populate business info with profile data, only if fields are empty
       const fullName = profile.first_name && profile.last_name 
         ? `${profile.first_name} ${profile.last_name}` 
         : profile.business_legal_name || '';
@@ -164,25 +164,16 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
         ? `${profile.street_address}${profile.city ? `, ${profile.city}` : ''}${profile.state ? `, ${profile.state}` : ''}${profile.zip_code ? ` ${profile.zip_code}` : ''}`
         : '';
 
-      setBusinessInfo({
-        businessLegalName: profile.business_legal_name || '',
-        businessOwner: fullName,
-        businessOwnerPhone: profile.phone ? normalizePhoneInput(profile.phone) : '',
-        businessOwnerEmail: profile.email || '',
-        businessAddress: fullAddress,
-        businessEIN: ''
-      });
-    } else if (!checked) {
-      // Clear business info when toggled off
-      setBusinessInfo({
-        businessLegalName: '',
-        businessOwner: '',
-        businessOwnerPhone: '',
-        businessOwnerEmail: '',
-        businessAddress: '',
-        businessEIN: ''
-      });
+      setBusinessInfo(prev => ({
+        businessLegalName: prev.businessLegalName || profile.business_legal_name || '',
+        businessOwner: prev.businessOwner || fullName,
+        businessOwnerPhone: prev.businessOwnerPhone || (profile.phone ? normalizePhoneInput(profile.phone) : ''),
+        businessOwnerEmail: prev.businessOwnerEmail || profile.email || '',
+        businessAddress: prev.businessAddress || fullAddress,
+        businessEIN: prev.businessEIN || ''
+      }));
     }
+    // Note: We no longer clear fields when toggled off to preserve user input
   };
 
   const handleBusinessAddressSelect = (addressComponents: any) => {
@@ -325,7 +316,6 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                         if (e.target.value) clearFieldError('businessLegalName');
                       }}
                       className={`mt-1 ${validationErrors.businessLegalName ? 'ring-2 ring-destructive border-destructive' : ''}`}
-                      disabled={useBusinessProfileInfo}
                       data-error={!!validationErrors.businessLegalName}
                     />
                     {validationErrors.businessLegalName && (
@@ -349,7 +339,6 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                         if (e.target.value) clearFieldError('businessOwner');
                       }}
                       className={`mt-1 ${validationErrors.businessOwner ? 'ring-2 ring-destructive border-destructive' : ''}`}
-                      disabled={useBusinessProfileInfo}
                       data-error={!!validationErrors.businessOwner}
                     />
                     {validationErrors.businessOwner && (
@@ -374,7 +363,6 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                         if (normalized) clearFieldError('businessOwnerPhone');
                       }}
                       className={`mt-1 ${validationErrors.businessOwnerPhone ? 'ring-2 ring-destructive border-destructive' : ''}`}
-                      disabled={useBusinessProfileInfo}
                       data-error={!!validationErrors.businessOwnerPhone}
                     />
                     {validationErrors.businessOwnerPhone && (
@@ -399,7 +387,6 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                         if (e.target.value) clearFieldError('businessOwnerEmail');
                       }}
                       className={`mt-1 ${validationErrors.businessOwnerEmail ? 'ring-2 ring-destructive border-destructive' : ''}`}
-                      disabled={useBusinessProfileInfo}
                       data-error={!!validationErrors.businessOwnerEmail}
                     />
                     {validationErrors.businessOwnerEmail && (
@@ -416,16 +403,16 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                     </p>
                     <RestPlacesAutocomplete
                       placeholder="Start typing the business address..."
-                      onAddressSelect={useBusinessProfileInfo ? () => {} : (addressComponents) => {
+                      onAddressSelect={(addressComponents) => {
                         handleBusinessAddressSelect(addressComponents);
                         clearFieldError('businessAddress');
                       }}
                       value={businessInfo.businessAddress}
-                      onChange={useBusinessProfileInfo ? () => {} : (value) => {
+                      onChange={(value) => {
                         setBusinessInfo(prev => ({ ...prev, businessAddress: value }));
                         if (value) clearFieldError('businessAddress');
                       }}
-                      className={`mt-1 ${useBusinessProfileInfo ? 'opacity-50 pointer-events-none' : ''} ${validationErrors.businessAddress ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                      className={`mt-1 ${validationErrors.businessAddress ? 'ring-2 ring-destructive border-destructive' : ''}`}
                       data-error={!!validationErrors.businessAddress}
                     />
                     {validationErrors.businessAddress && (
@@ -449,7 +436,6 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                         if (e.target.value) clearFieldError('businessEIN');
                       }}
                       className={`mt-1 ${validationErrors.businessEIN ? 'ring-2 ring-destructive border-destructive' : ''}`}
-                      disabled={useBusinessProfileInfo}
                       data-error={!!validationErrors.businessEIN}
                     />
                     {validationErrors.businessEIN && (
