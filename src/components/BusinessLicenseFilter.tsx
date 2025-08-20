@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { useBusinessLicenseTypes } from '@/hooks/useBusinessLicenseTypes';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface BusinessLicenseFilters {
   licenseType?: string;
@@ -21,25 +23,27 @@ const BusinessLicenseFilter: React.FC<BusinessLicenseFilterProps> = ({
   filters,
   onFiltersChange
 }) => {
-  const licenseTypeOptions = [
-    { value: 'business_license', label: 'Business License' },
-    { value: 'food_service', label: 'Food Service' },
-    { value: 'liquor_license', label: 'Liquor License' },
-    { value: 'retail_license', label: 'Retail License' },
-    { value: 'professional_service', label: 'Professional Service' },
-    { value: 'home_occupation', label: 'Home Occupation' },
-    { value: 'special_event', label: 'Special Event' },
-  ];
+  const { profile } = useAuth();
+  const { data: licenseTypes, isLoading: licenseTypesLoading } = useBusinessLicenseTypes({
+    customerId: profile?.customer_id
+  });
+
+  const licenseTypeOptions = licenseTypes?.map(type => ({
+    value: type.id,
+    label: type.name
+  })) || [];
 
   const statusOptions = [
     { value: 'draft', label: 'Draft' },
     { value: 'submitted', label: 'Submitted' },
     { value: 'under_review', label: 'Under Review' },
+    { value: 'information_requested', label: 'Information Requested' },
+    { value: 'resubmitted', label: 'Resubmitted' },
     { value: 'approved', label: 'Approved' },
-    { value: 'active', label: 'Active' },
-    { value: 'expired', label: 'Expired' },
-    { value: 'suspended', label: 'Suspended' },
     { value: 'denied', label: 'Denied' },
+    { value: 'withdrawn', label: 'Withdrawn' },
+    { value: 'expired', label: 'Expired' },
+    { value: 'issued', label: 'Issued' },
   ];
 
   const dateRangeOptions = [
@@ -140,9 +144,13 @@ const BusinessLicenseFilter: React.FC<BusinessLicenseFilterProps> = ({
           {/* License Type - Hidden on mobile (Priority 2) */}
           <div className="hidden sm:block space-y-2">
             <label className="text-sm font-medium text-muted-foreground">License Type</label>
-            <Select value={filters.licenseType || 'all'} onValueChange={(value) => updateFilter('licenseType', value)}>
+            <Select 
+              value={filters.licenseType || 'all'} 
+              onValueChange={(value) => updateFilter('licenseType', value)}
+              disabled={licenseTypesLoading}
+            >
               <SelectTrigger className="h-9">
-                <SelectValue placeholder="Type" />
+                <SelectValue placeholder={licenseTypesLoading ? "Loading..." : "Type"} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
