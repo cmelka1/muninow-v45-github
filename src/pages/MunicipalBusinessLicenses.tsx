@@ -34,7 +34,7 @@ const MunicipalBusinessLicenses = () => {
       <MunicipalBusinessLicenseTable 
         filters={filters} 
         onViewClick={(licenseId) => {
-          window.location.href = `/business-licenses/${licenseId}`;
+          window.location.href = `/municipal/business-license/${licenseId}`;
         }}
       />
     </div>

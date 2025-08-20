@@ -65,7 +65,7 @@ export const MunicipalBusinessLicenseTable: React.FC<MunicipalBusinessLicenseTab
     if (onViewClick) {
       onViewClick(license.id);
     } else {
-      window.location.href = `/business-licenses/${license.id}`;
+      window.location.href = `/municipal/business-license/${license.id}`;
     }
   };
 
