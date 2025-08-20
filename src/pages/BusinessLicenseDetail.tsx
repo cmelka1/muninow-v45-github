@@ -13,6 +13,7 @@ import { BusinessLicenseStatusBadge } from '@/components/BusinessLicenseStatusBa
 import { BusinessLicenseCommunication } from '@/components/BusinessLicenseCommunication';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
+import { formatEINForDisplay } from '@/lib/formatters';
 
 export const BusinessLicenseDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -232,7 +233,7 @@ export const BusinessLicenseDetail = () => {
                 {license.federal_ein && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Federal EIN</label>
-                    <p className="text-sm">{license.federal_ein}</p>
+                    <p className="text-sm">{formatEINForDisplay(license.federal_ein)}</p>
                   </div>
                 )}
               </div>

@@ -15,7 +15,7 @@ import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { Separator } from '@/components/ui/separator';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
-import { normalizeEINInput, formatEINForStorage } from '@/lib/formatters';
+import { normalizeEINInput, formatEINForStorage, formatEINForDisplay } from '@/lib/formatters';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useBusinessLicenseTypes } from '@/hooks/useBusinessLicenseTypes';
@@ -368,17 +368,6 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
       'other': 'Other'
     };
     return typeMapping[businessType] || businessType;
-  };
-
-  const formatEINForDisplay = (ein: string) => {
-    if (!ein) return 'Not provided';
-    // Remove any existing formatting
-    const cleaned = ein.replace(/\D/g, '');
-    // Format as XX-XXXXXXX
-    if (cleaned.length === 9) {
-      return `${cleaned.slice(0, 2)}-${cleaned.slice(2)}`;
-    }
-    return ein;
   };
 
   const handleBusinessAddressSelect = (addressComponents: any) => {

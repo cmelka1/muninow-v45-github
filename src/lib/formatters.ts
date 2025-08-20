@@ -59,6 +59,24 @@ export const validateEIN = (ein: string): { isValid: boolean; error?: string } =
 };
 
 /**
+ * Formats EIN for display (XX-XXXXXXX format)
+ */
+export const formatEINForDisplay = (ein: string): string => {
+  if (!ein) return 'Not provided';
+  
+  // Remove all non-digits
+  const cleaned = ein.replace(/\D/g, '');
+  
+  // Format as XX-XXXXXXX if we have 9 digits
+  if (cleaned.length === 9) {
+    return `${cleaned.slice(0, 2)}-${cleaned.slice(2)}`;
+  }
+  
+  // Return as-is if not 9 digits
+  return ein;
+};
+
+/**
  * Formats EIN for storage (removes hyphen, keeps only digits)
  */
 export const formatEINForStorage = (ein: string): string => {
