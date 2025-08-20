@@ -53,6 +53,13 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
     businessEIN: ''
   });
   const [useBusinessProfileInfo, setUseBusinessProfileInfo] = useState(false);
+  const [isDifferentPropertyOwner, setIsDifferentPropertyOwner] = useState(false);
+  const [propertyOwnerInfo, setPropertyOwnerInfo] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    address: ''
+  });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -74,6 +81,14 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
     if (!businessInfo.businessOwnerEmail) errors.businessOwnerEmail = 'Business owner email is required';
     if (!businessInfo.businessAddress) errors.businessAddress = 'Business address is required';
     if (!businessInfo.businessEIN) errors.businessEIN = 'Business EIN is required';
+
+    // Validate property owner fields if switch is enabled
+    if (isDifferentPropertyOwner) {
+      if (!propertyOwnerInfo.name) errors.propertyOwnerName = 'Property owner name is required';
+      if (!propertyOwnerInfo.phone) errors.propertyOwnerPhone = 'Property owner phone is required';
+      if (!propertyOwnerInfo.email) errors.propertyOwnerEmail = 'Property owner email is required';
+      if (!propertyOwnerInfo.address) errors.propertyOwnerAddress = 'Property owner address is required';
+    }
 
     return errors;
   };
@@ -137,6 +152,13 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
       businessEIN: ''
     });
     setUseBusinessProfileInfo(false);
+    setIsDifferentPropertyOwner(false);
+    setPropertyOwnerInfo({
+      name: '',
+      phone: '',
+      email: '',
+      address: ''
+    });
     setValidationErrors({});
     setIsSubmitting(false);
     onOpenChange(false);
@@ -444,6 +466,128 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                   </div>
                 </div>
               </CardContent>
+            </Card>
+
+            <Card className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  Property Information
+                </CardTitle>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="different-property-owner" className="text-sm text-muted-foreground">
+                    If Property Owner is Different than Business Owner
+                  </Label>
+                  <Switch
+                    id="different-property-owner"
+                    checked={isDifferentPropertyOwner}
+                    onCheckedChange={setIsDifferentPropertyOwner}
+                  />
+                </div>
+              </CardHeader>
+              {isDifferentPropertyOwner && (
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="property-owner-name" className="text-sm font-medium text-foreground">
+                        Name/Company *
+                      </Label>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Enter the property owner's name or company name
+                      </p>
+                      <Input
+                        id="property-owner-name"
+                        placeholder="Enter property owner name"
+                        value={propertyOwnerInfo.name}
+                        onChange={(e) => {
+                          setPropertyOwnerInfo(prev => ({ ...prev, name: e.target.value }));
+                          if (e.target.value) clearFieldError('propertyOwnerName');
+                        }}
+                        className={`mt-1 ${validationErrors.propertyOwnerName ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                        data-error={!!validationErrors.propertyOwnerName}
+                      />
+                      {validationErrors.propertyOwnerName && (
+                        <p className="text-sm text-destructive mt-1">{validationErrors.propertyOwnerName}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="property-owner-phone" className="text-sm font-medium text-foreground">
+                        Phone Number *
+                      </Label>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Enter the property owner's contact phone number
+                      </p>
+                      <Input
+                        id="property-owner-phone"
+                        placeholder="(xxx) xxx-xxxx"
+                        value={propertyOwnerInfo.phone}
+                        onChange={(e) => {
+                          const normalized = normalizePhoneInput(e.target.value);
+                          setPropertyOwnerInfo(prev => ({ ...prev, phone: normalized }));
+                          if (normalized) clearFieldError('propertyOwnerPhone');
+                        }}
+                        className={`mt-1 ${validationErrors.propertyOwnerPhone ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                        data-error={!!validationErrors.propertyOwnerPhone}
+                      />
+                      {validationErrors.propertyOwnerPhone && (
+                        <p className="text-sm text-destructive mt-1">{validationErrors.propertyOwnerPhone}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="property-owner-email" className="text-sm font-medium text-foreground">
+                        Email *
+                      </Label>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Enter the property owner's email address
+                      </p>
+                      <Input
+                        id="property-owner-email"
+                        type="email"
+                        placeholder="Enter email address"
+                        value={propertyOwnerInfo.email}
+                        onChange={(e) => {
+                          setPropertyOwnerInfo(prev => ({ ...prev, email: e.target.value }));
+                          if (e.target.value) clearFieldError('propertyOwnerEmail');
+                        }}
+                        className={`mt-1 ${validationErrors.propertyOwnerEmail ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                        data-error={!!validationErrors.propertyOwnerEmail}
+                      />
+                      {validationErrors.propertyOwnerEmail && (
+                        <p className="text-sm text-destructive mt-1">{validationErrors.propertyOwnerEmail}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="property-owner-address" className="text-sm font-medium text-foreground">
+                        Address *
+                      </Label>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Enter the property owner's address
+                      </p>
+                      <RestPlacesAutocomplete
+                        placeholder="Start typing the property owner address..."
+                        onAddressSelect={(addressComponents) => {
+                          const fullAddress = `${addressComponents.streetAddress}, ${addressComponents.city}, ${addressComponents.state} ${addressComponents.zipCode}`;
+                          setPropertyOwnerInfo(prev => ({ ...prev, address: fullAddress }));
+                          clearFieldError('propertyOwnerAddress');
+                        }}
+                        value={propertyOwnerInfo.address}
+                        onChange={(value) => {
+                          setPropertyOwnerInfo(prev => ({ ...prev, address: value }));
+                          if (value) clearFieldError('propertyOwnerAddress');
+                        }}
+                        className={`mt-1 ${validationErrors.propertyOwnerAddress ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                        data-error={!!validationErrors.propertyOwnerAddress}
+                      />
+                      {validationErrors.propertyOwnerAddress && (
+                        <p className="text-sm text-destructive mt-1">{validationErrors.propertyOwnerAddress}</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              )}
             </Card>
           </div>
         );
