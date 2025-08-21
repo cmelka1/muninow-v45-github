@@ -100,7 +100,7 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
           municipality: customerMap.get(license.customer_id) || 'Unknown',
           status: license.application_status,
           customerId: license.customer_id,
-          detailPath: `/business-licenses/${license.id}`
+          detailPath: `/business-license/${license.id}`
         })),
 
         // Transform tax submissions
