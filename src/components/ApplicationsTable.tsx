@@ -32,19 +32,25 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
     pageSize,
   });
 
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
+  const totalCount = data?.count || 0;
+  const totalPages = data?.totalPages || 0;
+
   const handlePageSizeChange = (newPageSize: string) => {
-    setPageSize(parseInt(newPageSize));
+    setPageSize(Number(newPageSize));
     setCurrentPage(1);
   };
 
   const handlePreviousPage = () => {
-    setCurrentPage(prev => Math.max(1, prev - 1));
+    setCurrentPage(prev => Math.max(prev - 1, 1));
   };
 
   const handleNextPage = () => {
-    if (data && currentPage < data.totalPages) {
-      setCurrentPage(prev => prev + 1);
-    }
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
   };
 
   const handleRowClick = (application: UserApplication) => {
@@ -81,43 +87,57 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
     }
   };
 
-  const getStatusBadge = (status: string, serviceType: string) => {
+  const getStatusBadge = (status: string) => {
     const normalizedStatus = status.toLowerCase();
     
-    let variant: "default" | "secondary" | "destructive" | "outline" = "secondary";
-    
     switch (normalizedStatus) {
-      case 'approved':
-      case 'issued':
-      case 'paid':
-        variant = "default";
-        break;
-      case 'denied':
-        variant = "destructive";
-        break;
-      case 'under_review':
-      case 'submitted':
-        variant = "secondary";
-        break;
       case 'draft':
-        variant = "outline";
-        break;
+        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Draft</Badge>;
+      case 'submitted':
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Submitted</Badge>;
+      case 'under_review':
+        return <Badge variant="secondary" className="bg-purple-100 text-purple-800">Under Review</Badge>;
+      case 'information_requested':
+        return <Badge variant="secondary" className="bg-orange-100 text-orange-800">Info Requested</Badge>;
+      case 'resubmitted':
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Resubmitted</Badge>;
+      case 'approved':
+        return <Badge variant="secondary" className="bg-green-100 text-green-800">Approved</Badge>;
+      case 'denied':
+        return <Badge variant="destructive">Denied</Badge>;
+      case 'issued':
+        return <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">Issued</Badge>;
+      case 'paid':
+        return <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">Paid</Badge>;
+      case 'withdrawn':
+        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Withdrawn</Badge>;
+      case 'expired':
+        return <Badge variant="secondary" className="bg-red-100 text-red-800">Expired</Badge>;
+      default:
+        return <Badge variant="outline">{status.replace('_', ' ').toUpperCase()}</Badge>;
     }
-
-    return (
-      <Badge variant={variant}>
-        {status.replace('_', ' ').toUpperCase()}
-      </Badge>
-    );
   };
 
   const formatDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), 'MMM d, yyyy');
+      return format(new Date(dateString), 'MMM dd, yyyy');
     } catch {
       return 'N/A';
     }
   };
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-destructive">Error loading applications: {error.message}</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -126,29 +146,10 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
           <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4">
-                <Skeleton className="h-4 w-4" />
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-6 w-20" />
-              </div>
+          <div className="space-y-2">
+            {[...Array(pageSize)].map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
             ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardContent className="py-8">
-          <div className="text-center text-muted-foreground">
-            Error loading applications. Please try again.
           </div>
         </CardContent>
       </Card>
@@ -159,15 +160,13 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
     return (
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>{title}</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>{title} ({totalCount})</CardTitle>
             {headerActions}
           </div>
         </CardHeader>
-        <CardContent className="py-8">
-          <div className="text-center text-muted-foreground">
-            No applications found. Start by applying for permits, licenses, or other services.
-          </div>
+        <CardContent>
+          <p className="text-muted-foreground">No applications found. Start by applying for permits, licenses, or other services.</p>
         </CardContent>
       </Card>
     );
@@ -176,32 +175,37 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>{title}</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle>{title} ({totalCount})</CardTitle>
           {headerActions}
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="rounded-md border">
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-muted/50">
               <TableRow>
+                <TableHead className="hidden sm:table-cell">Date</TableHead>
                 <TableHead>Service Type</TableHead>
-                <TableHead>Service Name</TableHead>
-                <TableHead>Date Submitted</TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead>Municipality</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead className="hidden md:table-cell">Service Name</TableHead>
+                <TableHead className="hidden lg:table-cell">Address</TableHead>
+                <TableHead className="hidden xl:table-cell">Municipality</TableHead>
+                <TableHead className="text-center">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.applications.map((application) => (
                 <TableRow
                   key={application.id}
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="h-12 cursor-pointer hover:bg-muted/50"
                   onClick={() => handleRowClick(application)}
                 >
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell py-2">
+                    <span className="text-sm text-muted-foreground">
+                      {formatDate(application.dateSubmitted)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-2">
                     <div className="flex items-center gap-2">
                       {getServiceTypeIcon(application.serviceType)}
                       <span className="font-medium">
@@ -209,20 +213,23 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="font-medium">
-                    {application.serviceName}
+                  <TableCell className="hidden md:table-cell py-2">
+                    <span className="truncate block max-w-[150px]" title={application.serviceName}>
+                      {application.serviceName}
+                    </span>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatDate(application.dateSubmitted)}
+                  <TableCell className="hidden lg:table-cell py-2">
+                    <span className="truncate block max-w-[150px] text-sm" title={application.address}>
+                      {application.address}
+                    </span>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {application.address}
+                  <TableCell className="hidden xl:table-cell py-2">
+                    <span className="truncate block max-w-[120px] text-sm" title={application.municipality}>
+                      {application.municipality}
+                    </span>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {application.municipality}
-                  </TableCell>
-                  <TableCell>
-                    {getStatusBadge(application.status, application.serviceType)}
+                  <TableCell className="text-center py-2">
+                    {getStatusBadge(application.status)}
                   </TableCell>
                 </TableRow>
               ))}
@@ -231,46 +238,51 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
         </div>
 
         {/* Pagination Controls */}
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-muted-foreground">Rows per page:</span>
-            <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
-              <SelectTrigger className="w-16 h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="5">5</SelectItem>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-muted-foreground">
-              Page {data.currentPage} of {data.totalPages} ({data.count} total)
-            </span>
-            <div className="flex items-center space-x-1">
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium">Show:</span>
+              <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                <SelectTrigger className="w-16 h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handlePreviousPage}
-                disabled={currentPage <= 1}
+                disabled={currentPage === 1}
+                className="h-8 px-3"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
               </Button>
+              
+              <span className="text-sm font-medium px-2">
+                {currentPage} of {totalPages}
+              </span>
+              
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleNextPage}
-                disabled={currentPage >= data.totalPages}
+                disabled={currentPage === totalPages}
+                className="h-8 px-3"
               >
-                <ChevronRight className="h-4 w-4" />
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );
