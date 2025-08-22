@@ -363,29 +363,41 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
           
           <div>
             <Label htmlFor="pdf-upload">Upload PDF Form (Optional)</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="pdf-upload"
-                type="file"
-                accept=".pdf"
-                onChange={handlePdfFileChange}
-                className="flex-1"
-              />
-              <Upload className="h-4 w-4 text-muted-foreground" />
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="bg-background border-2 border-dashed border-primary/30 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200"
+                  onClick={() => document.getElementById('pdf-upload')?.click()}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Choose PDF File
+                </Button>
+                <input
+                  id="pdf-upload"
+                  type="file"
+                  accept=".pdf"
+                  onChange={handlePdfFileChange}
+                  className="hidden"
+                />
+                <span className="text-sm text-muted-foreground">
+                  Upload a PDF form file (max 10MB). This will replace any existing PDF.
+                </span>
+              </div>
+              {pdfFile && (
+                <p className="text-sm text-green-600 flex items-center gap-1">
+                  <Upload className="h-3 w-3" />
+                  Selected: {pdfFile.name}
+                </p>
+              )}
+              {tile?.pdf_form_url && !pdfFile && (
+                <p className="text-sm text-blue-600 flex items-center gap-1">
+                  <Upload className="h-3 w-3" />
+                  Current PDF: Available for download
+                </p>
+              )}
             </div>
-            {pdfFile && (
-              <p className="text-sm text-green-600 mt-1">
-                Selected: {pdfFile.name}
-              </p>
-            )}
-            {tile?.pdf_form_url && !pdfFile && (
-              <p className="text-sm text-blue-600 mt-1">
-                Current PDF: Available for download
-              </p>
-            )}
-            <p className="text-sm text-muted-foreground mt-1">
-              Upload a PDF form file (max 10MB). This will replace any existing PDF.
-            </p>
           </div>
         </CardContent>
       </Card>
