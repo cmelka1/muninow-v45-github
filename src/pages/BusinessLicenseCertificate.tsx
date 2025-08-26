@@ -58,7 +58,7 @@ const BusinessLicenseCertificate = () => {
           </div>
 
           {/* Row-Based Content Layout */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             {/* License Information Row */}
             <div className="bg-muted/10 p-5 rounded-lg">
               <div className="grid grid-cols-3 gap-8">
