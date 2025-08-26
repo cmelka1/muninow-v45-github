@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Eye, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Eye, Download, Loader2, CreditCard } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
@@ -23,6 +23,7 @@ import { formatEINForDisplay } from '@/lib/formatters';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { BusinessLicenseStatus } from '@/hooks/useBusinessLicenseWorkflow';
 import { useToast } from '@/hooks/use-toast';
+import BusinessLicensePaymentManagement from '@/components/BusinessLicensePaymentManagement';
 
 export const BusinessLicenseDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -484,34 +485,69 @@ export const BusinessLicenseDetail = () => {
 
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
-          {/* Fee Information */}
+          {/* Payment Management */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Fee Information
+                <CreditCard className="h-5 w-5" />
+                Payment Management
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Base Fee</span>
-                <span className="text-sm font-medium">{formatCurrency(license.base_fee_cents)}</span>
-              </div>
-              {license.service_fee_cents > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Service Fee</span>
-                  <span className="text-sm font-medium">{formatCurrency(license.service_fee_cents)}</span>
+            <CardContent className="space-y-6">
+              {license.application_status === 'approved' && license.payment_status !== 'paid' && (
+                <BusinessLicensePaymentManagement license={license} />
+              )}
+              
+              {license.application_status === 'issued' && license.payment_status === 'paid' && (
+                <div className="text-center py-8">
+                  <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full">
+                    <CreditCard className="h-8 w-8 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">Payment Complete</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Your business license has been issued and payment has been processed successfully.
+                  </p>
+                  <Badge variant="default" className="text-sm">
+                    License Issued
+                  </Badge>
                 </div>
               )}
-              <Separator />
-              <div className="flex justify-between">
-                <span className="font-medium">Total Amount</span>
-                <span className="font-medium">{formatCurrency(license.total_fee_cents)}</span>
-              </div>
-              <div className="mt-2">
-                <Badge variant={license.payment_status === 'paid' ? 'default' : 'secondary'}>
-                  {license.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
-                </Badge>
+              
+              {(license.application_status !== 'approved' && license.application_status !== 'issued') && (
+                <div className="text-center py-8">
+                  <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full">
+                    <Calendar className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">Payment Not Available</h3>
+                  <p className="text-muted-foreground">
+                    Payment will be available once your business license application is approved.
+                  </p>
+                </div>
+              )}
+              
+              {/* Fee Breakdown */}
+              <div className="border-t border-border pt-4">
+                <h4 className="font-medium mb-3">Fee Breakdown</h4>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Base Fee</span>
+                  <span className="text-sm font-medium">{formatCurrency(license.base_fee_cents)}</span>
+                </div>
+                {license.service_fee_cents > 0 && (
+                  <div className="flex justify-between mt-2">
+                    <span className="text-sm text-gray-600">Service Fee</span>
+                    <span className="text-sm font-medium">{formatCurrency(license.service_fee_cents)}</span>
+                  </div>
+                )}
+                <Separator className="my-2" />
+                <div className="flex justify-between">
+                  <span className="font-medium">Total Amount</span>
+                  <span className="font-medium">{formatCurrency(license.total_fee_cents)}</span>
+                </div>
+                <div className="mt-2">
+                  <Badge variant={license.payment_status === 'paid' ? 'default' : 'secondary'}>
+                    {license.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
+                  </Badge>
+                </div>
               </div>
             </CardContent>
           </Card>
