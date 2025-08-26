@@ -31,6 +31,7 @@ import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { ScheduleInspectionDialog } from '@/components/ScheduleInspectionDialog';
 import { PermitCommunication } from '@/components/PermitCommunication';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
+import { DocumentViewerModal } from '@/components/DocumentViewerModal';
 
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, formatDate } from '@/lib/formatters';
@@ -42,6 +43,8 @@ const MunicipalPermitDetail = () => {
   const [reviewNotes, setReviewNotes] = useState('');
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isInspectionDialogOpen, setIsInspectionDialogOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
   
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
@@ -323,33 +326,9 @@ const MunicipalPermitDetail = () => {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          onClick={async () => {
-                            try {
-                              const { data, error } = await supabase.storage
-                                .from('permit-documents')
-                                .createSignedUrl(doc.storage_path, 3600); // 1 hour expiry
-                              
-                              if (error) {
-                                console.error('Error creating signed URL:', error);
-                                toast({
-                                  title: "Error",
-                                  description: "Failed to preview document",
-                                  variant: "destructive"
-                                });
-                                return;
-                              }
-                              
-                              if (data?.signedUrl) {
-                                window.open(data.signedUrl, '_blank');
-                              }
-                            } catch (error) {
-                              console.error('Error previewing document:', error);
-                              toast({
-                                title: "Error",
-                                description: "Failed to preview document",
-                                variant: "destructive"
-                              });
-                            }
+                          onClick={() => {
+                            setSelectedDocument(doc);
+                            setIsDocumentModalOpen(true);
                           }}
                         >
                           <Eye className="h-4 w-4" />
@@ -533,6 +512,13 @@ const MunicipalPermitDetail = () => {
         permitId={permitId!}
       />
 
+
+      {/* Document Viewer Modal */}
+      <DocumentViewerModal
+        open={isDocumentModalOpen}
+        onOpenChange={setIsDocumentModalOpen}
+        document={selectedDocument}
+      />
 
       {/* Status Change Dialog */}
       <PermitStatusChangeDialog
