@@ -11,7 +11,7 @@ import {
   Users,
   Building,
   Download,
-  Eye,
+  
   CalendarIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -320,40 +320,6 @@ const MunicipalPermitDetail = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={async () => {
-                            try {
-                              const { data, error } = await supabase.storage
-                                .from('permit-documents')
-                                .createSignedUrl(doc.storage_path, 3600); // 1 hour expiry
-                              
-                              if (error) {
-                                console.error('Error creating signed URL:', error);
-                                toast({
-                                  title: "Error",
-                                  description: "Failed to preview document",
-                                  variant: "destructive"
-                                });
-                                return;
-                              }
-                              
-                              if (data?.signedUrl) {
-                                window.open(data.signedUrl, '_blank');
-                              }
-                            } catch (error) {
-                              console.error('Error previewing document:', error);
-                              toast({
-                                title: "Error",
-                                description: "Failed to preview document",
-                                variant: "destructive"
-                              });
-                            }
-                          }}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
                         <Button 
                           variant="ghost" 
                           size="sm"
