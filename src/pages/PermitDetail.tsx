@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, MapPin, User, Clock, MessageSquare, Download, CreditCard, Building, Plus, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, MapPin, User, Clock, MessageSquare, Download, Eye, CreditCard, Building, Plus, Loader2 } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
@@ -32,6 +32,7 @@ const PermitDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
+  const [viewingDocument, setViewingDocument] = useState<string | null>(null);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
   
   const isMunicipalUser = user?.user_metadata?.account_type === 'municipal';
@@ -56,6 +57,49 @@ const PermitDetail = () => {
     setSelectedPaymentMethod
   } = usePermitPaymentMethods(permit);
 
+  const handleDocumentView = async (document: any) => {
+    setViewingDocument(document.id);
+    try {
+      console.log('Attempting to view document:', document.storage_path);
+      
+      const { data, error } = await supabase.storage
+        .from('permit-documents')
+        .createSignedUrl(document.storage_path, 60);
+      
+      if (error) {
+        console.error('Error creating signed URL:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to access document. Please try again or contact support.",
+        });
+        return;
+      }
+      
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, '_blank');
+        toast({
+          title: "Document opened",
+          description: "Document opened in a new tab.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Unable to generate document link.",
+        });
+      }
+    } catch (error) {
+      console.error('Error viewing document:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to view document. Please try again later.",
+      });
+    } finally {
+      setViewingDocument(null);
+    }
+  };
 
   const handleDocumentDownload = async (document: any) => {
     setDownloadingDocument(document.id);
@@ -383,6 +427,18 @@ const PermitDetail = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDocumentView(doc)}
+                          disabled={viewingDocument === doc.id}
+                        >
+                          {viewingDocument === doc.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
