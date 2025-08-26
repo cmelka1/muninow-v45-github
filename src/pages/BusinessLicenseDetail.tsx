@@ -17,6 +17,8 @@ import { BusinessLicenseCommunication } from '@/components/BusinessLicenseCommun
 import { BusinessLicenseStatusChangeDialog } from '@/components/BusinessLicenseStatusChangeDialog';
 import { AddBusinessLicenseDocumentDialog } from '@/components/AddBusinessLicenseDocumentDialog';
 import { DocumentViewerModal } from '@/components/DocumentViewerModal';
+import { BusinessLicensePaymentManagement } from '@/components/BusinessLicensePaymentManagement';
+import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { formatEINForDisplay } from '@/lib/formatters';
@@ -33,6 +35,7 @@ export const BusinessLicenseDetail = () => {
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
+  const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
   
   const { data: license, isLoading, error, refetch } = useBusinessLicense(id!);
   const { data: documents, isLoading: documentsLoading, refetch: refetchDocuments } = useBusinessLicenseDocumentsList(id!);
@@ -484,37 +487,11 @@ export const BusinessLicenseDetail = () => {
 
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
-          {/* Fee Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Fee Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Base Fee</span>
-                <span className="text-sm font-medium">{formatCurrency(license.base_fee_cents)}</span>
-              </div>
-              {license.service_fee_cents > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Service Fee</span>
-                  <span className="text-sm font-medium">{formatCurrency(license.service_fee_cents)}</span>
-                </div>
-              )}
-              <Separator />
-              <div className="flex justify-between">
-                <span className="font-medium">Total Amount</span>
-                <span className="font-medium">{formatCurrency(license.total_fee_cents)}</span>
-              </div>
-              <div className="mt-2">
-                <Badge variant={license.payment_status === 'paid' ? 'default' : 'secondary'}>
-                  {license.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Payment Management */}
+          <BusinessLicensePaymentManagement 
+            license={license}
+            onAddPaymentMethod={() => setIsAddPaymentDialogOpen(true)}
+          />
 
           {/* Status Timeline */}
           <Card>
@@ -612,6 +589,16 @@ export const BusinessLicenseDetail = () => {
           bucketName="business-license-documents"
         />
       )}
+      
+      {/* Add Payment Method Dialog */}
+      <AddPaymentMethodDialog
+        open={isAddPaymentDialogOpen}
+        onOpenChange={setIsAddPaymentDialogOpen}
+        onSuccess={() => {
+          // Payment method added successfully - no need to do anything specific
+          // The BusinessLicensePaymentManagement component will auto-refresh
+        }}
+      />
     </div>
   );
 
