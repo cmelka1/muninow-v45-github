@@ -38,7 +38,14 @@ export const useBusinessLicenseTypes = ({ customerId }: UseBusinessLicenseTypesP
         throw error;
       }
 
-      return data as BusinessLicenseType[];
+      // Sort business types with "Other" always last
+      const sortedData = data?.sort((a, b) => {
+        if (a.name.toLowerCase() === 'other') return 1;
+        if (b.name.toLowerCase() === 'other') return -1;
+        return a.name.localeCompare(b.name);
+      });
+
+      return sortedData as BusinessLicenseType[];
     },
     enabled: true,
   });

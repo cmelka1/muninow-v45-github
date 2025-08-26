@@ -585,11 +585,11 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                         <SelectValue placeholder="Select a business type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {licenseTypes.map((type) => (
-                          <SelectItem key={type.id} value={type.id}>
-                            {type.name} - {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(type.base_fee_cents / 100)}
-                          </SelectItem>
-                        ))}
+                         {licenseTypes.map((type) => (
+                           <SelectItem key={type.id} value={type.id}>
+                             {type.name}
+                           </SelectItem>
+                         ))}
                       </SelectContent>
                     </Select>
                     {validationErrors.businessType && (
