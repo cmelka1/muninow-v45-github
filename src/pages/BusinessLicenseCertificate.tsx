@@ -259,37 +259,44 @@ const BusinessLicenseCertificate = () => {
                         <Building className="h-5 w-5" />
                         Business Information
                       </h3>
-                      <div className="space-y-2">
-                        <div>
-                          <span className="font-medium text-muted-foreground">Business Name:</span>
-                          <div className="font-bold text-lg">{license.business_legal_name}</div>
-                        </div>
-                        {license.doing_business_as && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Left Column - Business Details */}
+                        <div className="space-y-2">
                           <div>
-                            <span className="font-medium text-muted-foreground">DBA:</span>
-                            <div className="font-semibold">{license.doing_business_as}</div>
+                            <span className="font-medium text-muted-foreground">Business Name:</span>
+                            <div className="font-bold text-lg">{license.business_legal_name}</div>
                           </div>
-                        )}
-                        <div>
-                          <span className="font-medium text-muted-foreground">Business Address:</span>
-                          <div className="font-semibold">
-                            {license.business_street_address}
-                            {license.business_apt_number && `, ${license.business_apt_number}`}
-                            <br />
-                            {license.business_city}, {license.business_state} {license.business_zip_code}
+                          {license.doing_business_as && (
+                            <div>
+                              <span className="font-medium text-muted-foreground">DBA:</span>
+                              <div className="font-semibold">{license.doing_business_as}</div>
+                            </div>
+                          )}
+                          <div>
+                            <span className="font-medium text-muted-foreground">Business Address:</span>
+                            <div className="font-semibold">
+                              {license.business_street_address}
+                              {license.business_apt_number && `, ${license.business_apt_number}`}
+                              <br />
+                              {license.business_city}, {license.business_state} {license.business_zip_code}
+                            </div>
                           </div>
                         </div>
-                        {license.federal_ein && (
+                        
+                        {/* Right Column - EIN and Owner */}
+                        <div className="space-y-2">
+                          {license.federal_ein && (
+                            <div>
+                              <span className="font-medium text-muted-foreground">Federal EIN:</span>
+                              <div className="font-semibold">{formatEINForDisplay(license.federal_ein)}</div>
+                            </div>
+                          )}
                           <div>
-                            <span className="font-medium text-muted-foreground">Federal EIN:</span>
-                            <div className="font-semibold">{formatEINForDisplay(license.federal_ein)}</div>
-                          </div>
-                        )}
-                        <div>
-                          <span className="font-medium text-muted-foreground">Owner:</span>
-                          <div className="font-semibold">
-                            {license.owner_first_name} {license.owner_last_name}
-                            {license.owner_title && `, ${license.owner_title}`}
+                            <span className="font-medium text-muted-foreground">Owner:</span>
+                            <div className="font-semibold">
+                              {license.owner_first_name} {license.owner_last_name}
+                              {license.owner_title && `, ${license.owner_title}`}
+                            </div>
                           </div>
                         </div>
                       </div>
