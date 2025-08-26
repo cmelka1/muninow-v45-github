@@ -219,31 +219,19 @@ const BusinessLicenseCertificate = () => {
                             <div className="font-semibold">{formatEINForDisplay(license.federal_ein)}</div>
                           </div>
                         )}
+                        <div>
+                          <span className="font-medium text-muted-foreground">Owner:</span>
+                          <div className="font-semibold">
+                            {license.owner_first_name} {license.owner_last_name}
+                            {license.owner_title && `, ${license.owner_title}`}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Right Column */}
                   <div className="space-y-6">
-                    {/* Owner Information */}
-                    <div className="bg-muted/20 p-4 rounded-lg">
-                      <h3 className="font-semibold text-lg mb-3">Owner Information</h3>
-                      <div className="space-y-2">
-                        <div>
-                          <span className="font-medium text-muted-foreground">Owner Name:</span>
-                          <div className="font-semibold">
-                            {license.owner_first_name} {license.owner_last_name}
-                          </div>
-                        </div>
-                        {license.owner_title && (
-                          <div>
-                            <span className="font-medium text-muted-foreground">Title:</span>
-                            <div className="font-semibold">{license.owner_title}</div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
                     {/* Legal Notice */}
                     <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
                       <h3 className="font-semibold text-lg mb-3 text-primary">Important Notice</h3>
