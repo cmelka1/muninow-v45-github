@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight, Upload, X, FileText, Image, FileCheck, Edit } from 'lucide-react';
-import { BuildingPermitsMunicipalityAutocomplete } from '@/components/ui/building-permits-municipality-autocomplete';
+import { BusinessLicensesMunicipalityAutocomplete } from '@/components/ui/business-licenses-municipality-autocomplete';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -513,7 +513,7 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                     <p className="text-xs text-muted-foreground mb-2">
                       Select the municipality where your license will be processed
                     </p>
-                    <BuildingPermitsMunicipalityAutocomplete
+                    <BusinessLicensesMunicipalityAutocomplete
                       placeholder="Search for your municipality..."
                       onSelect={(municipality) => {
                         handleMunicipalitySelect(municipality);
