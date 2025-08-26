@@ -11,7 +11,6 @@ import {
   Users,
   Building,
   Download,
-  Eye,
   CalendarIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,7 +30,6 @@ import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { ScheduleInspectionDialog } from '@/components/ScheduleInspectionDialog';
 import { PermitCommunication } from '@/components/PermitCommunication';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
-import { DocumentViewerModal } from '@/components/DocumentViewerModal';
 
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, formatDate } from '@/lib/formatters';
@@ -43,8 +41,6 @@ const MunicipalPermitDetail = () => {
   const [reviewNotes, setReviewNotes] = useState('');
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isInspectionDialogOpen, setIsInspectionDialogOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<any>(null);
-  const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
   
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
@@ -323,17 +319,7 @@ const MunicipalPermitDetail = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => {
-                            setSelectedDocument(doc);
-                            setIsDocumentModalOpen(true);
-                          }}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button 
+                        <Button
                           variant="ghost" 
                           size="sm"
                           onClick={async () => {
@@ -512,13 +498,6 @@ const MunicipalPermitDetail = () => {
         permitId={permitId!}
       />
 
-
-      {/* Document Viewer Modal */}
-      <DocumentViewerModal
-        open={isDocumentModalOpen}
-        onOpenChange={setIsDocumentModalOpen}
-        document={selectedDocument}
-      />
 
       {/* Status Change Dialog */}
       <PermitStatusChangeDialog
