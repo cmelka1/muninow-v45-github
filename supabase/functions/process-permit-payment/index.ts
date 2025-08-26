@@ -348,7 +348,7 @@ serve(async (req) => {
         transfer_id: finixData.id,
         transfer_state: finixData.state,
         amount_cents: total_amount_cents,
-        redirect_url: `/permit/${permit_id}?payment=success`
+        redirect_url: `/permit/${permit_id}/certificate`
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

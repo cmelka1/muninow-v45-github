@@ -54,6 +54,7 @@ import Taxes from "./pages/Taxes";
 import OtherServices from "./pages/OtherServices";
 import PermitOverview from "./pages/PermitOverview";
 import PermitDetail from "./pages/PermitDetail";
+import PermitCertificate from "./pages/PermitCertificate";
 import Notifications from "./pages/Notifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MunicipalProtectedRoute } from "@/components/MunicipalProtectedRoute";
@@ -95,6 +96,16 @@ const App = () => (
                 <Route path="/taxes" element={<Taxes />} />
                 <Route path="/other-services" element={<OtherServices />} />
                 <Route path="/permit/:permitId" element={<PermitDetail />} />
+                <Route path="/permit/:permitId/certificate" element={
+                  <SidebarProvider>
+                    <div className="min-h-screen flex w-full">
+                      <AppSidebar />
+                      <main className="flex-1 overflow-auto">
+                        <PermitCertificate />
+                      </main>
+                    </div>
+                  </SidebarProvider>
+                } />
                 <Route path="/bill/:billId" element={<BillOverview />} />
                 <Route path="/payment-confirmation/:paymentHistoryId" element={<PaymentConfirmation />} />
                 <Route path="/members" element={<Members />} />

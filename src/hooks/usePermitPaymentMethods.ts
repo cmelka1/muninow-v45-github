@@ -266,6 +266,15 @@ export const usePermitPaymentMethods = (permit: any) => {
           title: "Payment Successful",
           description: "Your permit payment has been processed successfully.",
         });
+        
+        // Redirect to certificate page if permit is issued
+        if (data.redirect_url) {
+          window.location.href = data.redirect_url;
+        } else {
+          // Fallback: redirect to certificate page directly
+          window.location.href = `/permit/${permit.permit_id}/certificate`;
+        }
+        
         return { success: true, ...data };
       } else {
         toast({
@@ -380,6 +389,10 @@ export const usePermitPaymentMethods = (permit: any) => {
           title: "Payment Successful",
           description: "Your Google Pay permit payment has been processed successfully.",
         });
+        
+        // Redirect to certificate page
+        window.location.href = `/permit/${permit.permit_id}/certificate`;
+        
         return { success: true, ...data };
       } else {
         throw new Error(data?.error || 'Payment failed');
@@ -445,6 +458,17 @@ export const usePermitPaymentMethods = (permit: any) => {
 
         if (error || !data?.success) {
           return { success: false, error: data?.error || 'Payment failed' };
+        }
+
+        // Redirect to certificate page on success
+        if (data.success) {
+          toast({
+            title: "Payment Successful",
+            description: "Your Apple Pay permit payment has been processed successfully.",
+          });
+          
+          // Redirect to certificate page
+          window.location.href = `/permit/${permit.permit_id}/certificate`;
         }
 
         return { success: true, ...data };

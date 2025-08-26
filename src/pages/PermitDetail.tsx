@@ -525,11 +525,22 @@ const PermitDetail = () => {
                   </p>
                 </div>
               ) : permit.payment_status === 'paid' ? (
-                <div className="pt-2">
+                <div className="pt-2 space-y-2">
                   <Button className="w-full" disabled variant="outline">
                     <CreditCard className="h-4 w-4 mr-2" />
                     Payment Complete
                   </Button>
+                  
+                  {permit.application_status === 'issued' && (
+                    <Button 
+                      className="w-full" 
+                      onClick={() => navigate(`/permit/${permitId}/certificate`)}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      View Certificate
+                    </Button>
+                  )}
+                  
                   <p className="text-xs text-green-600 mt-2">
                     Your permit fee has been paid
                   </p>
