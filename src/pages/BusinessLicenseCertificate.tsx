@@ -236,7 +236,7 @@ const BusinessLicenseCertificate = () => {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div>
                           <span className="font-medium text-muted-foreground">License Number:</span>
-                          <div className="text-base font-bold text-primary whitespace-nowrap">
+                          <div className="text-lg font-bold text-primary">
                             #{license.license_number || license.id.slice(0, 8).toUpperCase()}
                           </div>
                         </div>
