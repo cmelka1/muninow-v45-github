@@ -27,6 +27,141 @@ const BusinessLicenseCertificate = () => {
     window.print();
   };
 
+  const renderPDFVersion = () => {
+    if (!license || !municipality) return null;
+
+    return (
+      <div className="w-[1200px] h-[800px] bg-white p-16 font-serif relative">
+        {/* Enhanced decorative corners */}
+        <div className="absolute top-4 left-4 w-20 h-20 border-l-4 border-t-4 border-primary"></div>
+        <div className="absolute top-4 right-4 w-20 h-20 border-r-4 border-t-4 border-primary"></div>
+        <div className="absolute bottom-4 left-4 w-20 h-20 border-l-4 border-b-4 border-primary"></div>
+        <div className="absolute bottom-4 right-4 w-20 h-20 border-r-4 border-b-4 border-primary"></div>
+
+        {/* Enhanced header */}
+        <div className="text-center mb-16">
+          <h1 className="text-6xl font-bold text-primary mb-6">BUSINESS LICENSE CERTIFICATE</h1>
+          <h2 className="text-3xl font-semibold text-muted-foreground mb-4">
+            {municipality?.legal_entity_name || 'Municipal Authority'}
+          </h2>
+          <div className="w-48 h-1 bg-primary mx-auto"></div>
+        </div>
+
+        {/* Enhanced 3-column content */}
+        <div className="grid grid-cols-3 gap-16 mb-16">
+          {/* Left Column - License Details */}
+          <div className="space-y-8">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-primary mb-6">LICENSE DETAILS</h3>
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-lg font-semibold text-muted-foreground">License Number</p>
+                  <p className="text-2xl font-bold text-primary">#{license.license_number || license.id.slice(0, 8).toUpperCase()}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-lg font-semibold text-muted-foreground">License Type</p>
+                  <p className="text-xl font-semibold">{license.business_type || 'Business License'}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-lg font-semibold text-muted-foreground">Issue Date</p>
+                  <p className="text-xl font-semibold">
+                    {license.issued_at ? format(new Date(license.issued_at), 'MMMM d, yyyy') : 'Pending'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Center Column - Business Information */}
+          <div className="space-y-8">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-primary mb-6">BUSINESS INFORMATION</h3>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-lg font-semibold text-muted-foreground">Business Name</p>
+                  <p className="text-2xl font-bold">{license.business_legal_name}</p>
+                  {license.doing_business_as && (
+                    <p className="text-lg text-muted-foreground">DBA: {license.doing_business_as}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-lg font-semibold text-muted-foreground">Business Address</p>
+                  <p className="text-xl">{license.business_street_address}</p>
+                  {license.business_apt_number && <p className="text-xl">#{license.business_apt_number}</p>}
+                  <p className="text-xl">{license.business_city}, {license.business_state} {license.business_zip_code}</p>
+                </div>
+                <div>
+                  <p className="text-lg font-semibold text-muted-foreground">Business Owner</p>
+                  <p className="text-xl font-semibold">{license.owner_first_name} {license.owner_last_name}</p>
+                  {license.owner_title && <p className="text-lg text-muted-foreground">{license.owner_title}</p>}
+                </div>
+                {license.federal_ein && (
+                  <div>
+                    <p className="text-lg font-semibold text-muted-foreground">Federal EIN</p>
+                    <p className="text-xl">{formatEINForDisplay(license.federal_ein)}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Legal Notice & Authority */}
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-2xl font-bold text-primary mb-6">LEGAL NOTICE</h3>
+              <div className="p-6 bg-gray-50 rounded-lg">
+                <p className="text-lg leading-relaxed">
+                  This certificate serves as official documentation that the above-named business 
+                  is duly licensed to operate within the jurisdiction of {municipality?.legal_entity_name || 'this municipality'}.
+                </p>
+                <p className="text-lg leading-relaxed mt-4">
+                  This license is subject to all applicable laws, regulations, and ordinances.
+                </p>
+                <p className="text-lg font-semibold mt-4 text-primary">
+                  Must be displayed prominently at business location.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-2xl font-bold text-primary mb-6">ISSUING AUTHORITY</h3>
+              <div className="space-y-3">
+                <p className="text-lg font-semibold">{municipality?.legal_entity_name}</p>
+                {municipality?.business_address_line1 && (
+                  <p className="text-lg">{municipality.business_address_line1}</p>
+                )}
+                <p className="text-lg">{municipality?.business_city}, {municipality?.business_state}</p>
+                <p className="text-lg text-muted-foreground mt-4">Business License Department</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced footer */}
+        <div className="border-t-2 border-primary pt-8">
+          <div className="grid grid-cols-2 gap-16">
+            <div>
+              <p className="text-lg">
+                <span className="font-semibold">Certificate ID:</span> {license.id.slice(0, 12).toUpperCase()}
+              </p>
+              <p className="text-lg mt-2">
+                <span className="font-semibold">Status:</span> {license.application_status?.toUpperCase()}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-lg">
+                <span className="font-semibold">Generated:</span> {format(new Date(), 'MMMM d, yyyy')}
+              </p>
+              <p className="text-lg mt-2 font-semibold text-primary">
+                Valid License on File
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const handleDownloadPDF = async () => {
     if (!license) return;
 
@@ -34,22 +169,44 @@ const BusinessLicenseCertificate = () => {
     toast.info("Generating PDF...");
 
     try {
-      const certificateElement = document.getElementById('certificate-content');
-      if (!certificateElement) {
-        throw new Error('Certificate content not found');
+      // Create PDF-optimized version
+      const pdfVersionElement = renderPDFVersion();
+      if (!pdfVersionElement) {
+        throw new Error('Unable to generate PDF version');
       }
 
-      // Capture the certificate as canvas with high resolution for framing
-      const canvas = await html2canvas(certificateElement, {
-        scale: 3, // Higher resolution for crisp printing
+      // Create a temporary container for PDF rendering
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      tempContainer.style.zIndex = '-1';
+      document.body.appendChild(tempContainer);
+
+      // Render the PDF version
+      const { createRoot } = await import('react-dom/client');
+      const root = createRoot(tempContainer);
+      
+      // Wrap in a promise to ensure rendering is complete
+      await new Promise<void>((resolve) => {
+        root.render(pdfVersionElement);
+        
+        // Give React time to render
+        setTimeout(resolve, 200);
+      });
+
+      // Capture the PDF version
+      const pdfElement = tempContainer.firstElementChild as HTMLElement;
+      const canvas = await html2canvas(pdfElement, {
+        scale: 3,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
-        width: certificateElement.scrollWidth,
-        height: certificateElement.scrollHeight,
+        width: 1200,
+        height: 800,
       });
 
-      // Create PDF in landscape orientation optimized for framing
+      // Create PDF in landscape orientation
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
@@ -59,41 +216,38 @@ const BusinessLicenseCertificate = () => {
       // Define frame-optimized dimensions (A4 landscape: 297x210mm)
       const pageWidth = 297;
       const pageHeight = 210;
-      const margin = 8; // Small margin for printing
+      const margin = 8;
       
-      // Calculate certificate dimensions to fit within frame-friendly proportions
       const maxWidth = pageWidth - (2 * margin);
       const maxHeight = pageHeight - (2 * margin);
       
-      // Maintain aspect ratio while fitting within the printable area
       const canvasAspectRatio = canvas.width / canvas.height;
       const targetAspectRatio = maxWidth / maxHeight;
       
       let certWidth, certHeight;
       if (canvasAspectRatio > targetAspectRatio) {
-        // Canvas is wider - fit to width
         certWidth = maxWidth;
         certHeight = maxWidth / canvasAspectRatio;
       } else {
-        // Canvas is taller - fit to height
         certHeight = maxHeight;
         certWidth = maxHeight * canvasAspectRatio;
       }
       
-      // Center the certificate on the page
       const x = (pageWidth - certWidth) / 2;
       const y = (pageHeight - certHeight) / 2;
 
-      // Add the canvas image to PDF with proper centering and scaling
       pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, certWidth, certHeight);
 
-      // Generate filename with license number
+      // Generate filename
       const licenseNumber = license.license_number || license.id.slice(0, 8).toUpperCase();
       const filename = `Business-License-Certificate-${licenseNumber}.pdf`;
-
-      // Download the PDF
+      
       pdf.save(filename);
       toast.success("PDF downloaded successfully!");
+
+      // Cleanup
+      root.unmount();
+      document.body.removeChild(tempContainer);
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast.error("Failed to generate PDF. Please try again.");
