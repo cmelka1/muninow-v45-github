@@ -419,8 +419,8 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
       const selectedLicenseType = licenseTypes.find(type => type.id === selectedBusinessType);
       console.log('📜 Selected License Type:', selectedLicenseType);
 
-      // Fetch merchant and fee profile data
-      console.log('🔍 Fetching merchant fee profile data for merchant:', selectedMunicipality.id);
+      // Fetch merchant and fee profile data for Business Licenses
+      console.log('🔍 Fetching Business Licenses merchant for customer:', selectedMunicipality.customer_id);
       const { data: merchantData, error: merchantError } = await supabase
         .from('merchants')
         .select(`
@@ -434,16 +434,21 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
             ach_fixed_fee
           )
         `)
-        .eq('id', selectedMunicipality.id)
+        .eq('customer_id', selectedMunicipality.customer_id)
+        .eq('subcategory', 'Business Licenses')
         .single();
 
       if (merchantError) {
-        console.error('❌ Error fetching merchant data:', merchantError);
-        throw merchantError;
+        console.error('❌ Error fetching Business Licenses merchant data:', merchantError);
+        throw new Error(`No Business Licenses merchant found for this municipality: ${merchantError.message}`);
+      }
+
+      if (!merchantData) {
+        throw new Error('No Business Licenses merchant configured for this municipality');
       }
 
       const feeProfile = merchantData.merchant_fee_profiles?.[0];
-      console.log('📊 Fee profile data:', feeProfile);
+      console.log('📊 Found merchant:', merchantData.id, 'with fee profile:', feeProfile);
 
       // Generate payment identifiers
       const idempotencyId = crypto.randomUUID();
@@ -452,7 +457,7 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
       // Create the application
       const applicationData = {
         customer_id: selectedMunicipality.customer_id,
-        merchant_id: selectedMunicipality.id,
+        merchant_id: merchantData.id,
         license_type_id: selectedBusinessType,
         business_legal_name: businessInfo.businessLegalName,
         business_type: selectedLicenseType?.name || '',
