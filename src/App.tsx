@@ -106,16 +106,29 @@ const App = () => (
                 } />
                 <Route path="/taxes" element={<Taxes />} />
                 <Route path="/other-services" element={<OtherServices />} />
-                <Route path="/permit/:permitId" element={<PermitDetail />} />
+                <Route path="/permit/:permitId" element={
+                  <ProtectedRoute requiredRole="user">
+                    <SidebarProvider>
+                      <div className="min-h-screen flex w-full">
+                        <AppSidebar />
+                        <main className="flex-1 overflow-auto">
+                          <PermitDetail />
+                        </main>
+                      </div>
+                    </SidebarProvider>
+                  </ProtectedRoute>
+                } />
                 <Route path="/permit/:permitId/certificate" element={
-                  <SidebarProvider>
-                    <div className="min-h-screen flex w-full">
-                      <AppSidebar />
-                      <main className="flex-1 overflow-auto">
-                        <PermitCertificate />
-                      </main>
-                    </div>
-                  </SidebarProvider>
+                  <ProtectedRoute requiredRole="user">
+                    <SidebarProvider>
+                      <div className="min-h-screen flex w-full">
+                        <AppSidebar />
+                        <main className="flex-1 overflow-auto">
+                          <PermitCertificate />
+                        </main>
+                      </div>
+                    </SidebarProvider>
+                  </ProtectedRoute>
                 } />
                 <Route path="/bill/:billId" element={<BillOverview />} />
                 <Route path="/payment-confirmation/:paymentHistoryId" element={<PaymentConfirmation />} />
