@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Printer, Building, Award } from 'lucide-react';
+import { ArrowLeft, Printer, Building, Award, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,12 +8,16 @@ import { useBusinessLicense } from '@/hooks/useBusinessLicense';
 import { useCustomerById } from '@/hooks/useCustomerById';
 import { format } from 'date-fns';
 import { formatEINForDisplay } from '@/lib/formatters';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { toast } from 'sonner';
 
 const BusinessLicenseCertificate = () => {
   const { licenseId } = useParams<{ licenseId: string }>();
   const navigate = useNavigate();
   const { data: license, isLoading, error } = useBusinessLicense(licenseId!);
   const { customer: municipality, isLoading: municipalityLoading } = useCustomerById(license?.customer_id);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const handleBack = () => {
     navigate(`/business-license/${licenseId}`);
@@ -21,6 +25,57 @@ const BusinessLicenseCertificate = () => {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!license) return;
+
+    setIsGeneratingPDF(true);
+    toast.info("Generating PDF...");
+
+    try {
+      const certificateElement = document.getElementById('certificate-content');
+      if (!certificateElement) {
+        throw new Error('Certificate content not found');
+      }
+
+      // Capture the certificate as canvas with high resolution
+      const canvas = await html2canvas(certificateElement, {
+        scale: 2, // Higher resolution
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: certificateElement.scrollWidth,
+        height: certificateElement.scrollHeight,
+      });
+
+      // Create PDF in landscape orientation
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      // Calculate dimensions to fit the certificate properly
+      const imgWidth = 297; // A4 landscape width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      // Add the canvas image to PDF
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
+
+      // Generate filename with license number
+      const licenseNumber = license.license_number || license.id.slice(0, 8).toUpperCase();
+      const filename = `Business-License-Certificate-${licenseNumber}.pdf`;
+
+      // Download the PDF
+      pdf.save(filename);
+      toast.success("PDF downloaded successfully!");
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error("Failed to generate PDF. Please try again.");
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   if (isLoading || municipalityLoading) {
@@ -104,10 +159,21 @@ const BusinessLicenseCertificate = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to License
           </Button>
-          <Button onClick={handlePrint} className="flex items-center gap-2">
-            <Printer className="h-4 w-4" />
-            Print Certificate
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleDownloadPDF}
+              disabled={isGeneratingPDF}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
+            </Button>
+            <Button onClick={handlePrint} className="flex items-center gap-2">
+              <Printer className="h-4 w-4" />
+              Print Certificate
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -115,7 +181,7 @@ const BusinessLicenseCertificate = () => {
       <div className="print:p-0 print:m-0 print:bg-white print:shadow-none">
         <div className="max-w-4xl mx-auto print:max-w-none print:mx-0 print:w-full print:h-full">
           {/* Certificate Layout - Horizontal/Landscape Optimized */}
-          <div className="bg-white print:bg-white print:h-screen print:w-full print:flex print:flex-col print:justify-center print:items-center print:p-8 p-8">
+          <div id="certificate-content" className="bg-white print:bg-white print:h-screen print:w-full print:flex print:flex-col print:justify-center print:items-center print:p-8 p-8">
             <style dangerouslySetInnerHTML={{
               __html: `
                 @media print {
