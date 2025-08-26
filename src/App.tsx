@@ -92,7 +92,18 @@ const App = () => (
                 <Route path="/payment-history" element={<PaymentHistory />} />
                 <Route path="/permits" element={<Permits />} />
                 <Route path="/business-licenses" element={<BusinessLicenses />} />
-                <Route path="/business-license/:id" element={<BusinessLicenseDetail />} />
+                <Route path="/business-license/:id" element={
+                  <ProtectedRoute requiredRole="user">
+                    <SidebarProvider>
+                      <div className="min-h-screen flex w-full">
+                        <AppSidebar />
+                        <main className="flex-1 overflow-auto">
+                          <BusinessLicenseDetail />
+                        </main>
+                      </div>
+                    </SidebarProvider>
+                  </ProtectedRoute>
+                } />
                 <Route path="/taxes" element={<Taxes />} />
                 <Route path="/other-services" element={<OtherServices />} />
                 <Route path="/permit/:permitId" element={<PermitDetail />} />

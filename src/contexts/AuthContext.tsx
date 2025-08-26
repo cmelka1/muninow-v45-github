@@ -194,6 +194,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
       setSession(null);
       
+      // Redirect to signin page
+      window.location.href = '/signin';
+      
       toast({
         title: "Signed out",
         description: "You have been successfully signed out."
