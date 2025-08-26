@@ -47,7 +47,7 @@ const BusinessLicenseCertificate = () => {
           <div className="absolute bottom-2 right-2 w-12 h-12 border-r-2 border-b-2 border-primary/30"></div>
 
           {/* Header */}
-          <div className="text-center mb-12">
+          <div className="text-center mb-6">
             <h1 className="text-5xl font-bold text-primary mb-4">
               BUSINESS LICENSE CERTIFICATE
             </h1>
@@ -58,7 +58,7 @@ const BusinessLicenseCertificate = () => {
           </div>
 
           {/* Row-Based Content Layout */}
-          <div className="space-y-10">
+          <div className="space-y-6">
             {/* License Information Row */}
             <div className="bg-muted/10 p-8 rounded-lg">
               <h3 className="font-semibold text-2xl mb-6">
