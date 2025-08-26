@@ -21,6 +21,7 @@ interface AddPermitDocumentDialogProps {
 }
 
 
+// Force refresh to clear Select reference error
 export const AddPermitDocumentDialog: React.FC<AddPermitDocumentDialogProps> = ({
   open,
   onOpenChange,
