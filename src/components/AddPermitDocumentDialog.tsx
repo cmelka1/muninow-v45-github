@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, X } from "lucide-react";
@@ -20,15 +20,6 @@ interface AddPermitDocumentDialogProps {
   onSuccess: () => void;
 }
 
-const DOCUMENT_TYPES = [
-  "Plans",
-  "Application Form", 
-  "Supporting Documentation",
-  "Inspection Report",
-  "Certificate",
-  "Additional Information",
-  "Other"
-];
 
 export const AddPermitDocumentDialog: React.FC<AddPermitDocumentDialogProps> = ({
   open,
@@ -155,18 +146,12 @@ export const AddPermitDocumentDialog: React.FC<AddPermitDocumentDialogProps> = (
         <div className="space-y-4">
           <div>
             <Label htmlFor="document-type">Document Type *</Label>
-            <Select value={documentType} onValueChange={setDocumentType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select document type" />
-              </SelectTrigger>
-              <SelectContent>
-                {DOCUMENT_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              id="document-type"
+              value={documentType}
+              onChange={(e) => setDocumentType(e.target.value)}
+              placeholder="Enter document type (e.g., Plans, Application Form, Certificate)"
+            />
           </div>
 
           <div>

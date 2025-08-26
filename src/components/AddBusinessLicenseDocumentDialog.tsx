@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { useBusinessLicenseDocuments } from "@/hooks/useBusinessLicenseDocuments";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, X } from "lucide-react";
@@ -20,18 +20,6 @@ interface AddBusinessLicenseDocumentDialogProps {
   onSuccess: () => void;
 }
 
-const DOCUMENT_TYPES = [
-  "Application Form",
-  "Business License Certificate", 
-  "Supporting Documentation",
-  "Insurance Documents",
-  "Tax Documents",
-  "Zoning Certificate",
-  "Fire Department Approval",
-  "Health Department Approval",
-  "Additional Information",
-  "Other"
-];
 
 export const AddBusinessLicenseDocumentDialog: React.FC<AddBusinessLicenseDocumentDialogProps> = ({
   open,
@@ -135,18 +123,12 @@ export const AddBusinessLicenseDocumentDialog: React.FC<AddBusinessLicenseDocume
         <div className="space-y-4">
           <div>
             <Label htmlFor="document-type">Document Type *</Label>
-            <Select value={documentType} onValueChange={setDocumentType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select document type" />
-              </SelectTrigger>
-              <SelectContent>
-                {DOCUMENT_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              id="document-type"
+              value={documentType}
+              onChange={(e) => setDocumentType(e.target.value)}
+              placeholder="Enter document type (e.g., Application Form, Certificate, Insurance Documents)"
+            />
           </div>
 
           <div>
