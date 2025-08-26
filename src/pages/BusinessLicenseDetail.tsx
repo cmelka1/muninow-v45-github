@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit } from 'lucide-react';
+import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Eye, Download, Loader2 } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
@@ -8,23 +8,35 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useBusinessLicense } from '@/hooks/useBusinessLicense';
+import { useBusinessLicenseDocumentsList } from '@/hooks/useBusinessLicenseDocumentsList';
+import { useBusinessLicenseDocuments } from '@/hooks/useBusinessLicenseDocuments';
 import { BusinessLicenseStatusBadge } from '@/components/BusinessLicenseStatusBadge';
 import { BusinessLicenseCommunication } from '@/components/BusinessLicenseCommunication';
 import { BusinessLicenseStatusChangeDialog } from '@/components/BusinessLicenseStatusChangeDialog';
+import { AddBusinessLicenseDocumentDialog } from '@/components/AddBusinessLicenseDocumentDialog';
+import { DocumentViewerModal } from '@/components/DocumentViewerModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { formatEINForDisplay } from '@/lib/formatters';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { BusinessLicenseStatus } from '@/hooks/useBusinessLicenseWorkflow';
+import { useToast } from '@/hooks/use-toast';
 
 export const BusinessLicenseDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [addDocumentOpen, setAddDocumentOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
   
   const { data: license, isLoading, error, refetch } = useBusinessLicense(id!);
+  const { data: documents, isLoading: documentsLoading, refetch: refetchDocuments } = useBusinessLicenseDocumentsList(id!);
+  const { getDocumentUrl } = useBusinessLicenseDocuments();
   
   const isMunicipalUser = user?.user_metadata?.account_type === 'municipal';
 
@@ -33,6 +45,46 @@ export const BusinessLicenseDetail = () => {
       navigate('/municipal/business-licenses');
     } else {
       navigate('/business-licenses');
+    }
+  };
+
+  const handleDocumentView = async (document: any) => {
+    try {
+      const url = await getDocumentUrl(document.storage_path);
+      if (url) {
+        setSelectedDocument({ ...document, signedUrl: url });
+      }
+    } catch (error) {
+      console.error('Error getting document URL:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load document preview",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDocumentDownload = async (document: any) => {
+    setDownloadingDocument(document.id);
+    try {
+      const url = await getDocumentUrl(document.storage_path);
+      if (url) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = document.file_name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download document",
+        variant: "destructive"
+      });
+    } finally {
+      setDownloadingDocument(null);
     }
   };
 
@@ -347,6 +399,87 @@ export const BusinessLicenseDetail = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Documents Section */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Documents ({documents?.length || 0})
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAddDocumentOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Document
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {documentsLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ) : documents && documents.length > 0 ? (
+                <div className="space-y-3">
+                  {documents.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-3 flex-1">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium truncate">{doc.file_name}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {doc.document_type}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                            <span>{(doc.file_size / 1024).toFixed(1)} KB</span>
+                            <span>Uploaded: {formatDate(doc.uploaded_at)}</span>
+                          </div>
+                          {doc.description && (
+                            <p className="text-xs text-muted-foreground mt-1">{doc.description}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDocumentView(doc)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDocumentDownload(doc)}
+                          disabled={downloadingDocument === doc.id}
+                        >
+                          {downloadingDocument === doc.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                  <p className="text-sm">No documents uploaded yet</p>
+                  <p className="text-xs mt-1">Documents will appear here once uploaded</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Right Column - Sidebar */}
@@ -453,6 +586,30 @@ export const BusinessLicenseDetail = () => {
             refetch();
             setShowStatusDialog(false);
           }}
+        />
+      )}
+
+      {/* Add Document Dialog */}
+      <AddBusinessLicenseDocumentDialog
+        open={addDocumentOpen}
+        onOpenChange={setAddDocumentOpen}
+        licenseId={license.id}
+        customerId={license.customer_id}
+        merchantId={license.merchant_id}
+        merchantName={license.merchant_id ? "Business License" : undefined}
+        onSuccess={() => {
+          refetchDocuments();
+          setAddDocumentOpen(false);
+        }}
+      />
+
+      {/* Document Viewer Modal */}
+      {selectedDocument && (
+        <DocumentViewerModal
+          isOpen={!!selectedDocument}
+          onClose={() => setSelectedDocument(null)}
+          document={selectedDocument}
+          bucketName="business-license-documents"
         />
       )}
     </div>

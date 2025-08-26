@@ -4,6 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export interface BusinessLicenseDetail {
   id: string;
+  user_id: string;
+  customer_id: string;
+  merchant_id?: string;
   license_number: string;
   application_status: string;
   business_legal_name: string;
