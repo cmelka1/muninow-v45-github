@@ -98,7 +98,7 @@ const BusinessLicenseCertificate = () => {
               </div>
 
               {/* Three Column Row: Owner | Business Address | Federal EIN */}
-              <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-3 gap-4 mb-2">
                 <div className="text-center">
                   <span className="font-medium text-lg text-muted-foreground block mb-2">Business Owner:</span>
                   <div className="text-xl font-semibold">
