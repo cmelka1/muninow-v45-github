@@ -52,7 +52,7 @@ export const getStatusDescription = (status: BusinessLicenseStatus): string => {
 export const getValidStatusTransitions = (currentStatus: BusinessLicenseStatus): BusinessLicenseStatus[] => {
   const transitions: Record<BusinessLicenseStatus, BusinessLicenseStatus[]> = {
     draft: ['submitted'],
-    submitted: ['under_review', 'withdrawn', 'approved'],
+    submitted: ['under_review', 'approved', 'withdrawn'],
     under_review: ['information_requested', 'approved', 'denied', 'rejected'],
     information_requested: ['resubmitted', 'withdrawn', 'expired'],
     resubmitted: ['under_review'],
