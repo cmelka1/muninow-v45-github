@@ -93,42 +93,36 @@ const App = () => (
                 <Route path="/permits" element={<Permits />} />
                 <Route path="/business-licenses" element={<BusinessLicenses />} />
                 <Route path="/business-license/:id" element={
-                  <ProtectedRoute requiredRole="user">
-                    <SidebarProvider>
-                      <div className="min-h-screen flex w-full">
-                        <AppSidebar />
-                        <main className="flex-1 overflow-auto">
-                          <BusinessLicenseDetail />
-                        </main>
-                      </div>
-                    </SidebarProvider>
-                  </ProtectedRoute>
+                  <SidebarProvider>
+                    <div className="min-h-screen flex w-full">
+                      <AppSidebar />
+                      <main className="flex-1 overflow-auto">
+                        <BusinessLicenseDetail />
+                      </main>
+                    </div>
+                  </SidebarProvider>
                 } />
                 <Route path="/taxes" element={<Taxes />} />
                 <Route path="/other-services" element={<OtherServices />} />
                 <Route path="/permit/:permitId" element={
-                  <ProtectedRoute requiredRole="user">
-                    <SidebarProvider>
-                      <div className="min-h-screen flex w-full">
-                        <AppSidebar />
-                        <main className="flex-1 overflow-auto">
-                          <PermitDetail />
-                        </main>
-                      </div>
-                    </SidebarProvider>
-                  </ProtectedRoute>
+                  <SidebarProvider>
+                    <div className="min-h-screen flex w-full">
+                      <AppSidebar />
+                      <main className="flex-1 overflow-auto">
+                        <PermitDetail />
+                      </main>
+                    </div>
+                  </SidebarProvider>
                 } />
                 <Route path="/permit/:permitId/certificate" element={
-                  <ProtectedRoute requiredRole="user">
-                    <SidebarProvider>
-                      <div className="min-h-screen flex w-full">
-                        <AppSidebar />
-                        <main className="flex-1 overflow-auto">
-                          <PermitCertificate />
-                        </main>
-                      </div>
-                    </SidebarProvider>
-                  </ProtectedRoute>
+                  <SidebarProvider>
+                    <div className="min-h-screen flex w-full">
+                      <AppSidebar />
+                      <main className="flex-1 overflow-auto">
+                        <PermitCertificate />
+                      </main>
+                    </div>
+                  </SidebarProvider>
                 } />
                 <Route path="/bill/:billId" element={<BillOverview />} />
                 <Route path="/payment-confirmation/:paymentHistoryId" element={<PaymentConfirmation />} />
