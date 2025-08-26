@@ -14,6 +14,7 @@ import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
 import { usePermitPaymentMethods } from '@/hooks/usePermitPaymentMethods';
 import { AddPermitDocumentDialog } from '@/components/AddPermitDocumentDialog';
+import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 import { PermitCommunication } from '@/components/PermitCommunication';
 import { DocumentViewerModal } from '@/components/DocumentViewerModal';
@@ -36,6 +37,7 @@ const PermitDetail = () => {
   const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
+  const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
   
   const isMunicipalUser = user?.user_metadata?.account_type === 'municipal';
   
@@ -56,8 +58,17 @@ const PermitDetail = () => {
     handlePayment,
     handleGooglePayment,
     handleApplePayment,
-    setSelectedPaymentMethod
+    setSelectedPaymentMethod,
+    loadPaymentInstruments,
+    paymentMethodsLoading
   } = usePermitPaymentMethods(permit);
+
+  const handleAddPaymentMethodSuccess = async (paymentMethodId?: string) => {
+    await loadPaymentInstruments();
+    if (paymentMethodId) {
+      setSelectedPaymentMethod(paymentMethodId);
+    }
+  };
 
   const handleDocumentView = (document: any) => {
     setSelectedDocument(document);
@@ -465,17 +476,27 @@ const PermitDetail = () => {
                   />
                   
                   {/* Payment Method Selection */}
-                  {paymentInstruments.length > 0 && (
-                    <div>
-                      <Label className="text-sm font-medium mb-2 block">Payment Method</Label>
+                  <div>
+                    <Label className="text-sm font-medium mb-3 block">Payment Method</Label>
+                    <div className="space-y-3">
                       <PaymentMethodSelector
                         paymentInstruments={paymentInstruments}
                         selectedPaymentMethod={selectedPaymentMethod}
                         onSelectPaymentMethod={setSelectedPaymentMethod}
-                        maxMethods={2}
+                        isLoading={paymentMethodsLoading}
+                        maxMethods={5}
                       />
+                      
+                      <Button 
+                        variant="outline" 
+                        className="w-full" 
+                        onClick={() => setIsAddPaymentDialogOpen(true)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add New Payment Method
+                      </Button>
                     </div>
-                  )}
+                  </div>
                   
                   {/* Payment Buttons */}
                   <div className="space-y-2">
@@ -616,6 +637,12 @@ const PermitDetail = () => {
         isOpen={documentViewerOpen}
         onClose={() => setDocumentViewerOpen(false)}
         document={selectedDocument}
+      />
+      
+      <AddPaymentMethodDialog
+        open={isAddPaymentDialogOpen}
+        onOpenChange={setIsAddPaymentDialogOpen}
+        onSuccess={handleAddPaymentMethodSuccess}
       />
     </div>
   );
