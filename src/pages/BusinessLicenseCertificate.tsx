@@ -47,7 +47,7 @@ const BusinessLicenseCertificate = () => {
           <div className="absolute bottom-2 right-2 w-12 h-12 border-r-2 border-b-2 border-primary/30"></div>
 
           {/* Header */}
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <h1 className="text-5xl font-bold text-primary mb-4">
               BUSINESS LICENSE CERTIFICATE
             </h1>
@@ -58,9 +58,9 @@ const BusinessLicenseCertificate = () => {
           </div>
 
           {/* Row-Based Content Layout */}
-          <div className="space-y-10">
+          <div className="space-y-6">
             {/* License Information Row */}
-            <div className="bg-muted/10 p-8 rounded-lg">
+            <div className="bg-muted/10 p-6 rounded-lg">
               <h3 className="font-semibold text-2xl mb-6">
                 License Details
               </h3>
@@ -87,7 +87,7 @@ const BusinessLicenseCertificate = () => {
             </div>
 
             {/* Business Information Row */}
-            <div className="bg-muted/10 p-8 rounded-lg">
+            <div className="bg-muted/10 p-6 rounded-lg">
               <h3 className="font-semibold text-2xl mb-6">
                 Business Information
               </h3>
@@ -105,7 +105,7 @@ const BusinessLicenseCertificate = () => {
               </div>
 
               {/* Three Column Row: Owner | Business Address | Federal EIN */}
-              <div className="grid grid-cols-3 gap-6 mb-6">
+              <div className="grid grid-cols-3 gap-6">
                 <div className="text-center">
                   <span className="font-medium text-lg text-muted-foreground block mb-2">Business Owner:</span>
                   <div className="text-lg font-semibold">
@@ -133,12 +133,14 @@ const BusinessLicenseCertificate = () => {
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Legal Notice & Authority Row */}
-            <div className="grid grid-cols-2 gap-8">
+          {/* Footer: Important Notice and Issuing Authority */}
+          <div className="border-t-2 border-primary pt-6 mt-8">
+            <div className="grid grid-cols-2 gap-8 mb-6">
               <div className="bg-muted/10 p-6 rounded-lg">
-                <h3 className="text-xl font-bold text-primary mb-4">LEGAL NOTICE</h3>
-                <div className="space-y-3 text-lg leading-relaxed">
+                <h3 className="text-xl font-bold text-primary mb-4">IMPORTANT NOTICE</h3>
+                <div className="space-y-3 text-base leading-relaxed">
                   <p>
                     This certificate serves as official documentation that the above-named business 
                     is duly licensed to operate within the jurisdiction of {municipality?.legal_entity_name || 'this municipality'}.
@@ -153,9 +155,9 @@ const BusinessLicenseCertificate = () => {
               </div>
 
               <div className="bg-muted/10 p-6 rounded-lg">
-                <h3 className="text-xl font-bold text-primary mb-4">ISSUING AUTHORITY</h3>
-                <div className="space-y-2 text-lg">
-                  <div className="font-semibold">{municipality?.legal_entity_name}</div>
+                <h3 className="text-xl font-bold text-primary mb-4">ISSUED BY</h3>
+                <div className="space-y-2 text-base">
+                  <div className="font-semibold text-lg">{municipality?.legal_entity_name}</div>
                   {municipality?.business_address_line1 && (
                     <div>{municipality.business_address_line1}</div>
                   )}
@@ -422,7 +424,7 @@ const BusinessLicenseCertificate = () => {
                 <div className="absolute bottom-2 right-2 w-8 h-8 border-r-2 border-b-2 border-primary/30"></div>
 
                 {/* Header */}
-                <div className="text-center mb-8">
+                <div className="text-center mb-6">
                   <h1 className="text-3xl font-bold text-primary mb-2">
                     BUSINESS LICENSE CERTIFICATE
                   </h1>
@@ -431,125 +433,116 @@ const BusinessLicenseCertificate = () => {
                   </div>
                 </div>
 
-                {/* Main Content - Horizontal Layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                  {/* Left Column */}
-                  <div className="space-y-6">
-                    {/* License Information */}
-                    <div className="bg-muted/20 p-4 rounded-lg">
-                      <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                        <Award className="h-5 w-5" />
-                        License Details
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div>
-                          <span className="font-medium text-muted-foreground">License Number:</span>
-                          <div className="text-lg font-bold text-primary">
-                            #{license.license_number || license.id.slice(0, 8).toUpperCase()}
-                          </div>
-                        </div>
-                        <div>
-                          <span className="font-medium text-muted-foreground">License Type:</span>
-                          <div className="font-semibold">{license.business_type}</div>
-                        </div>
-                        <div>
-                          <span className="font-medium text-muted-foreground">Issue Date:</span>
-                          <div className="font-semibold">
-                            {license.issued_at ? format(new Date(license.issued_at), 'MMMM d, yyyy') : 'N/A'}
-                          </div>
+                {/* Content Layout */}
+                <div className="space-y-4">
+                  {/* License Information Row */}
+                  <div className="bg-muted/10 p-4 rounded-lg">
+                    <h3 className="font-semibold text-lg mb-4">
+                      License Details
+                    </h3>
+                    <div className="grid grid-cols-3 gap-6">
+                      <div className="text-center">
+                        <span className="font-medium text-muted-foreground block mb-1">License Number:</span>
+                        <div className="text-xl font-bold text-primary">
+                          #{license.license_number || license.id.slice(0, 8).toUpperCase()}
                         </div>
                       </div>
-                    </div>
-
-                    {/* Business Information */}
-                    <div className="bg-muted/20 p-4 rounded-lg">
-                      <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                        <Building className="h-5 w-5" />
-                        Business Information
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Left Column - Business Details */}
-                        <div className="space-y-2">
-                          <div>
-                            <span className="font-medium text-muted-foreground">Business Name:</span>
-                            <div className="font-bold text-lg">{license.business_legal_name}</div>
-                          </div>
-                          {license.doing_business_as && (
-                            <div>
-                              <span className="font-medium text-muted-foreground">DBA:</span>
-                              <div className="font-semibold">{license.doing_business_as}</div>
-                            </div>
-                          )}
-                          <div>
-                            <span className="font-medium text-muted-foreground">Business Address:</span>
-                            <div className="font-semibold">
-                              {license.business_street_address}
-                              {license.business_apt_number && `, ${license.business_apt_number}`}
-                              <br />
-                              {license.business_city}, {license.business_state} {license.business_zip_code}
-                            </div>
-                          </div>
+                      <div className="text-center">
+                        <span className="font-medium text-muted-foreground block mb-1">License Type:</span>
+                        <div className="text-lg font-semibold">
+                          {license.business_type || 'Business License'}
                         </div>
-                        
-                        {/* Right Column - EIN and Owner */}
-                        <div className="space-y-2">
-                          {license.federal_ein && (
-                            <div>
-                              <span className="font-medium text-muted-foreground">Federal EIN:</span>
-                              <div className="font-semibold">{formatEINForDisplay(license.federal_ein)}</div>
-                            </div>
-                          )}
-                          <div>
-                            <span className="font-medium text-muted-foreground">Owner:</span>
-                            <div className="font-semibold">
-                              {license.owner_first_name} {license.owner_last_name}
-                              {license.owner_title && `, ${license.owner_title}`}
-                            </div>
-                          </div>
+                      </div>
+                      <div className="text-center">
+                        <span className="font-medium text-muted-foreground block mb-1">Issue Date:</span>
+                        <div className="text-lg font-semibold">
+                          {license.issued_at ? format(new Date(license.issued_at), 'MMMM d, yyyy') : 'Pending'}
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Right Column */}
-                  <div className="space-y-6">
-                    {/* Legal Notice */}
-                    <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
-                      <h3 className="font-semibold text-lg mb-3 text-primary">Important Notice</h3>
-                      <div className="text-sm space-y-2">
-                        <p>
-                          This certificate must be displayed in a conspicuous location on the licensed 
-                          premises where it can be easily seen by the public.
-                        </p>
-                        <p>
-                          This license is valid until revoked, suspended, or expired according to 
-                          municipal regulations.
-                        </p>
-                        <p className="font-medium">
-                          Failure to display this certificate may result in penalties.
-                        </p>
+                  {/* Business Information Row */}
+                  <div className="bg-muted/10 p-4 rounded-lg">
+                    <h3 className="font-semibold text-lg mb-4">
+                      Business Information
+                    </h3>
+                    
+                    {/* Business Name - Prominent */}
+                    <div className="text-center mb-6">
+                      <div className="text-3xl font-bold text-primary">
+                        {license.business_legal_name}
+                      </div>
+                      {license.doing_business_as && (
+                        <div className="text-lg text-muted-foreground mt-2">
+                          DBA: {license.doing_business_as}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Three Column Row: Owner | Business Address | Federal EIN */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <span className="font-medium text-muted-foreground block mb-1">Business Owner:</span>
+                        <div className="text-base font-semibold">
+                          {license.owner_first_name} {license.owner_last_name}
+                        </div>
+                        {license.owner_title && (
+                          <div className="text-sm text-muted-foreground mt-1">{license.owner_title}</div>
+                        )}
+                      </div>
+                      <div className="text-center">
+                        <span className="font-medium text-muted-foreground block mb-1">Business Address:</span>
+                        <div className="text-base font-semibold">
+                          {license.business_street_address}
+                          {license.business_apt_number && `, #${license.business_apt_number}`}
+                        </div>
+                        <div className="text-sm">
+                          {license.business_city}, {license.business_state} {license.business_zip_code}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <span className="font-medium text-muted-foreground block mb-1">Federal EIN:</span>
+                        <div className="text-base font-semibold">
+                          {license.federal_ein ? formatEINForDisplay(license.federal_ein) : 'Not provided'}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Footer - Issuing Authority */}
-                <div className="border-t pt-6 mt-8">
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Issued by:</p>
-                      <p className="font-semibold">{municipality?.legal_entity_name || 'Municipality'}</p>
-                      <p className="text-sm text-muted-foreground">Business License Department</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">
-                        Certificate issued on {format(new Date(), 'MMMM d, yyyy')}
-                      </p>
-                      {municipality?.entity_website && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Verify authenticity at: {municipality.entity_website}
+                {/* Footer: Important Notice and Issuing Authority */}
+                <div className="border-t-2 border-primary pt-4 mt-6">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="bg-muted/10 p-4 rounded-lg">
+                      <h3 className="text-base font-bold text-primary mb-3">IMPORTANT NOTICE</h3>
+                      <div className="space-y-2 text-sm leading-relaxed">
+                        <p>
+                          This certificate serves as official documentation that the above-named business 
+                          is duly licensed to operate within the jurisdiction of {municipality?.legal_entity_name || 'this municipality'}.
                         </p>
-                      )}
+                        <p>
+                          This license is subject to all applicable laws, regulations, and ordinances.
+                        </p>
+                        <p className="font-semibold text-primary">
+                          Must be displayed prominently at business location.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-muted/10 p-4 rounded-lg">
+                      <h3 className="text-base font-bold text-primary mb-3">ISSUED BY</h3>
+                      <div className="space-y-1 text-sm">
+                        <div className="font-semibold text-base">{municipality?.legal_entity_name}</div>
+                        {municipality?.business_address_line1 && (
+                          <div>{municipality.business_address_line1}</div>
+                        )}
+                        <div>{municipality?.business_city}, {municipality?.business_state}</div>
+                        <div className="text-muted-foreground mt-2">Business License Department</div>
+                        <div className="text-muted-foreground mt-2">
+                          Generated: {format(new Date(), 'MMMM d, yyyy')}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
