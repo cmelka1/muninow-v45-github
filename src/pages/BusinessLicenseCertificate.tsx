@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBusinessLicense } from '@/hooks/useBusinessLicense';
+import { useCustomerById } from '@/hooks/useCustomerById';
 import { format } from 'date-fns';
 import { formatEINForDisplay } from '@/lib/formatters';
 
@@ -12,6 +13,7 @@ const BusinessLicenseCertificate = () => {
   const { licenseId } = useParams<{ licenseId: string }>();
   const navigate = useNavigate();
   const { data: license, isLoading, error } = useBusinessLicense(licenseId!);
+  const { customer: municipality, isLoading: municipalityLoading } = useCustomerById(license?.customer_id);
 
   const handleBack = () => {
     navigate(`/business-license/${licenseId}`);
@@ -21,7 +23,7 @@ const BusinessLicenseCertificate = () => {
     window.print();
   };
 
-  if (isLoading) {
+  if (isLoading || municipalityLoading) {
     return (
       <div className="min-h-screen bg-background p-8">
         <div className="max-w-4xl mx-auto">
@@ -151,7 +153,7 @@ const BusinessLicenseCertificate = () => {
                     BUSINESS LICENSE CERTIFICATE
                   </h1>
                   <div className="text-lg text-muted-foreground">
-                    Municipality of [Municipality Name]
+                    {municipality?.legal_entity_name || 'Municipality'}
                   </div>
                 </div>
 
@@ -267,16 +269,18 @@ const BusinessLicenseCertificate = () => {
                   <div className="flex justify-between items-end">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Issued by:</p>
-                      <p className="font-semibold">Municipality of [Municipality Name]</p>
+                      <p className="font-semibold">{municipality?.legal_entity_name || 'Municipality'}</p>
                       <p className="text-sm text-muted-foreground">Business License Department</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">
                         Certificate issued on {format(new Date(), 'MMMM d, yyyy')}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Verify authenticity at: [Municipality Website]
-                      </p>
+                      {municipality?.entity_website && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Verify authenticity at: {municipality.entity_website}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
