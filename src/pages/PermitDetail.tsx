@@ -487,6 +487,15 @@ const PermitDetail = () => {
                         maxMethods={5}
                       />
                       
+                      <PaymentButtonsContainer
+                        bill={permit}
+                        totalAmount={totalWithFee || 0}
+                        merchantId={permit?.finix_merchant_id}
+                        onGooglePayment={() => handleGooglePayment().then(() => {})}
+                        onApplePayment={() => handleApplePayment().then(() => {})}
+                        isDisabled={isProcessingPayment}
+                      />
+                      
                       <Button 
                         variant="outline" 
                         className="w-full" 
@@ -510,15 +519,6 @@ const PermitDetail = () => {
                         {isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency((totalWithFee || 0) / 100)}`}
                       </Button>
                     )}
-                    
-                    <PaymentButtonsContainer
-                      bill={permit}
-                      totalAmount={totalWithFee || 0}
-                      merchantId={permit?.finix_merchant_id}
-                      onGooglePayment={() => handleGooglePayment().then(() => {})}
-                      onApplePayment={() => handleApplePayment().then(() => {})}
-                      isDisabled={isProcessingPayment}
-                    />
                   </div>
                   
                   <p className="text-xs text-muted-foreground">
