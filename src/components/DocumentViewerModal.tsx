@@ -147,11 +147,6 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
                   </Button>
                 </>
               )}
-              <DialogClose asChild>
-                <Button variant="ghost" size="sm">
-                  <X className="h-4 w-4" />
-                </Button>
-              </DialogClose>
             </div>
           </div>
         </DialogHeader>
