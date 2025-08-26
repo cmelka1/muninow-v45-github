@@ -117,6 +117,21 @@ export const BusinessLicensePaymentManagement: React.FC<BusinessLicensePaymentMa
             {/* Separator */}
             <Separator />
 
+            {/* Payment Details */}
+            {(license?.base_fee_cents > 0 || license?.total_amount_cents > 0) && (
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold">Payment Details</h3>
+                <PermitPaymentSummary
+                  baseAmount={license?.base_fee_cents || license?.total_amount_cents || 0}
+                  serviceFee={serviceFee}
+                  selectedPaymentMethod={selectedPaymentMethod}
+                />
+              </div>
+            )}
+
+            {/* Separator */}
+            <Separator />
+
             {/* Payment Method Selection */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -143,21 +158,6 @@ export const BusinessLicensePaymentManagement: React.FC<BusinessLicensePaymentMa
                 />
               )}
             </div>
-
-            {/* Payment Details */}
-            {(license?.base_fee_cents > 0 || license?.total_amount_cents > 0) && (
-              <>
-                <Separator />
-                <div className="space-y-3">
-                  <h3 className="text-lg font-semibold">Payment Details</h3>
-                  <PermitPaymentSummary
-                    baseAmount={license?.base_fee_cents || license?.total_amount_cents || 0}
-                    serviceFee={serviceFee}
-                    selectedPaymentMethod={selectedPaymentMethod}
-                  />
-                </div>
-              </>
-            )}
 
             {/* Separator */}
             <Separator />
