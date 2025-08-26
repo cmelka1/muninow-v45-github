@@ -95,7 +95,10 @@ export const BusinessLicenseCommunication = ({ licenseId }: BusinessLicenseCommu
                         <span className="font-medium text-sm">
                           {comment.reviewer.first_name} {comment.reviewer.last_name}
                         </span>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge 
+                          variant={comment.reviewer.account_type === 'municipal' ? 'secondary' : 'outline'} 
+                          className={`text-xs ${comment.reviewer.account_type === 'municipal' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
+                        >
                           {comment.reviewer.account_type === 'municipal' ? 'Municipal Staff' : 'Applicant'}
                         </Badge>
                         {comment.is_internal && (
