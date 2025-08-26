@@ -39,9 +39,9 @@ const BusinessLicenseCertificate = () => {
         throw new Error('Certificate content not found');
       }
 
-      // Capture the certificate as canvas with high resolution
+      // Capture the certificate as canvas with high resolution for framing
       const canvas = await html2canvas(certificateElement, {
-        scale: 2, // Higher resolution
+        scale: 3, // Higher resolution for crisp printing
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
@@ -49,19 +49,43 @@ const BusinessLicenseCertificate = () => {
         height: certificateElement.scrollHeight,
       });
 
-      // Create PDF in landscape orientation
+      // Create PDF in landscape orientation optimized for framing
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
         format: 'a4',
       });
 
-      // Calculate dimensions to fit the certificate properly
-      const imgWidth = 297; // A4 landscape width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      // Define frame-optimized dimensions (A4 landscape: 297x210mm)
+      const pageWidth = 297;
+      const pageHeight = 210;
+      const margin = 8; // Small margin for printing
+      
+      // Calculate certificate dimensions to fit within frame-friendly proportions
+      const maxWidth = pageWidth - (2 * margin);
+      const maxHeight = pageHeight - (2 * margin);
+      
+      // Maintain aspect ratio while fitting within the printable area
+      const canvasAspectRatio = canvas.width / canvas.height;
+      const targetAspectRatio = maxWidth / maxHeight;
+      
+      let certWidth, certHeight;
+      if (canvasAspectRatio > targetAspectRatio) {
+        // Canvas is wider - fit to width
+        certWidth = maxWidth;
+        certHeight = maxWidth / canvasAspectRatio;
+      } else {
+        // Canvas is taller - fit to height
+        certHeight = maxHeight;
+        certWidth = maxHeight * canvasAspectRatio;
+      }
+      
+      // Center the certificate on the page
+      const x = (pageWidth - certWidth) / 2;
+      const y = (pageHeight - certHeight) / 2;
 
-      // Add the canvas image to PDF
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
+      // Add the canvas image to PDF with proper centering and scaling
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, certWidth, certHeight);
 
       // Generate filename with license number
       const licenseNumber = license.license_number || license.id.slice(0, 8).toUpperCase();
