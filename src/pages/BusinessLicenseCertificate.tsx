@@ -87,7 +87,7 @@ const BusinessLicenseCertificate = () => {
             <div className="bg-muted/10 p-6 rounded-lg">
               {/* Business Name - Prominent Like License Number */}
               <div className="text-center mb-6">
-                <div className="text-4xl font-bold text-primary">
+                <div className="text-6xl font-bold text-primary">
                   {license.business_legal_name}
                 </div>
                 {license.doing_business_as && (
