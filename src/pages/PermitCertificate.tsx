@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building, Calendar, MapPin, User, FileText, Printer } from 'lucide-react';
+import { ArrowLeft, Building, FileText, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -110,43 +110,31 @@ const PermitCertificate = () => {
         {/* Property and Work Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <MapPin className="h-5 w-5 text-primary mt-1" />
-              <div>
-                <p className="font-medium text-primary">PROPERTY ADDRESS</p>
-                <p className="text-lg">{permit.property_address}</p>
-              </div>
+            <div>
+              <p className="font-medium text-primary">PROPERTY ADDRESS</p>
+              <p className="text-lg">{permit.property_address}</p>
             </div>
             
-            <div className="flex items-start gap-3">
-              <FileText className="h-5 w-5 text-primary mt-1" />
-              <div>
-                <p className="font-medium text-primary">SCOPE OF WORK</p>
-                <SafeHtmlRenderer 
-                  content={permit.scope_of_work}
-                  fallback="See application for details"
-                  className="text-base leading-relaxed whitespace-pre-wrap"
-                />
-              </div>
+            <div>
+              <p className="font-medium text-primary">SCOPE OF WORK</p>
+              <SafeHtmlRenderer 
+                content={permit.scope_of_work}
+                fallback="See application for details"
+                className="text-base leading-relaxed whitespace-pre-wrap"
+              />
             </div>
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <User className="h-5 w-5 text-primary mt-1" />
-              <div>
-                <p className="font-medium text-primary">PERMIT HOLDER</p>
-                <p className="text-lg">{permit.applicant_full_name}</p>
-                <p className="text-sm text-muted-foreground">{permit.applicant_email}</p>
-              </div>
+            <div>
+              <p className="font-medium text-primary">PERMIT HOLDER</p>
+              <p className="text-lg">{permit.applicant_full_name}</p>
+              <p className="text-sm text-muted-foreground">{permit.applicant_email}</p>
             </div>
             
-            <div className="flex items-start gap-3">
-              <Calendar className="h-5 w-5 text-primary mt-1" />
-              <div>
-                <p className="font-medium text-primary">DATE ISSUED</p>
-                <p className="text-lg">{formatDate(permit.issued_at)}</p>
-              </div>
+            <div>
+              <p className="font-medium text-primary">DATE ISSUED</p>
+              <p className="text-lg">{formatDate(permit.issued_at)}</p>
             </div>
           </div>
         </div>
