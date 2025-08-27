@@ -9,13 +9,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { BusinessLicenseFilters } from './BusinessLicenseFilter';
+import { BusinessLicenseStatusBadge } from './BusinessLicenseStatusBadge';
 import { NewBusinessLicenseDialog } from '@/components/NewBusinessLicenseDialog';
 import { useBusinessLicenses } from '@/hooks/useBusinessLicenses';
 
@@ -46,28 +46,6 @@ const BusinessLicenseTable: React.FC<BusinessLicenseTableProps> = ({ filters = {
     setCurrentPage(1);
   }, [filters]);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Draft</Badge>;
-      case 'submitted':
-        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Submitted</Badge>;
-      case 'under_review':
-        return <Badge variant="secondary" className="bg-purple-100 text-purple-800">Under Review</Badge>;
-      case 'approved':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800">Approved</Badge>;
-      case 'active':
-        return <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">Active</Badge>;
-      case 'expired':
-        return <Badge variant="secondary" className="bg-red-100 text-red-800">Expired</Badge>;
-      case 'suspended':
-        return <Badge variant="destructive">Suspended</Badge>;
-      case 'denied':
-        return <Badge variant="destructive">Denied</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
 
   const getLicenseTypeLabel = (type: string) => {
     // Capitalize first letter and handle common types
@@ -230,7 +208,7 @@ const BusinessLicenseTable: React.FC<BusinessLicenseTableProps> = ({ filters = {
                     </span>
                   </TableCell>
                   <TableCell className="text-center py-2">
-                    {getStatusBadge(license.application_status)}
+                    <BusinessLicenseStatusBadge status={license.application_status} />
                   </TableCell>
                 </TableRow>
               ))}
