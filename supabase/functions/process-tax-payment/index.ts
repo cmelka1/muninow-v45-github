@@ -174,7 +174,9 @@ serve(async (req) => {
     }
 
     // Calculate tax amount from totalAmountDue - convert from dollars to cents
-    const baseAmountDollars = parseFloat(totalAmountDue);
+    // Remove commas before parsing to handle formatted numbers like "1,000.00"
+    const cleanedTotalAmountDue = totalAmountDue.replace(/,/g, '');
+    const baseAmountDollars = parseFloat(cleanedTotalAmountDue);
     if (isNaN(baseAmountDollars) || baseAmountDollars <= 0) {
       throw new Error('Invalid tax amount: must be a valid number greater than 0');
     }
