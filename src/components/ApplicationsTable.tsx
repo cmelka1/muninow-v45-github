@@ -100,19 +100,19 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
       case 'information_requested':
         return <Badge variant="secondary" className="bg-orange-100 text-orange-800">Info Requested</Badge>;
       case 'resubmitted':
-        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Resubmitted</Badge>;
+        return <Badge variant="secondary" className="bg-indigo-100 text-indigo-800">Resubmitted</Badge>;
       case 'approved':
         return <Badge variant="secondary" className="bg-green-100 text-green-800">Approved</Badge>;
       case 'denied':
-        return <Badge variant="destructive">Denied</Badge>;
+        return <Badge variant="secondary" className="bg-red-100 text-red-800">Denied</Badge>;
       case 'issued':
-        return <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">Issued</Badge>;
+        return <Badge variant="secondary" className="bg-blue-600 text-white">Issued</Badge>;
       case 'paid':
         return <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">Paid</Badge>;
       case 'withdrawn':
         return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Withdrawn</Badge>;
       case 'expired':
-        return <Badge variant="secondary" className="bg-red-100 text-red-800">Expired</Badge>;
+        return <Badge variant="secondary" className="bg-amber-100 text-amber-800">Expired</Badge>;
       default:
         return <Badge variant="outline">{status.replace('_', ' ').toUpperCase()}</Badge>;
     }

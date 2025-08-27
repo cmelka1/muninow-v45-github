@@ -60,14 +60,16 @@ const TaxSubmissionsTable: React.FC<TaxSubmissionsTableProps> = ({
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      paid: { label: 'Paid', variant: 'default' as const },
-      pending: { label: 'Pending', variant: 'secondary' as const },
-      failed: { label: 'Failed', variant: 'destructive' as const },
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig] || { label: status, variant: 'secondary' as const };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    switch (status) {
+      case 'paid':
+        return <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">Paid</Badge>;
+      case 'pending':
+        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Pending</Badge>;
+      case 'failed':
+        return <Badge variant="secondary" className="bg-red-100 text-red-800">Failed</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
 
   const handlePageSizeChange = (newPageSize: string) => {
