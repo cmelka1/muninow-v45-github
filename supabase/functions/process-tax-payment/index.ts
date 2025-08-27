@@ -181,10 +181,10 @@ serve(async (req) => {
     }
     const baseAmount = Math.round(baseAmountDollars * 100); // Convert dollars to cents
 
-    // Calculate service fees using grossed-up method to match frontend
+    // Calculate service fees using hardcoded rates for tax payments
     const isCard = paymentInstrument.instrument_type === 'PAYMENT_CARD';
-    const basisPoints = isCard ? (feeProfile.basis_points || 250) : (feeProfile.ach_basis_points || 20);
-    const fixedFee = isCard ? (feeProfile.fixed_fee || 50) : (feeProfile.ach_fixed_fee || 50);
+    const basisPoints = isCard ? 300 : 150; // 3% for cards, 1.5% for ACH
+    const fixedFee = 50; // $0.50 fixed fee for both card and ACH
     
     // Use grossed-up calculation to match frontend
     const percentageDecimal = basisPoints / 10000;

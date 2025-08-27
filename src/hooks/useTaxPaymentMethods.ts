@@ -53,12 +53,12 @@ export const useTaxPaymentMethods = (taxData: {
     const paymentMethod = paymentInstruments.find(p => p.id === selectedPaymentMethod);
     const isACH = paymentMethod?.instrument_type === 'BANK_ACCOUNT';
     
-    let basisPoints = 300; // 3% default for cards
-    let fixedFee = 0;
+    let basisPoints = 300; // 3% for cards
+    let fixedFee = 50; // $0.50 fixed fee for cards
     
     if (isACH) {
-      basisPoints = 100; // 1% for ACH
-      fixedFee = 100; // $1.00 fixed fee for ACH
+      basisPoints = 150; // 1.5% for ACH
+      fixedFee = 50; // $0.50 fixed fee for ACH
     }
 
     const percentageFee = Math.round((taxData.amount * basisPoints) / 10000);
