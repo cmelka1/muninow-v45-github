@@ -88,9 +88,14 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   // Add payment method dialog state
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false);
 
+  // Helper function to parse formatted numbers (removes commas)
+  const parseFormattedNumber = (value: string) => {
+    return parseFloat(value.replace(/,/g, '') || '0');
+  };
+
   // Tax amount calculation for payment methods
   const getTaxAmountInCents = () => {
-    return Math.round((parseFloat(totalAmountDue) || 0) * 100);
+    return Math.round((parseFormattedNumber(totalAmountDue) || 0) * 100);
   };
 
   const getCurrentTaxCalculationData = () => {
@@ -247,7 +252,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     const e: Record<string, string> = {};
     if (!calculationNotes.trim()) e.calculationNotes = 'Calculation details are required';
     if (!totalAmountDue.trim()) e.totalAmountDue = 'Total amount due is required';
-    if (totalAmountDue && (isNaN(parseFloat(totalAmountDue)) || parseFloat(totalAmountDue) <= 0)) {
+    if (totalAmountDue && (isNaN(parseFormattedNumber(totalAmountDue)) || parseFormattedNumber(totalAmountDue) <= 0)) {
       e.totalAmountDue = 'Please enter a valid amount greater than 0';
     }
     setErrors(e);
@@ -684,7 +689,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                             </div>
                             <div className="flex justify-between font-medium pt-2 border-t">
                               <span>Total Amount Due:</span>
-                              <span>{formatCurrency(parseFloat(totalAmountDue) || 0)}</span>
+                              <span>{formatCurrency(parseFormattedNumber(totalAmountDue) || 0)}</span>
                             </div>
                           </div>
                         </div>
