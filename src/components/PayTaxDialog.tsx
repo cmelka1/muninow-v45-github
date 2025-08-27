@@ -613,9 +613,16 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                                 placeholder="0.00"
                                 value={totalAmountDue}
                                 onChange={(e) => {
-                                  const value = e.target.value.replace(/[^\d.]/g, '');
-                                  setTotalAmountDue(value);
-                                  if (value.trim()) clearFieldError('totalAmountDue');
+                                  // Remove all non-digits and non-decimal points
+                                  const numericValue = e.target.value.replace(/[^\d.]/g, '');
+                                  
+                                  // Format with commas for display
+                                  const parts = numericValue.split('.');
+                                  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                                  const formattedValue = parts.join('.');
+                                  
+                                  setTotalAmountDue(formattedValue);
+                                  if (numericValue.trim()) clearFieldError('totalAmountDue');
                                 }}
                                 className={`mt-1 ${errors.totalAmountDue ? 'border-destructive ring-2 ring-destructive' : ''}`}
                               />
