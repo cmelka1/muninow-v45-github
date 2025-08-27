@@ -16,11 +16,14 @@ interface ProcessTaxPaymentRequest {
   paymentInstrumentId: string;
   idempotencyId: string;
   fraudSessionId?: string;
-  calculationData: any;
+  calculationNotes: string;
+  totalAmountDue: string;
   payer: {
     firstName: string;
     lastName: string;
     email: string;
+    ein?: string;
+    phone?: string;
     businessName?: string;
     address: {
       street: string;
@@ -105,7 +108,7 @@ serve(async (req) => {
     // Parse request body
     const { 
       taxType, taxPeriodStart, taxPeriodEnd, taxYear, customerId, merchantId,
-      paymentInstrumentId, idempotencyId, fraudSessionId, calculationData, payer 
+      paymentInstrumentId, idempotencyId, fraudSessionId, calculationNotes, totalAmountDue, payer 
     }: ProcessTaxPaymentRequest = await req.json();
 
     // Normalize tax type to database format
@@ -170,10 +173,10 @@ serve(async (req) => {
       throw new Error('Merchant fee profile not found');
     }
 
-    // Calculate tax amount from calculation data - convert from dollars to cents
-    const baseAmountDollars = parseFloat(calculationData.totalDue || calculationData.tax || calculationData.line8 || "0");
+    // Calculate tax amount from totalAmountDue - convert from dollars to cents
+    const baseAmountDollars = parseFloat(totalAmountDue);
     if (isNaN(baseAmountDollars) || baseAmountDollars <= 0) {
-      throw new Error('Invalid tax amount in calculation data');
+      throw new Error('Invalid tax amount: must be a valid number greater than 0');
     }
     const baseAmount = Math.round(baseAmountDollars * 100); // Convert dollars to cents
 
@@ -210,7 +213,8 @@ serve(async (req) => {
         p_tax_period_end: taxPeriodEnd,
         p_tax_year: taxYear,
         p_amount_cents: baseAmount,
-        p_calculation_data: calculationData,
+        p_calculation_notes: calculationNotes,
+        p_total_amount_due_cents: baseAmount,
         p_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
         p_finix_merchant_id: merchant.finix_merchant_id,
         p_service_fee_cents: serviceFee,
@@ -289,12 +293,6 @@ serve(async (req) => {
         .from('payment_history')
         .delete()
         .eq('id', paymentHistoryId);
-      
-      // Delete tax calculation record  
-      await supabaseServiceRole
-        .from('tax_calculations')
-        .delete()
-        .eq('tax_submission_id', taxSubmissionId);
       
       // Delete tax submission record
       await supabaseServiceRole
