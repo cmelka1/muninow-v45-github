@@ -402,15 +402,18 @@ const TaxDetail: React.FC = () => {
             
             <div className="pt-4 border-t space-y-3">
               <div>
+                <Label className="text-sm font-medium text-muted-foreground">Payment Method</Label>
                 <p className="text-sm capitalize">{submission.payment_type?.replace('_', ' ')}</p>
               </div>
               {submission.paid_at && (
                 <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Payment Date</Label>
                   <p className="text-sm">{formatDate(submission.paid_at)}</p>
                 </div>
               )}
               {submission.finix_merchant_id && (
                 <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Transaction Reference</Label>
                   <p className="text-xs font-mono text-muted-foreground">{submission.finix_merchant_id}</p>
                 </div>
               )}
