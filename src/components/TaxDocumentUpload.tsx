@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, X, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, X, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useTaxSubmissionDocuments, TaxDocument } from '@/hooks/useTaxSubmissionDocuments';
@@ -256,24 +256,18 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
       <CardContent className="space-y-4">
         {/* Upload Area */}
         <div
-          className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-300 ${
+          className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
             dragActive
-              ? 'border-primary bg-primary/5 scale-105'
+              ? 'border-primary bg-primary/5'
               : 'border-muted-foreground/25 hover:border-muted-foreground/50'
-          } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${
-            isUploading ? 'animate-pulse bg-primary/10 border-primary' : ''
-          }`}
+          } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
-          onClick={() => !disabled && !isUploading && fileInputRef.current?.click()}
+          onClick={() => !disabled && fileInputRef.current?.click()}
         >
-          {isUploading ? (
-            <Loader2 className="h-8 w-8 mx-auto mb-2 text-primary animate-spin" />
-          ) : (
-            <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-          )}
+          <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
           <p className="text-sm text-muted-foreground mb-1">
             {isUploading ? 'Uploading documents...' : 'Click to upload or drag and drop'}
           </p>
@@ -290,27 +284,6 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
             disabled={disabled || isUploading}
           />
         </div>
-
-        {/* Overall Upload Progress */}
-        {isUploading && (
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 animate-fade-in">
-            <div className="flex items-center gap-3 mb-2">
-              <Loader2 className="h-4 w-4 text-primary animate-spin" />
-              <span className="text-sm font-medium text-primary">Uploading documents...</span>
-            </div>
-            <div className="space-y-2">
-              {Object.entries(uploadProgress).map(([docId, progress]) => (
-                <div key={docId} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Document upload</span>
-                    <span>{progress}%</span>
-                  </div>
-                  <Progress value={progress} className="h-2 animate-scale-in" />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Document List */}
         {documents.length > 0 && (
@@ -339,18 +312,14 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
                         <p className="text-xs text-muted-foreground">
                           {formatFileSize(doc.file_size)}
                         </p>
-                         {progress < 100 && (
-                           <div className="mt-2 space-y-1 animate-fade-in">
-                             <div className="flex items-center justify-between text-xs">
-                               <span className="text-primary font-medium flex items-center gap-1">
-                                 <Loader2 className="h-3 w-3 animate-spin" />
-                                 Uploading...
-                               </span>
-                               <span className="text-primary font-medium">{progress}%</span>
-                             </div>
-                             <Progress value={progress} className="h-2 bg-primary/10" />
-                           </div>
-                         )}
+                        {progress < 100 && (
+                          <div className="mt-1">
+                            <Progress value={progress} className="h-1" />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Uploading... {progress}%
+                            </p>
+                          </div>
+                        )}
                         {doc.status === 'failed' && (
                           <p className="text-xs text-destructive mt-1">
                             Upload failed. Please try again.
