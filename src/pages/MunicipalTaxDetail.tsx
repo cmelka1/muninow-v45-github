@@ -157,18 +157,16 @@ const MunicipalTaxDetail = () => {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate('/municipal/taxes')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Tax Submissions
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Tax Submission Details</h1>
-            <p className="text-muted-foreground">
-              {submission.payer_business_name || `${submission.first_name} ${submission.last_name}`}
-            </p>
-          </div>
+      <div className="flex items-center gap-4">
+        <Button variant="outline" onClick={() => navigate('/municipal/taxes')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Tax Submissions
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold">Tax Submission Details</h1>
+          <p className="text-muted-foreground">
+            {submission.payer_business_name || `${submission.first_name} ${submission.last_name}`}
+          </p>
         </div>
       </div>
 
