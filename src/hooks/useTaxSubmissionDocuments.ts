@@ -56,76 +56,99 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
     return `${userId}/${timestamp}_${sanitizedFileName}`;
   };
 
+  // Track upload states for better error handling
+  const [uploadStates, setUploadStates] = useState<Record<string, 'uploading' | 'success' | 'failed'>>({});
+
   // Immediate upload mutation (like business license documents)
   const uploadDocument = useMutation({
-    mutationFn: async ({ file, data }: { file: File; data: UploadTaxDocumentData }) => {
+    mutationFn: async ({ file, data, fileId: providedFileId }: { 
+      file: File; 
+      data: UploadTaxDocumentData; 
+      fileId?: string; 
+    }) => {
       if (!user) throw new Error('User must be authenticated');
 
-      const fileId = crypto.randomUUID();
+      const fileId = providedFileId || crypto.randomUUID();
       const fileName = `${fileId}-${file.name}`;
       const filePath = `tax-documents/${currentStagingId}/${fileName}`;
 
-      // Track uploading document
+      console.log(`[Upload] Starting upload for file: ${file.name}, fileId: ${fileId}`);
+
+      // Track uploading document and state
       setUploadingDocuments(prev => new Set(prev).add(fileId));
-      // Set initial progress
+      setUploadStates(prev => ({ ...prev, [fileId]: 'uploading' }));
       setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
 
-      // Upload file to storage with progress tracking
-      const { error: uploadError } = await supabase.storage
-        .from('tax-documents')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        });
-
-      if (uploadError) {
-        setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
-        throw uploadError;
-      }
-
-      // Update progress to 50% after storage upload
-      setUploadProgress(prev => ({ ...prev, [fileId]: 50 }));
-
-      // Create staged document record
-      const { data: document, error: docError } = await supabase
-        .from('tax_submission_documents')
-        .insert({
-          staging_id: data.staging_id,
-          document_type: data.document_type,
-          file_name: fileName,
-          original_file_name: file.name,
-          content_type: file.type,
-          file_size: file.size,
-          storage_path: filePath,
-          description: data.description || null,
-          uploaded_by: user.id,
-          status: 'staged',
-          upload_progress: 100,
-          retry_count: 0,
-          tax_submission_id: null // Will be updated when payment succeeds
-        })
-        .select()
-        .single();
-
-      if (docError) {
-        // Clean up uploaded file if database insert fails
-        await supabase.storage
+      try {
+        // Upload file to storage with progress tracking
+        const { error: uploadError } = await supabase.storage
           .from('tax-documents')
-          .remove([filePath]);
-        
-        setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
-        throw docError;
-      }
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+          });
 
-      // Complete progress and remove from uploading set
-      setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
-      setUploadingDocuments(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(fileId);
-        return newSet;
-      });
-      
-      return document;
+        if (uploadError) {
+          console.error(`[Upload] Storage upload failed for ${file.name}:`, uploadError);
+          throw uploadError;
+        }
+
+        // Update progress to 50% after storage upload
+        setUploadProgress(prev => ({ ...prev, [fileId]: 50 }));
+
+        // Create staged document record
+        const { data: document, error: docError } = await supabase
+          .from('tax_submission_documents')
+          .insert({
+            staging_id: data.staging_id,
+            document_type: data.document_type,
+            file_name: fileName,
+            original_file_name: file.name,
+            content_type: file.type,
+            file_size: file.size,
+            storage_path: filePath,
+            description: data.description || null,
+            uploaded_by: user.id,
+            status: 'staged',
+            upload_progress: 100,
+            retry_count: 0,
+            tax_submission_id: null // Will be updated when payment succeeds
+          })
+          .select()
+          .single();
+
+        if (docError) {
+          console.error(`[Upload] Database insert failed for ${file.name}:`, docError);
+          // Clean up uploaded file if database insert fails
+          await supabase.storage
+            .from('tax-documents')
+            .remove([filePath]);
+          throw docError;
+        }
+
+        // Complete progress and update states
+        setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
+        setUploadStates(prev => ({ ...prev, [fileId]: 'success' }));
+        setUploadingDocuments(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(fileId);
+          return newSet;
+        });
+        
+        console.log(`[Upload] Successfully completed upload for ${file.name}`);
+        return { ...document, fileId };
+      } catch (error) {
+        // Properly handle errors with the correct fileId
+        console.error(`[Upload] Upload failed for ${file.name}, fileId: ${fileId}:`, error);
+        setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+        setUploadStates(prev => ({ ...prev, [fileId]: 'failed' }));
+        setUploadingDocuments(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(fileId);
+          return newSet;
+        });
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staged-tax-documents'] });
@@ -135,17 +158,10 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
       });
     },
     onError: (error: any, variables) => {
-      // Remove from uploading set on error
-      const fileId = crypto.randomUUID(); // This won't match, so let's handle this differently
-      setUploadingDocuments(prev => {
-        const newSet = new Set(prev);
-        // Clear all uploading documents on error (simple approach)
-        newSet.clear();
-        return newSet;
-      });
+      console.error('[Upload] Upload mutation error:', error);
       toast({
         title: 'Upload failed',
-        description: error.message,
+        description: error.message || 'Failed to upload document. Please try again.',
         variant: 'destructive'
       });
     }
@@ -294,6 +310,21 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
     }
   };
 
+  // Clear failed upload state and allow retry
+  const clearFailedUpload = (fileId: string) => {
+    console.log(`[Upload] Clearing failed upload state for fileId: ${fileId}`);
+    setUploadStates(prev => {
+      const updated = { ...prev };
+      delete updated[fileId];
+      return updated;
+    });
+    setUploadProgress(prev => {
+      const updated = { ...prev };
+      delete updated[fileId];
+      return updated;
+    });
+  };
+
   // Calculate if all uploads are complete
   const allUploadsComplete = uploadingDocuments.size === 0 && !uploadDocument.isPending;
 
@@ -306,8 +337,10 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
     uploadMultipleDocuments, // Backward compatibility
     getDocumentUrl,
     cleanupStagingArea,
+    clearFailedUpload,
     uploadProgress,
     setUploadProgress,
+    uploadStates,
     stagingId: currentStagingId,
     isUploading: uploadDocument.isPending,
     isDeleting: deleteDocument.isPending,

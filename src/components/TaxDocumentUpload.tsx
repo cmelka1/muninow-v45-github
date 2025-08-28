@@ -64,6 +64,8 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
     uploadDocument,
     deleteDocument,
     uploadProgress,
+    uploadStates,
+    clearFailedUpload,
     isUploading,
     isDeleting,
     stagingId: currentStagingId,
@@ -107,9 +109,11 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
     
     // Upload files immediately with default values
     for (const file of validFiles) {
+      const fileId = crypto.randomUUID(); // Generate unique ID for tracking
       try {
         const result = await uploadDocument.mutateAsync({
           file,
+          fileId, // Pass the fileId for proper tracking
           data: {
             staging_id: currentStagingId,
             document_type: 'supporting_document', // Default type
@@ -233,14 +237,34 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
     onDocumentsChange(updatedDocuments);
   };
 
-  const getFileIcon = (fileType: string, status: string, progress: number) => {
-    if (status === 'failed') {
+  const getFileIcon = (fileType: string, status: string, progress: number, fileId?: string) => {
+    const uploadState = fileId ? uploadStates[fileId] : undefined;
+    
+    if (status === 'failed' || uploadState === 'failed') {
       return <AlertCircle className="h-4 w-4 text-destructive" />;
     }
-    if (status === 'staged' && progress === 100) {
+    if ((status === 'staged' && progress === 100) || uploadState === 'success') {
       return <CheckCircle className="h-4 w-4 text-success" />;
     }
+    if (uploadState === 'uploading' || (progress > 0 && progress < 100)) {
+      return <FileText className="h-4 w-4 text-yellow-600" />;
+    }
     return <FileText className="h-4 w-4" />;
+  };
+
+  const retryFailedUpload = async (doc: StagedDocument, index: number) => {
+    // Remove the failed document first
+    await removeDocument(index);
+    
+    // Clear the failed upload state
+    clearFailedUpload(doc.id);
+    
+    // Create a new file object (we can't recreate the original file, so show a message)
+    toast({
+      title: 'Please re-upload the file',
+      description: `Please select and upload "${doc.original_file_name}" again.`,
+      variant: 'default'
+    });
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -332,7 +356,7 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
                   className="flex items-start gap-3 p-3 border rounded-lg bg-muted/30"
                 >
                   <div className="flex-shrink-0 mt-1">
-                    {getFileIcon(doc.content_type, doc.status, progress)}
+                    {getFileIcon(doc.content_type, doc.status, progress, doc.id)}
                   </div>
                   
                   <div className="flex-1 min-w-0 space-y-2">
@@ -350,10 +374,21 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
                             </p>
                           </div>
                         )}
-                        {doc.status === 'failed' && (
-                          <p className="text-xs text-destructive mt-1">
-                            Upload failed. Please try again.
-                          </p>
+                        {(doc.status === 'failed' || uploadStates[doc.id] === 'failed') && (
+                          <div className="mt-1 space-y-1">
+                            <p className="text-xs text-destructive">
+                              Upload failed. Please try again.
+                            </p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => retryFailedUpload(doc, index)}
+                              disabled={disabled}
+                              className="h-6 px-2 text-xs"
+                            >
+                              Retry Upload
+                            </Button>
+                          </div>
                         )}
                       </div>
                       
