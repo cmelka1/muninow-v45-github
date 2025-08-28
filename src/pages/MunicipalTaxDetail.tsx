@@ -8,6 +8,7 @@ import {
   Receipt,
   Clock, 
   Building,
+  Calendar,
   Download,
   Eye
 } from 'lucide-react';
@@ -200,10 +201,6 @@ const MunicipalTaxDetail = () => {
                   </div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Submission Date</Label>
-                  <p className="text-base">{formatDate(submission.submission_date)}</p>
-                </div>
-                <div>
                   <Label className="text-sm font-medium text-muted-foreground">Tax Period</Label>
                   <p className="text-base">
                     {formatPeriod(submission.tax_period_start, submission.tax_period_end)}
@@ -212,6 +209,10 @@ const MunicipalTaxDetail = () => {
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Tax Year</Label>
                   <p className="text-base">{submission.tax_year}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Submitted</Label>
+                  <p className="text-base">{formatDate(submission.submission_date)}</p>
                 </div>
               </div>
             </CardContent>
@@ -228,65 +229,71 @@ const MunicipalTaxDetail = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {submission.payer_business_name ? (
-                  <>
-                    <div>
-                      <Label className="text-sm font-medium text-muted-foreground">Business Name</Label>
-                      <p className="text-base">{submission.payer_business_name}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-muted-foreground">EIN</Label>
-                      <p className="text-base">{submission.payer_ein || 'N/A'}</p>
-                    </div>
-                  </>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Business Name</Label>
+                    <p className="text-base">{submission.payer_business_name}</p>
+                  </div>
                 ) : (
-                  <>
-                    <div>
-                      <Label className="text-sm font-medium text-muted-foreground">Full Name</Label>
-                      <p className="text-base">{submission.first_name} {submission.last_name}</p>
-                    </div>
-                    <div></div>
-                  </>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Name</Label>
+                    <p className="text-base">{submission.first_name} {submission.last_name}</p>
+                  </div>
                 )}
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Email</Label>
-                  <p className="text-base">{submission.email || 'N/A'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Phone</Label>
-                  <p className="text-base">{submission.payer_phone || 'N/A'}</p>
-                </div>
-                {(submission.payer_street_address || submission.payer_city) && (
-                  <div className="md:col-span-2">
-                    <Label className="text-sm font-medium text-muted-foreground">Address</Label>
-                    <p className="text-base">
-                      {[
-                        submission.payer_street_address,
-                        submission.payer_city,
-                        submission.payer_state,
-                        submission.payer_zip_code
-                      ].filter(Boolean).join(', ') || 'N/A'}
-                    </p>
+                {submission.payer_ein && (
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">EIN</Label>
+                    <p className="text-base font-mono">{submission.payer_ein}</p>
+                  </div>
+                )}
+                {submission.email && (
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Email</Label>
+                    <p className="text-base">{submission.email}</p>
+                  </div>
+                )}
+                {submission.payer_phone && (
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Phone</Label>
+                    <p className="text-base">{submission.payer_phone}</p>
                   </div>
                 )}
               </div>
+              {(submission.payer_street_address || submission.payer_city) && (
+                <div className="pt-4 border-t">
+                  <Label className="text-sm font-medium text-muted-foreground">Address</Label>
+                  <div className="text-base">
+                    {submission.payer_street_address && <p>{submission.payer_street_address}</p>}
+                    {(submission.payer_city || submission.payer_state || submission.payer_zip_code) && (
+                      <p>
+                        {submission.payer_city}
+                        {submission.payer_state && `, ${submission.payer_state}`}
+                        {submission.payer_zip_code && ` ${submission.payer_zip_code}`}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Calculation Details */}
+          {/* Calculation Notes */}
           {submission.calculation_notes && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Building className="h-5 w-5" />
-                  Calculation Details
+                  <Calendar className="h-5 w-5" />
+                  Calculation Notes
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <SafeHtmlRenderer 
-                  content={submission.calculation_notes} 
-                  className="prose prose-sm max-w-none"
-                  fallback="No calculation details provided"
-                />
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Calculation Notes</Label>
+                  <SafeHtmlRenderer 
+                    content={submission.calculation_notes}
+                    className="text-base"
+                    fallback="No calculation notes provided"
+                  />
+                </div>
               </CardContent>
             </Card>
           )}
@@ -327,14 +334,14 @@ const MunicipalTaxDetail = () => {
                       <div className="flex items-center gap-3 flex-1">
                         <FileText className="h-4 w-4 text-muted-foreground" />
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium truncate">{doc.original_file_name}</span>
-                            <Badge variant="outline" className="text-xs">{doc.document_type}</Badge>
-                          </div>
-                          <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                            <span>{(doc.file_size / 1024).toFixed(1)} KB</span>
-                            <span>Uploaded: {formatDate(doc.created_at)}</span>
-                          </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium truncate">{doc.original_file_name}</span>
+                        </div>
+                        <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                          <span>{(doc.file_size / 1024).toFixed(1)} KB</span>
+                          <span>Uploaded: {formatDate(doc.created_at)}</span>
+                          {doc.document_type && <span>Type: {doc.document_type}</span>}
+                        </div>
                           {doc.description && (
                             <p className="text-xs text-muted-foreground mt-1">{doc.description}</p>
                           )}
