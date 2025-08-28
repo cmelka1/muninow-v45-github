@@ -3108,62 +3108,6 @@ export type Database = {
           },
         ]
       }
-      tax_documents: {
-        Row: {
-          created_at: string
-          customer_id: string
-          document_type: string
-          file_path: string
-          file_size: number
-          file_type: string
-          filename: string
-          id: string
-          tax_submission_id: string
-          updated_at: string
-          upload_date: string
-          upload_status: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          customer_id: string
-          document_type: string
-          file_path: string
-          file_size: number
-          file_type: string
-          filename: string
-          id?: string
-          tax_submission_id: string
-          updated_at?: string
-          upload_date?: string
-          upload_status?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          customer_id?: string
-          document_type?: string
-          file_path?: string
-          file_size?: number
-          file_type?: string
-          filename?: string
-          id?: string
-          tax_submission_id?: string
-          updated_at?: string
-          upload_date?: string
-          upload_status?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tax_documents_tax_submission_id_fkey"
-            columns: ["tax_submission_id"]
-            isOneToOne: false
-            referencedRelation: "tax_submissions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       tax_submission_documents: {
         Row: {
           content_type: string
