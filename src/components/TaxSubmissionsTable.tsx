@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTaxSubmissions } from '@/hooks/useTaxSubmissions';
@@ -61,18 +60,6 @@ const TaxSubmissionsTable: React.FC<TaxSubmissionsTableProps> = ({
     return `${start} - ${end}`;
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">Paid</Badge>;
-      case 'pending':
-        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Pending</Badge>;
-      case 'failed':
-        return <Badge variant="secondary" className="bg-red-100 text-red-800">Failed</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
 
   const handlePageSizeChange = (newPageSize: string) => {
     setPageSize(parseInt(newPageSize));
@@ -96,7 +83,10 @@ const TaxSubmissionsTable: React.FC<TaxSubmissionsTableProps> = ({
   if (error) {
     return (
       <Card>
-        <CardContent className="p-6">
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="flex items-center justify-center space-x-2 text-destructive">
             <AlertCircle className="h-5 w-5" />
             <span>Error loading tax submissions</span>
@@ -106,114 +96,132 @@ const TaxSubmissionsTable: React.FC<TaxSubmissionsTableProps> = ({
     );
   }
 
-  return (
-    <Card>
-      <div className="p-6 pb-0">
-        <div className="flex items-center justify-between mb-4">
-          <CardTitle className="text-xl font-semibold">{title}</CardTitle>
-          {headerAction}
-        </div>
-      </div>
-      <CardContent className="p-6 pt-0">
-        {isLoading ? (
-          <div className="space-y-4">
-            {Array.from({ length: pageSize }).map((_, index) => (
-              <div key={index} className="flex justify-between items-center p-4 border rounded-lg">
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-4 w-1/3" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-6 w-16" />
-                  <Skeleton className="h-4 w-20" />
-                </div>
-              </div>
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {[...Array(pageSize)].map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
-        ) : !data?.data?.length ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No tax submissions found
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data?.data?.length) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>{title} ({data?.count || 0})</CardTitle>
+            {headerAction}
           </div>
-        ) : (
-          <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Submission Date</TableHead>
-                  <TableHead>Tax Type</TableHead>
-                  <TableHead>Tax Period</TableHead>
-                  <TableHead>Tax Year</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.data.map((submission) => (
-                  <TableRow 
-                    key={submission.id} 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/tax/${submission.id}`)}
-                  >
-                    <TableCell className="font-medium">
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">No tax submissions found.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <CardTitle>{title} ({data?.count || 0})</CardTitle>
+          {headerAction}
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                <TableHead className="hidden sm:table-cell">Submission Date</TableHead>
+                <TableHead>Tax Type</TableHead>
+                <TableHead className="hidden md:table-cell">Tax Period</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.data.map((submission) => (
+                <TableRow 
+                  key={submission.id} 
+                  className="h-12 cursor-pointer hover:bg-muted/50"
+                  onClick={() => navigate(`/tax/${submission.id}`)}
+                >
+                  <TableCell className="hidden sm:table-cell py-2">
+                    <span className="text-sm text-muted-foreground">
                       {formatDate(submission.submission_date)}
-                    </TableCell>
-                    <TableCell>{formatTaxType(submission.tax_type)}</TableCell>
-                    <TableCell>
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-2">
+                    <span className="font-medium">{formatTaxType(submission.tax_type)}</span>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell py-2">
+                    <span className="text-sm">
                       {formatPeriod(submission.tax_period_start, submission.tax_period_end)}
-                    </TableCell>
-                    <TableCell>{submission.tax_year}</TableCell>
-                    <TableCell>{getStatusBadge(submission.payment_status)}</TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatAmount(submission.total_amount_cents)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-
-            {/* Pagination */}
-            <div className="flex items-center justify-between pt-4 border-t">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-muted-foreground">Rows per page:</span>
-                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
-                  <SelectTrigger className="w-16 h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center space-x-6">
-                <span className="text-sm text-muted-foreground">
-                  {startIndex}-{endIndex} of {data.count}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handlePreviousPage}
-                    disabled={currentPage === 1}
-                    className="h-8 w-8 p-0"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleNextPage}
-                    disabled={currentPage >= totalPages}
-                    className="h-8 w-8 p-0"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right font-medium py-2">
+                    {formatAmount(submission.total_amount_cents)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium">Show:</span>
+              <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                <SelectTrigger className="w-16 h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </>
+            
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
+                className="h-8 px-3"
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
+              </Button>
+              
+              <span className="text-sm font-medium px-2">
+                {currentPage} of {totalPages}
+              </span>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className="h-8 px-3"
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
