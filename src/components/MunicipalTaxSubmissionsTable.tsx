@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { useMunicipalTaxSubmissions } from '@/hooks/useMunicipalTaxSubmissions';
@@ -61,16 +60,6 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
     return `${start} - ${end}`;
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      paid: { label: 'Paid', variant: 'default' as const },
-      pending: { label: 'Pending', variant: 'secondary' as const },
-      failed: { label: 'Failed', variant: 'destructive' as const },
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig] || { label: status, variant: 'secondary' as const };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
 
   const handlePageSizeChange = (newPageSize: string) => {
     setPageSize(parseInt(newPageSize));
@@ -95,6 +84,10 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
     navigate(`/municipal/tax/${submissionId}`);
   };
 
+  const handleRowClick = (submissionId: string) => {
+    handleViewDetails(submissionId);
+  };
+
   if (error) {
     return (
       <Card>
@@ -110,25 +103,23 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
 
   return (
     <Card>
-      <div className="p-6 pb-0">
-        <div className="flex items-center justify-between mb-4">
-          <CardTitle className="text-xl font-semibold">{title}</CardTitle>
-          {headerAction}
-        </div>
-      </div>
-      <CardContent className="p-6 pt-0">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-xl font-semibold">
+          {title} ({data?.count || 0})
+        </CardTitle>
+        {headerAction}
+      </CardHeader>
+      <CardContent className="p-0">
         {isLoading ? (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {Array.from({ length: pageSize }).map((_, index) => (
-              <div key={index} className="flex justify-between items-center p-4 border rounded-lg">
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-4 w-1/3" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-6 w-16" />
-                  <Skeleton className="h-4 w-20" />
-                </div>
+              <div key={index} className="flex items-center space-x-4 p-4">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-8 w-16" />
               </div>
             ))}
           </div>
@@ -139,21 +130,23 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
         ) : (
           <>
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead>Submission Date</TableHead>
                   <TableHead>Taxpayer Name</TableHead>
                   <TableHead>Tax Type</TableHead>
                   <TableHead>Tax Period</TableHead>
-                  <TableHead>Tax Year</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data.data.map((submission) => (
-                  <TableRow key={submission.id} className="hover:bg-muted/50">
+                  <TableRow 
+                    key={submission.id} 
+                    className="hover:bg-muted/50 cursor-pointer"
+                    onClick={() => handleRowClick(submission.id)}
+                  >
                     <TableCell className="font-medium">
                       {formatDate(submission.submission_date)}
                     </TableCell>
@@ -164,8 +157,6 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
                     <TableCell>
                       {formatPeriod(submission.tax_period_start, submission.tax_period_end)}
                     </TableCell>
-                    <TableCell>{submission.tax_year}</TableCell>
-                    <TableCell>{getStatusBadge(submission.payment_status)}</TableCell>
                     <TableCell className="text-right font-medium">
                       {formatAmount(submission.total_amount_cents)}
                     </TableCell>
@@ -173,7 +164,10 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleViewDetails(submission.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewDetails(submission.id);
+                        }}
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         View
@@ -184,10 +178,9 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
               </TableBody>
             </Table>
 
-            {/* Pagination */}
-            <div className="flex items-center justify-between pt-4 border-t">
+            <div className="flex items-center justify-between p-4 border-t">
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-muted-foreground">Rows per page:</span>
+                <span className="text-sm text-muted-foreground">Show</span>
                 <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
                   <SelectTrigger className="w-16 h-8">
                     <SelectValue />
@@ -198,11 +191,12 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
                     <SelectItem value="20">20</SelectItem>
                   </SelectContent>
                 </Select>
+                <span className="text-sm text-muted-foreground">entries</span>
               </div>
 
-              <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-4">
                 <span className="text-sm text-muted-foreground">
-                  {startIndex}-{endIndex} of {data.count}
+                  Page {currentPage} of {totalPages}
                 </span>
                 <div className="flex items-center space-x-2">
                   <Button
@@ -210,18 +204,20 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
                     size="sm"
                     onClick={handlePreviousPage}
                     disabled={currentPage === 1}
-                    className="h-8 w-8 p-0"
+                    className="h-8 px-3"
                   >
-                    <ChevronLeft className="h-4 w-4" />
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleNextPage}
                     disabled={currentPage >= totalPages}
-                    className="h-8 w-8 p-0"
+                    className="h-8 px-3"
                   >
-                    <ChevronRight className="h-4 w-4" />
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
                 </div>
               </div>
