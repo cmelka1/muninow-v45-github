@@ -6,10 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { useTaxSubmissionDetail } from '@/hooks/useTaxSubmissionDetail';
 import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
-import { formatCurrency, formatDate } from '@/lib/formatters';
+import { formatCurrency, formatDate, smartAbbreviateFilename } from '@/lib/formatters';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -294,16 +295,12 @@ const TaxDetail: React.FC = () => {
               Calculation Notes
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
             {submission.calculation_notes && (
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Calculation Notes</Label>
-                <SafeHtmlRenderer 
-                  content={submission.calculation_notes}
-                  className="text-base"
-                  fallback="No calculation notes provided"
-                />
-              </div>
+              <SafeHtmlRenderer 
+                content={submission.calculation_notes}
+                fallback="No calculation notes provided"
+              />
             )}
           </CardContent>
         </Card>
@@ -360,9 +357,18 @@ const TaxDetail: React.FC = () => {
                       <FileText className="h-4 w-4 text-muted-foreground" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium truncate">
-                            {doc.original_file_name || doc.file_name}
-                          </span>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="text-sm font-medium truncate">
+                                  {smartAbbreviateFilename(doc.original_file_name || doc.file_name, 30)}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{doc.original_file_name || doc.file_name}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                         <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                           <span>{(doc.file_size / 1024).toFixed(1)} KB</span>
