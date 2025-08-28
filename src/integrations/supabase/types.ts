@@ -3058,56 +3058,6 @@ export type Database = {
         }
         Relationships: []
       }
-      tax_calculations: {
-        Row: {
-          calculation_data: Json
-          commission_cents: number | null
-          created_at: string
-          deductions_cents: number | null
-          gross_receipts_cents: number | null
-          id: string
-          tax_amount_cents: number | null
-          tax_rate: number | null
-          tax_submission_id: string
-          taxable_receipts_cents: number | null
-          updated_at: string
-        }
-        Insert: {
-          calculation_data: Json
-          commission_cents?: number | null
-          created_at?: string
-          deductions_cents?: number | null
-          gross_receipts_cents?: number | null
-          id?: string
-          tax_amount_cents?: number | null
-          tax_rate?: number | null
-          tax_submission_id: string
-          taxable_receipts_cents?: number | null
-          updated_at?: string
-        }
-        Update: {
-          calculation_data?: Json
-          commission_cents?: number | null
-          created_at?: string
-          deductions_cents?: number | null
-          gross_receipts_cents?: number | null
-          id?: string
-          tax_amount_cents?: number | null
-          tax_rate?: number | null
-          tax_submission_id?: string
-          taxable_receipts_cents?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tax_calculations_tax_submission_id_fkey"
-            columns: ["tax_submission_id"]
-            isOneToOne: false
-            referencedRelation: "tax_submissions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       tax_submission_documents: {
         Row: {
           content_type: string
@@ -4113,10 +4063,6 @@ export type Database = {
       }
       validate_merchant_category_subcategory: {
         Args: { p_category: string; p_subcategory: string }
-        Returns: boolean
-      }
-      validate_tax_calculation: {
-        Args: { p_calculation_data: Json; p_tax_type: string }
         Returns: boolean
       }
     }
