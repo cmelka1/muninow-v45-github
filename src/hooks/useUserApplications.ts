@@ -10,6 +10,7 @@ export interface UserApplication {
   address: string;
   municipality: string;
   status: string;
+  paymentStatus: string;
   customerId: string;
   detailPath: string;
 }
@@ -37,19 +38,19 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
         // Permits
         supabase
           .from('permit_applications')
-          .select('permit_id, permit_number, permit_type, application_status, property_address, customer_id, submitted_at, created_at')
+          .select('permit_id, permit_number, permit_type, application_status, property_address, customer_id, submitted_at, created_at, payment_status')
           .eq('user_id', user.id),
         
         // Business Licenses  
         supabase
           .from('business_license_applications')
-          .select('id, license_number, business_type, application_status, business_street_address, customer_id, submitted_at, created_at')
+          .select('id, license_number, business_type, application_status, business_street_address, customer_id, submitted_at, created_at, payment_status')
           .eq('user_id', user.id),
         
         // Tax Submissions
         supabase
           .from('tax_submissions')
-          .select('id, tax_type, submission_status, customer_id, submission_date, created_at, payer_street_address, payer_city, payer_state, payer_zip_code')
+          .select('id, tax_type, submission_status, customer_id, submission_date, created_at, payer_street_address, payer_city, payer_state, payer_zip_code, payment_status')
           .eq('user_id', user.id),
         
         // Municipal Service Applications
@@ -86,6 +87,7 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
           address: permit.property_address || 'N/A',
           municipality: customerMap.get(permit.customer_id) || 'Unknown',
           status: permit.application_status,
+          paymentStatus: permit.payment_status || 'unpaid',
           customerId: permit.customer_id,
           detailPath: `/permit/${permit.permit_id}`
         })),
@@ -99,6 +101,7 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
           address: license.business_street_address || 'N/A',
           municipality: customerMap.get(license.customer_id) || 'Unknown',
           status: license.application_status,
+          paymentStatus: license.payment_status || 'unpaid',
           customerId: license.customer_id,
           detailPath: `/business-license/${license.id}`
         })),
@@ -125,6 +128,7 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
             address,
             municipality: customerMap.get(tax.customer_id) || 'Unknown',
             status: tax.submission_status,
+            paymentStatus: tax.payment_status || 'pending',
             customerId: tax.customer_id,
             detailPath: `/taxes`
           };
@@ -139,6 +143,7 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
           address: 'N/A',
           municipality: customerMap.get(service.customer_id) || 'Unknown',
           status: service.status,
+          paymentStatus: service.status === 'paid' ? 'paid' : 'n/a',
           customerId: service.customer_id,
           detailPath: `/other-services`
         }))

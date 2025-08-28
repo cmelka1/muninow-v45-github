@@ -118,6 +118,27 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
     }
   };
 
+  const getPaymentStatusBadge = (paymentStatus: string) => {
+    const normalizedStatus = paymentStatus.toLowerCase();
+    
+    switch (normalizedStatus) {
+      case 'paid':
+        return <Badge variant="secondary" className="bg-green-100 text-green-800">Paid</Badge>;
+      case 'unpaid':
+        return <Badge variant="secondary" className="bg-red-100 text-red-800">Unpaid</Badge>;
+      case 'pending':
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+      case 'refunded':
+        return <Badge variant="secondary" className="bg-purple-100 text-purple-800">Refunded</Badge>;
+      case 'failed':
+        return <Badge variant="secondary" className="bg-red-100 text-red-800">Failed</Badge>;
+      case 'n/a':
+        return <Badge variant="secondary" className="bg-gray-100 text-gray-600">N/A</Badge>;
+      default:
+        return <Badge variant="outline">{paymentStatus.replace('_', ' ').toUpperCase()}</Badge>;
+    }
+  };
+
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), 'MMM dd, yyyy');
@@ -191,6 +212,7 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                 <TableHead className="hidden lg:table-cell">Address</TableHead>
                 <TableHead className="hidden xl:table-cell">Municipality</TableHead>
                 <TableHead className="text-center">Status</TableHead>
+                <TableHead className="text-center">Payment</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -227,6 +249,9 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
                   </TableCell>
                   <TableCell className="text-center py-2">
                     {getStatusBadge(application.status)}
+                  </TableCell>
+                  <TableCell className="text-center py-2">
+                    {getPaymentStatusBadge(application.paymentStatus)}
                   </TableCell>
                 </TableRow>
               ))}
