@@ -159,7 +159,7 @@ export const useTaxPaymentMethods = (taxData: {
   };
 
   // Handle regular payment processing
-  const handlePayment = async (): Promise<void> => {
+  const handlePayment = async (): Promise<{ taxSubmissionId?: string } | void> => {
     if (!selectedPaymentMethod || !user) {
       toast({
         title: "Error",
@@ -270,7 +270,7 @@ export const useTaxPaymentMethods = (taxData: {
           title: "Payment Successful",
           description: "Your tax payment has been processed successfully.",
         });
-        return;
+        return { taxSubmissionId: data.tax_submission_id };
       } else {
         throw new Error(data.error || 'Payment failed');
       }

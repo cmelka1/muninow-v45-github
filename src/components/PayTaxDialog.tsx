@@ -96,6 +96,9 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   // Add payment method dialog state
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false);
 
+  // Document upload functionality
+  const { uploadMultipleDocuments } = useTaxSubmissionDocuments();
+
   // Helper function to parse formatted numbers (removes commas)
   const parseFormattedNumber = (value: string) => {
     return parseFloat(value.replace(/,/g, '') || '0');
@@ -367,11 +370,27 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
     setIsSubmitting(true);
     try {
-      // Process payment - document upload will be handled separately for now
-      await handlePayment();
+      // Process payment and get tax submission ID
+      const paymentResult = await handlePayment();
       
-      // Note: Document upload functionality will be completed in Phase 3
-      // when we enhance the municipal review interface
+      // Upload documents if any were provided and payment was successful
+      if (uploadedDocuments.length > 0 && paymentResult && paymentResult.taxSubmissionId) {
+        try {
+          await uploadMultipleDocuments(uploadedDocuments, paymentResult.taxSubmissionId);
+          
+          toast({
+            title: "Tax Payment Complete",
+            description: `Your tax payment has been processed and ${uploadedDocuments.length} document(s) uploaded successfully.`,
+          });
+        } catch (uploadError: any) {
+          console.error('Document upload failed:', uploadError);
+          toast({
+            title: "Payment Successful, Document Upload Failed",
+            description: "Your payment was processed but some documents failed to upload. You can upload them later from the tax detail page.",
+            variant: "destructive",
+          });
+        }
+      }
       
       resetForm();
       onOpenChange(false);
