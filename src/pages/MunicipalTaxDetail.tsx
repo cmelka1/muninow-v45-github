@@ -9,8 +9,7 @@ import {
   Clock, 
   Building,
   Calendar,
-  Download,
-  Eye
+  Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +20,7 @@ import { Separator } from '@/components/ui/separator';
 import { useTaxSubmissionDetail } from '@/hooks/useTaxSubmissionDetail';
 import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
-import { DocumentViewerModal } from '@/components/DocumentViewerModal';
+
 import { formatCurrency, formatDate, smartAbbreviateFilename } from '@/lib/formatters';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,8 +28,6 @@ import { supabase } from '@/integrations/supabase/client';
 const MunicipalTaxDetail = () => {
   const { submissionId } = useParams<{ submissionId: string }>();
   const navigate = useNavigate();
-  const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<any>(null);
   
   const { data: submission, isLoading, error } = useTaxSubmissionDetail(submissionId || null);
   const { getDocuments } = useTaxSubmissionDocuments();
@@ -353,17 +350,7 @@ const MunicipalTaxDetail = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => {
-                            setSelectedDocument(doc);
-                            setDocumentViewerOpen(true);
-                          }}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button 
+                        <Button
                           variant="ghost" 
                           size="sm"
                           onClick={async () => {
@@ -495,23 +482,6 @@ const MunicipalTaxDetail = () => {
         </div>
       </div>
 
-      {/* Document Viewer Modal */}
-      {selectedDocument && (
-        <DocumentViewerModal
-          isOpen={documentViewerOpen}
-          onClose={() => {
-            setDocumentViewerOpen(false);
-            setSelectedDocument(null);
-          }}
-          document={{
-            id: selectedDocument.id,
-            file_name: selectedDocument.original_file_name,
-            storage_path: selectedDocument.storage_path,
-            file_size: selectedDocument.file_size
-          }}
-          bucketName="tax-documents"
-        />
-      )}
     </div>
   );
 };
