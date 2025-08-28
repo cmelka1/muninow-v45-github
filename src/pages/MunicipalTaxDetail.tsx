@@ -32,20 +32,41 @@ const MunicipalTaxDetail = () => {
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   
   const { data: submission, isLoading, error } = useTaxSubmissionDetail(submissionId || null);
-  const { getConfirmedDocuments } = useTaxSubmissionDocuments();
+  const { getDocuments } = useTaxSubmissionDocuments();
   const [documents, setDocuments] = useState<any[]>([]);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
+  const [documentsError, setDocumentsError] = useState<string | null>(null);
 
   // Load documents when submission is available
   React.useEffect(() => {
     if (submission?.id) {
       setLoadingDocuments(true);
-      getConfirmedDocuments(submission.id)
+      setDocumentsError(null);
+      
+      getDocuments(submission.id)
         .then(setDocuments)
-        .catch(console.error)
+        .catch((error) => {
+          console.error('Error loading documents:', error);
+          setDocumentsError(error.message || 'Failed to load documents');
+        })
         .finally(() => setLoadingDocuments(false));
     }
-  }, [submission?.id, getConfirmedDocuments]);
+  }, [submission?.id]); // Removed getDocuments from dependencies to prevent infinite re-renders
+
+  const retryLoadDocuments = React.useCallback(() => {
+    if (submission?.id) {
+      setLoadingDocuments(true);
+      setDocumentsError(null);
+      
+      getDocuments(submission.id)
+        .then(setDocuments)
+        .catch((error) => {
+          console.error('Error loading documents:', error);
+          setDocumentsError(error.message || 'Failed to load documents');
+        })
+        .finally(() => setLoadingDocuments(false));
+    }
+  }, [submission?.id, getDocuments]);
 
   const formatTaxType = (taxType: string) => {
     const typeMap: Record<string, string> = {
@@ -285,6 +306,20 @@ const MunicipalTaxDetail = () => {
                   {Array.from({ length: 3 }).map((_, i) => (
                     <Skeleton key={i} className="h-16 w-full" />
                   ))}
+                </div>
+              ) : documentsError ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                  <p className="text-sm text-destructive">Error loading documents</p>
+                  <p className="text-xs mt-1">{documentsError}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-3"
+                    onClick={retryLoadDocuments}
+                  >
+                    Retry
+                  </Button>
                 </div>
               ) : documents && documents.length > 0 ? (
                 <div className="space-y-3">
