@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMunicipalTaxSubmissions } from '@/hooks/useMunicipalTaxSubmissions';
 import { TaxSubmissionFilters } from '@/components/TaxSubmissionsFilter';
 
@@ -119,7 +119,6 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
                 <Skeleton className="h-4 w-28" />
                 <Skeleton className="h-4 w-36" />
                 <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-8 w-16" />
               </div>
             ))}
           </div>
@@ -137,7 +136,6 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
                   <TableHead>Tax Type</TableHead>
                   <TableHead>Tax Period</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -159,19 +157,6 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatAmount(submission.total_amount_cents)}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleViewDetails(submission.id);
-                        }}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
