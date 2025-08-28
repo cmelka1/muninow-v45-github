@@ -225,24 +225,6 @@ const TaxDetail: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Tax Calculation Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Tax Period & Calculation
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {submission.calculation_notes && (
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Calculation Notes</Label>
-                <p className="text-base whitespace-pre-wrap">{submission.calculation_notes}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
         {/* Payer Information */}
         <Card>
           <CardHeader>
@@ -296,6 +278,24 @@ const TaxDetail: React.FC = () => {
                     </p>
                   )}
                 </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Calculation Notes */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Calculation Notes
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {submission.calculation_notes && (
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Calculation Notes</Label>
+                <p className="text-base whitespace-pre-wrap">{submission.calculation_notes}</p>
               </div>
             )}
           </CardContent>
