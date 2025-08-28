@@ -14,7 +14,9 @@ interface ProcessTaxPaymentRequest {
   customer_id: string;
   merchant_id: string;
   payment_instrument_id: string;
-  total_amount_cents: number;
+  base_amount_cents: number; // Original tax amount (base)
+  service_fee_cents: number; // Calculated service fee
+  total_amount_cents: number; // Grossed-up total
   idempotency_id: string;
   fraud_session_id: string;
   calculation_notes: string;
@@ -100,6 +102,8 @@ serve(async (req) => {
       customer_id,
       merchant_id,
       payment_instrument_id,
+      base_amount_cents,
+      service_fee_cents,
       total_amount_cents,
       idempotency_id,
       fraud_session_id,
@@ -120,6 +124,8 @@ serve(async (req) => {
     console.log("Processing tax payment:", { 
       tax_type, 
       payment_instrument_id, 
+      base_amount_cents,
+      service_fee_cents,
       total_amount_cents, 
       user_id: user.id 
     });
@@ -128,6 +134,8 @@ serve(async (req) => {
     const missingParams = [];
     if (!tax_type) missingParams.push("tax_type");
     if (!payment_instrument_id) missingParams.push("payment_instrument_id");
+    if (!base_amount_cents) missingParams.push("base_amount_cents");
+    if (!service_fee_cents && service_fee_cents !== 0) missingParams.push("service_fee_cents");
     if (!total_amount_cents) missingParams.push("total_amount_cents");
     if (!idempotency_id) missingParams.push("idempotency_id");
     
@@ -135,9 +143,18 @@ serve(async (req) => {
       throw new Error(`Missing required parameters: ${missingParams.join(", ")}`);
     }
 
-    // Validate amount is reasonable
+    // Validate amounts are reasonable
+    if (base_amount_cents <= 0) {
+      throw new Error("Base amount must be greater than zero");
+    }
+    
     if (total_amount_cents <= 0) {
-      throw new Error("Amount must be greater than zero");
+      throw new Error("Total amount must be greater than zero");
+    }
+    
+    // Validate that total = base + service fee (with small rounding tolerance)
+    if (Math.abs((base_amount_cents + service_fee_cents) - total_amount_cents) > 1) {
+      throw new Error(`Amount calculation error: base (${base_amount_cents}) + fee (${service_fee_cents}) != total (${total_amount_cents})`);
     }
 
     // fraud_session_id is optional - if empty, we'll still proceed but log a warning
@@ -191,22 +208,30 @@ serve(async (req) => {
     // merchant_id from the request should be the finix_merchant_id
     const finixMerchantId = merchant_id;
 
-    // Calculate base amount and service fee using the same logic as permits
-    const isCard = paymentInstrument.instrument_type === 'PAYMENT_CARD';
-    const basisPoints = isCard ? 300 : 150; // 3% for cards, 1.5% for ACH
-    const fixedFee = 50; // $0.50 fixed fee for both
+    // Use the provided amounts from frontend (no reverse calculation needed)
+    const baseAmount = base_amount_cents;
+    const calculatedServiceFee = service_fee_cents;
     
-    // Calculate base amount from total (reverse grossed-up calculation)
-    const percentageDecimal = basisPoints / 10000;
-    const baseAmount = Math.round((total_amount_cents * (1 - percentageDecimal)) - fixedFee);
-    const calculatedServiceFee = total_amount_cents - baseAmount;
+    // Validate payment instrument type matches expected fee calculation
+    const isCard = paymentInstrument.instrument_type === 'PAYMENT_CARD';
+    const expectedBasisPoints = isCard ? 300 : 150; // 3% for cards, 1.5% for ACH
+    const expectedFixedFee = 50; // $0.50 fixed fee for both
+    
+    // Validate that the service fee calculation is reasonable
+    const expectedPercentageFee = Math.round((baseAmount * expectedBasisPoints) / 10000);
+    const expectedTotalFee = expectedPercentageFee + expectedFixedFee;
+    
+    // Allow some tolerance for rounding differences in grossed-up calculations
+    if (Math.abs(calculatedServiceFee - expectedTotalFee) > 2) {
+      console.warn(`Service fee mismatch - Expected: ${expectedTotalFee}, Received: ${calculatedServiceFee}`);
+    }
 
     console.log("Fee calculation:", { 
       baseAmount, 
       serviceFee: calculatedServiceFee, 
       totalAmount: total_amount_cents, 
-      basisPoints, 
-      fixedFee 
+      expectedBasisPoints, 
+      expectedFixedFee 
     });
 
     // Determine payment type

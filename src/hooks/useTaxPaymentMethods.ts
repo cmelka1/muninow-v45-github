@@ -38,7 +38,7 @@ export const useTaxPaymentMethods = (taxData: {
     })
     .slice(0, 3);
 
-  // Calculate service fee based on payment method
+  // Calculate service fee based on payment method using grossed-up formula
   const calculateServiceFee = useCallback((): ServiceFee => {
     if (!selectedPaymentMethod || !taxData.amount) {
       return {
@@ -64,17 +64,38 @@ export const useTaxPaymentMethods = (taxData: {
       fixedFee = 50; // $0.50 fixed fee for ACH
     }
 
+    // Convert basis points to decimal percentage (p)
+    const percentageDecimal = basisPoints / 10000;
+    
+    // Prevent division by zero or invalid percentages
+    if (percentageDecimal >= 1) {
+      console.error('Invalid percentage fee for tax: cannot be 100% or higher');
+      return {
+        totalFee: 0,
+        percentageFee: 0,
+        fixedFee,
+        basisPoints,
+        isCard: !isACH,
+        totalAmountToCharge: taxData.amount,
+        serviceFeeToDisplay: 0
+      };
+    }
+    
+    // Apply grossed-up formula: T = (A + f) / (1 - p)
+    const totalAmountToCharge = Math.round((taxData.amount + fixedFee) / (1 - percentageDecimal));
+    const serviceFeeToDisplay = totalAmountToCharge - taxData.amount;
+    
+    // Calculate percentage fee for display purposes
     const percentageFee = Math.round((taxData.amount * basisPoints) / 10000);
-    const totalFee = percentageFee + fixedFee;
     
     return {
-      totalFee,
+      totalFee: serviceFeeToDisplay, // Legacy compatibility
       percentageFee,
       fixedFee,
       basisPoints,
       isCard: !isACH,
-      totalAmountToCharge: taxData.amount + totalFee,
-      serviceFeeToDisplay: totalFee
+      totalAmountToCharge,
+      serviceFeeToDisplay
     };
   }, [selectedPaymentMethod, taxData.amount, paymentInstruments]);
 
@@ -253,7 +274,9 @@ export const useTaxPaymentMethods = (taxData: {
         customer_id: taxData.municipality?.customer_id,
         merchant_id: taxData.municipality?.finix_merchant_id,
         payment_instrument_id: selectedPaymentMethod,
-        total_amount_cents: finalAmountCents,
+        base_amount_cents: taxData.amount, // Original tax amount (base)
+        service_fee_cents: serviceFee.serviceFeeToDisplay, // Calculated service fee
+        total_amount_cents: finalAmountCents, // Grossed-up total
         idempotency_id: idempotencyId,
         fraud_session_id: validFraudSessionId,
         calculation_notes: taxData.calculationData?.calculationNotes || '',
