@@ -452,145 +452,39 @@ const TaxDetail: React.FC = () => {
                       {submission.finix_merchant_id && (
                         <div>
                           <Label className="text-sm font-medium text-muted-foreground">Transaction Reference</Label>
-                          <p className="text-xs font-mono text-muted-foreground break-all">{submission.finix_merchant_id}</p>
+                          <p className="text-xs font-mono text-muted-foreground">{submission.finix_merchant_id}</p>
                         </div>
                       )}
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Tax Period Summary */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Calendar className="h-5 w-5" />
-                      Tax Period Details
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-3">
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">Reporting Period</Label>
-                        <p className="text-sm">{formatPeriod(submission.tax_period_start, submission.tax_period_end)}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">Tax Year</Label>
-                        <p className="text-sm font-medium">{submission.tax_year}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">Tax Category</Label>
-                        <p className="text-sm">{formatTaxType(submission.tax_type)}</p>
-                      </div>
-                      <div className="pt-3 border-t">
-                        <Label className="text-sm font-medium text-muted-foreground">Filing Status</Label>
-                        <div className="mt-1">
-                          {getStatusBadge(submission.payment_status)}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Receipt Information */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
-                      Receipt Details
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-3">
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">Submission ID</Label>
-                        <p className="text-xs font-mono bg-muted p-2 rounded break-all">{submission.id}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-muted-foreground">Submission Date</Label>
-                        <p className="text-sm">{formatDate(submission.submission_date)}</p>
-                      </div>
-                      {submission.paid_at && (
-                        <div>
-                          <Label className="text-sm font-medium text-muted-foreground">Payment Confirmation</Label>
-                          <p className="text-sm text-emerald-600 font-medium">Payment Confirmed</p>
-                          <p className="text-xs text-muted-foreground">{formatDate(submission.paid_at)}</p>
-                        </div>
-                      )}
-                    </div>
-                    <div className="pt-3 border-t">
-                      <p className="text-xs text-muted-foreground">
-                        Keep this receipt for your tax records. If you need assistance, reference your submission ID when contacting support.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Municipality Information */}
-                {(submission.payer_city || submission.payer_state) && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Building className="h-5 w-5" />
-                        Municipality Info
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-3">
-                        {submission.payer_city && (
-                          <div>
-                            <Label className="text-sm font-medium text-muted-foreground">Municipality</Label>
-                            <p className="text-sm">{submission.payer_city}{submission.payer_state && `, ${submission.payer_state}`}</p>
-                          </div>
-                        )}
-                        <div>
-                          <Label className="text-sm font-medium text-muted-foreground">Tax Authority</Label>
-                          <p className="text-sm">Municipal Tax Collection Office</p>
-                        </div>
-                        <div className="pt-3 border-t">
-                          <p className="text-xs text-muted-foreground">
-                            For questions about this tax submission, contact your local municipal tax office during business hours.
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
 
                 {/* Submission Timeline */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Clock className="h-5 w-5" />
-                      Processing Timeline
+                      Timeline
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       <div className="flex items-start gap-3">
                         <div className="w-2 h-2 rounded-full bg-primary mt-2"></div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">Tax Submission Created</p>
+                        <div>
+                          <p className="text-sm font-medium">Submitted</p>
                           <p className="text-xs text-muted-foreground">{formatDate(submission.submission_date)}</p>
-                          <p className="text-xs text-muted-foreground mt-1">Submission received and validated</p>
                         </div>
                       </div>
                       {submission.paid_at && (
                         <div className="flex items-start gap-3">
                           <div className="w-2 h-2 rounded-full bg-emerald-500 mt-2"></div>
-                          <div className="flex-1">
+                          <div>
                             <p className="text-sm font-medium">Payment Processed</p>
                             <p className="text-xs text-muted-foreground">{formatDate(submission.paid_at)}</p>
-                            <p className="text-xs text-muted-foreground mt-1">Payment successfully received and recorded</p>
                           </div>
                         </div>
                       )}
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 rounded-full bg-muted mt-2"></div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-muted-foreground">Processing Complete</p>
-                          <p className="text-xs text-muted-foreground">Tax filing has been submitted to municipal authorities</p>
-                        </div>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
