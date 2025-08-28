@@ -66,9 +66,6 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
     uploadProgress,
     isUploading,
     isDeleting,
-    areUploadsInProgress,
-    allUploadsComplete,
-    uploadingCount,
     stagingId: currentStagingId
   } = useTaxSubmissionDocuments(stagingId);
 
@@ -272,7 +269,7 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
         >
           <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
           <p className="text-sm text-muted-foreground mb-1">
-            {areUploadsInProgress ? `Uploading ${uploadingCount} document${uploadingCount > 1 ? 's' : ''}...` : 'Click to upload or drag and drop'}
+            {isUploading ? 'Uploading documents...' : 'Click to upload or drag and drop'}
           </p>
           <p className="text-xs text-muted-foreground">
             PDF, DOC, DOCX, XLS, XLSX, or images (max 50MB)
@@ -288,28 +285,10 @@ export const TaxDocumentUpload: React.FC<TaxDocumentUploadProps> = ({
           />
         </div>
 
-        {/* Upload Status Indicator */}
-        {areUploadsInProgress && (
-          <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-            <span className="text-sm text-blue-700">
-              {uploadingCount} document{uploadingCount > 1 ? 's' : ''} uploading... Please wait before proceeding with payment.
-            </span>
-          </div>
-        )}
-
         {/* Document List */}
         {documents.length > 0 && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">Uploaded Documents</Label>
-              {allUploadsComplete && documents.length > 0 && (
-                <div className="flex items-center gap-1 text-xs text-success">
-                  <CheckCircle className="h-3 w-3" />
-                  All uploads complete
-                </div>
-              )}
-            </div>
+            <Label className="text-sm font-medium">Uploaded Documents</Label>
             {documents.map((doc, index) => {
               const docSettings = selectedDocuments[doc.id] || { 
                 type: doc.document_type, 

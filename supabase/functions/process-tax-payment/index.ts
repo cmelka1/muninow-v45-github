@@ -422,42 +422,16 @@ serve(async (req) => {
       if (staging_id) {
         console.log("Confirming staged documents for staging_id:", staging_id);
         try {
-          // First check if staged documents exist
-          const { data: stagedDocs, error: checkError } = await supabaseService
-            .from('tax_submission_documents')
-            .select('id, status')
-            .eq('staging_id', staging_id)
-            .eq('status', 'staged');
+          const { error: confirmError } = await supabaseService.rpc('confirm_staged_tax_documents', {
+            p_staging_id: staging_id,
+            p_tax_submission_id: taxSubmission.id
+          });
           
-          if (checkError) {
-            console.error("Error checking staged documents:", checkError);
-          } else if (!stagedDocs || stagedDocs.length === 0) {
-            console.log("No staged documents found for staging_id:", staging_id);
+          if (confirmError) {
+            console.error("Error confirming staged documents:", confirmError);
+            // Don't fail the payment for document confirmation issues
           } else {
-            console.log(`Found ${stagedDocs.length} staged documents to confirm`);
-            
-            const { error: confirmError } = await supabaseService.rpc('confirm_staged_tax_documents', {
-              p_staging_id: staging_id,
-              p_tax_submission_id: taxSubmission.id
-            });
-            
-            if (confirmError) {
-              console.error("Error confirming staged documents:", confirmError);
-              // Retry once after a brief delay
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              const { error: retryError } = await supabaseService.rpc('confirm_staged_tax_documents', {
-                p_staging_id: staging_id,
-                p_tax_submission_id: taxSubmission.id
-              });
-              
-              if (retryError) {
-                console.error("Retry also failed:", retryError);
-              } else {
-                console.log("Successfully confirmed staged documents on retry");
-              }
-            } else {
-              console.log("Successfully confirmed staged documents");
-            }
+            console.log("Successfully confirmed staged documents");
           }
         } catch (docError) {
           console.error("Failed to confirm staged documents:", docError);
