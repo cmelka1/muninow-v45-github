@@ -16,6 +16,7 @@ export const useTaxPaymentMethods = (taxData: {
   taxPeriodStart?: string;
   taxPeriodEnd?: string;
   taxYear?: number;
+  stagingId?: string;
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -256,17 +257,18 @@ export const useTaxPaymentMethods = (taxData: {
         idempotency_id: idempotencyId,
         fraud_session_id: validFraudSessionId,
         calculation_notes: taxData.calculationData?.calculationNotes || '',
-        // Flatten payer object into individual fields
+        staging_id: taxData.stagingId, // Pass staging ID for document confirmation
+        // Flatten payer object into individual fields - fix field mapping
         payer_first_name: taxData.payer?.firstName || '',
         payer_last_name: taxData.payer?.lastName || '',
         payer_email: taxData.payer?.email || '',
         payer_ein: taxData.payer?.ein || '',
         payer_phone: taxData.payer?.phone || '',
         payer_business_name: taxData.payer?.businessName || '',
-        payer_street_address: taxData.payer?.streetAddress || '',
-        payer_city: taxData.payer?.city || '',
-        payer_state: taxData.payer?.state || '',
-        payer_zip_code: taxData.payer?.zipCode || ''
+        payer_street_address: taxData.payer?.address?.street || '',
+        payer_city: taxData.payer?.address?.city || '',
+        payer_state: taxData.payer?.address?.state || '',
+        payer_zip_code: taxData.payer?.address?.zipCode || ''
       };
 
       const { data, error } = await supabase.functions.invoke('process-tax-payment', {

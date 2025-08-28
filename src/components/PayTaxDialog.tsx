@@ -201,7 +201,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     payer: getPayerData(),
     taxPeriodStart: getCurrentTaxPeriodStart(),
     taxPeriodEnd: getCurrentTaxPeriodEnd(),
-    taxYear: getCurrentTaxYear()
+    taxYear: getCurrentTaxYear(),
+    stagingId: stagingId // Pass staging ID for document confirmation
   });
 
   const scrollTop = () => {

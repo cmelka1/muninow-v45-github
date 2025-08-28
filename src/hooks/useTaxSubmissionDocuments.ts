@@ -210,33 +210,25 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
     return (data as StagedTaxDocument[]) || [];
   };
 
-  // Updated getDocuments method - fetches documents for paid tax submissions regardless of status
+  // Enhanced getDocuments method - improved fallback for documents
   const getDocuments = async (taxSubmissionId: string): Promise<StagedTaxDocument[]> => {
     // First try to get confirmed documents
     let documents = await getConfirmedDocuments(taxSubmissionId);
     
-    // If no confirmed documents found, check if tax submission is paid and get staged documents
+    // If no confirmed documents found, get all documents for this tax submission
     if (documents.length === 0) {
-      const { data: submission } = await supabase
-        .from('tax_submissions')
-        .select('payment_status')
-        .eq('id', taxSubmissionId)
-        .single();
+      const { data, error } = await supabase
+        .from('tax_submission_documents')
+        .select('*')
+        .eq('tax_submission_id', taxSubmissionId)
+        .in('status', ['confirmed', 'staged'])
+        .order('created_at', { ascending: false });
       
-      // If submission is paid, get all documents (staged and confirmed)
-      if (submission?.payment_status === 'paid') {
-        const { data, error } = await supabase
-          .from('tax_submission_documents')
-          .select('*')
-          .eq('tax_submission_id', taxSubmissionId)
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          throw new Error(`Failed to fetch documents: ${error.message}`);
-        }
-        
-        documents = (data as StagedTaxDocument[]) || [];
+      if (error) {
+        throw new Error(`Failed to fetch documents: ${error.message}`);
       }
+      
+      documents = (data as StagedTaxDocument[]) || [];
     }
     
     return documents;
