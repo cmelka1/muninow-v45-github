@@ -15,7 +15,8 @@ import { formatCurrency, formatDate } from '@/lib/formatters';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-const TaxDetail = () => {
+const TaxDetail: React.FC = () => {
+  console.log('TaxDetail component loading...'); // Debug log
   const { submissionId } = useParams<{ submissionId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -23,7 +24,7 @@ const TaxDetail = () => {
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
   
-  const { data: submission, isLoading, error } = useTaxSubmissionDetail(submissionId!);
+  const { data: submission, isLoading, error } = useTaxSubmissionDetail(submissionId || '');
   const { getDocuments } = useTaxSubmissionDocuments();
   const [documents, setDocuments] = useState<any[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
