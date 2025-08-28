@@ -336,16 +336,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     if (currentStep === 1 && !validateStep1()) return;
     if (currentStep === 2 && !validateStep2()) return;
     
-    // Additional check for step 2 - ensure no uploads are in progress
-    if (currentStep === 2 && hasUploadingDocuments) {
-      toast({
-        title: "Documents Still Uploading",
-        description: `Please wait for ${uploadingDocumentsCount} document${uploadingDocumentsCount > 1 ? 's' : ''} to finish uploading before proceeding.`,
-        variant: "destructive",
-      });
-      return;
-    }
-    
     if (currentStep < totalSteps) {
       setCurrentStep((s) => s + 1);
       scrollTop();
