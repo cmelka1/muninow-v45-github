@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,6 +45,8 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+  const [uploadingDocuments, setUploadingDocuments] = useState<Set<string>>(new Set());
+  const [allUploadsComplete, setAllUploadsComplete] = useState(true);
 
   // Generate unique staging ID for this upload session
   const currentStagingId = stagingId || crypto.randomUUID();
@@ -64,60 +66,79 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
       const fileName = `${fileId}-${file.name}`;
       const filePath = `tax-documents/${currentStagingId}/${fileName}`;
 
+      // Track uploading document
+      setUploadingDocuments(prev => new Set([...prev, fileId]));
+      setAllUploadsComplete(false);
+
       // Set initial progress
       setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
 
-      // Upload file to storage with progress tracking
-      const { error: uploadError } = await supabase.storage
-        .from('tax-documents')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        });
-
-      if (uploadError) {
-        setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
-        throw uploadError;
-      }
-
-      // Update progress to 50% after storage upload
-      setUploadProgress(prev => ({ ...prev, [fileId]: 50 }));
-
-      // Create staged document record
-      const { data: document, error: docError } = await supabase
-        .from('tax_submission_documents')
-        .insert({
-          staging_id: data.staging_id,
-          document_type: data.document_type,
-          file_name: fileName,
-          original_file_name: file.name,
-          content_type: file.type,
-          file_size: file.size,
-          storage_path: filePath,
-          description: data.description || null,
-          uploaded_by: user.id,
-          status: 'staged',
-          upload_progress: 100,
-          retry_count: 0,
-          tax_submission_id: null // Will be updated when payment succeeds
-        })
-        .select()
-        .single();
-
-      if (docError) {
-        // Clean up uploaded file if database insert fails
-        await supabase.storage
+      try {
+        // Upload file to storage with progress tracking
+        const { error: uploadError } = await supabase.storage
           .from('tax-documents')
-          .remove([filePath]);
-        
-        setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
-        throw docError;
-      }
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+          });
 
-      // Complete progress
-      setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
-      
-      return document;
+        if (uploadError) {
+          setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+          throw uploadError;
+        }
+
+        // Update progress to 50% after storage upload
+        setUploadProgress(prev => ({ ...prev, [fileId]: 50 }));
+
+        // Create staged document record
+        const { data: document, error: docError } = await supabase
+          .from('tax_submission_documents')
+          .insert({
+            staging_id: data.staging_id,
+            document_type: data.document_type,
+            file_name: fileName,
+            original_file_name: file.name,
+            content_type: file.type,
+            file_size: file.size,
+            storage_path: filePath,
+            description: data.description || null,
+            uploaded_by: user.id,
+            status: 'staged',
+            upload_progress: 100,
+            retry_count: 0,
+            tax_submission_id: null // Will be updated when payment succeeds
+          })
+          .select()
+          .single();
+
+        if (docError) {
+          // Clean up uploaded file if database insert fails
+          await supabase.storage
+            .from('tax-documents')
+            .remove([filePath]);
+          
+          setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+          throw docError;
+        }
+
+        // Complete progress and remove from uploading set
+        setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
+        setUploadingDocuments(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(fileId);
+          return newSet;
+        });
+        
+        return document;
+      } catch (error) {
+        // Remove from uploading set on error
+        setUploadingDocuments(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(fileId);
+          return newSet;
+        });
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staged-tax-documents'] });
@@ -132,6 +153,10 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
         description: error.message,
         variant: 'destructive'
       });
+    },
+    onSettled: () => {
+      // Update allUploadsComplete when any upload settles
+      setAllUploadsComplete(uploadingDocuments.size === 0);
     }
   });
 
@@ -278,6 +303,11 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
     }
   };
 
+  // Update allUploadsComplete whenever uploadingDocuments changes
+  useEffect(() => {
+    setAllUploadsComplete(uploadingDocuments.size === 0);
+  }, [uploadingDocuments]);
+
   return {
     uploadDocument,
     deleteDocument,
@@ -292,6 +322,9 @@ export const useTaxSubmissionDocuments = (stagingId?: string) => {
     stagingId: currentStagingId,
     isUploading: uploadDocument.isPending,
     isDeleting: deleteDocument.isPending,
-    uploading: uploadDocument.isPending // Backward compatibility
+    uploading: uploadDocument.isPending, // Backward compatibility
+    areUploadsInProgress: uploadingDocuments.size > 0,
+    allUploadsComplete,
+    uploadingCount: uploadingDocuments.size
   };
 };
