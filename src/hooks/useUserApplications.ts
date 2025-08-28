@@ -108,8 +108,8 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
           id: tax.id,
           serviceType: 'tax' as const,
           serviceName: tax.tax_type.includes('_') 
-            ? tax.tax_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ' Tax'
-            : tax.tax_type + ' Tax',
+            ? tax.tax_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+            : tax.tax_type,
           dateSubmitted: tax.submission_date || tax.created_at,
           address: 'N/A',
           municipality: customerMap.get(tax.customer_id) || 'Unknown',

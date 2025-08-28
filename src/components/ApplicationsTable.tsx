@@ -187,7 +187,7 @@ const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
               <TableRow>
                 <TableHead className="hidden sm:table-cell">Date</TableHead>
                 <TableHead className="text-center">Service Type</TableHead>
-                <TableHead className="hidden md:table-cell text-center">Service Name</TableHead>
+                <TableHead className="hidden md:table-cell text-center">Category</TableHead>
                 <TableHead className="hidden lg:table-cell">Address</TableHead>
                 <TableHead className="hidden xl:table-cell">Municipality</TableHead>
                 <TableHead className="text-center">Status</TableHead>
