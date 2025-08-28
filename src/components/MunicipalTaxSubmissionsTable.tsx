@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertCircle, ChevronLeft, ChevronRight, Eye, FileText } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { useMunicipalTaxSubmissions } from '@/hooks/useMunicipalTaxSubmissions';
 import { TaxSubmissionFilters } from '@/components/TaxSubmissionsFilter';
-import { TaxSubmissionDetailModal } from '@/components/municipal/TaxSubmissionDetailModal';
 
 interface MunicipalTaxSubmissionsTableProps {
   filters?: TaxSubmissionFilters;
@@ -22,10 +21,9 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
   title = "Municipal Tax Submissions",
   headerAction 
 }) => {
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const { data, isLoading, error } = useMunicipalTaxSubmissions({
     page: currentPage,
@@ -94,13 +92,7 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
   const endIndex = Math.min(currentPage * pageSize, data?.count || 0);
 
   const handleViewDetails = (submissionId: string) => {
-    setSelectedSubmissionId(submissionId);
-    setIsDetailModalOpen(true);
-  };
-
-  const handleCloseDetailModal = () => {
-    setIsDetailModalOpen(false);
-    setSelectedSubmissionId(null);
+    navigate(`/municipal/tax/${submissionId}`);
   };
 
   if (error) {
@@ -237,19 +229,6 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
           </>
         )}
       </CardContent>
-
-      {/* Tax Submission Detail Modal */}
-      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Tax Submission Details</DialogTitle>
-          </DialogHeader>
-          <TaxSubmissionDetailModal
-            submissionId={selectedSubmissionId}
-            onClose={handleCloseDetailModal}
-          />
-        </DialogContent>
-      </Dialog>
     </Card>
   );
 };
