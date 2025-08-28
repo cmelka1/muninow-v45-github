@@ -282,15 +282,11 @@ const MunicipalTaxDetail = () => {
                   Calculation Notes
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Calculation Notes</Label>
-                  <SafeHtmlRenderer 
-                    content={submission.calculation_notes}
-                    className="text-base"
-                    fallback="No calculation notes provided"
-                  />
-                </div>
+              <CardContent>
+                <SafeHtmlRenderer 
+                  content={submission.calculation_notes}
+                  fallback="No calculation notes provided"
+                />
               </CardContent>
             </Card>
           )}
