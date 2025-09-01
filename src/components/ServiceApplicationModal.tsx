@@ -471,22 +471,42 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                       type="button" 
                       variant="outline" 
                       size="sm"
-                      onClick={() => {
+                      onClick={async () => {
                         try {
                           if (!tile.pdf_form_url) {
                             throw new Error('PDF form URL not available');
                           }
                           
+                          toast({
+                            title: "Downloading...",
+                            description: "Preparing your PDF download.",
+                          });
+                          
+                          // Fetch the PDF as a blob
+                          const response = await fetch(tile.pdf_form_url);
+                          if (!response.ok) {
+                            throw new Error('Failed to fetch PDF file');
+                          }
+                          
+                          const blob = await response.blob();
+                          
+                          // Create a download URL from the blob
+                          const downloadUrl = URL.createObjectURL(blob);
+                          
+                          // Create and trigger download
                           const link = document.createElement('a');
-                          link.href = tile.pdf_form_url;
+                          link.href = downloadUrl;
                           link.download = `${tile.title.replace(/[^a-zA-Z0-9]/g, '_')}_form.pdf`;
                           document.body.appendChild(link);
                           link.click();
                           document.body.removeChild(link);
                           
+                          // Clean up the object URL
+                          URL.revokeObjectURL(downloadUrl);
+                          
                           toast({
-                            title: "Download Started",
-                            description: "The PDF form is downloading to your device.",
+                            title: "Download Complete",
+                            description: "The PDF form has been downloaded to your device.",
                           });
                         } catch (error) {
                           console.error('Error downloading PDF:', error);
