@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
-import { FileText, Download, User, Copy, ExternalLink, AlertCircle, Upload, X, Image, FileCheck, ArrowLeft, ArrowRight, CheckCircle, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, Download, User, Copy, ExternalLink, AlertCircle, Upload, X, Image, FileCheck, ArrowLeft, ArrowRight, CheckCircle, Edit, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { useCreateServiceApplication } from '@/hooks/useServiceApplications';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,6 +18,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import PaymentSummary from './PaymentSummary';
 import PaymentMethodSelector from './PaymentMethodSelector';
+import PaymentButtonsContainer from './PaymentButtonsContainer';
 import { AddPaymentMethodDialog } from './profile/AddPaymentMethodDialog';
 import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
 import { formatCurrency } from '@/lib/formatters';
@@ -923,47 +924,85 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             {!tile.requires_review ? (
               /* Payment Section for Auto-Approve Services */
               <>
-                {totalAmount > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Payment Summary</CardTitle>
+                <div className="space-y-6">
+                  {totalAmount > 0 && (
+                    <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <div className="w-2 h-2 bg-primary rounded-full"></div>
+                          Payment Summary
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <PaymentSummary 
+                          baseAmount={totalAmount}
+                          serviceFee={null}
+                          selectedPaymentMethod={selectedPaymentMethod}
+                          compact={true}
+                        />
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Separator */}
+                  {totalAmount > 0 && <div className="border-t border-border"></div>}
+
+                  {/* Payment Method Selection */}
+                  <Card className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        Payment Method
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <PaymentSummary 
-                        baseAmount={totalAmount}
-                        serviceFee={null}
+                    <CardContent className="space-y-4">
+                      <PaymentMethodSelector
+                        paymentInstruments={paymentInstruments.slice(0, 3)}
                         selectedPaymentMethod={selectedPaymentMethod}
-                        compact={true}
+                        onSelectPaymentMethod={setSelectedPaymentMethod}
+                        isLoading={paymentMethodsLoading}
+                        maxMethods={3}
                       />
+
+                       {/* Show message when alternative payment methods are not available */}
+                       <div className="text-sm text-muted-foreground text-center py-2">
+                         Alternative payment methods are not available for this service.
+                       </div>
                     </CardContent>
                   </Card>
-                )}
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Payment Method</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <PaymentMethodSelector
-                      paymentInstruments={paymentInstruments}
-                      selectedPaymentMethod={selectedPaymentMethod}
-                      onSelectPaymentMethod={setSelectedPaymentMethod}
-                      isLoading={paymentMethodsLoading}
-                      maxMethods={3}
-                    />
-                    
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsAddPaymentMethodOpen(true)}
-                      className="w-full"
+                  {/* Separator */}
+                  <div className="border-t border-border"></div>
+
+                  {/* Pay Now Section */}
+                  <div className="space-y-3">
+                    <Button 
+                      className="w-full" 
+                      size="lg"
+                      disabled={!selectedPaymentMethod || isSubmitting}
+                      onClick={handlePayment}
                     >
+                      {isSubmitting ? 'Processing...' : totalAmount > 0 ? `Pay ${formatCurrency(totalAmount / 100)}` : 'Submit Application'}
+                    </Button>
+                   
+                    <Button 
+                      variant="outline" 
+                      className="w-full" 
+                      size="lg"
+                      onClick={() => setIsAddPaymentMethodOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
                       Add New Payment Method
                     </Button>
-                  </CardContent>
-                </Card>
+                    
+                    <p className="text-xs text-muted-foreground text-center">
+                      Your payment will be processed securely
+                    </p>
+                  </div>
+                </div>
 
-                {/* Navigation & Payment Actions */}
-                <div className="flex gap-3 pt-6 border-t">
+                {/* Navigation Actions */}
+                <div className="flex justify-between pt-6 border-t bg-muted/20 -mx-6 px-6 -mb-6 pb-6 rounded-b-lg">
                   <Button 
                     type="button" 
                     variant="outline" 
@@ -972,15 +1011,6 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                   >
                     <ChevronLeft className="h-4 w-4" />
                     Previous
-                  </Button>
-                  <Button 
-                    type="button"
-                    onClick={handlePayment}
-                    disabled={!selectedPaymentMethod || isSubmitting || (totalAmount > 0 && !selectedPaymentMethod)}
-                    className="flex-1"
-                  >
-                    {isSubmitting ? 'Processing...' : totalAmount > 0 ? `Pay ${formatCurrency(totalAmount / 100)}` : 'Submit Application'}
-                    <CheckCircle className="h-4 w-4 ml-2" />
                   </Button>
                 </div>
               </>
