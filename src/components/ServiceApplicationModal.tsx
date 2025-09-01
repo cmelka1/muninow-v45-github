@@ -462,7 +462,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                   <div>
                     <h3 className="text-sm font-medium mb-1">Official Form Available</h3>
                     <p className="text-sm text-muted-foreground">
-                      View the official PDF form which will open in a new tab. You can download it from there if needed.
+                      Download the official PDF form directly to your device.
                     </p>
                   </div>
                   
@@ -477,39 +477,30 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                             throw new Error('PDF form URL not available');
                           }
                           
-                          const newWindow = window.open(tile.pdf_form_url, '_blank', 'noopener,noreferrer');
+                          const link = document.createElement('a');
+                          link.href = tile.pdf_form_url;
+                          link.download = `${tile.title.replace(/[^a-zA-Z0-9]/g, '_')}_form.pdf`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
                           
-                          // Check if popup was blocked
-                          setTimeout(() => {
-                            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                              setPdfAccessBlocked(true);
-                              toast({
-                                title: "Popup Blocked",
-                                description: "Please allow popups for this site or use the direct link below.",
-                                variant: "destructive",
-                              });
-                            } else {
-                              setPdfAccessBlocked(false);
-                              toast({
-                                title: "Opening PDF Form",
-                                description: "The official form is opening in a new tab.",
-                              });
-                            }
-                          }, 100);
-                        } catch (error) {
-                          console.error('Error opening PDF:', error);
-                          setPdfAccessBlocked(true);
                           toast({
-                            title: "Error Opening PDF",
-                            description: "Unable to open the PDF form. Please use the direct link below.",
+                            title: "Download Started",
+                            description: "The PDF form is downloading to your device.",
+                          });
+                        } catch (error) {
+                          console.error('Error downloading PDF:', error);
+                          toast({
+                            title: "Download Failed",
+                            description: "Unable to download PDF form. Please try again.",
                             variant: "destructive",
                           });
                         }
                       }}
                       className="w-fit"
                     >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Open PDF Form
+                      <Download className="h-4 w-4 mr-2" />
+                      Download PDF Form
                     </Button>
                     
                     <Button 

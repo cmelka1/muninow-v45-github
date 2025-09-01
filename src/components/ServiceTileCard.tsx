@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText } from 'lucide-react';
+import { FileText, Download } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 
 interface ServiceTileCardProps {
@@ -34,13 +34,35 @@ const ServiceTileCard: React.FC<ServiceTileCardProps> = ({ tile, onApply }) => {
             </div>
           )}
           
-          <Button 
-            onClick={() => onApply(tile)}
-            className="w-full"
-            size="lg"
-          >
-            Apply Now
-          </Button>
+          <div className="flex gap-2">
+            {tile.pdf_form_url && (
+              <Button 
+                type="button"
+                variant="outline" 
+                size="lg"
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = tile.pdf_form_url!;
+                  link.download = `${tile.title.replace(/[^a-zA-Z0-9]/g, '_')}_form.pdf`;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download Form
+              </Button>
+            )}
+            
+            <Button 
+              onClick={() => onApply(tile)}
+              className="flex-1"
+              size="lg"
+            >
+              Apply Now
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
