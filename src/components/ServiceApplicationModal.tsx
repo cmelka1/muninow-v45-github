@@ -21,6 +21,7 @@ import PaymentMethodSelector from './PaymentMethodSelector';
 import PaymentButtonsContainer from './PaymentButtonsContainer';
 import { AddPaymentMethodDialog } from './profile/AddPaymentMethodDialog';
 import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
+import { useServiceApplicationPaymentMethods } from '@/hooks/useServiceApplicationPaymentMethods';
 import { formatCurrency } from '@/lib/formatters';
 import ServiceApplicationReviewStep from './ServiceApplicationReviewStep';
 
@@ -80,11 +81,25 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     loadPaymentInstruments,
   } = useUserPaymentInstruments();
 
+  // Get user-defined amount from form data for fee calculation
+  const userDefinedAmount = tile?.allow_user_defined_amount ? formData.amount_cents / 100 : undefined;
+  
+  // Use the service application payment hook for fee calculations
+  const {
+    serviceFee,
+    totalWithFee,
+    baseAmount,
+    setSelectedPaymentMethod: setPaymentHookMethod,
+    handlePayment: handleServicePayment,
+    merchantFeeProfile,
+  } = useServiceApplicationPaymentMethods(tile, userDefinedAmount);
+
   useEffect(() => {
     if (tile && isOpen) {
       // Reset state when modal opens
       setCurrentStep(1);
       setSelectedPaymentMethod(null);
+      setPaymentHookMethod(null);
       setIsSubmitting(false);
       setUploadedDocuments([]);
       setValidationErrors({});
@@ -934,9 +949,9 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <PaymentSummary 
-                          baseAmount={totalAmount}
-                          serviceFee={null}
+                       <PaymentSummary 
+                          baseAmount={baseAmount}
+                          serviceFee={serviceFee}
                           selectedPaymentMethod={selectedPaymentMethod}
                           compact={true}
                         />
@@ -959,7 +974,10 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                       <PaymentMethodSelector
                         paymentInstruments={paymentInstruments.slice(0, 3)}
                         selectedPaymentMethod={selectedPaymentMethod}
-                        onSelectPaymentMethod={setSelectedPaymentMethod}
+                        onSelectPaymentMethod={(method) => {
+                          setSelectedPaymentMethod(method);
+                          setPaymentHookMethod(method);
+                        }}
                         isLoading={paymentMethodsLoading}
                         maxMethods={3}
                       />
@@ -982,7 +1000,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                       disabled={!selectedPaymentMethod || isSubmitting}
                       onClick={handlePayment}
                     >
-                      {isSubmitting ? 'Processing...' : totalAmount > 0 ? `Pay ${formatCurrency(totalAmount / 100)}` : 'Submit Application'}
+                      {isSubmitting ? 'Processing...' : totalWithFee > 0 ? `Pay ${formatCurrency(totalWithFee / 100)}` : 'Submit Application'}
                     </Button>
                    
                     <Button 
