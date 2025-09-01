@@ -628,7 +628,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           currentStep={currentStep}
           totalSteps={2}
         >
-        <DialogHeader className="space-y-4 pb-6 border-b">
+        <DialogHeader className="space-y-4 pb-6">
           <div className="space-y-3">
             <DialogTitle className="text-xl font-semibold">
               {tile.title}
