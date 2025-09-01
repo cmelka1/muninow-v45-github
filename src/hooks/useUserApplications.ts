@@ -55,7 +55,7 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
         // Municipal Service Applications
         supabase
           .from('municipal_service_applications')
-          .select('id, tile_id, status, customer_id, created_at, municipal_service_tiles(title)')
+          .select('id, tile_id, status, payment_status, customer_id, created_at, municipal_service_tiles(title)')
           .eq('user_id', user.id),
         
         // Get customer names for municipality lookup
@@ -126,7 +126,7 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
           dateSubmitted: service.created_at,
           municipality: customerMap.get(service.customer_id) || 'Unknown',
           status: service.status,
-          paymentStatus: service.status === 'paid' ? 'paid' : 'n/a',
+          paymentStatus: service.payment_status || 'unpaid',
           customerId: service.customer_id,
           detailPath: `/other-services`
         }))
