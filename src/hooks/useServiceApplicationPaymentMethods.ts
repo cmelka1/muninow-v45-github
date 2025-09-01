@@ -345,8 +345,8 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
         };
       }
 
-      // Check for successful payment indicators
-      if (data.success === true || data.payment_id || data.transfer_id || data.payment_status === 'completed') {
+      // Check for successful payment indicators - backend returns 'paid' not 'completed'
+      if (data.success === true || data.payment_id || data.transfer_id || data.payment_status === 'paid') {
         console.log('Payment processed successfully:', data);
         
         const successMessage = data.auto_approved 
