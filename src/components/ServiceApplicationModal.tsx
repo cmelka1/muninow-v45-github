@@ -1163,7 +1163,6 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                       disabled={isSubmitting}
                     >
                       {isSubmitting ? 'Submitting...' : 'Submit Application'}
-                      <CheckCircle className="h-4 w-4 ml-2" />
                     </Button>
                   </div>
                 </div>
