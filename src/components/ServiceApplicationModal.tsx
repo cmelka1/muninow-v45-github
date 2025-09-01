@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { KeyboardNavigationForm } from '@/components/ui/keyboard-navigation-form';
 import { FileText, Download, User, Copy, ExternalLink, AlertCircle, Upload, X, Image, FileCheck, ArrowLeft, ArrowRight, CheckCircle, Edit, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { useCreateServiceApplication } from '@/hooks/useServiceApplications';
@@ -618,6 +619,15 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent ref={dialogContentRef} className="max-w-4xl max-h-[90vh] overflow-y-auto p-8">
+        <KeyboardNavigationForm
+          onNext={currentStep === 1 ? handleNext : undefined}
+          onSubmit={currentStep === 2 ? (tile.requires_review ? handleSubmitApplication : handlePayment) : undefined}
+          onPrevious={currentStep === 2 ? handlePrevious : undefined}
+          isNextDisabled={currentStep === 1 && Object.keys(validateStep1Fields()).length > 0}
+          isSubmitDisabled={isSubmitting || (currentStep === 2 && !tile.requires_review && !selectedPaymentMethod)}
+          currentStep={currentStep}
+          totalSteps={2}
+        >
         <DialogHeader className="space-y-4 pb-6 border-b">
           <div className="space-y-3">
             <DialogTitle className="text-xl font-semibold">
@@ -1169,6 +1179,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           onOpenChange={setIsAddPaymentMethodOpen}
           onSuccess={loadPaymentInstruments}
         />
+        </KeyboardNavigationForm>
       </DialogContent>
     </Dialog>
   );
