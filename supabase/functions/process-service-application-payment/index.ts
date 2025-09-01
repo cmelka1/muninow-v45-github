@@ -105,33 +105,10 @@ serve(async (req) => {
       );
     }
 
-    // Validate service application ownership and get details
+    // Get service application and validate ownership (separate query like business license)
     const { data: application, error: appError } = await supabaseServiceClient
       .from("municipal_service_applications")
-      .select(`
-        *,
-        municipal_service_tiles!inner(
-          id,
-          title,
-          customer_id,
-          merchant_id,
-          amount_cents,
-          requires_review,
-          merchants!inner(
-            id,
-            finix_merchant_id,
-            merchant_name,
-            customer_id,
-            merchant_fee_profiles(
-              id,
-              basis_points,
-              fixed_fee,
-              ach_basis_points,
-              ach_fixed_fee
-            )
-          )
-        )
-      `)
+      .select("*")
       .eq("id", requestBody.application_id)
       .eq("user_id", user.id)
       .maybeSingle();
@@ -153,9 +130,35 @@ serve(async (req) => {
       );
     }
 
-    const tile = application.municipal_service_tiles;
-    const merchant = tile.merchants;
-    const merchantFeeProfile = merchant.merchant_fee_profiles?.[0];
+    // Get service tile details (separate query)
+    const { data: tile, error: tileError } = await supabaseServiceClient
+      .from("municipal_service_tiles")
+      .select("*")
+      .eq("id", application.tile_id)
+      .maybeSingle();
+
+    if (tileError || !tile) {
+      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Service tile not found:", tileError);
+      return new Response(
+        JSON.stringify({ error: "Service tile not found" }),
+        { headers: corsHeaders, status: 404 }
+      );
+    }
+
+    // Get merchant details (separate query)
+    const { data: merchant, error: merchantError } = await supabaseServiceClient
+      .from("merchants")
+      .select("*")
+      .eq("id", tile.merchant_id)
+      .maybeSingle();
+
+    if (merchantError || !merchant) {
+      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Merchant not found:", merchantError);
+      return new Response(
+        JSON.stringify({ error: "Merchant not found" }),
+        { headers: corsHeaders, status: 404 }
+      );
+    }
 
     // Validate merchant configuration
     if (!merchant.finix_merchant_id) {
@@ -164,6 +167,18 @@ serve(async (req) => {
         JSON.stringify({ error: "Merchant payment configuration incomplete" }),
         { headers: corsHeaders, status: 400 }
       );
+    }
+
+    // Get merchant fee profile (separate query)
+    const { data: merchantFeeProfiles, error: feeProfileError } = await supabaseServiceClient
+      .from("merchant_fee_profiles")
+      .select("*")
+      .eq("merchant_id", merchant.id)
+      .limit(1);
+
+    const merchantFeeProfile = merchantFeeProfiles?.[0];
+    if (feeProfileError) {
+      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Fee profile error:", feeProfileError);
     }
 
     // Validate payment instrument ownership
