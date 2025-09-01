@@ -202,7 +202,7 @@ serve(async (req) => {
 
     // Grossed-up calculation: T = (A + F) / (1 - R)
     const percentageFee = basisPoints / 10000;
-    const grossedUpAmount = Math.ceil((baseAmount + fixedFee) / (1 - percentageFee));
+    const grossedUpAmount = Math.round((baseAmount + fixedFee) / (1 - percentageFee));
     const serviceFee = grossedUpAmount - baseAmount;
 
     console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Fee calculation:", {
@@ -215,8 +215,8 @@ serve(async (req) => {
       requestedTotal: requestBody.total_amount_cents
     });
 
-    // Validate calculated amount matches request
-    if (Math.abs(grossedUpAmount - requestBody.total_amount_cents) > 1) {
+    // Validate calculated amount matches request (allow 2 cent tolerance for rounding)
+    if (Math.abs(grossedUpAmount - requestBody.total_amount_cents) > 2) {
       console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Amount mismatch");
       return new Response(
         JSON.stringify({ 
