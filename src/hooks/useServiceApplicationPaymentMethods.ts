@@ -345,9 +345,36 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
         };
       }
 
-      // Check for successful payment indicators - backend returns 'paid' not 'completed'
-      if (data.success === true || data.payment_id || data.transfer_id || data.payment_status === 'paid') {
-        console.log('Payment processed successfully:', data);
+      // Enhanced success detection with detailed logging
+      console.log('=== PAYMENT RESPONSE ANALYSIS ===');
+      console.log('Full response data:', JSON.stringify(data, null, 2));
+      console.log('data.success:', data.success, '(type:', typeof data.success, ')');
+      console.log('data.payment_id:', data.payment_id);
+      console.log('data.transfer_id:', data.transfer_id);
+      console.log('data.payment_status:', data.payment_status, '(type:', typeof data.payment_status, ')');
+      console.log('data.status:', data.status);
+      console.log('data.auto_approved:', data.auto_approved);
+      
+      // Multiple success conditions with individual logging
+      const successConditions = [
+        { check: data.success === true, name: 'data.success === true' },
+        { check: !!data.payment_id, name: 'payment_id exists' },
+        { check: !!data.transfer_id, name: 'transfer_id exists' },
+        { check: data.payment_status === 'paid', name: 'payment_status === "paid"' },
+        { check: data.status === 'paid', name: 'status === "paid"' },
+        { check: data.status === 'approved', name: 'status === "approved"' }
+      ];
+      
+      console.log('=== SUCCESS CONDITIONS CHECK ===');
+      successConditions.forEach(condition => {
+        console.log(`${condition.name}: ${condition.check}`);
+      });
+      
+      const isSuccess = successConditions.some(condition => condition.check);
+      console.log('Overall success determination:', isSuccess);
+      
+      if (isSuccess) {
+        console.log('✅ Payment processed successfully:', data);
         
         const successMessage = data.auto_approved 
           ? "Your payment has been processed and your application has been approved!"
@@ -362,12 +389,13 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
           success: true,
           payment_id: data.payment_id,
           transaction_id: data.transfer_id,
-          status: data.payment_status,
+          status: data.payment_status || data.status,
         };
       }
 
       // Handle edge case where response structure is unexpected
-      console.warn('Unexpected payment response structure:', data);
+      console.warn('❌ Payment status unclear - no success indicators found');
+      console.warn('Response structure:', JSON.stringify(data, null, 2));
       const warningMsg = "Payment status unclear. Please check your payment history.";
       
       toast({
