@@ -1131,7 +1131,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                 </Card>
 
                 {/* Navigation & Submit Actions */}
-                <div className="flex gap-3 pt-6 border-t">
+                <div className="flex justify-between pt-6 border-t">
                   <Button 
                     type="button" 
                     variant="outline" 
@@ -1141,15 +1141,23 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                     <ChevronLeft className="h-4 w-4" />
                     Previous
                   </Button>
-                  <Button 
-                    type="button"
-                    onClick={handleSubmitApplication}
-                    disabled={isSubmitting}
-                    className="flex-1"
-                  >
-                    {isSubmitting ? 'Submitting...' : 'Submit Application'}
-                    <CheckCircle className="h-4 w-4 ml-2" />
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={onClose}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="button"
+                      onClick={handleSubmitApplication}
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Submitting...' : 'Submit Application'}
+                      <CheckCircle className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
                 </div>
               </>
             )}
