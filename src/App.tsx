@@ -58,7 +58,7 @@ import PermitDetail from "./pages/PermitDetail";
 import PermitCertificate from "./pages/PermitCertificate";
 import BusinessLicenseCertificate from "./pages/BusinessLicenseCertificate";
 import TaxDetail from "./pages/TaxDetail";
-import ServiceApplicationDetail from "./pages/ServiceApplicationDetail";
+import ServiceApplicationDetail from "@/pages/ServiceApplicationDetail";
 import Notifications from "./pages/Notifications";
 import { SimpleProtectedRoute } from "@/components/SimpleProtectedRoute";
 import { MunicipalLayout } from "@/components/layouts/MunicipalLayout";
