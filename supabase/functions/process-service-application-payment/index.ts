@@ -20,7 +20,7 @@ interface FinixTransferRequest {
   amount: number;
   source: string;
   idempotency_id: string;
-  fraud_session_id?: string;
+  fraud_session_id: string;
 }
 
 interface FinixTransferResponse {
@@ -260,6 +260,11 @@ serve(async (req) => {
       ? "https://finix.payments-api.com" 
       : "https://finix.sandbox-payments-api.com";
 
+    // Validate fraud session ID
+    if (!requestBody.fraud_session_id || requestBody.fraud_session_id.trim() === '') {
+      console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Warning: Empty fraud session ID");
+    }
+
     // Process payment via Finix
     const finixTransferData: FinixTransferRequest = {
       merchant: merchant.finix_merchant_id,
@@ -267,11 +272,8 @@ serve(async (req) => {
       amount: grossedUpAmount,
       source: paymentInstrument.finix_payment_instrument_id,
       idempotency_id: requestBody.idempotency_id,
+      fraud_session_id: requestBody.fraud_session_id || "",
     };
-
-    if (requestBody.fraud_session_id) {
-      finixTransferData.fraud_session_id = requestBody.fraud_session_id;
-    }
 
     console.log("[PROCESS-SERVICE-APPLICATION-PAYMENT] Initiating Finix transfer");
     const finixResponse = await fetch(`${finixBaseUrl}/transfers`, {
