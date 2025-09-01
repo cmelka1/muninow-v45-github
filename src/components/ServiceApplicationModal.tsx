@@ -9,12 +9,18 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
-import { FileText, Download, User, Copy, ExternalLink, AlertCircle, Upload, X, Image, FileCheck } from 'lucide-react';
+import { FileText, Download, User, Copy, ExternalLink, AlertCircle, Upload, X, Image, FileCheck, ArrowLeft, ArrowRight, CheckCircle, Edit } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { useCreateServiceApplication } from '@/hooks/useServiceApplications';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import PaymentSummary from './PaymentSummary';
+import PaymentMethodSelector from './PaymentMethodSelector';
+import { AddPaymentMethodDialog } from './profile/AddPaymentMethodDialog';
+import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
+import { formatCurrency } from '@/lib/formatters';
+import ServiceApplicationReviewStep from './ServiceApplicationReviewStep';
 
 interface ServiceApplicationModalProps {
   tile: MunicipalServiceTile | null;
@@ -44,25 +50,41 @@ const DOCUMENT_TYPES = [
   'other'
 ];
 
+type ApplicationStep = 'form' | 'review';
+
 const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   tile,
   isOpen,
   onClose,
 }) => {
+  const [currentStep, setCurrentStep] = useState<ApplicationStep>('form');
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [useAutoPopulate, setUseAutoPopulate] = useState(true);
   const [pdfAccessBlocked, setPdfAccessBlocked] = useState(false);
   const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
   const [dragActive, setDragActive] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { profile } = useAuth();
   const createApplication = useCreateServiceApplication();
+  const {
+    paymentInstruments,
+    isLoading: paymentMethodsLoading,
+    loadPaymentInstruments,
+  } = useUserPaymentInstruments();
 
   useEffect(() => {
     if (tile && isOpen) {
+      // Reset state when modal opens
+      setCurrentStep('form');
+      setSelectedPaymentMethod(null);
+      setIsSubmitting(false);
+      setUploadedDocuments([]);
+      
       // Initialize form data
       const initialData: Record<string, any> = {};
-      
       
       // Initialize form fields first
       tile.form_fields?.forEach(field => {
@@ -136,6 +158,10 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       
       setFormData(initialData);
       
+      // Load payment instruments if this service doesn't require review
+      if (!tile.requires_review) {
+        loadPaymentInstruments();
+      }
     }
   }, [tile, isOpen, useAutoPopulate, profile]);
 
@@ -146,10 +172,8 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!tile) return;
+  const validateFormStep = (): boolean => {
+    if (!tile) return false;
 
     // Validate required fields
     let missingFields: { label: string }[] = tile.form_fields?.filter(field => 
@@ -167,8 +191,22 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         description: `Please fill in: ${missingFields.map(f => f.label).join(', ')}`,
         variant: 'destructive',
       });
-      return;
+      return false;
     }
+
+    return true;
+  };
+
+  const handleContinueToReview = () => {
+    if (validateFormStep()) {
+      setCurrentStep('review');
+    }
+  };
+
+  const handleSubmitApplication = async () => {
+    if (!tile || isSubmitting) return;
+
+    setIsSubmitting(true);
 
     try {
       const applicationData = await createApplication.mutateAsync({
@@ -201,10 +239,32 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         await Promise.all(documentPromises);
       }
       
+      toast({
+        title: 'Application Submitted',
+        description: 'Your application has been submitted for review.',
+      });
+      
       onClose();
     } catch (error) {
       console.error('Error submitting application:', error);
+      toast({
+        title: 'Submission Failed',
+        description: 'There was an error submitting your application. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const handlePayment = async () => {
+    if (!tile || !selectedPaymentMethod || isSubmitting) return;
+
+    // TODO: Implement payment processing
+    toast({
+      title: 'Payment Processing',
+      description: 'Payment functionality will be implemented next.',
+    });
   };
 
   const renderFormField = (field: any) => {
@@ -418,368 +478,502 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
 
   if (!tile) return null;
 
+  const totalAmount = tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto p-8">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-8">
         <DialogHeader className="space-y-4 pb-6 border-b">
           <div className="space-y-2">
             <DialogTitle className="text-xl font-semibold">
               {tile.title}
             </DialogTitle>
-            {!tile.allow_user_defined_amount && (
-              <Badge variant="secondary" className="text-sm px-3 py-1 w-fit">
-                ${(tile.amount_cents / 100).toFixed(2)}
+            <div className="flex items-center gap-2">
+              {totalAmount > 0 && (
+                <Badge variant="secondary" className="text-sm px-3 py-1">
+                  {formatCurrency(totalAmount / 100)}
+                </Badge>
+              )}
+              <Badge variant="outline" className="text-sm px-3 py-1">
+                Step {currentStep === 'form' ? '1' : '2'} of 2
               </Badge>
-            )}
+            </div>
           </div>
           <DialogDescription className="text-base leading-relaxed">
-            {tile.description}
+            {currentStep === 'form' ? tile.description : 'Review your application details before submitting'}
           </DialogDescription>
         </DialogHeader>
 
-        {/* Guidance Text Box */}
-        <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-3">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-            <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
-              <p>
-                Please review the attached PDF carefully and either (a) provide responses to any applicable questions in the Additional Information text area, or (b) upload a completed copy of the document in the Document Upload section.
-              </p>
-              <p>
-                If your payment amount is variable, please calculate the amount due and enter both the total and the calculation reasoning as the final item in the Additional Information text area.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-8 pt-6">
-          {/* PDF Form Section */}
-          {tile.pdf_form_url && (
-            <div className="border rounded-lg p-6">
-              <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-                <div className="space-y-3 flex-1">
-                  <div>
-                    <h3 className="text-sm font-medium mb-1">Official Form Available</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Download the official PDF form directly to your device.
-                    </p>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm"
-                      onClick={async () => {
-                        try {
-                          if (!tile.pdf_form_url) {
-                            throw new Error('PDF form URL not available');
-                          }
-                          
-                          toast({
-                            title: "Downloading...",
-                            description: "Preparing your PDF download.",
-                          });
-                          
-                          // Fetch the PDF as a blob
-                          const response = await fetch(tile.pdf_form_url);
-                          if (!response.ok) {
-                            throw new Error('Failed to fetch PDF file');
-                          }
-                          
-                          const blob = await response.blob();
-                          
-                          // Create a download URL from the blob
-                          const downloadUrl = URL.createObjectURL(blob);
-                          
-                          // Create and trigger download
-                          const link = document.createElement('a');
-                          link.href = downloadUrl;
-                          link.download = `${tile.title.replace(/[^a-zA-Z0-9]/g, '_')}_form.pdf`;
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                          
-                          // Clean up the object URL
-                          URL.revokeObjectURL(downloadUrl);
-                          
-                          toast({
-                            title: "Download Complete",
-                            description: "The PDF form has been downloaded to your device.",
-                          });
-                        } catch (error) {
-                          console.error('Error downloading PDF:', error);
-                          toast({
-                            title: "Download Failed",
-                            description: "Unable to download PDF form. Please try again.",
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                      className="w-fit"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download PDF Form
-                    </Button>
-                    
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => {
-                        navigator.clipboard.writeText(tile.pdf_form_url!).then(() => {
-                          toast({
-                            title: "Link Copied",
-                            description: "PDF form link copied to clipboard.",
-                          });
-                        }).catch(() => {
-                          toast({
-                            title: "Copy Failed",
-                            description: "Unable to copy link. Please manually copy the URL below.",
-                            variant: "destructive",
-                          });
-                        });
-                      }}
-                      className="w-fit"
-                    >
-                      <Copy className="h-4 w-4 mr-2" />
-                      Copy Link
-                    </Button>
-                  </div>
-                  
-                  {/* Fallback options when popup is blocked */}
-                  {pdfAccessBlocked && (
-                    <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                      <div className="flex items-start gap-2">
-                        <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-                        <div className="space-y-2">
-                          <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
-                            Having trouble accessing the PDF?
-                          </p>
-                          <p className="text-xs text-amber-700 dark:text-amber-300">
-                            • Try allowing popups for this site in your browser settings
-                          </p>
-                          <p className="text-xs text-amber-700 dark:text-amber-300">
-                            • Or copy this direct link: 
-                            <code className="ml-1 px-1 bg-amber-100 dark:bg-amber-900 rounded text-xs break-all">
-                              {tile.pdf_form_url}
-                            </code>
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+        {currentStep === 'form' ? (
+          <>
+            {/* Guidance Text Box */}
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+                  <p>
+                    Please review the attached PDF carefully and either (a) provide responses to any applicable questions in the Additional Information text area, or (b) upload a completed copy of the document in the Document Upload section.
+                  </p>
+                  <p>
+                    If your payment amount is variable, please calculate the amount due and enter both the total and the calculation reasoning as the final item in the Additional Information text area.
+                  </p>
                 </div>
               </div>
             </div>
-          )}
 
-
-          {/* Dynamic Form Fields */}
-          {tile.form_fields && tile.form_fields.length > 0 && (
-            <Card className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <CardHeader className="pb-4 flex flex-row items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  Application Information
-                </CardTitle>
-                <div className="flex items-center space-x-2">
-                  <Label htmlFor="auto-populate" className="text-sm text-muted-foreground">
-                    Use Profile Information
-                  </Label>
-                  <Switch
-                    id="auto-populate"
-                    checked={useAutoPopulate}
-                    onCheckedChange={(checked) => setUseAutoPopulate(checked)}
-                  />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-5">
-                  {tile.form_fields?.map((field) => (
-                    <div key={field.id} className="space-y-2">
-                      <Label htmlFor={field.id} className="flex items-center gap-1 text-sm">
-                        {field.label}
-                        {field.required && <span className="text-destructive">*</span>}
-                      </Label>
-                      {renderFormField(field)}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Document Upload Section */}
-          <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base flex items-center gap-2">
-                <div className="w-2 h-2 bg-primary rounded-full"></div>
-                Document Upload
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium text-foreground">
-                    Supporting Documents <span className="text-muted-foreground">(Optional)</span>
-                  </Label>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Upload any documents that support your application
-                  </p>
-                  
-                  {/* File Upload Zone */}
-                  <div
-                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                      dragActive 
-                        ? 'border-primary bg-primary/5' 
-                        : 'border-muted-foreground/25 hover:border-muted-foreground/50'
-                    }`}
-                    onDragEnter={handleDragEnter}
-                    onDragLeave={handleDragLeave}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                  >
-                    <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                    <div className="text-sm">
-                      <label htmlFor="file-upload" className="text-primary hover:text-primary/80 cursor-pointer font-medium">
-                        Click to upload
-                      </label>
-                      <span className="text-muted-foreground"> or drag and drop</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      PDF, DOC, DOCX, JPG, PNG, GIF up to 10MB each
-                    </p>
-                    <input
-                      id="file-upload"
-                      type="file"
-                      multiple
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
-                      onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
-                      className="hidden"
-                    />
-                  </div>
-                </div>
-
-                {/* Uploaded Files List */}
-                {uploadedDocuments.length > 0 && (
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium text-foreground">
-                      Uploaded Files ({uploadedDocuments.length})
-                    </Label>
-                    {uploadedDocuments.map((doc) => (
-                      <div key={doc.id} className="flex items-center space-x-3 p-3 border rounded-lg">
-                        <div className="flex-shrink-0">
-                          {getFileIcon(doc.type)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {doc.name}
-                          </p>
-                          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                            <span>{formatFileSize(doc.size)}</span>
-                            {doc.uploadStatus === 'uploading' && (
-                              <span className="text-blue-600">Uploading...</span>
-                            )}
-                            {doc.uploadStatus === 'completed' && (
-                              <span className="text-green-600">✓ Uploaded</span>
-                            )}
-                            {doc.uploadStatus === 'error' && (
-                              <span className="text-red-600">Error: {doc.error}</span>
-                            )}
+            <div className="space-y-8 pt-6">
+              {/* PDF Form Section */}
+              {tile.pdf_form_url && (
+                <div className="border rounded-lg p-6">
+                  <div className="flex items-start gap-3">
+                    <FileText className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+                    <div className="space-y-3 flex-1">
+                      <div>
+                        <h3 className="text-sm font-medium mb-1">Official Form Available</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Download the official PDF form directly to your device.
+                        </p>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              if (!tile.pdf_form_url) {
+                                throw new Error('PDF form URL not available');
+                              }
+                              
+                              toast({
+                                title: "Downloading...",
+                                description: "Preparing your PDF download.",
+                              });
+                              
+                              // Fetch the PDF as a blob
+                              const response = await fetch(tile.pdf_form_url);
+                              if (!response.ok) {
+                                throw new Error('Failed to fetch PDF file');
+                              }
+                              
+                              const blob = await response.blob();
+                              
+                              // Create a download URL from the blob
+                              const downloadUrl = URL.createObjectURL(blob);
+                              
+                              // Create and trigger download
+                              const link = document.createElement('a');
+                              link.href = downloadUrl;
+                              link.download = `${tile.title.replace(/[^a-zA-Z0-9]/g, '_')}_form.pdf`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              
+                              // Clean up the object URL
+                              URL.revokeObjectURL(downloadUrl);
+                              
+                              toast({
+                                title: "Download Complete",
+                                description: "The PDF form has been downloaded to your device.",
+                              });
+                            } catch (error) {
+                              console.error('Error downloading PDF:', error);
+                              toast({
+                                title: "Download Failed",
+                                description: "Unable to download PDF form. Please try again.",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                          className="w-fit"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Download PDF Form
+                        </Button>
+                        
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(tile.pdf_form_url!).then(() => {
+                              toast({
+                                title: "Link Copied",
+                                description: "PDF form link copied to clipboard.",
+                              });
+                            }).catch(() => {
+                              toast({
+                                title: "Copy Failed",
+                                description: "Unable to copy link. Please manually copy the URL below.",
+                                variant: "destructive",
+                              });
+                            });
+                          }}
+                          className="w-fit"
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copy Link
+                        </Button>
+                      </div>
+                      
+                      {/* Fallback options when popup is blocked */}
+                      {pdfAccessBlocked && (
+                        <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                          <div className="flex items-start gap-2">
+                            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                            <div className="space-y-2">
+                              <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                                Having trouble accessing the PDF?
+                              </p>
+                              <p className="text-xs text-amber-700 dark:text-amber-300">
+                                • Try allowing popups for this site in your browser settings
+                              </p>
+                              <p className="text-xs text-amber-700 dark:text-amber-300">
+                                • Or copy this direct link: 
+                                <code className="ml-1 px-1 bg-amber-100 dark:bg-amber-900 rounded text-xs break-all">
+                                  {tile.pdf_form_url}
+                                </code>
+                              </p>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Select
-                            defaultValue={doc.documentType}
-                            onValueChange={(value) => handleDocumentTypeChange(doc.id, value)}
-                          >
-                            <SelectTrigger className="w-32 h-8">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="general">General</SelectItem>
-                              <SelectItem value="plans">Plans</SelectItem>
-                              <SelectItem value="specifications">Specifications</SelectItem>
-                              <SelectItem value="inspection">Inspection</SelectItem>
-                              <SelectItem value="survey">Survey</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveDocument(doc.id)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* User-Defined Amount Section */}
-          {tile.allow_user_defined_amount && (
-            <div className="border rounded-lg p-6 space-y-4">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-medium">Service Fee</h3>
-                <Badge variant="outline" className="text-sm px-2 py-1">
-                  {formData.amount_cents ? `$${(formData.amount_cents / 100).toFixed(2)}` : 'Not set'}
-                </Badge>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="amount" className="flex items-center gap-1 text-sm">
-                  Amount
-                  <span className="text-destructive">*</span>
-                </Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.amount_cents ? (formData.amount_cents / 100).toString() : ''}
-                    onChange={(e) => handleInputChange('amount_cents', Math.round(parseFloat(e.target.value || '0') * 100))}
-                    placeholder="0.00"
-                    className="pl-8 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-                    required
-                  />
                 </div>
+              )}
+
+              {/* Dynamic Form Fields */}
+              {tile.form_fields && tile.form_fields.length > 0 && (
+                <Card className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                  <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <div className="w-2 h-2 bg-primary rounded-full"></div>
+                      Application Information
+                    </CardTitle>
+                    <div className="flex items-center space-x-2">
+                      <Label htmlFor="auto-populate" className="text-sm text-muted-foreground">
+                        Use Profile Information
+                      </Label>
+                      <Switch
+                        id="auto-populate"
+                        checked={useAutoPopulate}
+                        onCheckedChange={(checked) => setUseAutoPopulate(checked)}
+                      />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-5">
+                      {tile.form_fields?.map((field) => (
+                        <div key={field.id} className="space-y-2">
+                          <Label htmlFor={field.id} className="flex items-center gap-1 text-sm">
+                            {field.label}
+                            {field.required && <span className="text-destructive">*</span>}
+                          </Label>
+                          {renderFormField(field)}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Document Upload Section */}
+              <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    Document Upload
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium text-foreground">
+                        Supporting Documents <span className="text-muted-foreground">(Optional)</span>
+                      </Label>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Upload any documents that support your application
+                      </p>
+                      
+                      {/* File Upload Zone */}
+                      <div
+                        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                          dragActive 
+                            ? 'border-primary bg-primary/5' 
+                            : 'border-muted-foreground/25 hover:border-muted-foreground/50'
+                        }`}
+                        onDragEnter={handleDragEnter}
+                        onDragLeave={handleDragLeave}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                      >
+                        <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                        <div className="text-sm">
+                          <label htmlFor="file-upload" className="text-primary hover:text-primary/80 cursor-pointer font-medium">
+                            Click to upload
+                          </label>
+                          <span className="text-muted-foreground"> or drag and drop</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          PDF, DOC, DOCX, JPG, PNG, GIF up to 10MB each
+                        </p>
+                        <input
+                          id="file-upload"
+                          type="file"
+                          multiple
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+                          onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
+                          className="hidden"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Uploaded Files List */}
+                    {uploadedDocuments.length > 0 && (
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium text-foreground">
+                          Uploaded Files ({uploadedDocuments.length})
+                        </Label>
+                        {uploadedDocuments.map((doc) => (
+                          <div key={doc.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                            <div className="flex-shrink-0">
+                              {getFileIcon(doc.type)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">
+                                {doc.name}
+                              </p>
+                              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                                <span>{formatFileSize(doc.size)}</span>
+                                {doc.uploadStatus === 'uploading' && (
+                                  <span className="text-blue-600">Uploading...</span>
+                                )}
+                                {doc.uploadStatus === 'completed' && (
+                                  <span className="text-green-600">✓ Uploaded</span>
+                                )}
+                                {doc.uploadStatus === 'error' && (
+                                  <span className="text-red-600">Error: {doc.error}</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Select
+                                defaultValue={doc.documentType}
+                                onValueChange={(value) => handleDocumentTypeChange(doc.id, value)}
+                              >
+                                <SelectTrigger className="w-32 h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="general">General</SelectItem>
+                                  <SelectItem value="plans">Plans</SelectItem>
+                                  <SelectItem value="specifications">Specifications</SelectItem>
+                                  <SelectItem value="inspection">Inspection</SelectItem>
+                                  <SelectItem value="survey">Survey</SelectItem>
+                                  <SelectItem value="other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveDocument(doc.id)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* User-Defined Amount Section */}
+              {tile.allow_user_defined_amount && (
+                <div className="border rounded-lg p-6 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-medium">Service Fee</h3>
+                    <Badge variant="outline" className="text-sm px-2 py-1">
+                      {formData.amount_cents ? `$${(formData.amount_cents / 100).toFixed(2)}` : 'Not set'}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="amount" className="flex items-center gap-1 text-sm">
+                      Amount
+                      <span className="text-destructive">*</span>
+                    </Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                      <Input
+                        id="amount"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.amount_cents ? (formData.amount_cents / 100).toString() : ''}
+                        onChange={(e) => handleInputChange('amount_cents', Math.round(parseFloat(e.target.value || '0') * 100))}
+                        placeholder="0.00"
+                        className="pl-8 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Review Notice */}
+              {tile.requires_review && (
+                <div className="border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20 rounded-lg p-4">
+                  <p className="text-sm text-blue-900 dark:text-blue-100">
+                    <span className="font-medium">Review Required:</span> This application will be reviewed by municipal staff before approval. 
+                    Payment will only be processed after approval.
+                  </p>
+                </div>
+              )}
+
+              {/* Form Navigation */}
+              <div className="flex gap-3 pt-6 border-t">
+                <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+                  Cancel
+                </Button>
+                <Button 
+                  type="button"
+                  onClick={handleContinueToReview}
+                  className="flex-1"
+                >
+                  Continue to Review
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
               </div>
             </div>
-          )}
+          </>
+        ) : (
+          /* Review Step */
+          <>
+            <ServiceApplicationReviewStep
+              tile={tile}
+              formData={formData}
+              uploadedDocuments={uploadedDocuments}
+              onEdit={() => setCurrentStep('form')}
+            />
+            
+            {/* Conditional Payment or Submit Section */}
+            {!tile.requires_review ? (
+              /* Payment Section for Auto-Approve Services */
+              <>
+                {totalAmount > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Payment Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <PaymentSummary 
+                        baseAmount={totalAmount}
+                        serviceFee={null}
+                        selectedPaymentMethod={selectedPaymentMethod}
+                        compact={true}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
 
-          {/* Review Notice */}
-          {tile.requires_review && (
-            <div className="border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20 rounded-lg p-4">
-              <p className="text-sm text-blue-900 dark:text-blue-100">
-                <span className="font-medium">Review Required:</span> This application will be reviewed by municipal staff before approval. 
-                Payment will only be processed after approval.
-              </p>
-            </div>
-          )}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Payment Method</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <PaymentMethodSelector
+                      paymentInstruments={paymentInstruments}
+                      selectedPaymentMethod={selectedPaymentMethod}
+                      onSelectPaymentMethod={setSelectedPaymentMethod}
+                      isLoading={paymentMethodsLoading}
+                      maxMethods={3}
+                    />
+                    
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsAddPaymentMethodOpen(true)}
+                      className="w-full"
+                    >
+                      Add New Payment Method
+                    </Button>
+                  </CardContent>
+                </Card>
 
-          {/* Submit Button */}
-          <div className="flex gap-3 pt-6 border-t">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              className="flex-1"
-              disabled={createApplication.isPending}
-            >
-              {createApplication.isPending ? 'Submitting...' : 'Submit Application'}
-            </Button>
-          </div>
-        </form>
+                {/* Payment Actions */}
+                <div className="flex gap-3 pt-6 border-t">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setCurrentStep('form')}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                  </Button>
+                  <Button 
+                    type="button"
+                    onClick={handlePayment}
+                    disabled={!selectedPaymentMethod || isSubmitting || (totalAmount > 0 && !selectedPaymentMethod)}
+                    className="flex-1"
+                  >
+                    {isSubmitting ? 'Processing...' : totalAmount > 0 ? `Pay ${formatCurrency(totalAmount / 100)}` : 'Submit Application'}
+                    <CheckCircle className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
+              </>
+            ) : (
+              /* Submit Section for Manual Review Services */
+              <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Next Steps</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 text-sm">
+                      <p>Your application will be submitted for manual review by municipal staff.</p>
+                      {totalAmount > 0 && (
+                        <p>Payment will be processed after your application is approved.</p>
+                      )}
+                      <p>You will receive notifications about your application status via email.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Submit Actions */}
+                <div className="flex gap-3 pt-6 border-t">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setCurrentStep('form')}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                  </Button>
+                  <Button 
+                    type="button"
+                    onClick={handleSubmitApplication}
+                    disabled={isSubmitting}
+                    className="flex-1"
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Submit Application'}
+                    <CheckCircle className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
+              </>
+            )}
+          </>
+        )}
+
+        <AddPaymentMethodDialog
+          open={isAddPaymentMethodOpen}
+          onOpenChange={setIsAddPaymentMethodOpen}
+          onSuccess={loadPaymentInstruments}
+        />
       </DialogContent>
     </Dialog>
   );
