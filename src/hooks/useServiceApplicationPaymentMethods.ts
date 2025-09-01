@@ -345,24 +345,34 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
         };
       }
 
-      // Enhanced success detection with detailed logging
-      console.log('=== PAYMENT RESPONSE ANALYSIS ===');
-      console.log('Full response data:', JSON.stringify(data, null, 2));
-      console.log('data.success:', data.success, '(type:', typeof data.success, ')');
-      console.log('data.payment_id:', data.payment_id);
-      console.log('data.transfer_id:', data.transfer_id);
-      console.log('data.payment_status:', data.payment_status, '(type:', typeof data.payment_status, ')');
-      console.log('data.status:', data.status);
-      console.log('data.auto_approved:', data.auto_approved);
+      // Normalize response - handle nested Supabase function responses
+      console.log('=== RAW SUPABASE RESPONSE ===');
+      console.log('Raw data:', JSON.stringify(data, null, 2));
       
-      // Multiple success conditions with individual logging
+      // Check if response is nested in data.data (common Supabase pattern)
+      let normalizedData = data;
+      if (data && typeof data === 'object' && data.data && !data.success && !data.payment_id) {
+        console.log('Detected nested response structure, using data.data');
+        normalizedData = data.data;
+      }
+      
+      console.log('=== NORMALIZED RESPONSE ===');
+      console.log('Normalized data:', JSON.stringify(normalizedData, null, 2));
+      console.log('normalizedData.success:', normalizedData.success, '(type:', typeof normalizedData.success, ')');
+      console.log('normalizedData.payment_id:', normalizedData.payment_id);
+      console.log('normalizedData.transfer_id:', normalizedData.transfer_id);
+      console.log('normalizedData.payment_status:', normalizedData.payment_status);
+      console.log('normalizedData.status:', normalizedData.status);
+      console.log('normalizedData.auto_approved:', normalizedData.auto_approved);
+      
+      // Multiple success conditions using normalized data
       const successConditions = [
-        { check: data.success === true, name: 'data.success === true' },
-        { check: !!data.payment_id, name: 'payment_id exists' },
-        { check: !!data.transfer_id, name: 'transfer_id exists' },
-        { check: data.payment_status === 'paid', name: 'payment_status === "paid"' },
-        { check: data.status === 'paid', name: 'status === "paid"' },
-        { check: data.status === 'approved', name: 'status === "approved"' }
+        { check: normalizedData.success === true, name: 'normalizedData.success === true' },
+        { check: !!normalizedData.payment_id, name: 'normalizedData.payment_id exists' },
+        { check: !!normalizedData.transfer_id, name: 'normalizedData.transfer_id exists' },
+        { check: normalizedData.payment_status === 'paid', name: 'normalizedData.payment_status === "paid"' },
+        { check: normalizedData.status === 'paid', name: 'normalizedData.status === "paid"' },
+        { check: normalizedData.status === 'approved', name: 'normalizedData.status === "approved"' }
       ];
       
       console.log('=== SUCCESS CONDITIONS CHECK ===');
@@ -374,9 +384,9 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
       console.log('Overall success determination:', isSuccess);
       
       if (isSuccess) {
-        console.log('✅ Payment processed successfully:', data);
+        console.log('✅ Payment processed successfully:', normalizedData);
         
-        const successMessage = data.auto_approved 
+        const successMessage = normalizedData.auto_approved 
           ? "Your payment has been processed and your application has been approved!"
           : "Your payment has been processed. Your application is now under review.";
         
@@ -387,9 +397,9 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
 
         return {
           success: true,
-          payment_id: data.payment_id,
-          transaction_id: data.transfer_id,
-          status: data.payment_status || data.status,
+          payment_id: normalizedData.payment_id,
+          transaction_id: normalizedData.transfer_id,
+          status: normalizedData.payment_status || normalizedData.status,
         };
       }
 
