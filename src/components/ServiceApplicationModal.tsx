@@ -655,7 +655,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           </div>
           
           <DialogDescription className="text-base leading-relaxed">
-            {currentStep === 1 ? tile.description : 'Review your application details before submitting'}
+            {currentStep === 1 ? tile.description : ''}
           </DialogDescription>
         </DialogHeader>
 
