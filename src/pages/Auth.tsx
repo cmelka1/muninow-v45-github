@@ -25,15 +25,16 @@ const Auth = () => {
     profile,
     isLoading,
     isSubmitting, 
+    isLoggingOut,
     loginError, 
     signIn, 
     setForgotPasswordOpen,
     clearError 
   } = useAuth();
 
-  // Dynamic navigation based on user type
+  // Dynamic navigation based on user type - avoid navigating during logout
   useEffect(() => {
-    if (user && !isLoading && profile) {
+    if (user && !isLoading && profile && !isLoggingOut) {
       if (profile.account_type === 'municipal') {
         navigate('/municipal/dashboard');
       } else if (profile.account_type === 'business' && profile.role === 'superAdmin') {
@@ -42,7 +43,7 @@ const Auth = () => {
         navigate('/dashboard');
       }
     }
-  }, [user, profile, isLoading, navigate]);
+  }, [user, profile, isLoading, isLoggingOut, navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();

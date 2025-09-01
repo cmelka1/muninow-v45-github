@@ -25,6 +25,7 @@ interface AuthContextType {
   profile: Profile | null;
   isLoading: boolean;
   isSubmitting: boolean;
+  isLoggingOut: boolean;
   loginError: string | null;
   isForgotPasswordOpen: boolean;
   resetSent: boolean;
@@ -60,6 +61,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [resetSent, setResetSent] = useState(false);
@@ -186,6 +188,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signOut = async () => {
+    if (isLoggingOut) return; // Prevent multiple logout attempts
+    
+    setIsLoggingOut(true);
+    
     try {
       // Clear cross-tab session storage immediately
       localStorage.removeItem('active_session_id');
@@ -209,8 +215,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         description: "You have been successfully signed out."
       });
       
-      // Use window.location for immediate redirect without React Router state
-      window.location.href = '/signin';
+      // Small delay to ensure state is cleared before navigation
+      setTimeout(() => {
+        window.location.href = '/signin';
+      }, 100);
+      
     } catch (error: any) {
       console.error('Sign out error:', error);
       // Always clear local state even if server logout fails
@@ -220,7 +229,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.removeItem('active_session_id');
       
       // Still redirect user - they're effectively logged out locally
-      window.location.href = '/signin';
+      setTimeout(() => {
+        window.location.href = '/signin';
+      }, 100);
     }
   };
 
@@ -373,6 +384,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     profile,
     isLoading,
     isSubmitting,
+    isLoggingOut,
     loginError,
     isForgotPasswordOpen,
     resetSent,

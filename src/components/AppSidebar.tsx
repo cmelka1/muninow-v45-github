@@ -65,7 +65,7 @@ const navigationItems = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, isLoggingOut } = useAuth();
   const { hasRole } = useUserRole();
 
   // Get the logo URL from Supabase Storage
@@ -80,19 +80,8 @@ export function AppSidebar() {
     return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
   };
 
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
   const handleLogout = async () => {
-    if (isLoggingOut) return; // Prevent double-clicking
-    
-    setIsLoggingOut(true);
-    try {
-      await signOut();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      setIsLoggingOut(false);
-    }
+    await signOut();
   };
 
   return (
