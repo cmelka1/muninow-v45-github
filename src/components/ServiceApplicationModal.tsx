@@ -51,7 +51,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [useAutoPopulate, setUseAutoPopulate] = useState(true);
-  
+  const [pdfAccessBlocked, setPdfAccessBlocked] = useState(false);
   const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
   const [dragActive, setDragActive] = useState(false);
   
@@ -462,7 +462,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                   <div>
                     <h3 className="text-sm font-medium mb-1">Official Form Available</h3>
                     <p className="text-sm text-muted-foreground">
-                      Download the official PDF form directly to your device.
+                      View the official PDF form which will open in a new tab. You can download it from there if needed.
                     </p>
                   </div>
                   
@@ -477,30 +477,39 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                             throw new Error('PDF form URL not available');
                           }
                           
-                          const link = document.createElement('a');
-                          link.href = tile.pdf_form_url;
-                          link.download = `${tile.title.replace(/[^a-zA-Z0-9]/g, '_')}_form.pdf`;
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
+                          const newWindow = window.open(tile.pdf_form_url, '_blank', 'noopener,noreferrer');
                           
-                          toast({
-                            title: "Download Started",
-                            description: "The PDF form is downloading.",
-                          });
+                          // Check if popup was blocked
+                          setTimeout(() => {
+                            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                              setPdfAccessBlocked(true);
+                              toast({
+                                title: "Popup Blocked",
+                                description: "Please allow popups for this site or use the direct link below.",
+                                variant: "destructive",
+                              });
+                            } else {
+                              setPdfAccessBlocked(false);
+                              toast({
+                                title: "Opening PDF Form",
+                                description: "The official form is opening in a new tab.",
+                              });
+                            }
+                          }, 100);
                         } catch (error) {
-                          console.error('Error downloading PDF:', error);
+                          console.error('Error opening PDF:', error);
+                          setPdfAccessBlocked(true);
                           toast({
-                            title: "Error",
-                            description: "Unable to download PDF form. Please try again.",
+                            title: "Error Opening PDF",
+                            description: "Unable to open the PDF form. Please use the direct link below.",
                             variant: "destructive",
                           });
                         }
                       }}
                       className="w-fit"
                     >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download PDF Form
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open PDF Form
                     </Button>
                     
                     <Button 
@@ -528,6 +537,28 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                     </Button>
                   </div>
                   
+                  {/* Fallback options when popup is blocked */}
+                  {pdfAccessBlocked && (
+                    <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                        <div className="space-y-2">
+                          <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                            Having trouble accessing the PDF?
+                          </p>
+                          <p className="text-xs text-amber-700 dark:text-amber-300">
+                            • Try allowing popups for this site in your browser settings
+                          </p>
+                          <p className="text-xs text-amber-700 dark:text-amber-300">
+                            • Or copy this direct link: 
+                            <code className="ml-1 px-1 bg-amber-100 dark:bg-amber-900 rounded text-xs break-all">
+                              {tile.pdf_form_url}
+                            </code>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
