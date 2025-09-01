@@ -1789,6 +1789,7 @@ export type Database = {
           allow_user_defined_amount: boolean
           amount_cents: number
           auto_populate_user_info: boolean
+          auto_renew_enabled: boolean | null
           created_at: string
           created_by: string
           customer_id: string
@@ -1797,9 +1798,12 @@ export type Database = {
           form_fields: Json | null
           id: string
           is_active: boolean
+          is_renewable: boolean | null
           merchant_fee_profile_id: string | null
           merchant_id: string | null
           pdf_form_url: string | null
+          renewal_frequency: string | null
+          renewal_reminder_days: number | null
           requires_review: boolean
           title: string
           updated_at: string
@@ -1808,6 +1812,7 @@ export type Database = {
           allow_user_defined_amount?: boolean
           amount_cents?: number
           auto_populate_user_info?: boolean
+          auto_renew_enabled?: boolean | null
           created_at?: string
           created_by: string
           customer_id: string
@@ -1816,9 +1821,12 @@ export type Database = {
           form_fields?: Json | null
           id?: string
           is_active?: boolean
+          is_renewable?: boolean | null
           merchant_fee_profile_id?: string | null
           merchant_id?: string | null
           pdf_form_url?: string | null
+          renewal_frequency?: string | null
+          renewal_reminder_days?: number | null
           requires_review?: boolean
           title: string
           updated_at?: string
@@ -1827,6 +1835,7 @@ export type Database = {
           allow_user_defined_amount?: boolean
           amount_cents?: number
           auto_populate_user_info?: boolean
+          auto_renew_enabled?: boolean | null
           created_at?: string
           created_by?: string
           customer_id?: string
@@ -1835,9 +1844,12 @@ export type Database = {
           form_fields?: Json | null
           id?: string
           is_active?: boolean
+          is_renewable?: boolean | null
           merchant_fee_profile_id?: string | null
           merchant_id?: string | null
           pdf_form_url?: string | null
+          renewal_frequency?: string | null
+          renewal_reminder_days?: number | null
           requires_review?: boolean
           title?: string
           updated_at?: string

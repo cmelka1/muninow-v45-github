@@ -24,6 +24,10 @@ export interface MunicipalServiceTile {
   auto_populate_user_info: boolean;
   allow_user_defined_amount: boolean;
   is_active: boolean;
+  is_renewable: boolean;
+  renewal_frequency?: 'annual' | 'quarterly';
+  renewal_reminder_days: number;
+  auto_renew_enabled: boolean;
   created_by: string;
   created_at: string;
   updated_at: string;

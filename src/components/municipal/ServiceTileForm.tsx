@@ -84,6 +84,10 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isUploadingPdf, setIsUploadingPdf] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isRenewable, setIsRenewable] = useState(tile?.is_renewable || false);
+  const [renewalFrequency, setRenewalFrequency] = useState<'annual' | 'quarterly'>(tile?.renewal_frequency || 'annual');
+  const [renewalReminderDays, setRenewalReminderDays] = useState(tile?.renewal_reminder_days || 30);
+  const [autoRenewEnabled, setAutoRenewEnabled] = useState(tile?.auto_renew_enabled || false);
 
   // Fetch merchants for this municipality on mount
   useEffect(() => {
@@ -186,6 +190,10 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
       // merchant_fee_profile_id will be set via merchant relationship
       pdf_form_url: finalPdfUrl,
       form_fields: STANDARD_FORM_FIELDS,
+      is_renewable: isRenewable,
+      renewal_frequency: isRenewable ? renewalFrequency : undefined,
+      renewal_reminder_days: renewalReminderDays,
+      auto_renew_enabled: autoRenewEnabled,
       customer_id: customerId || profile?.customer_id!,
       created_by: profile?.id!,
     };
@@ -360,6 +368,67 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
               onCheckedChange={setIsActive}
             />
           </div>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="renewable">Enable Renewals</Label>
+              <p className="text-sm text-muted-foreground">
+                Allow this service to be renewed automatically
+              </p>
+            </div>
+            <Switch
+              id="renewable"
+              checked={isRenewable}
+              onCheckedChange={setIsRenewable}
+            />
+          </div>
+          
+          {isRenewable && (
+            <>
+              <div>
+                <Label htmlFor="renewal-frequency">Renewal Frequency</Label>
+                <Select value={renewalFrequency} onValueChange={(value: 'annual' | 'quarterly') => setRenewalFrequency(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select renewal frequency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="annual">Annual</SelectItem>
+                    <SelectItem value="quarterly">Quarterly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="reminder-days">Renewal Reminder (Days Before)</Label>
+                <Input
+                  id="reminder-days"
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={renewalReminderDays}
+                  onChange={(e) => setRenewalReminderDays(parseInt(e.target.value) || 30)}
+                  placeholder="30"
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Send renewal reminders this many days before expiration
+                </p>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="auto-renew">Allow Auto-Renewal</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Users can opt for automatic renewal of this service
+                  </p>
+                </div>
+                <Switch
+                  id="auto-renew"
+                  checked={autoRenewEnabled}
+                  onCheckedChange={setAutoRenewEnabled}
+                />
+              </div>
+            </>
+          )}
           
           <div>
             <Label htmlFor="pdf-upload">Upload PDF Form (Optional)</Label>

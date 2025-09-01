@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Search, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, EyeOff, RotateCcw, Calendar } from 'lucide-react';
 import { ServiceTileForm } from '@/components/municipal/ServiceTileForm';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 
@@ -124,6 +124,18 @@ export function ServiceTileManager({ serviceTiles, isLoading, customerId }: Serv
                       )}
                       {tile.pdf_form_url && (
                         <Badge variant="outline">PDF Form</Badge>
+                      )}
+                      {tile.is_renewable && (
+                        <Badge variant="outline" className="gap-1">
+                          <RotateCcw className="h-3 w-3" />
+                          {tile.renewal_frequency === 'annual' ? 'Annual' : 'Quarterly'}
+                        </Badge>
+                      )}
+                      {tile.auto_renew_enabled && (
+                        <Badge variant="outline" className="gap-1">
+                          <Calendar className="h-3 w-3" />
+                          Auto-Renew
+                        </Badge>
                       )}
                     </div>
                   </div>
