@@ -81,7 +81,11 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/signin" element={<Auth />} />
                 <Route path="/signup" element={<Signup />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={
+                  <ProtectedRoute requiredRole="user">
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
                 <Route path="/notifications" element={
                   <SidebarProvider>
                     <div className="min-h-screen flex w-full">

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -80,11 +80,18 @@ export function AppSidebar() {
     return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
   };
 
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const handleLogout = async () => {
+    if (isLoggingOut) return; // Prevent double-clicking
+    
+    setIsLoggingOut(true);
     try {
       await signOut();
     } catch (error) {
       console.error('Logout error:', error);
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -200,11 +207,12 @@ export function AppSidebar() {
           
           <Button
             onClick={handleLogout}
+            disabled={isLoggingOut}
             variant="outline"
-            className="justify-start text-red-500 hover:text-red-600 hover:bg-red-50 border-border p-3 h-auto"
+            className="justify-start text-red-500 hover:text-red-600 hover:bg-red-50 border-border p-3 h-auto disabled:opacity-50"
           >
             <LogOut className="h-4 w-4 mr-2" />
-            <span className="text-sm">Log Out</span>
+            <span className="text-sm">{isLoggingOut ? 'Signing out...' : 'Log Out'}</span>
           </Button>
         </div>
       </SidebarFooter>

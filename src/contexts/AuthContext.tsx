@@ -187,30 +187,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.warn('Logout error:', error.message);
-      }
+      // Clear cross-tab session storage immediately
+      localStorage.removeItem('active_session_id');
       
-      // Clear local state
+      // Clear local state first
       setProfile(null);
       setUser(null);
       setSession(null);
       
-      // Redirect to signin page
-      window.location.href = '/signin';
+      // Only attempt logout if we have a valid session
+      if (session && isSessionValid()) {
+        const { error } = await supabase.auth.signOut();
+        if (error && error.message !== 'Session not found') {
+          console.warn('Logout error:', error.message);
+          // Don't throw error for expired sessions - user is effectively logged out
+        }
+      }
       
       toast({
         title: "Signed out",
         description: "You have been successfully signed out."
       });
+      
+      // Use window.location for immediate redirect without React Router state
+      window.location.href = '/signin';
     } catch (error: any) {
       console.error('Sign out error:', error);
-      toast({
-        title: "Error",
-        description: "There was an issue signing out. Please try again.",
-        variant: "destructive"
-      });
+      // Always clear local state even if server logout fails
+      setProfile(null);
+      setUser(null);
+      setSession(null);
+      localStorage.removeItem('active_session_id');
+      
+      // Still redirect user - they're effectively logged out locally
+      window.location.href = '/signin';
     }
   };
 
