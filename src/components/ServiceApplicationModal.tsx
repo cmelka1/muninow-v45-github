@@ -1100,7 +1100,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                 </div>
 
                 {/* Navigation Actions */}
-                <div className="flex justify-between pt-6 border-t bg-muted/20 -mx-6 px-6 -mb-6 pb-6 rounded-b-lg">
+                <div className="flex justify-between pt-6 bg-muted/20 -mx-6 px-6 -mb-6 pb-6 rounded-b-lg">
                   <Button 
                     type="button" 
                     variant="outline" 
@@ -1139,7 +1139,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                 </Card>
 
                 {/* Navigation & Submit Actions */}
-                <div className="flex justify-between pt-6 border-t">
+                <div className="flex justify-between pt-6">
                   <Button 
                     type="button" 
                     variant="outline" 
