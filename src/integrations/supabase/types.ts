@@ -2068,6 +2068,7 @@ export type Database = {
           payment_type: string
           permit_id: string | null
           raw_finix_response: Json | null
+          service_application_id: string | null
           service_fee_cents: number
           statement_descriptor: string | null
           subcategory: string | null
@@ -2134,6 +2135,7 @@ export type Database = {
           payment_type: string
           permit_id?: string | null
           raw_finix_response?: Json | null
+          service_application_id?: string | null
           service_fee_cents: number
           statement_descriptor?: string | null
           subcategory?: string | null
@@ -2200,6 +2202,7 @@ export type Database = {
           payment_type?: string
           permit_id?: string | null
           raw_finix_response?: Json | null
+          service_application_id?: string | null
           service_fee_cents?: number
           statement_descriptor?: string | null
           subcategory?: string | null
@@ -2244,6 +2247,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "permit_applications"
             referencedColumns: ["permit_id"]
+          },
+          {
+            foreignKeyName: "payment_history_service_application_id_fkey"
+            columns: ["service_application_id"]
+            isOneToOne: false
+            referencedRelation: "municipal_service_applications"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "payment_history_tax_submission_id_fkey"
