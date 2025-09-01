@@ -18,7 +18,7 @@ const Index = () => {
   // Initialize performance optimizations
   useEffect(() => {
     // Preload critical route chunks
-    import('@/pages/Auth');
+    import('@/pages/SimpleAuth');
     import('@/pages/Signup');
   }, []);
 

@@ -65,7 +65,7 @@ const navigationItems = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const { user, profile, signOut, isLoggingOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { hasRole } = useUserRole();
 
   // Get the logo URL from Supabase Storage
@@ -196,12 +196,11 @@ export function AppSidebar() {
           
           <Button
             onClick={handleLogout}
-            disabled={isLoggingOut}
             variant="outline"
-            className="justify-start text-red-500 hover:text-red-600 hover:bg-red-50 border-border p-3 h-auto disabled:opacity-50"
+            className="justify-start text-red-500 hover:text-red-600 hover:bg-red-50 border-border p-3 h-auto"
           >
             <LogOut className="h-4 w-4 mr-2" />
-            <span className="text-sm">{isLoggingOut ? 'Signing out...' : 'Log Out'}</span>
+            <span className="text-sm">Log Out</span>
           </Button>
         </div>
       </SidebarFooter>

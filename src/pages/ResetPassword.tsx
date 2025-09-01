@@ -22,10 +22,10 @@ const ResetPassword = () => {
   
   const { 
     updatePassword, 
-    isSubmitting, 
-    loginError, 
-    clearError 
+    error
   } = useAuth();
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check for valid reset token on mount
   useEffect(() => {
@@ -61,11 +61,12 @@ const ResetPassword = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    clearError();
     
     if (!validatePasswords()) {
       return;
     }
+
+    setIsSubmitting(true);
 
     const { error } = await updatePassword(newPassword);
     
@@ -76,6 +77,8 @@ const ResetPassword = () => {
         navigate('/signin');
       }, 3000);
     }
+    
+    setIsSubmitting(false);
   };
 
   const handleBackToLogin = () => {
@@ -190,7 +193,6 @@ const ResetPassword = () => {
                     onChange={(e) => {
                       setNewPassword(e.target.value);
                       if (passwordError) setPasswordError('');
-                      if (loginError) clearError();
                     }}
                     required
                     className="h-11 focus:ring-primary pr-10"
@@ -224,7 +226,6 @@ const ResetPassword = () => {
                     onChange={(e) => {
                       setConfirmPassword(e.target.value);
                       if (passwordError) setPasswordError('');
-                      if (loginError) clearError();
                     }}
                     required
                     className="h-11 focus:ring-primary pr-10"
@@ -251,9 +252,9 @@ const ResetPassword = () => {
                 </div>
               )}
 
-              {loginError && (
+              {error && (
                 <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
-                  <p className="text-sm text-destructive">{loginError}</p>
+                  <p className="text-sm text-destructive">{error}</p>
                 </div>
               )}
               
