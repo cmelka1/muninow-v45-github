@@ -306,11 +306,36 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
         };
       }
 
-      // Enhanced response validation - check for actual response structure
+      // Enhanced response validation with JSON parsing support
       console.log('Raw payment response:', data);
+      console.log('Response type:', typeof data);
+      
+      // Parse response if it's a string (sometimes Supabase functions return JSON strings)
+      let parsedData = data;
+      if (typeof data === 'string') {
+        try {
+          parsedData = JSON.parse(data);
+          console.log('Parsed string response to object:', parsedData);
+        } catch (parseError) {
+          console.error('Failed to parse response string:', parseError);
+          // Fall back to treating it as an error
+          const errorMsg = "Invalid response format from payment service";
+          toast({
+            title: "Payment Failed",
+            description: errorMsg,
+            variant: "destructive",
+          });
+          
+          return {
+            success: false,
+            error: errorMsg,
+            retryable: true,
+          };
+        }
+      }
       
       // Check if we have a valid response structure
-      if (!data) {
+      if (!parsedData) {
         const errorMsg = "No response received from payment service";
         console.error('Empty payment response');
         
@@ -328,9 +353,9 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
       }
 
       // Check for explicit failure in response
-      if (data.success === false || data.error) {
-        const errorMsg = data.error || "Payment processing failed";
-        console.error('Payment failed with error:', data);
+      if (parsedData.success === false || parsedData.error) {
+        const errorMsg = parsedData.error || "Payment processing failed";
+        console.error('Payment failed with error:', parsedData);
         
         toast({
           title: "Payment Failed",
@@ -345,24 +370,34 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
         };
       }
 
-      // Simplified success detection using standardized response format (matches tax payment format)
-      console.log('=== PAYMENT RESPONSE ===');
-      console.log('Response data:', JSON.stringify(data, null, 2));
+      // Enhanced success detection with multiple fallback methods
+      console.log('=== PAYMENT RESPONSE ANALYSIS ===');
+      console.log('Parsed data:', JSON.stringify(parsedData, null, 2));
       
-      // Check for standardized success indicators (same as tax payment)
-      const isSuccess = data?.success === true && (data?.payment_history_id || data?.transfer_id);
+      // Primary success check
+      const hasExplicitSuccess = parsedData?.success === true;
+      const hasPaymentId = !!(parsedData?.payment_history_id || parsedData?.payment_id);
+      const hasTransferId = !!(parsedData?.transfer_id || parsedData?.transaction_id);
+      const hasValidStatus = parsedData?.status === 'completed' || parsedData?.transfer_state === 'SUCCEEDED';
       
-      console.log('Success check:', {
-        'data.success': data?.success,
-        'has_payment_history_id': !!data?.payment_history_id,
-        'has_transfer_id': !!data?.transfer_id,
+      // Multiple success detection methods
+      const isSuccess = hasExplicitSuccess || 
+                       (hasPaymentId && hasTransferId) ||
+                       (hasPaymentId && hasValidStatus) ||
+                       hasValidStatus;
+      
+      console.log('Success analysis:', {
+        hasExplicitSuccess,
+        hasPaymentId,
+        hasTransferId,
+        hasValidStatus,
         'overall_success': isSuccess
       });
       
       if (isSuccess) {
         console.log('✅ Payment processed successfully');
         
-        const successMessage = data.auto_approved 
+        const successMessage = parsedData.auto_approved 
           ? "Your payment has been processed and your application has been approved!"
           : "Your payment has been processed. Your application is now under review.";
         
@@ -373,16 +408,16 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
 
         return {
           success: true,
-          payment_id: data.payment_history_id,
-          transaction_id: data.transfer_id,
-          status: data.transfer_state || 'paid',
+          payment_id: parsedData.payment_history_id || parsedData.payment_id,
+          transaction_id: parsedData.transfer_id || parsedData.transaction_id,
+          status: parsedData.transfer_state || parsedData.status || 'paid',
         };
       }
 
       // Handle edge case where response structure is unexpected
-      console.warn('❌ Payment status unclear - no success indicators found');
-      console.warn('Response structure:', JSON.stringify(data, null, 2));
-      const warningMsg = "Payment status unclear. Please check your payment history.";
+      console.warn('❌ Payment status unclear - no clear success indicators found');
+      console.warn('Full response structure:', JSON.stringify(parsedData, null, 2));
+      const warningMsg = "Payment status unclear. Please check your payment history or contact support.";
       
       toast({
         title: "Payment Processing",
