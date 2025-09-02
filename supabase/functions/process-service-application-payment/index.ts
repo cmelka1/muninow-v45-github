@@ -288,33 +288,39 @@ serve(async (req) => {
     }
 
     // Record payment in payment_history
+    const paymentHistoryData = {
+      user_id: user.id,
+      customer_id: serviceTile.customer_id,
+      service_application_id: requestBody.application_id,
+      amount_cents: serviceTile.amount_cents,
+      service_fee_cents: calculatedServiceFee,
+      total_amount_cents: requestBody.total_amount_cents,
+      payment_type: isACH ? 'ACH' : 'CARD',
+      payment_status: 'pending',
+      currency: 'USD',
+      finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
+      idempotency_id: requestBody.idempotency_id,
+      fraud_session_id: requestBody.fraud_session_id,
+      card_brand: paymentInstrument.card_brand,
+      card_last_four: paymentInstrument.card_last_four,
+      bank_last_four: paymentInstrument.bank_last_four,
+      merchant_id: serviceTile.merchant_id,
+      finix_merchant_id: serviceTile.finix_merchant_id,
+      merchant_name: serviceTile.title,
+      category: 'Municipal Services',
+      subcategory: 'Other Services',
+      statement_descriptor: serviceTile.title,
+      transfer_state: finixData.state,
+      finix_transfer_id: finixData.id,
+    };
+
+    console.log('Payment history insert data:', JSON.stringify(paymentHistoryData, null, 2));
+    console.log('Service application ID value:', requestBody.application_id);
+    console.log('Service application ID type:', typeof requestBody.application_id);
+
     const { data: paymentRecord, error: paymentError } = await supabase
       .from('payment_history')
-      .insert({
-        user_id: user.id,
-        customer_id: serviceTile.customer_id,
-        service_application_id: requestBody.application_id,
-        amount_cents: serviceTile.amount_cents,
-        service_fee_cents: calculatedServiceFee,
-        total_amount_cents: requestBody.total_amount_cents,
-        payment_type: isACH ? 'ACH' : 'CARD',
-        payment_status: 'pending',
-        currency: 'USD',
-        finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
-        idempotency_id: requestBody.idempotency_id,
-        fraud_session_id: requestBody.fraud_session_id,
-        card_brand: paymentInstrument.card_brand,
-        card_last_four: paymentInstrument.card_last_four,
-        bank_last_four: paymentInstrument.bank_last_four,
-        merchant_id: serviceTile.merchant_id,
-        finix_merchant_id: serviceTile.finix_merchant_id,
-        merchant_name: serviceTile.title,
-        category: 'Municipal Services',
-        subcategory: 'Other Services',
-        statement_descriptor: serviceTile.title,
-        transfer_state: finixData.state,
-        finix_transfer_id: finixData.id,
-      })
+      .insert(paymentHistoryData)
       .select()
       .single();
 
