@@ -3,11 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare, Send, User } from 'lucide-react';
 import { useServiceApplicationComments, useCreateServiceApplicationComment } from '@/hooks/useServiceApplicationComments';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface ServiceApplicationCommunicationProps {
   applicationId: string;
@@ -18,40 +20,34 @@ export const ServiceApplicationCommunication: React.FC<ServiceApplicationCommuni
 }) => {
   const [newComment, setNewComment] = useState('');
   const [isInternal, setIsInternal] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { profile } = useAuth();
   const { data: comments, isLoading } = useServiceApplicationComments(applicationId);
   const { mutate: createComment, isPending } = useCreateServiceApplicationComment();
 
   const handleSubmit = async () => {
     if (!newComment.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a comment",
-        variant: "destructive"
-      });
+      toast.error("Please enter a comment");
       return;
     }
 
-    createComment({
-      application_id: applicationId,
-      comment_text: newComment,
-      is_internal: isInternal
-    }, {
-      onSuccess: () => {
-        setNewComment('');
-        toast({
-          title: "Success",
-          description: "Comment added successfully",
-        });
-      },
-      onError: (error) => {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to add comment",
-          variant: "destructive"
-        });
-      }
-    });
+    setIsSubmitting(true);
+
+    try {
+      await createComment({
+        application_id: applicationId,
+        comment_text: newComment,
+        is_internal: isInternal
+      });
+
+      setNewComment('');
+      toast.success("Comment added successfully");
+    } catch (error: any) {
+      console.error('Error adding comment:', error);
+      toast.error(error.message || "Failed to add comment");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Filter comments based on user role
@@ -62,54 +58,87 @@ export const ServiceApplicationCommunication: React.FC<ServiceApplicationCommuni
     return !comment.is_internal; // Regular users only see external comments
   }) || [];
 
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Communication
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5" />
-          Communication ({filteredComments.length})
+          Communication
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Comment List */}
-        <div className="space-y-3 max-h-64 overflow-y-auto">
-          {isLoading ? (
-            <div className="text-center py-4 text-muted-foreground">
-              <p className="text-sm">Loading comments...</p>
-            </div>
-          ) : filteredComments.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground">
-              <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">No comments yet</p>
-            </div>
-          ) : (
-            filteredComments.map((comment) => (
-              <div key={comment.id} className="border rounded-lg p-3 space-y-2">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    <span className="font-medium text-sm">
-                      {comment.reviewer?.first_name} {comment.reviewer?.last_name}
-                    </span>
-                    {comment.is_internal && (
-                      <Badge variant="secondary" className="text-xs">
-                        Internal
-                      </Badge>
-                    )}
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {format(new Date(comment.created_at), 'MMM d, yyyy h:mm a')}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground">{comment.comment_text}</p>
+        <ScrollArea className="h-96">
+          <div className="space-y-4">
+            {filteredComments.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p>No communication yet</p>
+                <p className="text-sm">Comments and updates will appear here</p>
               </div>
-            ))
-          )}
-        </div>
+            ) : (
+              filteredComments.map((comment, index) => (
+                <div key={comment.id}>
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <User className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-sm">
+                          {comment.reviewer?.first_name} {comment.reviewer?.last_name}
+                        </span>
+                        <Badge 
+                          variant={comment.reviewer?.account_type === 'municipal' ? 'secondary' : 'outline'} 
+                          className={`text-xs ${comment.reviewer?.account_type === 'municipal' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
+                        >
+                          {comment.reviewer?.account_type === 'municipal' ? 'Municipal Staff' : 'Applicant'}
+                        </Badge>
+                        {comment.is_internal && (
+                          <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800">
+                            Internal
+                          </Badge>
+                        )}
+                        <span className="text-xs text-gray-500">
+                          {format(new Date(comment.created_at), 'MMM d, yyyy h:mm a')}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                        {comment.comment_text}
+                      </p>
+                    </div>
+                  </div>
+                  {index < filteredComments.length - 1 && (
+                    <Separator className="my-4" />
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </ScrollArea>
 
-        {/* Add Comment Form - Only for municipal users */}
-        {profile?.account_type === 'municipal' && (
-          <div className="space-y-3 pt-3 border-t">
+        {/* Add Comment Form */}
+        <div className="space-y-3 pt-4 border-t">
+          {profile?.account_type === 'municipal' && (
             <div className="flex items-center gap-2">
               <Button
                 variant={isInternal ? "default" : "outline"}
@@ -126,22 +155,28 @@ export const ServiceApplicationCommunication: React.FC<ServiceApplicationCommuni
                 External
               </Button>
             </div>
-            <Textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder={isInternal ? "Add internal note..." : "Add comment for applicant..."}
-              rows={3}
-            />
+          )}
+          <Textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder={
+              profile?.account_type === 'municipal' 
+                ? (isInternal ? "Add internal note..." : "Add comment for applicant...")
+                : "Add a comment..."
+            }
+            className="min-h-[80px]"
+          />
+          <div className="flex items-center justify-end">
             <Button 
               onClick={handleSubmit} 
-              disabled={isPending || !newComment.trim()}
-              className="w-full"
+              disabled={isSubmitting || !newComment.trim()}
+              size="sm"
             >
               <Send className="h-4 w-4 mr-2" />
-              {isPending ? "Adding..." : "Add Comment"}
+              {isSubmitting ? "Sending..." : "Send"}
             </Button>
           </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
