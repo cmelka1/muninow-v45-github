@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,7 @@ export function ApplicationHistoryTable({
   onPageChange,
   onPageSizeChange 
 }: ApplicationHistoryTableProps) {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [pageSize, setPageSize] = useState(5);
@@ -119,7 +121,7 @@ export function ApplicationHistoryTable({
   };
 
   const handleRowClick = (applicationId: string) => {
-    window.location.href = `/municipal/service-application/${applicationId}`;
+    navigate(`/municipal/service-application/${applicationId}`);
   };
 
   if (isLoading) {
