@@ -145,27 +145,18 @@ const MunicipalServiceApplicationDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-4 mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/municipal/other-services')}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={() => navigate('/municipal/other-services')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Applications
           </Button>
-        </div>
-        
-        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">{application.tile?.title || 'Service Application'}</h1>
-            <p className="text-muted-foreground">Application #{application.id}</p>
+            <h1 className="text-2xl font-bold">Service Application Review</h1>
+            <p className="text-muted-foreground">{application.id.slice(0, 8)}...</p>
           </div>
-          <ServiceApplicationStatusBadge status={application.status} />
         </div>
       </div>
 
@@ -185,11 +176,11 @@ const MunicipalServiceApplicationDetail = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Application ID</Label>
-                  <p className="text-base font-mono">{application.id}</p>
+                  <p className="text-base font-mono">{application.id.slice(0, 8)}...</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Service</Label>
-                  <p className="text-base">{application.tile?.title || 'Service information unavailable'}</p>
+                  <p className="text-base">{application.tile.title}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Status</Label>
@@ -198,34 +189,62 @@ const MunicipalServiceApplicationDetail = () => {
                   </div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Municipality</Label>
-                  <p className="text-base">{application.customer?.legal_entity_name || 'Municipality information unavailable'}</p>
-                </div>
-                <div>
                   <Label className="text-sm font-medium text-muted-foreground">Submitted</Label>
                   <p className="text-base">{formatDate(application.created_at)}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Last Updated</Label>
-                  <p className="text-base">{formatDate(application.updated_at)}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">Municipality</Label>
+                  <p className="text-base">{application.customer.legal_entity_name}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Amount</Label>
+                  <p className="text-base">{formatCurrency(application.tile.amount_cents / 100)}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Application Information */}
+          {/* Service Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building className="h-5 w-5" />
+                Service Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Service Title</Label>
+                <p className="text-base font-medium">{application.tile.title}</p>
+              </div>
+              {application.tile.description && (
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Description</Label>
+                  <p className="text-base">{application.tile.description}</p>
+                </div>
+              )}
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Requires Review</Label>
+                <p className="text-base">{application.tile.requires_review ? 'Yes' : 'No'}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Applicant Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />
-                Application Information
+                Applicant Information
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Applicant Name</Label>
-                  <p className="text-base">{application.applicant_name || 'N/A'}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">Full Name</Label>
+                  <p className="text-base">
+                    {application.applicant_name || 'N/A'}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Email</Label>
@@ -234,10 +253,6 @@ const MunicipalServiceApplicationDetail = () => {
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Phone</Label>
                   <p className="text-base">{application.applicant_phone || 'N/A'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Business Name</Label>
-                  <p className="text-base">{application.business_legal_name || 'N/A'}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Address</Label>
@@ -251,77 +266,45 @@ const MunicipalServiceApplicationDetail = () => {
                     ].filter(Boolean).join(', ') || 'N/A'}
                   </p>
                 </div>
-                {/* Service-specific data */}
-                {application.tile?.form_fields?.map((field: any) => {
-                  const value = application.service_specific_data?.[field.id] || application.service_specific_data?.[field.name];
-                  if (!value) return null;
-                  
-                  return (
-                    <div key={field.name}>
-                      <Label className="text-sm font-medium text-muted-foreground">{field.label}</Label>
-                      <p className="text-base">{renderFormField(field, value)}</p>
-                    </div>
-                  );
-                })}
               </div>
             </CardContent>
           </Card>
 
-          {/* Additional Information */}
-          {application.additional_information && (
+          {/* Form Fields */}
+          {application.tile.form_fields && application.tile.form_fields.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Additional Information
+                  <FileText className="h-5 w-5" />
+                  Application Details
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-base">{application.additional_information}</p>
+              <CardContent className="space-y-3">
+                {application.tile.form_fields.map((field: any) => {
+                  const value = application.service_specific_data?.[field.id] || application.service_specific_data?.[field.name];
+                  if (!value && !field.required) return null;
+                  
+                  return (
+                    <div key={field.name} className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        {field.label}
+                      </Label>
+                      <div className="md:col-span-2">
+                        <p className="text-sm">{renderFormField(field, value)}</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
           )}
 
-          {/* Review Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Review Notes
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {application.review_notes && (
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm">{application.review_notes}</p>
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="review-notes">Add Review Notes</Label>
-                <Textarea
-                  id="review-notes"
-                  placeholder="Enter review notes or comments..."
-                  value={reviewNotes}
-                  onChange={(e) => setReviewNotes(e.target.value)}
-                  rows={4}
-                />
-                <Button 
-                  onClick={handleSaveNotes}
-                  disabled={isSavingNotes || !reviewNotes.trim()}
-                  size="sm"
-                >
-                  {isSavingNotes ? 'Saving...' : 'Save Notes'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Supporting Documents */}
+          {/* Documents Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                Supporting Documents ({documents?.length || 0})
+                Documents ({documents?.length || 0})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -415,50 +398,9 @@ const MunicipalServiceApplicationDetail = () => {
           </Card>
         </div>
 
-        {/* Right Column - Municipal Actions & Review */}
+        {/* Right Column - Actions & Review */}
         <div className="space-y-6">
-          {/* Payment Management */}
-          {application.tile?.amount_cents && application.tile.amount_cents > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
-                  Payment Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-muted-foreground">Payment Status</span>
-                    <Badge 
-                      variant={application.payment_status === 'paid' ? 'default' : 'outline'}
-                      className={
-                        application.payment_status === 'paid' 
-                          ? 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200' 
-                          : application.payment_status === 'processing'
-                          ? 'bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200'
-                          : 'bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200'
-                      }
-                    >
-                      {application.payment_status === 'paid' ? 'Paid' : 
-                       application.payment_status === 'processing' ? 'Processing' : 'Pending'}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Total Amount</span>
-                    <span className="font-semibold">{formatCurrency(application.tile.amount_cents / 100)}</span>
-                  </div>
-                  {application.finix_transfer_id && (
-                    <div className="text-xs text-muted-foreground">
-                      Transfer ID: {application.finix_transfer_id.slice(0, 8)}...
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Review Management */}
+          {/* Review Actions */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -490,14 +432,75 @@ const MunicipalServiceApplicationDetail = () => {
                 >
                   Update Status
                 </Button>
-                <p className="text-xs text-muted-foreground text-center">
-                  Current: {getStatusDisplayName(application.status as ServiceApplicationStatus)}
-                </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Communication Log */}
+          {/* Review Notes */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Review Notes
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {application.review_notes && (
+                <div className="p-3 bg-muted rounded-lg">
+                  <Label className="text-sm font-medium text-muted-foreground">Previous Notes</Label>
+                  <p className="text-sm mt-1">{application.review_notes}</p>
+                </div>
+              )}
+              
+              <div>
+                <Label htmlFor="review-notes">Add Review Notes</Label>
+                <Textarea
+                  id="review-notes"
+                  value={reviewNotes}
+                  onChange={(e) => setReviewNotes(e.target.value)}
+                  placeholder="Add notes about this application review..."
+                  className="mt-1"
+                  rows={4}
+                />
+              </div>
+              
+              <Button 
+                onClick={handleSaveNotes} 
+                disabled={!reviewNotes.trim() || isSavingNotes}
+                className="w-full"
+              >
+                {isSavingNotes ? 'Saving...' : 'Save Notes'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Payment Summary */}
+          {application.tile.amount_cents > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Payment Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm">Service Fee</span>
+                  <span className="text-sm font-medium">
+                    {formatCurrency(application.tile.amount_cents / 100)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Payment Status</span>
+                  <Badge variant={application.payment_status === 'paid' ? 'default' : 'outline'}>
+                    {application.payment_status || 'Unpaid'}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Communication */}
           <ServiceApplicationCommunication applicationId={applicationId!} />
         </div>
       </div>
