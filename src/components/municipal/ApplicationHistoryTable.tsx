@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Search, Filter, Eye, Download, Calendar, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { ApplicationDetailModal } from '@/components/municipal/ApplicationDetailModal';
+import ServiceApplicationStatusBadge from '@/components/ServiceApplicationStatusBadge';
 import { ServiceApplication } from '@/hooks/useServiceApplications';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { format } from 'date-fns';
@@ -45,9 +46,15 @@ export function ApplicationHistoryTable({
     { value: 'draft', label: 'Draft' },
     { value: 'submitted', label: 'Submitted' },
     { value: 'under_review', label: 'Under Review' },
+    { value: 'information_requested', label: 'Information Requested' },
+    { value: 'resubmitted', label: 'Resubmitted' },
     { value: 'approved', label: 'Approved' },
     { value: 'denied', label: 'Denied' },
-    { value: 'paid', label: 'Paid' },
+    { value: 'rejected', label: 'Rejected' },
+    { value: 'withdrawn', label: 'Withdrawn' },
+    { value: 'expired', label: 'Expired' },
+    { value: 'issued', label: 'Issued' },
+    { value: 'completed', label: 'Completed' },
   ];
 
   // Reset to first page when filters change
@@ -70,47 +77,17 @@ export function ApplicationHistoryTable({
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Draft</Badge>;
-      case 'submitted':
-        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Submitted</Badge>;
-      case 'under_review':
-        return <Badge variant="secondary" className="bg-purple-100 text-purple-800">Under Review</Badge>;
-      case 'information_requested':
-        return <Badge variant="secondary" className="bg-orange-100 text-orange-800">Info Requested</Badge>;
-      case 'approved':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800">Approved</Badge>;
-      case 'denied':
-        return <Badge variant="destructive">Denied</Badge>;
-      case 'paid':
-        return <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">Paid</Badge>;
-      case 'completed':
-        return <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">Completed</Badge>;
-      case 'withdrawn':
-        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Withdrawn</Badge>;
-      case 'expired':
-        return <Badge variant="secondary" className="bg-red-100 text-red-800">Expired</Badge>;
-      default:
-        return <Badge variant="outline">{status.replace('_', ' ').toUpperCase()}</Badge>;
-    }
-  };
 
   const getPaymentStatusBadge = (paymentStatus: string) => {
     switch (paymentStatus) {
-      case 'pending':
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+      case 'unpaid':
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">Unpaid</Badge>;
       case 'paid':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800">Paid</Badge>;
-      case 'failed':
-        return <Badge variant="destructive">Failed</Badge>;
-      case 'refunded':
-        return <Badge variant="secondary" className="bg-purple-100 text-purple-800">Refunded</Badge>;
-      case 'cancelled':
-        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Cancelled</Badge>;
+        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Paid</Badge>;
+      case 'partially_paid':
+        return <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-200">Partially Paid</Badge>;
       default:
-        return <Badge variant="outline">{paymentStatus.replace('_', ' ').toUpperCase()}</Badge>;
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">Unpaid</Badge>;
     }
   };
 
@@ -269,10 +246,10 @@ export function ApplicationHistoryTable({
                           </span>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell py-2 text-center">
-                          {getStatusBadge(application.status)}
+                          <ServiceApplicationStatusBadge status={application.status} />
                         </TableCell>
                         <TableCell className="hidden xl:table-cell py-2 text-center">
-                          {getPaymentStatusBadge(application.payment_status || 'pending')}
+                          {getPaymentStatusBadge(application.payment_status || 'unpaid')}
                         </TableCell>
                         <TableCell className="hidden 2xl:table-cell py-2 text-center">
                           <span className="text-sm font-medium">
