@@ -269,6 +269,7 @@ serve(async (req) => {
         customer_id: application.customer_id,
         payment_instrument_id: paymentInstrumentData.id,
         payment_method_type: 'apple_pay',
+        payment_type: 'APPLE_PAY',
         base_amount_cents: baseAmount,
         service_fee_cents: serviceFeeAmount,
         total_amount_cents: total_amount_cents,
@@ -350,7 +351,8 @@ serve(async (req) => {
         status: 'under_review',
         payment_processed_at: new Date().toISOString(),
         amount_cents: total_amount_cents,
-        payment_method_type: 'apple_pay'
+        payment_method_type: 'apple_pay',
+        payment_type: 'APPLE_PAY'
       })
       .eq('id', application_id);
 

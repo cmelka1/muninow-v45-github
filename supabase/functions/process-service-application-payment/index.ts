@@ -217,7 +217,7 @@ serve(async (req) => {
         merchant_id: serviceTile.merchant_id,
         finix_merchant_id: serviceTile.finix_merchant_id,
         merchant_name: serviceTile.title,
-        payment_type: isACH ? 'ACH' : 'CARD',
+      payment_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
         fraud_session_id: requestBody.fraud_session_id || null,
         idempotency_id: requestBody.idempotency_id
       })
@@ -247,7 +247,7 @@ serve(async (req) => {
         service_fee_cents: calculatedServiceFee,
         total_amount_cents: requestBody.total_amount_cents,
         currency: 'USD',
-        payment_type: isACH ? 'ACH' : 'CARD',
+        payment_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
         idempotency_id: requestBody.idempotency_id,
         fraud_session_id: requestBody.fraud_session_id || null,
         transfer_state: 'PENDING',

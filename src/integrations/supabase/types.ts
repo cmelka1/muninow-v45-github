@@ -1792,6 +1792,7 @@ export type Database = {
           payment_method_type: string | null
           payment_processed_at: string | null
           payment_status: string | null
+          payment_type: Database["public"]["Enums"]["payment_type_enum"] | null
           review_notes: string | null
           service_fee_cents: number | null
           service_name: string | null
@@ -1849,6 +1850,7 @@ export type Database = {
           payment_method_type?: string | null
           payment_processed_at?: string | null
           payment_status?: string | null
+          payment_type?: Database["public"]["Enums"]["payment_type_enum"] | null
           review_notes?: string | null
           service_fee_cents?: number | null
           service_name?: string | null
@@ -1906,6 +1908,7 @@ export type Database = {
           payment_method_type?: string | null
           payment_processed_at?: string | null
           payment_status?: string | null
+          payment_type?: Database["public"]["Enums"]["payment_type_enum"] | null
           review_notes?: string | null
           service_fee_cents?: number | null
           service_name?: string | null
@@ -2436,6 +2439,7 @@ export type Database = {
           payment_method_type: string | null
           payment_processed_at: string | null
           payment_status: string | null
+          payment_type: Database["public"]["Enums"]["payment_type_enum"] | null
           permit_id: string
           permit_merchant_id: string | null
           permit_number: string | null
@@ -2504,6 +2508,7 @@ export type Database = {
           payment_method_type?: string | null
           payment_processed_at?: string | null
           payment_status?: string | null
+          payment_type?: Database["public"]["Enums"]["payment_type_enum"] | null
           permit_id?: string
           permit_merchant_id?: string | null
           permit_number?: string | null
@@ -2572,6 +2577,7 @@ export type Database = {
           payment_method_type?: string | null
           payment_processed_at?: string | null
           payment_status?: string | null
+          payment_type?: Database["public"]["Enums"]["payment_type_enum"] | null
           permit_id?: string
           permit_merchant_id?: string | null
           permit_number?: string | null
@@ -4311,6 +4317,11 @@ export type Database = {
       fee_profile_sync_status: "pending" | "synced" | "error"
       payment_method_type: "card" | "ach"
       payment_status_enum: "paid" | "unpaid" | "partially_paid"
+      payment_type_enum:
+        | "PAYMENT_CARD"
+        | "BANK_ACCOUNT"
+        | "APPLE_PAY"
+        | "GOOGLE_PAY"
       payout_frequency: "DAILY" | "MONTHLY" | "CONTINUOUS"
       payout_rail: "NEXT_DAY_ACH" | "SAME_DAY_ACH"
       payout_type: "GROSS" | "NET"
@@ -4507,6 +4518,12 @@ export const Constants = {
       fee_profile_sync_status: ["pending", "synced", "error"],
       payment_method_type: ["card", "ach"],
       payment_status_enum: ["paid", "unpaid", "partially_paid"],
+      payment_type_enum: [
+        "PAYMENT_CARD",
+        "BANK_ACCOUNT",
+        "APPLE_PAY",
+        "GOOGLE_PAY",
+      ],
       payout_frequency: ["DAILY", "MONTHLY", "CONTINUOUS"],
       payout_rail: ["NEXT_DAY_ACH", "SAME_DAY_ACH"],
       payout_type: ["GROSS", "NET"],
