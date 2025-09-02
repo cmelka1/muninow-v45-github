@@ -5,12 +5,8 @@ interface ProcessServiceApplicationPaymentRequest {
   application_id: string;
   payment_instrument_id: string;
   total_amount_cents: number;
-  service_fee: number;
   fraud_session_id?: string;
   idempotency_id: string;
-  cardBrand?: string;
-  cardLastFour?: string;
-  bankLastFour?: string;
 }
 
 interface FinixTransferRequest {
@@ -18,7 +14,6 @@ interface FinixTransferRequest {
   currency: string;
   destination: string;
   source: string;
-  fee?: number;
   merchant_identity: string;
   tags?: Record<string, string>;
 }
@@ -100,6 +95,25 @@ serve(async (req) => {
       );
     }
 
+    // Get payment instrument details to determine type
+    const { data: paymentInstrument, error: instrumentError } = await supabase
+      .from('user_payment_instruments')
+      .select('*')
+      .eq('finix_payment_instrument_id', requestBody.payment_instrument_id)
+      .eq('user_id', user.id)
+      .single();
+
+    if (instrumentError || !paymentInstrument) {
+      console.error('Error fetching payment instrument:', instrumentError);
+      return new Response(
+        JSON.stringify({ error: 'Payment instrument not found' }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     // Get service application details (first query)
     const { data: application, error: applicationError } = await supabase
       .from('municipal_service_applications')
@@ -167,11 +181,11 @@ serve(async (req) => {
       );
     }
 
+    // Determine if this is an ACH payment based on payment instrument type
+    const isACH = paymentInstrument.instrument_type === 'BANK_ACCOUNT';
+    
     // Calculate service fee
     let calculatedServiceFee = 0;
-    
-    // Determine if this is an ACH payment based on payment instrument type
-    const isACH = !requestBody.cardBrand && requestBody.bankLastFour;
     
     if (isACH) {
       calculatedServiceFee = (serviceTile.amount_cents * (feeProfile.ach_basis_points || 0)) / 10000 + (feeProfile.ach_fixed_fee || 0);
@@ -233,7 +247,6 @@ serve(async (req) => {
       currency: 'USD',
       destination: serviceTile.finix_merchant_id,
       source: requestBody.payment_instrument_id,
-      fee: calculatedServiceFee,
       merchant_identity: finixIdentity.finix_identity_id,
       tags: {
         application_id: requestBody.application_id,
@@ -285,9 +298,9 @@ serve(async (req) => {
         payment_instrument_id: requestBody.payment_instrument_id,
         idempotency_id: requestBody.idempotency_id,
         fraud_session_id: requestBody.fraud_session_id,
-        card_brand: requestBody.cardBrand,
-        card_last_four: requestBody.cardLastFour,
-        bank_last_four: requestBody.bankLastFour,
+        card_brand: paymentInstrument.card_brand,
+        card_last_four: paymentInstrument.card_last_four,
+        bank_last_four: paymentInstrument.bank_last_four,
         merchant_id: serviceTile.merchant_id,
         finix_merchant_id: serviceTile.finix_merchant_id,
         merchant_name: serviceTile.title,
