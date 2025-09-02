@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, User, Clock, Receipt, Calendar, Building, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, User, Clock, Receipt, Calendar, Building, Download, Loader2, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -97,7 +97,7 @@ const ServiceApplicationDetail: React.FC = () => {
           application?.zip_code,
         ].filter(Boolean).join(', ') || undefined 
       },
-      { label: 'Additional Information', value: application?.additional_information },
+      
     ];
 
     // Service-specific data
@@ -260,6 +260,24 @@ const ServiceApplicationDetail: React.FC = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Additional Information */}
+          {application.additional_information && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  Additional Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SafeHtmlRenderer 
+                  content={application.additional_information}
+                  fallback="No additional information provided"
+                />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Review Notes */}
           {application.review_notes && (
