@@ -25,8 +25,31 @@ export const useFormKeyboardNavigation = ({
     const handleKeyDown = (event: KeyboardEvent) => {
       // Skip if focus is on excluded elements
       const activeElement = document.activeElement as HTMLElement;
+      
+      // Check for basic tag exclusions (textarea)
       if (skipOn.includes(activeElement?.tagName?.toLowerCase())) {
         return;
+      }
+      
+      // Check for contenteditable elements (rich text editors)
+      if (activeElement?.contentEditable === 'true') {
+        return;
+      }
+      
+      // Check for ProseMirror editor elements (TipTap uses this)
+      if (activeElement?.classList?.contains('ProseMirror')) {
+        return;
+      }
+      
+      // Check if we're inside a rich text editor by walking up the DOM
+      let element = activeElement;
+      while (element && element !== document.body) {
+        if (element.contentEditable === 'true' || 
+            element.classList?.contains('ProseMirror') ||
+            element.classList?.contains('tiptap')) {
+          return;
+        }
+        element = element.parentElement as HTMLElement;
       }
 
       // Handle Enter key
