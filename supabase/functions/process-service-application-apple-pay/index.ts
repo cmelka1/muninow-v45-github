@@ -349,8 +349,8 @@ serve(async (req) => {
         payment_status: 'paid',
         status: 'under_review',
         payment_processed_at: new Date().toISOString(),
-        payment_amount_cents: total_amount_cents,
-        payment_method: 'apple_pay'
+        amount_cents: total_amount_cents,
+        payment_method_type: 'apple_pay'
       })
       .eq('id', application_id);
 

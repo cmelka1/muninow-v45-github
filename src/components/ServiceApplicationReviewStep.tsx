@@ -67,7 +67,7 @@ const ServiceApplicationReviewStep: React.FC<ServiceApplicationReviewStepProps> 
   };
 
   const completedDocuments = uploadedDocuments.filter(doc => doc.uploadStatus === 'completed');
-  const totalAmount = tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents;
+  const totalAmount = tile.allow_user_defined_amount ? (formData.amount_cents || 0) : (tile.amount_cents || 0);
 
   return (
     <div className="space-y-6">
