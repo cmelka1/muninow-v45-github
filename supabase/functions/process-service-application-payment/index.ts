@@ -100,18 +100,10 @@ serve(async (req) => {
       );
     }
 
-    // Get service application details
+    // Get service application details (first query)
     const { data: application, error: applicationError } = await supabase
       .from('municipal_service_applications')
-      .select(`
-        *,
-        municipal_service_tiles (
-          title,
-          amount_cents,
-          requires_review,
-          customer_id
-        )
-      `)
+      .select('*')
       .eq('id', requestBody.applicationId)
       .eq('user_id', user.id)
       .single();
@@ -127,11 +119,29 @@ serve(async (req) => {
       );
     }
 
-    // Get merchant details from the application's tile
+    // Get service tile details using tile_id (second query)
+    const { data: serviceTile, error: tileError } = await supabase
+      .from('municipal_service_tiles')
+      .select('title, amount_cents, requires_review, customer_id')
+      .eq('id', application.tile_id)
+      .single();
+
+    if (tileError || !serviceTile) {
+      console.error('Error fetching service tile:', tileError);
+      return new Response(
+        JSON.stringify({ error: 'Service tile not found' }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Get merchant details from the tile's customer_id
     const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
       .select('*')
-      .eq('customer_id', application.municipal_service_tiles.customer_id)
+      .eq('customer_id', serviceTile.customer_id)
       .single();
 
     if (merchantError || !merchant) {
@@ -170,12 +180,12 @@ serve(async (req) => {
     const isACH = !requestBody.cardBrand && requestBody.bankLastFour;
     
     if (isACH) {
-      calculatedServiceFee = (application.municipal_service_tiles.amount_cents * (feeProfile.ach_basis_points || 0)) / 10000 + (feeProfile.ach_fixed_fee || 0);
+      calculatedServiceFee = (serviceTile.amount_cents * (feeProfile.ach_basis_points || 0)) / 10000 + (feeProfile.ach_fixed_fee || 0);
     } else {
-      calculatedServiceFee = (application.municipal_service_tiles.amount_cents * (feeProfile.basis_points || 0)) / 10000 + (feeProfile.fixed_fee || 0);
+      calculatedServiceFee = (serviceTile.amount_cents * (feeProfile.basis_points || 0)) / 10000 + (feeProfile.fixed_fee || 0);
     }
 
-    const totalCalculated = application.municipal_service_tiles.amount_cents + calculatedServiceFee;
+    const totalCalculated = serviceTile.amount_cents + calculatedServiceFee;
 
     // Validate amount
     if (Math.abs(requestBody.totalAmount - totalCalculated) > 1) {
@@ -271,8 +281,8 @@ serve(async (req) => {
       .from('payment_history')
       .insert({
         user_id: user.id,
-        customer_id: application.municipal_service_tiles.customer_id,
-        amount_cents: application.municipal_service_tiles.amount_cents,
+        customer_id: serviceTile.customer_id,
+        amount_cents: serviceTile.amount_cents,
         service_fee_cents: calculatedServiceFee,
         total_amount_cents: requestBody.totalAmount,
         payment_type: isACH ? 'ACH' : 'CARD',
@@ -319,7 +329,7 @@ serve(async (req) => {
         fraud_session_id: requestBody.fraudSessionId,
         idempotency_id: requestBody.idempotencyId,
         transfer_state: finixData.state,
-        amount_cents: application.municipal_service_tiles.amount_cents,
+        amount_cents: serviceTile.amount_cents,
         service_fee_cents: calculatedServiceFee,
         total_amount_cents: requestBody.totalAmount,
         merchant_id: merchant.id,
