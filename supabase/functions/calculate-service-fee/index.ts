@@ -18,9 +18,9 @@ const calculateServiceFeeUtil = (params: {
   const {
     baseAmountCents,
     isCard,
-    cardBasisPoints = 250,
+    cardBasisPoints = 300,
     cardFixedFeeCents = 50,
-    achBasisPoints = 20,
+    achBasisPoints = 150,
     achFixedFeeCents = 50
   } = params;
 
