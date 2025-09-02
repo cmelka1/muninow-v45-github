@@ -293,6 +293,7 @@ serve(async (req) => {
       .insert({
         user_id: user.id,
         customer_id: serviceTile.customer_id,
+        service_application_id: requestBody.application_id,
         amount_cents: serviceTile.amount_cents,
         service_fee_cents: calculatedServiceFee,
         total_amount_cents: requestBody.total_amount_cents,
