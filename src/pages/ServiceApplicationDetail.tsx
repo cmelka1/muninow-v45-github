@@ -110,7 +110,7 @@ const ServiceApplicationDetail: React.FC = () => {
       const skipFields = ['name', 'full_name', 'first_name', 'last_name', 'email', 'phone', 'phone_number', 
                          'business_name', 'business_legal_name', 'company_name', 'address', 'street_address', 
                          'street', 'apt', 'apt_number', 'apartment', 'city', 'state', 'zip', 'zip_code', 
-                         'postal_code', 'additional_information', 'notes', 'comments'];
+                         'postal_code', 'additional_information', 'notes', 'comments', 'amount_cents'];
       if (skipFields.includes(key.toLowerCase()) || !value) return null;
       
       const field = formFields.find((f: any) => f.id === key);
