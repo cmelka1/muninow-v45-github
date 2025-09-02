@@ -91,7 +91,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     baseAmount,
     selectedPaymentMethod,
     setSelectedPaymentMethod,
-    handlePayment: handleServicePayment,
+    handlePaymentWithData: handleServicePayment,
     merchantFeeProfile,
   } = useServiceApplicationPaymentMethods(tile, userDefinedAmount);
 
@@ -332,14 +332,11 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     setIsSubmitting(true);
     
     try {
-      console.log('Starting payment process for tile:', tile.id);
+      console.log('Starting atomic payment process for tile:', tile.id);
       
-      // First create the application
-      const applicationData = await createApplication.mutateAsync({
+      // Prepare application data for atomic processing
+      const applicationData = {
         tile_id: tile.id,
-        user_id: profile?.id || '',
-        customer_id: tile.customer_id,
-        status: 'draft',
         amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
         // Map form data to structured fields
         applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
@@ -353,40 +350,19 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         zip_code: formData.zip || formData.zip_code || formData.postal_code || undefined,
         additional_information: formData.additional_information || formData.notes || formData.comments || undefined,
         service_specific_data: formData,
-      });
+        documents: uploadedDocuments
+          .filter(doc => doc.uploadStatus === 'completed')
+          .map(doc => ({
+            name: doc.name,
+            size: doc.size,
+            type: doc.type,
+            storage_path: doc.filePath,
+            document_type: doc.documentType,
+          })),
+      };
 
-      console.log('Application created successfully:', applicationData.id);
-
-      // Link uploaded documents to the application
-      if (uploadedDocuments.length > 0) {
-        try {
-          const documentPromises = uploadedDocuments
-            .filter(doc => doc.uploadStatus === 'completed')
-            .map(doc => 
-              supabase.from('service_application_documents').insert({
-                application_id: applicationData.id,
-                user_id: profile?.id || '',
-                customer_id: tile.customer_id,
-                file_name: doc.name,
-                document_type: doc.documentType,
-                description: doc.description || null,
-                storage_path: doc.filePath || '',
-                file_size: doc.size,
-                content_type: doc.type
-              })
-            );
-
-          await Promise.all(documentPromises);
-          console.log('Documents linked successfully');
-        } catch (docError) {
-          console.error('Error linking documents:', docError);
-          // Continue with payment even if document linking fails
-        }
-      }
-
-      // Process payment using the hook
-      console.log('Processing payment for application:', applicationData.id);
-      const paymentResult = await handleServicePayment(applicationData.id);
+      console.log('Calling atomic payment processing with application data');
+      const paymentResult = await handleServicePayment(applicationData);
       
       if (paymentResult?.success) {
         console.log('Payment successful, closing modal');

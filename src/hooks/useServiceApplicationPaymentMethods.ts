@@ -207,12 +207,12 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
 
     try {
       // Generate idempotency ID for payment safety
-      const idempotencyId = generateIdempotencyId('service-app', applicationId);
+      const idempotencyId = generateIdempotencyId('service-app', applicationData.tile_id);
       console.log('Generated idempotency ID:', idempotencyId);
 
       const { data, error } = await supabase.functions.invoke('process-service-application-payment', {
         body: {
-          application_id: applicationId,
+          ...applicationData,
           payment_instrument_id: selectedPaymentMethod,
           total_amount_cents: totalWithFee,
           idempotency_id: idempotencyId,
@@ -710,7 +710,7 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
     merchantFeeProfile,
     
     // Actions
-    handlePayment,
+    handlePaymentWithData,
     handleGooglePayment,
     handleApplePayment,
     loadPaymentInstruments,
