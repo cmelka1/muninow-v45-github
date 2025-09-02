@@ -25,81 +25,10 @@ export const usePaymentMethods = (bill: any): PaymentMethodHookReturn => {
     })
     .slice(0, 3);
 
-  const calculateServiceFee = (): ServiceFee | null => {
-    if (!bill) return null;
-    
-    const billAmount = bill.total_amount_cents; // A = original bill amount
-    
-    // Handle Google Pay and Apple Pay as special cases - always use card fees
-    if (selectedPaymentMethod === 'google-pay' || selectedPaymentMethod === 'apple-pay') {
-      const basisPoints = bill.basis_points || 250;
-      const fixedFeeCents = bill.fixed_fee || 50;
-      
-      // Convert basis points to decimal percentage (p)
-      const percentageDecimal = basisPoints / 10000;
-      
-      // Prevent division by zero or invalid percentages
-      if (percentageDecimal >= 1) {
-        console.error('Invalid percentage fee: cannot be 100% or higher');
-        return null;
-      }
-      
-      // Apply grossed-up formula: T = (A + f) / (1 - p)
-      const totalAmountToCharge = Math.round((billAmount + fixedFeeCents) / (1 - percentageDecimal));
-      const serviceFeeToDisplay = totalAmountToCharge - billAmount;
-      
-      // Calculate percentage fee for display purposes
-      const percentageFee = Math.round((billAmount * basisPoints) / 10000);
-
-      return {
-        totalFee: serviceFeeToDisplay, // Legacy compatibility
-        percentageFee,
-        fixedFee: fixedFeeCents,
-        basisPoints,
-        isCard: true,
-        totalAmountToCharge,
-        serviceFeeToDisplay
-      };
-    }
-    
-    if (!selectedPaymentMethod) return null;
-    
-    const selectedInstrument = topPaymentMethods.find(instrument => instrument.id === selectedPaymentMethod);
-    if (!selectedInstrument) return null;
-
-    const isCard = selectedInstrument.instrument_type === 'PAYMENT_CARD';
-    const basisPoints = isCard ? (bill.basis_points || 250) : (bill.ach_basis_points || 20);
-    const fixedFeeCents = isCard ? (bill.fixed_fee || 50) : (bill.ach_fixed_fee || 50);
-    
-    // Convert basis points to decimal percentage (p)
-    const percentageDecimal = basisPoints / 10000;
-    
-    // Prevent division by zero or invalid percentages
-    if (percentageDecimal >= 1) {
-      console.error('Invalid percentage fee: cannot be 100% or higher');
-      return null;
-    }
-    
-    // Apply grossed-up formula: T = (A + f) / (1 - p)
-    const totalAmountToCharge = Math.round((billAmount + fixedFeeCents) / (1 - percentageDecimal));
-    const serviceFeeToDisplay = totalAmountToCharge - billAmount;
-    
-    // Calculate percentage fee for display purposes
-    const percentageFee = Math.round((billAmount * basisPoints) / 10000);
-
-    return {
-      totalFee: serviceFeeToDisplay, // Legacy compatibility
-      percentageFee,
-      fixedFee: fixedFeeCents,
-      basisPoints,
-      isCard,
-      totalAmountToCharge,
-      serviceFeeToDisplay
-    };
-  };
-
-  const serviceFee = calculateServiceFee();
-  const totalWithFee = serviceFee?.totalAmountToCharge || bill?.total_amount_cents || 0;
+  // Service fee calculation is now handled by the backend
+  // Frontend only displays the base amount and lets backend calculate fees
+  const serviceFee = null; // Removed frontend calculation
+  const totalWithFee = bill?.total_amount_cents || 0; // Base amount only
 
   // Auto-select default payment method when payment methods load
   useEffect(() => {
@@ -191,11 +120,11 @@ export const usePaymentMethods = (bill: any): PaymentMethodHookReturn => {
       return;
     }
 
-    // Handle regular payment methods
-    if (!serviceFee) {
+    // Backend will calculate service fees, so just validate bill amount exists
+    if (!bill?.total_amount_cents) {
       toast({
         title: "Error",
-        description: "Service fee calculation failed. Please try again.",
+        description: "Bill amount not available. Please try again.",
         variant: "destructive",
       });
       return;
@@ -224,7 +153,7 @@ export const usePaymentMethods = (bill: any): PaymentMethodHookReturn => {
         body: {
           bill_id: bill.bill_id,
           payment_instrument_id: selectedPaymentMethod,
-          total_amount_cents: totalWithFee,
+          base_amount_cents: bill.total_amount_cents,
           idempotency_id: idempotencyId,
           fraud_session_id: currentFraudSessionId
         }
@@ -312,12 +241,12 @@ export const usePaymentMethods = (bill: any): PaymentMethodHookReturn => {
             },
           },
         }],
-        transactionInfo: {
-          countryCode: 'US' as const,
-          currencyCode: 'USD' as const,
-          totalPrice: (totalWithFee / 100).toFixed(2),
-          totalPriceStatus: 'FINAL' as const,
-        },
+          transactionInfo: {
+            countryCode: 'US' as const,
+            currencyCode: 'USD' as const,
+            totalPrice: (bill.total_amount_cents / 100).toFixed(2), // Base amount only, backend calculates fees
+            totalPriceStatus: 'FINAL' as const,
+          },
         merchantInfo: {
           merchantId: googlePayMerchantId, // Use Google Pay merchant ID
           merchantName: bill.merchant_name || bill.business_legal_name || 'Merchant',
@@ -341,7 +270,7 @@ export const usePaymentMethods = (bill: any): PaymentMethodHookReturn => {
         body: {
           bill_id: bill.bill_id,
           google_pay_token: paymentToken,
-          total_amount_cents: totalWithFee,
+          base_amount_cents: bill.total_amount_cents,
           idempotency_id: idempotencyId,
           billing_address: billingAddress ? {
             name: billingAddress.name,
@@ -419,7 +348,7 @@ export const usePaymentMethods = (bill: any): PaymentMethodHookReturn => {
           body: {
             bill_id: bill.bill_id,
             apple_pay_token: event.payment.token,
-            total_amount_cents: totalWithFee,
+            base_amount_cents: bill.total_amount_cents,
             idempotency_id: idempotencyId,
             billing_address: event.payment.billingContact
           }
@@ -439,7 +368,7 @@ export const usePaymentMethods = (bill: any): PaymentMethodHookReturn => {
 
       const session = await initializeApplePaySession(
         bill.merchant_finix_identity_id,
-        totalWithFee,
+        bill.total_amount_cents, // Base amount only, backend calculates fees
         merchantName,
         onValidateMerchant,
         onPaymentAuthorized

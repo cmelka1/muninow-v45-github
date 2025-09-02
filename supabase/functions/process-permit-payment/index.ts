@@ -9,7 +9,7 @@ const corsHeaders = {
 interface ProcessPermitPaymentRequest {
   permit_id: string;
   payment_instrument_id: string;
-  total_amount_cents: number;
+  base_amount_cents: number;
   idempotency_id: string;
   fraud_session_id: string;
 }
@@ -78,7 +78,7 @@ serve(async (req) => {
     const { 
       permit_id, 
       payment_instrument_id, 
-      total_amount_cents, 
+      base_amount_cents, 
       idempotency_id,
       fraud_session_id 
     } = body;
@@ -86,12 +86,12 @@ serve(async (req) => {
     console.log("Processing permit payment:", { 
       permit_id, 
       payment_instrument_id, 
-      total_amount_cents, 
+      base_amount_cents, 
       user_id: user.id 
     });
 
     // Validate input
-    if (!permit_id || !payment_instrument_id || !total_amount_cents || !idempotency_id || !fraud_session_id) {
+    if (!permit_id || !payment_instrument_id || !base_amount_cents || !idempotency_id || !fraud_session_id) {
       throw new Error("Missing required parameters");
     }
 
@@ -140,22 +140,23 @@ serve(async (req) => {
       throw new Error("Payment instrument not found or access denied");
     }
 
-    // Calculate service fee based on payment instrument type using grossed-up method
+    // Calculate service fee using unified formula: Service Fee = (Base Amount × Fee Percentage) + Fixed Fee
     const isCard = paymentInstrument.instrument_type === 'PAYMENT_CARD';
     const basisPoints = isCard ? (permit.basis_points || 250) : (permit.ach_basis_points || 20);
     const fixedFee = isCard ? (permit.fixed_fee || 50) : (permit.ach_fixed_fee || 50);
     
-    const baseAmount = permit.payment_amount_cents || permit.total_amount_cents || 0;
+    // Use the permit base amount, validate against request
+    const permitBaseAmount = permit.payment_amount_cents || permit.total_amount_cents || 0;
     
-    // Use grossed-up calculation to match frontend
-    const percentageDecimal = basisPoints / 10000;
-    const expectedTotal = Math.round((baseAmount + fixedFee) / (1 - percentageDecimal));
-    const calculatedServiceFee = expectedTotal - baseAmount;
-
-    // Validate total amount matches calculation
-    if (Math.abs(total_amount_cents - expectedTotal) > 1) { // Allow 1 cent rounding difference
-      throw new Error(`Total amount mismatch. Expected: ${expectedTotal}, Received: ${total_amount_cents}`);
+    // Validate base amount matches
+    if (Math.abs(base_amount_cents - permitBaseAmount) > 1) {
+      throw new Error(`Base amount mismatch. Expected: ${permitBaseAmount}, Received: ${base_amount_cents}`);
     }
+    
+    // Calculate using unified formula
+    const percentageFee = Math.round((permitBaseAmount * basisPoints) / 10000);
+    const calculatedServiceFee = percentageFee + fixedFee;
+    const totalAmountToCharge = permitBaseAmount + calculatedServiceFee;
 
     // Get Finix merchant ID from the permit
     const finixMerchantId = permit.finix_merchant_id;
@@ -182,9 +183,9 @@ serve(async (req) => {
         customer_id: permit.customer_id,
         finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
         finix_merchant_id: finixMerchantId,
-        amount_cents: baseAmount,
+        amount_cents: permitBaseAmount,
         service_fee_cents: calculatedServiceFee,
-        total_amount_cents: total_amount_cents,
+        total_amount_cents: totalAmountToCharge,
         currency: 'USD',
         payment_type: paymentType,
         idempotency_id: idempotency_id,
@@ -215,7 +216,7 @@ serve(async (req) => {
         bill_type: 'permit',
         issue_date: permit.created_at,
         due_date: permit.created_at, // Permits are due immediately upon approval
-        original_amount_cents: baseAmount,
+        original_amount_cents: permitBaseAmount,
         payment_status: 'pending',
         bill_status: 'unpaid'
       })
@@ -231,7 +232,7 @@ serve(async (req) => {
     const finixRequest: FinixTransferRequest = {
       merchant: finixMerchantId,
       currency: "USD",
-      amount: total_amount_cents,
+      amount: totalAmountToCharge,
       source: paymentInstrument.finix_payment_instrument_id,
       idempotency_id: idempotency_id
     };
@@ -302,7 +303,7 @@ serve(async (req) => {
           .from("permit_applications")
           .update({
             service_fee_cents: calculatedServiceFee,
-            total_amount_cents: total_amount_cents,
+            total_amount_cents: totalAmountToCharge,
             payment_status: 'paid',
             application_status: 'issued',
             finix_transfer_id: finixData.id,
@@ -347,7 +348,9 @@ serve(async (req) => {
         payment_history_id: paymentHistory.id,
         transfer_id: finixData.id,
         transfer_state: finixData.state,
-        amount_cents: total_amount_cents,
+        amount_cents: totalAmountToCharge,
+        service_fee_cents: calculatedServiceFee,
+        base_amount_cents: permitBaseAmount,
         redirect_url: `/permit/${permit_id}/certificate`
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

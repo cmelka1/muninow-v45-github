@@ -27,91 +27,10 @@ export const useBusinessLicensePaymentMethods = (license: any) => {
     })
     .slice(0, 3);
 
-  const calculateServiceFee = (): ServiceFee | null => {
-    if (!license) return null;
-    
-    const licenseAmount = license.base_fee_cents || license.total_amount_cents || 0; // A = original license amount
-    
-    // Use fee data directly from license (primary source)
-    // Fee data is available directly in business_license_applications table
-    const basisPoints = license.basis_points;
-    const fixedFee = license.fixed_fee; 
-    const achBasisPoints = license.ach_basis_points;
-    const achFixedFee = license.ach_fixed_fee;
-    
-    // If no fee data available, we can't calculate service fees
-    if (!basisPoints && !achBasisPoints) return null;
-    
-    // Handle Google Pay and Apple Pay as special cases - always use card fees
-    if (selectedPaymentMethod === 'google-pay' || selectedPaymentMethod === 'apple-pay') {
-      const cardBasisPoints = basisPoints || 250;
-      const cardFixedFee = fixedFee || 50;
-      
-      // Convert basis points to decimal percentage (p)
-      const percentageDecimal = cardBasisPoints / 10000;
-      
-      // Prevent division by zero or invalid percentages
-      if (percentageDecimal >= 1) {
-        console.error('Invalid percentage fee: cannot be 100% or higher');
-        return null;
-      }
-      
-      // Apply grossed-up formula: T = (A + f) / (1 - p)
-      const totalAmountToCharge = Math.round((licenseAmount + cardFixedFee) / (1 - percentageDecimal));
-      const serviceFeeToDisplay = totalAmountToCharge - licenseAmount;
-      
-      // Calculate percentage fee for display purposes
-      const percentageFee = Math.round((licenseAmount * cardBasisPoints) / 10000);
-
-      return {
-        totalFee: serviceFeeToDisplay, // Legacy compatibility
-        percentageFee,
-        fixedFee: cardFixedFee,
-        basisPoints: cardBasisPoints,
-        isCard: true,
-        totalAmountToCharge,
-        serviceFeeToDisplay
-      };
-    }
-    
-    if (!selectedPaymentMethod) return null;
-    
-    const selectedInstrument = topPaymentMethods.find(instrument => instrument.id === selectedPaymentMethod);
-    if (!selectedInstrument) return null;
-
-    const isCard = selectedInstrument.instrument_type === 'PAYMENT_CARD';
-    const instrumentBasisPoints = isCard ? (basisPoints || 250) : (achBasisPoints || 20);
-    const instrumentFixedFee = isCard ? (fixedFee || 50) : (achFixedFee || 50);
-    
-    // Convert basis points to decimal percentage (p)
-    const percentageDecimal = instrumentBasisPoints / 10000;
-    
-    // Prevent division by zero or invalid percentages
-    if (percentageDecimal >= 1) {
-      console.error('Invalid percentage fee: cannot be 100% or higher');
-      return null;
-    }
-    
-    // Apply grossed-up formula: T = (A + f) / (1 - p)
-    const totalAmountToCharge = Math.round((licenseAmount + instrumentFixedFee) / (1 - percentageDecimal));
-    const serviceFeeToDisplay = totalAmountToCharge - licenseAmount;
-    
-    // Calculate percentage fee for display purposes
-    const percentageFee = Math.round((licenseAmount * instrumentBasisPoints) / 10000);
-
-    return {
-      totalFee: serviceFeeToDisplay, // Legacy compatibility
-      percentageFee,
-      fixedFee: instrumentFixedFee,
-      basisPoints: instrumentBasisPoints,
-      isCard,
-      totalAmountToCharge,
-      serviceFeeToDisplay
-    };
-  };
-
-  const serviceFee = calculateServiceFee();
-  const totalWithFee = serviceFee?.totalAmountToCharge || (license?.base_fee_cents || license?.total_amount_cents) || 0;
+  // Service fee calculation is now handled by the backend
+  // Frontend only displays the base amount and lets backend calculate fees
+  const serviceFee = null; // Removed frontend calculation
+  const totalWithFee = license?.base_fee_cents || license?.total_amount_cents || 0; // Base amount only
 
   // Auto-select default payment method when payment methods load
   useEffect(() => {
@@ -211,14 +130,14 @@ export const useBusinessLicensePaymentMethods = (license: any) => {
       return { success: false, error: "Session validation failed" };
     }
 
-    // Handle regular payment methods
-    if (!serviceFee) {
+    // Backend will calculate service fees, so just validate license amount exists
+    if (!license?.base_fee_cents && !license?.total_amount_cents) {
         toast({
           title: "Error",
-          description: "Service fee calculation failed. Please try again.",
+          description: "License amount not available. Please try again.",
           variant: "destructive",
         });
-        return { success: false, error: "Service fee calculation failed" };
+        return { success: false, error: "License amount not available" };
     }
 
     try {
@@ -254,7 +173,7 @@ export const useBusinessLicensePaymentMethods = (license: any) => {
         body: {
           license_id: license.id,
           payment_instrument_id: selectedPaymentMethod,
-          total_amount_cents: totalWithFee,
+          base_amount_cents: license.base_fee_cents || license.total_amount_cents,
           idempotency_id: idempotencyId,
           fraud_session_id: currentFraudSessionId
         }
@@ -348,7 +267,7 @@ export const useBusinessLicensePaymentMethods = (license: any) => {
         transactionInfo: {
           countryCode: 'US' as const,
           currencyCode: 'USD' as const,
-          totalPrice: (totalWithFee / 100).toFixed(2),
+          totalPrice: ((license.base_fee_cents || license.total_amount_cents) / 100).toFixed(2), // Base amount only
           totalPriceStatus: 'FINAL' as const,
         },
         merchantInfo: {
@@ -374,7 +293,7 @@ export const useBusinessLicensePaymentMethods = (license: any) => {
         body: {
           license_id: license.id,
           google_pay_token: paymentToken,
-          total_amount_cents: totalWithFee,
+          base_amount_cents: license.base_fee_cents || license.total_amount_cents,
           idempotency_id: idempotencyId,
           billing_address: billingAddress ? {
             name: billingAddress.name,
@@ -454,7 +373,7 @@ export const useBusinessLicensePaymentMethods = (license: any) => {
           body: {
             license_id: license.id,
             apple_pay_token: event.payment.token,
-            total_amount_cents: totalWithFee,
+            base_amount_cents: license.base_fee_cents || license.total_amount_cents,
             idempotency_id: idempotencyId,
             billing_address: event.payment.billingContact
           }
@@ -480,7 +399,7 @@ export const useBusinessLicensePaymentMethods = (license: any) => {
 
       const session = await initializeApplePaySession(
         license.finix_merchant_id,
-        totalWithFee,
+        license.base_fee_cents || license.total_amount_cents, // Base amount only
         merchantName,
         onValidateMerchant,
         onPaymentAuthorized

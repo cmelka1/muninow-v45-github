@@ -27,91 +27,10 @@ export const usePermitPaymentMethods = (permit: any) => {
     })
     .slice(0, 3);
 
-  const calculateServiceFee = (): ServiceFee | null => {
-    if (!permit) return null;
-    
-    const permitAmount = permit.base_fee_cents || permit.total_amount_cents || 0; // A = original permit amount
-    
-    // Use fee data directly from permit (primary source)
-    // Fee data is available directly in permit_applications table
-    const basisPoints = permit.basis_points;
-    const fixedFee = permit.fixed_fee; 
-    const achBasisPoints = permit.ach_basis_points;
-    const achFixedFee = permit.ach_fixed_fee;
-    
-    // If no fee data available, we can't calculate service fees
-    if (!basisPoints && !achBasisPoints) return null;
-    
-    // Handle Google Pay and Apple Pay as special cases - always use card fees
-    if (selectedPaymentMethod === 'google-pay' || selectedPaymentMethod === 'apple-pay') {
-      const cardBasisPoints = basisPoints || 250;
-      const cardFixedFee = fixedFee || 50;
-      
-      // Convert basis points to decimal percentage (p)
-      const percentageDecimal = cardBasisPoints / 10000;
-      
-      // Prevent division by zero or invalid percentages
-      if (percentageDecimal >= 1) {
-        console.error('Invalid percentage fee: cannot be 100% or higher');
-        return null;
-      }
-      
-      // Apply grossed-up formula: T = (A + f) / (1 - p)
-      const totalAmountToCharge = Math.round((permitAmount + cardFixedFee) / (1 - percentageDecimal));
-      const serviceFeeToDisplay = totalAmountToCharge - permitAmount;
-      
-      // Calculate percentage fee for display purposes
-      const percentageFee = Math.round((permitAmount * cardBasisPoints) / 10000);
-
-      return {
-        totalFee: serviceFeeToDisplay, // Legacy compatibility
-        percentageFee,
-        fixedFee: cardFixedFee,
-        basisPoints: cardBasisPoints,
-        isCard: true,
-        totalAmountToCharge,
-        serviceFeeToDisplay
-      };
-    }
-    
-    if (!selectedPaymentMethod) return null;
-    
-    const selectedInstrument = topPaymentMethods.find(instrument => instrument.id === selectedPaymentMethod);
-    if (!selectedInstrument) return null;
-
-    const isCard = selectedInstrument.instrument_type === 'PAYMENT_CARD';
-    const instrumentBasisPoints = isCard ? (basisPoints || 250) : (achBasisPoints || 20);
-    const instrumentFixedFee = isCard ? (fixedFee || 50) : (achFixedFee || 50);
-    
-    // Convert basis points to decimal percentage (p)
-    const percentageDecimal = instrumentBasisPoints / 10000;
-    
-    // Prevent division by zero or invalid percentages
-    if (percentageDecimal >= 1) {
-      console.error('Invalid percentage fee: cannot be 100% or higher');
-      return null;
-    }
-    
-    // Apply grossed-up formula: T = (A + f) / (1 - p)
-    const totalAmountToCharge = Math.round((permitAmount + instrumentFixedFee) / (1 - percentageDecimal));
-    const serviceFeeToDisplay = totalAmountToCharge - permitAmount;
-    
-    // Calculate percentage fee for display purposes
-    const percentageFee = Math.round((permitAmount * instrumentBasisPoints) / 10000);
-
-    return {
-      totalFee: serviceFeeToDisplay, // Legacy compatibility
-      percentageFee,
-      fixedFee: instrumentFixedFee,
-      basisPoints: instrumentBasisPoints,
-      isCard,
-      totalAmountToCharge,
-      serviceFeeToDisplay
-    };
-  };
-
-  const serviceFee = calculateServiceFee();
-  const totalWithFee = serviceFee?.totalAmountToCharge || (permit?.base_fee_cents || permit?.total_amount_cents) || 0;
+  // Service fee calculation is now handled by the backend
+  // Frontend only displays the base amount and lets backend calculate fees
+  const serviceFee = null; // Removed frontend calculation
+  const totalWithFee = permit?.base_fee_cents || permit?.total_amount_cents || 0; // Base amount only
 
   // Auto-select default payment method when payment methods load
   useEffect(() => {
@@ -211,14 +130,14 @@ export const usePermitPaymentMethods = (permit: any) => {
       return { success: false, error: "Session validation failed" };
     }
 
-    // Handle regular payment methods
-    if (!serviceFee) {
+    // Backend will calculate service fees, so just validate permit amount exists
+    if (!permit?.base_fee_cents && !permit?.total_amount_cents) {
         toast({
           title: "Error",
-          description: "Service fee calculation failed. Please try again.",
+          description: "Permit amount not available. Please try again.",
           variant: "destructive",
         });
-        return { success: false, error: "Service fee calculation failed" };
+        return { success: false, error: "Permit amount not available" };
     }
 
     try {
@@ -254,7 +173,7 @@ export const usePermitPaymentMethods = (permit: any) => {
         body: {
           permit_id: permit.permit_id,
           payment_instrument_id: selectedPaymentMethod,
-          total_amount_cents: totalWithFee,
+          base_amount_cents: permit.base_fee_cents || permit.total_amount_cents,
           idempotency_id: idempotencyId,
           fraud_session_id: currentFraudSessionId
         }
@@ -353,7 +272,7 @@ export const usePermitPaymentMethods = (permit: any) => {
         transactionInfo: {
           countryCode: 'US' as const,
           currencyCode: 'USD' as const,
-          totalPrice: (totalWithFee / 100).toFixed(2),
+          totalPrice: ((permit.base_fee_cents || permit.total_amount_cents) / 100).toFixed(2), // Base amount only
           totalPriceStatus: 'FINAL' as const,
         },
         merchantInfo: {
@@ -379,7 +298,7 @@ export const usePermitPaymentMethods = (permit: any) => {
         body: {
           permit_id: permit.permit_id,
           google_pay_token: paymentToken,
-          total_amount_cents: totalWithFee,
+          base_amount_cents: permit.base_fee_cents || permit.total_amount_cents,
           idempotency_id: idempotencyId,
           billing_address: billingAddress ? {
             name: billingAddress.name,
@@ -459,7 +378,7 @@ export const usePermitPaymentMethods = (permit: any) => {
           body: {
             permit_id: permit.permit_id,
             apple_pay_token: event.payment.token,
-            total_amount_cents: totalWithFee,
+            base_amount_cents: permit.base_fee_cents || permit.total_amount_cents,
             idempotency_id: idempotencyId,
             billing_address: event.payment.billingContact
           }
@@ -485,7 +404,7 @@ export const usePermitPaymentMethods = (permit: any) => {
 
       const session = await initializeApplePaySession(
         permit.finix_merchant_id,
-        totalWithFee,
+        permit.base_fee_cents || permit.total_amount_cents, // Base amount only
         merchantName,
         onValidateMerchant,
         onPaymentAuthorized
