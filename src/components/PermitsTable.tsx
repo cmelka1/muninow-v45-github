@@ -18,7 +18,7 @@ import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { PermitFilters } from './PermitsFilter';
 import { NewPermitApplicationDialog } from '@/components/NewPermitApplicationDialog';
 import { usePermits } from '@/hooks/usePermits';
-import { getStatusDisplayName, type PermitStatus } from '@/hooks/usePermitWorkflow';
+import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 
 interface PermitsTableProps {
   filters?: PermitFilters;
@@ -47,34 +47,6 @@ const PermitsTable: React.FC<PermitsTableProps> = ({ filters = {}, onViewClick }
     setCurrentPage(1);
   }, [filters]);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Draft</Badge>;
-      case 'submitted':
-        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Submitted</Badge>;
-      case 'under_review':
-        return <Badge variant="secondary" className="bg-purple-100 text-purple-800">Under Review</Badge>;
-      case 'information_requested':
-        return <Badge variant="secondary" className="bg-orange-100 text-orange-800">Info Requested</Badge>;
-      case 'resubmitted':
-        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Resubmitted</Badge>;
-      case 'approved':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800">Approved</Badge>;
-      case 'denied':
-        return <Badge variant="destructive">Denied</Badge>;
-      case 'withdrawn':
-        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Withdrawn</Badge>;
-      case 'expired':
-        return <Badge variant="secondary" className="bg-red-100 text-red-800">Expired</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
-      case 'issued':
-        return <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">Issued</Badge>;
-      default:
-        return <Badge variant="outline">{getStatusDisplayName(status as PermitStatus)}</Badge>;
-    }
-  };
 
   const getPermitTypeLabel = (type: string) => {
     // Capitalize first letter and handle common types
@@ -238,7 +210,7 @@ const PermitsTable: React.FC<PermitsTableProps> = ({ filters = {}, onViewClick }
                     </span>
                   </TableCell>
                   <TableCell className="text-center py-2">
-                    {getStatusBadge(permit.application_status)}
+                    <PermitStatusBadge status={permit.application_status as any} />
                   </TableCell>
                 </TableRow>
               ))}
