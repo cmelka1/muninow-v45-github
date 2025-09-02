@@ -42,37 +42,56 @@ export const useServiceApplication = (applicationId: string) => {
     queryFn: async () => {
       if (!applicationId) return null;
 
-      const { data, error } = await supabase
+      // Query 1: Get the service application data
+      const { data: applicationData, error: applicationError } = await supabase
         .from('municipal_service_applications')
-        .select(`
-          *,
-          tile:municipal_service_tiles!inner(
-            id,
-            title,
-            description,
-            amount_cents,
-            form_fields,
-            requires_review,
-            requires_payment,
-            customer_id,
-            is_active
-          ),
-          customer:customers!inner(
-            legal_entity_name,
-            doing_business_as,
-            business_city,
-            business_state
-          )
-        `)
+        .select('*')
         .eq('id', applicationId)
         .single();
 
-      if (error) {
-        console.error('Error fetching service application:', error);
-        throw error;
+      if (applicationError) {
+        console.error('Error fetching service application:', applicationError);
+        throw applicationError;
       }
 
-      return data as unknown as ServiceApplicationWithTile;
+      // Query 2: Get tile data using tile_id
+      let tile = null;
+      if (applicationData.tile_id) {
+        const { data: tileData, error: tileError } = await supabase
+          .from('municipal_service_tiles')
+          .select('id, title, description, amount_cents, form_fields, requires_review, requires_payment, customer_id, is_active')
+          .eq('id', applicationData.tile_id)
+          .single();
+        
+        if (tileError) {
+          console.error('Error fetching tile data:', tileError);
+        } else {
+          tile = tileData;
+        }
+      }
+
+      // Query 3: Get customer data using customer_id
+      let customer = null;
+      if (applicationData.customer_id) {
+        const { data: customerData, error: customerError } = await supabase
+          .from('customers')
+          .select('legal_entity_name, doing_business_as, business_city, business_state')
+          .eq('customer_id', applicationData.customer_id)
+          .single();
+        
+        if (customerError) {
+          console.error('Error fetching customer data:', customerError);
+        } else {
+          customer = customerData;
+        }
+      }
+
+      // Combine all data into the expected structure
+      return {
+        ...applicationData,
+        tile,
+        customer,
+      } as ServiceApplicationWithTile;
     },
     enabled: !!applicationId,
   });
