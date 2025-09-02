@@ -19,9 +19,10 @@ export const ServiceApplicationCommunication: React.FC<ServiceApplicationCommuni
   applicationId
 }) => {
   const [newComment, setNewComment] = useState('');
-  const [isInternal, setIsInternal] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { profile } = useAuth();
+  // Set isInternal default based on user type - false for residents, true for municipal
+  const [isInternal, setIsInternal] = useState(profile?.account_type === 'municipal');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: comments, isLoading } = useServiceApplicationComments(applicationId);
   const { mutate: createComment, isPending } = useCreateServiceApplicationComment();
 
