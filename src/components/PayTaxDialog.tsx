@@ -937,7 +937,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     <CardContent>
                       <PaymentSummary
                         baseAmount={getTaxAmountInCents()}
-                        selectedPaymentMethod={selectedPaymentMethod || "card"}
+                        selectedPaymentMethod={selectedPaymentMethod}
                       />
                     </CardContent>
                   </Card>
