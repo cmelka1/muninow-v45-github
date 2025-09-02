@@ -163,9 +163,9 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
     fetchGooglePayMerchantId();
   }, []);
 
-  const handlePayment = async (applicationId: string): Promise<PaymentResponse> => {
-    console.log('Processing service application payment:', {
-      applicationId,
+  const handlePaymentWithData = async (applicationData: any): Promise<PaymentResponse> => {
+    console.log('Processing service application payment with data:', {
+      applicationData,
       selectedPaymentMethod,
       totalWithFee,
       serviceFee

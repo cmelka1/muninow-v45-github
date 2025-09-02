@@ -3861,6 +3861,40 @@ export type Database = {
         }
         Returns: string
       }
+      create_service_application_with_payment: {
+        Args: {
+          p_additional_information?: string
+          p_amount_cents: number
+          p_applicant_email?: string
+          p_applicant_name?: string
+          p_applicant_phone?: string
+          p_apt_number?: string
+          p_bank_last_four?: string
+          p_business_legal_name?: string
+          p_card_brand?: string
+          p_card_last_four?: string
+          p_city?: string
+          p_customer_id: string
+          p_documents?: Json
+          p_finix_merchant_id: string
+          p_fraud_session_id?: string
+          p_idempotency_id: string
+          p_merchant_id: string
+          p_merchant_name: string
+          p_payment_instrument_id: string
+          p_payment_type: string
+          p_service_fee_cents: number
+          p_service_specific_data?: Json
+          p_state?: string
+          p_statement_descriptor: string
+          p_street_address?: string
+          p_tile_id: string
+          p_total_amount_cents: number
+          p_user_id: string
+          p_zip_code?: string
+        }
+        Returns: Json
+      }
       create_tax_submission_with_payment: {
         Args:
           | {
