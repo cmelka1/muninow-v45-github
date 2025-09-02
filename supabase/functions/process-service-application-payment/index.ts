@@ -174,11 +174,11 @@ serve(async (req) => {
     }
 
     // Get Finix credentials
-    const finixUsername = Deno.env.get('FINIX_USERNAME');
-    const finixPassword = Deno.env.get('FINIX_PASSWORD');
+    const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
+    const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
     const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
 
-    if (!finixUsername || !finixPassword) {
+    if (!finixApplicationId || !finixApiSecret) {
       return new Response(
         JSON.stringify({ error: 'Finix API credentials not configured' }),
         { status: 500, headers: corsHeaders }
@@ -263,7 +263,7 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${btoa(`${finixUsername}:${finixPassword}`)}`,
+        'Authorization': `Basic ${btoa(`${finixApplicationId}:${finixApiSecret}`)}`,
         'Finix-Version': '2022-02-01',
       },
       body: JSON.stringify(finixTransferPayload),
