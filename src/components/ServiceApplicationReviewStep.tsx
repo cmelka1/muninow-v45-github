@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Edit, FileText, User, Building } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { formatCurrency } from '@/lib/formatters';
+import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 
 interface UploadedDocument {
   id: string;
@@ -35,15 +36,11 @@ const ServiceApplicationReviewStep: React.FC<ServiceApplicationReviewStepProps> 
   const getFieldDisplayValue = (field: any, value: any) => {
     if (!value) return 'Not provided';
     
-    // Handle rich text content by stripping HTML tags
-    if (field.type === 'textarea' && typeof value === 'string') {
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = value;
-      const textContent = tempDiv.textContent || tempDiv.innerText || '';
-      return textContent.trim() || 'Not provided';
-    }
-    
     return value.toString();
+  };
+
+  const isRichTextContent = (content: string) => {
+    return content.includes('<') && content.includes('>');
   };
 
   const formatFileSize = (bytes: number) => {
@@ -134,17 +131,26 @@ const ServiceApplicationReviewStep: React.FC<ServiceApplicationReviewStepProps> 
             {tile.form_fields.map((field) => (
               <div key={field.id} className="border-b border-border last:border-b-0 pb-3 last:pb-0">
                 <span className="font-medium">{field.label}:</span>
-                <div className="mt-1">
-                  {field.type === 'textarea' ? (
-                    <div className="text-sm text-muted-foreground max-h-24 overflow-y-auto">
-                      {getFieldDisplayValue(field, formData[field.id])}
-                    </div>
-                  ) : (
-                    <span className="text-sm">
-                      {getFieldDisplayValue(field, formData[field.id])}
-                    </span>
-                  )}
-                </div>
+                 <div className="mt-1">
+                   {field.type === 'textarea' ? (
+                     <div className="max-h-24 overflow-y-auto">
+                       {formData[field.id] && isRichTextContent(formData[field.id]) ? (
+                         <SafeHtmlRenderer 
+                           content={formData[field.id]} 
+                           className="text-sm text-muted-foreground"
+                         />
+                       ) : (
+                         <span className="text-sm text-muted-foreground">
+                           {getFieldDisplayValue(field, formData[field.id])}
+                         </span>
+                       )}
+                     </div>
+                   ) : (
+                     <span className="text-sm">
+                       {getFieldDisplayValue(field, formData[field.id])}
+                     </span>
+                   )}
+                 </div>
               </div>
             ))}
           </CardContent>
