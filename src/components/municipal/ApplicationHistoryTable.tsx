@@ -5,10 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Search, Filter, Eye, Download, Calendar, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import { ApplicationDetailModal } from '@/components/municipal/ApplicationDetailModal';
 import ServiceApplicationStatusBadge from '@/components/ServiceApplicationStatusBadge';
 import { ServiceApplication } from '@/hooks/useServiceApplications';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
@@ -38,8 +36,6 @@ export function ApplicationHistoryTable({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [pageSize, setPageSize] = useState(5);
-  const [selectedApplication, setSelectedApplication] = useState<ServiceApplication | null>(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const statusOptions = [
     { value: 'all', label: 'All Statuses' },
@@ -123,16 +119,7 @@ export function ApplicationHistoryTable({
   };
 
   const handleRowClick = (applicationId: string) => {
-    const application = applications.find(app => app.id === applicationId);
-    if (application) {
-      const tile = serviceTiles.find(t => t.id === application.tile_id);
-      if (tile?.requires_review) {
-        window.location.href = `/municipal/service-application/${application.id}`;
-      } else {
-        setSelectedApplication(application);
-        setIsDetailModalOpen(true);
-      }
-    }
+    window.location.href = `/municipal/service-application/${applicationId}`;
   };
 
   if (isLoading) {
@@ -155,8 +142,7 @@ export function ApplicationHistoryTable({
   }
 
   return (
-    <>
-      <Card>
+    <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Service Applications ({totalCount})</CardTitle>
@@ -312,24 +298,5 @@ export function ApplicationHistoryTable({
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Application Details</DialogTitle>
-          </DialogHeader>
-          {selectedApplication && (
-            <ApplicationDetailModal
-              application={selectedApplication}
-              serviceTile={serviceTiles.find(t => t.id === selectedApplication.tile_id)}
-              onClose={() => {
-                setIsDetailModalOpen(false);
-                setSelectedApplication(null);
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
   );
 }

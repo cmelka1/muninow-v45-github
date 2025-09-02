@@ -5,14 +5,18 @@ import {
   ArrowLeft, 
   FileText, 
   User, 
-  MapPin, 
   Clock, 
+  Receipt,
+  Calendar,
   MessageSquare, 
   Users,
   Building,
   Download,
   Eye,
-  DollarSign
+  DollarSign,
+  Plus,
+  CreditCard,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +26,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { useServiceApplication } from '@/hooks/useServiceApplication';
 import ServiceApplicationStatusBadge from '@/components/ServiceApplicationStatusBadge';
 import { ServiceApplicationStatusChangeDialog } from '@/components/ServiceApplicationStatusChangeDialog';
@@ -30,21 +36,36 @@ import { ServiceApplicationStatus, getStatusDisplayName } from '@/hooks/useServi
 import { useServiceApplicationDocuments } from '@/hooks/useServiceApplicationDocuments';
 import { DocumentViewerModal } from '@/components/DocumentViewerModal';
 import { supabase } from '@/integrations/supabase/client';
-import { formatCurrency, formatDate } from '@/lib/formatters';
+import { formatCurrency, formatDate, smartAbbreviateFilename } from '@/lib/formatters';
 import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const MunicipalServiceApplicationDetail = () => {
   const { applicationId } = useParams<{ applicationId: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [reviewNotes, setReviewNotes] = useState('');
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
   
   const { data: application, isLoading, error } = useServiceApplication(applicationId!);
-  const { data: documents } = useServiceApplicationDocuments(applicationId!);
+  const { data: documentsQuery } = useServiceApplicationDocuments(applicationId!);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [documentsLoading, setDocumentsLoading] = useState(false);
+  const [documentsError, setDocumentsError] = useState<string | null>(null);
+
+  // Set documents from query
+  React.useEffect(() => {
+    if (documentsQuery) {
+      setDocuments(documentsQuery);
+      setDocumentsLoading(false);
+      setDocumentsError(null);
+    }
+  }, [documentsQuery]);
 
   const handleSaveNotes = async () => {
     if (!applicationId || !reviewNotes.trim()) {
@@ -144,19 +165,126 @@ const MunicipalServiceApplicationDetail = () => {
     );
   }
 
+  const handleDocumentDownload = async (document: any) => {
+    setDownloadingDocument(document.id);
+    try {
+      const { data, error } = await supabase.storage
+        .from('service-application-documents')
+        .download(document.storage_path);
+      
+      if (error) {
+        console.error('Error downloading document:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to download document. Please try again.",
+        });
+        return;
+      }
+      
+      if (data) {
+        const url = URL.createObjectURL(data);
+        const a = globalThis.document.createElement('a');
+        a.href = url;
+        a.download = document.original_file_name || document.file_name;
+        globalThis.document.body.appendChild(a);
+        a.click();
+        globalThis.document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        toast({
+          title: "Download started",
+          description: `${document.original_file_name || document.file_name} is being downloaded.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to download document. Please try again later.",
+      });
+    } finally {
+      setDownloadingDocument(null);
+    }
+  };
+
+  const renderApplicationData = () => {
+    const applicantData = [
+      { label: 'Applicant Name', value: application?.applicant_name },
+      { label: 'Email', value: application?.applicant_email },
+      { label: 'Phone', value: application?.applicant_phone },
+      { label: 'Business Name', value: application?.business_legal_name },
+      { 
+        label: 'Address', 
+        value: [
+          application?.street_address,
+          application?.apt_number && `Apt ${application.apt_number}`,
+          application?.city,
+          application?.state,
+          application?.zip_code,
+        ].filter(Boolean).join(', ') || undefined 
+      },
+    ];
+
+    // Service-specific data
+    const serviceData = application?.service_specific_data || {};
+    const formFields = application?.tile?.form_fields || [];
+    
+    const serviceSpecificData = Object.entries(serviceData).map(([key, value]) => {
+      // Skip fields that are already shown in structured data
+      const skipFields = ['name', 'full_name', 'first_name', 'last_name', 'email', 'phone', 'phone_number', 
+                         'business_name', 'business_legal_name', 'company_name', 'address', 'street_address', 
+                         'street', 'apt', 'apt_number', 'apartment', 'city', 'state', 'zip', 'zip_code', 
+                         'postal_code', 'additional_information', 'notes', 'comments', 'amount_cents'];
+      if (skipFields.includes(key.toLowerCase()) || !value) return null;
+      
+      const field = formFields.find((f: any) => f.id === key);
+      const fieldLabel = field?.label || key;
+      
+      return { label: fieldLabel, value: String(value) };
+    }).filter(Boolean);
+
+    const allData = [...applicantData, ...serviceSpecificData];
+
+    return allData.map((item, index) => {
+      if (!item || !item.value) return null;
+
+      return (
+        <div key={index}>
+          <Label className="text-sm font-medium text-muted-foreground">
+            {item.label}
+          </Label>
+          <p className="text-base">
+            {item.value}
+          </p>
+        </div>
+      );
+    });
+  };
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="min-h-screen bg-gray-100 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate('/municipal/other-services')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Applications
+      <div className="mb-6">
+        <div className="flex items-center gap-4 mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/municipal/other-services')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
           </Button>
+        </div>
+        
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Service Application Review</h1>
-            <p className="text-muted-foreground">{application.id.slice(0, 8)}...</p>
+            <h1 className="text-2xl font-bold">{application.tile?.title || 'Service Application'}</h1>
+            <p className="text-muted-foreground">Application #{application.application_number || application.id}</p>
           </div>
+          <ServiceApplicationStatusBadge status={application.status} />
         </div>
       </div>
 
@@ -168,7 +296,7 @@ const MunicipalServiceApplicationDetail = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
+                <Receipt className="h-5 w-5" />
                 Application Overview
               </CardTitle>
             </CardHeader>
@@ -176,11 +304,11 @@ const MunicipalServiceApplicationDetail = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Application ID</Label>
-                  <p className="text-base font-mono">{application.id.slice(0, 8)}...</p>
+                  <p className="text-base font-mono">{application.application_number || application.id}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Service</Label>
-                  <p className="text-base">{application.tile.title}</p>
+                  <p className="text-base">{application.tile?.title || 'Service information unavailable'}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Status</Label>
@@ -189,43 +317,17 @@ const MunicipalServiceApplicationDetail = () => {
                   </div>
                 </div>
                 <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Municipality</Label>
+                  <p className="text-base">{application.customer?.legal_entity_name || 'Municipality information unavailable'}</p>
+                </div>
+                <div>
                   <Label className="text-sm font-medium text-muted-foreground">Submitted</Label>
                   <p className="text-base">{formatDate(application.created_at)}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Municipality</Label>
-                  <p className="text-base">{application.customer.legal_entity_name}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">Last Updated</Label>
+                  <p className="text-base">{formatDate(application.updated_at)}</p>
                 </div>
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Amount</Label>
-                  <p className="text-base">{formatCurrency(application.tile.amount_cents / 100)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Service Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5" />
-                Service Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Service Title</Label>
-                <p className="text-base font-medium">{application.tile.title}</p>
-              </div>
-              {application.tile.description && (
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Description</Label>
-                  <p className="text-base">{application.tile.description}</p>
-                </div>
-              )}
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Requires Review</Label>
-                <p className="text-base">{application.tile.requires_review ? 'Yes' : 'No'}</p>
               </div>
             </CardContent>
           </Card>
@@ -235,66 +337,48 @@ const MunicipalServiceApplicationDetail = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />
-                Applicant Information
+                Application Information
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Full Name</Label>
-                  <p className="text-base">
-                    {application.applicant_name || 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Email</Label>
-                  <p className="text-base">{application.applicant_email || 'N/A'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Phone</Label>
-                  <p className="text-base">{application.applicant_phone || 'N/A'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Address</Label>
-                  <p className="text-base">
-                    {[
-                      application.street_address,
-                      application.apt_number && `Apt ${application.apt_number}`,
-                      application.city,
-                      application.state,
-                      application.zip_code,
-                    ].filter(Boolean).join(', ') || 'N/A'}
-                  </p>
-                </div>
+                {renderApplicationData()}
               </div>
             </CardContent>
           </Card>
 
-          {/* Form Fields */}
-          {application.tile.form_fields && application.tile.form_fields.length > 0 && (
+          {/* Additional Information */}
+          {application.additional_information && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Application Details
+                  <MessageSquare className="h-5 w-5" />
+                  Additional Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {application.tile.form_fields.map((field: any) => {
-                  const value = application.service_specific_data?.[field.id] || application.service_specific_data?.[field.name];
-                  if (!value && !field.required) return null;
-                  
-                  return (
-                    <div key={field.name} className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                      <Label className="text-sm font-medium text-muted-foreground">
-                        {field.label}
-                      </Label>
-                      <div className="md:col-span-2">
-                        <p className="text-sm">{renderFormField(field, value)}</p>
-                      </div>
-                    </div>
-                  );
-                })}
+              <CardContent>
+                <SafeHtmlRenderer 
+                  content={application.additional_information}
+                  fallback="No additional information provided"
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Review Notes */}
+          {application.review_notes && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Review Notes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SafeHtmlRenderer 
+                  content={application.review_notes}
+                  fallback="No review notes provided"
+                />
               </CardContent>
             </Card>
           )}
@@ -304,11 +388,22 @@ const MunicipalServiceApplicationDetail = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                Documents ({documents?.length || 0})
+                Supporting Documents ({documents?.length || 0})
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {documents && documents.length > 0 ? (
+              {documentsLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ) : documentsError ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                  <p className="text-sm text-red-600">Error loading documents</p>
+                  <p className="text-xs mt-1">{documentsError}</p>
+                </div>
+              ) : documents && documents.length > 0 ? (
                 <div className="space-y-3">
                   {documents.map((doc) => (
                     <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
@@ -316,11 +411,23 @@ const MunicipalServiceApplicationDetail = () => {
                         <FileText className="h-4 w-4 text-muted-foreground" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium truncate">{doc.file_name}</span>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="text-sm font-medium truncate">
+                                    {smartAbbreviateFilename(doc.original_file_name || doc.file_name, 30)}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{doc.original_file_name || doc.file_name}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </div>
                           <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                             <span>{(doc.file_size / 1024).toFixed(1)} KB</span>
-                            <span>Uploaded: {formatDate(doc.uploaded_at)}</span>
+                            <span>Uploaded: {formatDate(doc.created_at)}</span>
+                            {doc.document_type && <span>Type: {doc.document_type}</span>}
                           </div>
                           {doc.description && (
                             <p className="text-xs text-muted-foreground mt-1">{doc.description}</p>
@@ -328,60 +435,17 @@ const MunicipalServiceApplicationDetail = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
-                          onClick={() => {
-                            setSelectedDocument(doc);
-                            setDocumentViewerOpen(true);
-                          }}
+                          onClick={() => handleDocumentDownload(doc)}
+                          disabled={downloadingDocument === doc.id}
                         >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={async () => {
-                            try {
-                              const { data, error } = await supabase.storage
-                                .from('service-application-documents')
-                                .download(doc.storage_path);
-                              
-                              if (error) {
-                                console.error('Error downloading document:', error);
-                                toast({
-                                  title: "Error",
-                                  description: "Failed to download document",
-                                  variant: "destructive"
-                                });
-                                return;
-                              }
-                              
-                              if (data) {
-                                const url = URL.createObjectURL(data);
-                                const a = document.createElement('a');
-                                a.href = url;
-                                a.download = doc.file_name;
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                                URL.revokeObjectURL(url);
-                                toast({
-                                  title: "Success",
-                                  description: "Document downloaded successfully"
-                                });
-                              }
-                            } catch (error) {
-                              console.error('Error downloading document:', error);
-                              toast({
-                                title: "Error",
-                                description: "Failed to download document",
-                                variant: "destructive"
-                              });
-                            }
-                          }}
-                        >
-                          <Download className="h-4 w-4" />
+                          {downloadingDocument === doc.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -390,17 +454,55 @@ const MunicipalServiceApplicationDetail = () => {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <FileText className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                  <p className="text-sm">No documents uploaded yet</p>
-                  <p className="text-xs mt-1">Documents will appear here once uploaded by the applicant</p>
+                  <p className="text-sm">No supporting documents</p>
+                  <p className="text-xs mt-1">Documents would appear here if uploaded</p>
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Right Column - Actions & Review */}
+        {/* Right Column - Sidebar */}
         <div className="space-y-6">
-          {/* Review Actions */}
+          {/* Payment Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Payment Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Payment Status</span>
+                  <Badge 
+                    variant={application.payment_status === 'paid' ? 'default' : 'outline'}
+                    className={
+                      application.payment_status === 'paid' 
+                        ? 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200' 
+                        : application.payment_status === 'processing'
+                        ? 'bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200'
+                        : 'bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200'
+                    }
+                  >
+                    {application.payment_status === 'paid' ? 'Paid' : 
+                     application.payment_status === 'processing' ? 'Processing' : 'Pending'}
+                  </Badge>
+                </div>
+                {application.tile?.amount_cents && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Amount</span>
+                    <span className="text-sm font-medium">
+                      {formatCurrency(application.tile.amount_cents / 100)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Review Management */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -433,24 +535,8 @@ const MunicipalServiceApplicationDetail = () => {
                   Update Status
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Review Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Review Notes
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {application.review_notes && (
-                <div className="p-3 bg-muted rounded-lg">
-                  <Label className="text-sm font-medium text-muted-foreground">Previous Notes</Label>
-                  <p className="text-sm mt-1">{application.review_notes}</p>
-                </div>
-              )}
+              
+              <Separator />
               
               <div>
                 <Label htmlFor="review-notes">Add Review Notes</Label>
@@ -473,32 +559,6 @@ const MunicipalServiceApplicationDetail = () => {
               </Button>
             </CardContent>
           </Card>
-
-          {/* Payment Summary */}
-          {application.tile.amount_cents > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
-                  Payment Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm">Service Fee</span>
-                  <span className="text-sm font-medium">
-                    {formatCurrency(application.tile.amount_cents / 100)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Payment Status</span>
-                  <Badge variant={application.payment_status === 'paid' ? 'default' : 'outline'}>
-                    {application.payment_status || 'Unpaid'}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Communication */}
           <ServiceApplicationCommunication applicationId={applicationId!} />
