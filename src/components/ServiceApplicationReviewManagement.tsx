@@ -12,7 +12,7 @@ import { useMunicipalTeamMembers } from '@/hooks/useMunicipalTeamMembers';
 import { useServiceApplicationWorkflow, ServiceApplicationStatus, getStatusDisplayName, getStatusDescription } from '@/hooks/useServiceApplicationWorkflow';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
-import { ClipboardList, Users, Calendar, MessageSquare, Send, User, Clock, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import { ClipboardList, Users, Calendar, MessageSquare, Send, User, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ServiceApplicationReviewManagementProps {
@@ -68,24 +68,23 @@ export const ServiceApplicationReviewManagement: React.FC<ServiceApplicationRevi
     }
   };
 
-  const getStatusIcon = (status: ServiceApplicationStatus) => {
+  const getStatusCardStyle = (status: ServiceApplicationStatus) => {
     switch (status) {
-      case 'submitted':
-      case 'resubmitted':
-        return <Clock className="h-4 w-4 text-blue-600" />;
-      case 'under_review':
-        return <ClipboardList className="h-4 w-4 text-yellow-600" />;
-      case 'information_requested':
-        return <Info className="h-4 w-4 text-orange-600" />;
       case 'approved':
       case 'paid':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return 'bg-green-50 border border-green-200 text-green-700';
+      case 'information_requested':
+        return 'bg-orange-50 border border-orange-200 text-orange-700';
       case 'denied':
       case 'expired':
       case 'withdrawn':
-        return <AlertCircle className="h-4 w-4 text-red-600" />;
+        return 'bg-red-50 border border-red-200 text-red-700';
+      case 'under_review':
+        return 'bg-blue-50 border border-blue-200 text-blue-700';
+      case 'submitted':
+      case 'resubmitted':
       default:
-        return <Clock className="h-4 w-4 text-gray-600" />;
+        return 'bg-muted/30 border border-muted text-foreground';
     }
   };
 
@@ -138,9 +137,6 @@ export const ServiceApplicationReviewManagement: React.FC<ServiceApplicationRevi
                 Change Status
               </Button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {getStatusDescription(application?.status as ServiceApplicationStatus)}
-            </p>
           </div>
 
           <Separator />
@@ -187,33 +183,25 @@ export const ServiceApplicationReviewManagement: React.FC<ServiceApplicationRevi
             Status Timeline
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-48">
-            <div className="space-y-3">
-              {statusTimeline.length === 0 ? (
-                <div className="text-center py-4 text-gray-500">
-                  <Clock className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No status changes yet</p>
-                </div>
-              ) : (
-                statusTimeline.reverse().map((item, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      {getStatusIcon(item.status as ServiceApplicationStatus)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm">{item.label}</span>
-                        <span className="text-xs text-gray-500">
-                          {formatTimestamp(item.timestamp)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
+        <CardContent className="space-y-3">
+          {statusTimeline.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">
+              <Clock className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">No status changes yet</p>
             </div>
-          </ScrollArea>
+          ) : (
+            statusTimeline.reverse().map((item, index) => (
+              <div 
+                key={index} 
+                className={`flex justify-between items-center p-2 rounded ${getStatusCardStyle(item.status as ServiceApplicationStatus)}`}
+              >
+                <span className="text-sm font-medium">{item.label}</span>
+                <span className="text-xs opacity-75">
+                  {formatTimestamp(item.timestamp)}
+                </span>
+              </div>
+            ))
+          )}
         </CardContent>
       </Card>
 
