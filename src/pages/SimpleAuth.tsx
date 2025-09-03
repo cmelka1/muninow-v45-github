@@ -34,7 +34,7 @@ const SimpleAuth = () => {
       console.log('Navigation check - user:', user.id, 'profile:', profile);
       if (profile.account_type === 'municipal') {
         navigate('/municipal/dashboard');
-      } else if (profile.account_type === 'superAdmin') { // Fixed: Use camelCase
+      } else if (profile.account_type === 'superadmin') { // Fixed: Use lowercase
         navigate('/superadmin/dashboard');
       } else {
         navigate('/dashboard');

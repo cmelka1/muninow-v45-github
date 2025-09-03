@@ -574,7 +574,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
       } else {
         // Phase 5b: Assign appropriate admin role for non-invitation signups
         try {
-          const roleName = formData.accountType === 'business' ? 'businessAdmin' : 'residentAdmin';
+          const roleName = formData.accountType === 'business' ? 'businessadmin' : 'residentadmin';
           const { error: roleError } = await supabase.rpc('assign_role_to_user', {
             _user_id: authData.user.id,
             _role_name: roleName

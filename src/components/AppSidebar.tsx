@@ -139,7 +139,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* SuperAdmin Access */}
-        {hasRole('superAdmin') && (
+        {hasRole('superadmin') && (
           <SidebarGroup>
             <div className="mb-6">
               <h2 className="text-base font-medium text-gray-500 uppercase tracking-wide mb-4 pl-4">
