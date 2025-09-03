@@ -3713,21 +3713,33 @@ export type Database = {
           entity_id: string | null
           id: string
           role_id: string
+          role_name: string | null
+          user_email: string | null
+          user_first_name: string | null
           user_id: string
+          user_last_name: string | null
         }
         Insert: {
           created_at?: string
           entity_id?: string | null
           id?: string
           role_id: string
+          role_name?: string | null
+          user_email?: string | null
+          user_first_name?: string | null
           user_id: string
+          user_last_name?: string | null
         }
         Update: {
           created_at?: string
           entity_id?: string | null
           id?: string
           role_id?: string
+          role_name?: string | null
+          user_email?: string | null
+          user_first_name?: string | null
           user_id?: string
+          user_last_name?: string | null
         }
         Relationships: [
           {
@@ -3819,7 +3831,38 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_roles_detailed: {
+        Row: {
+          account_type: string | null
+          created_at: string | null
+          customer_id: string | null
+          entity_id: string | null
+          id: string | null
+          role_id: string | null
+          role_name: string | null
+          role_name_current: string | null
+          user_email: string | null
+          user_first_name: string | null
+          user_id: string | null
+          user_last_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "user_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       accept_organization_invitation: {
