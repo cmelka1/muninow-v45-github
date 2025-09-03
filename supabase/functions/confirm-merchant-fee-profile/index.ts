@@ -56,7 +56,7 @@ serve(async (req) => {
       );
     }
 
-    const isSuperAdmin = userRoles?.some((roleData: any) => roleData.role === 'superAdmin');
+    const isSuperAdmin = userRoles?.some((roleData: any) => roleData.role === 'superadmin');
     if (!isSuperAdmin) {
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions. SuperAdmin access required.' }),

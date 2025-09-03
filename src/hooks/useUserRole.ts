@@ -12,11 +12,17 @@ export const useUserRole = (): UseUserRoleReturn => {
   const hasRole = (role: string): boolean => {
     if (!profile) return false;
     
-    // Map old role system to new account_type system
+    // Map role names to normalized account_type values
     const roleMapping: Record<string, string[]> = {
+      'residentuser': ['resident'],
+      'residentadmin': ['resident'],
+      'superadmin': ['superadmin'],
+      'municipaluser': ['municipal'],
+      'municipaladmin': ['municipal'],
+      // Support legacy camelCase for backward compatibility
       'residentUser': ['resident'],
       'residentAdmin': ['resident'],
-      'superAdmin': ['superAdmin'], // Fixed: Use camelCase to match database
+      'superAdmin': ['superadmin'],
       'municipalUser': ['municipal'],
       'municipalAdmin': ['municipal']
     };
