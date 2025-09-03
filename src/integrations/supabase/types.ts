@@ -4292,13 +4292,13 @@ export type Database = {
     }
     Enums: {
       app_role:
-        | "superAdmin"
-        | "municipalAdmin"
-        | "municipalUser"
-        | "residentAdmin"
-        | "residentUser"
-        | "businessAdmin"
-        | "businessUser"
+        | "superadmin"
+        | "municipaladmin"
+        | "municipaluser"
+        | "residentadmin"
+        | "residentuser"
+        | "businessadmin"
+        | "businessuser"
       assignment_status_enum: "assigned" | "unassigned" | "pending_review"
       bill_status_enum:
         | "paid"
@@ -4490,13 +4490,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: [
-        "superAdmin",
-        "municipalAdmin",
-        "municipalUser",
-        "residentAdmin",
-        "residentUser",
-        "businessAdmin",
-        "businessUser",
+        "superadmin",
+        "municipaladmin",
+        "municipaluser",
+        "residentadmin",
+        "residentuser",
+        "businessadmin",
+        "businessuser",
       ],
       assignment_status_enum: ["assigned", "unassigned", "pending_review"],
       bill_status_enum: [
