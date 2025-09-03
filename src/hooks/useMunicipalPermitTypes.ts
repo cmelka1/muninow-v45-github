@@ -45,6 +45,7 @@ export interface PermitTypeWithCustomization {
   merchant_name?: string;
   is_active?: boolean;
   is_customized: boolean;
+  is_custom?: boolean; // Added to support custom permit types
 }
 
 export interface CreateMunicipalPermitTypeRequest {

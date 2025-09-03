@@ -12,124 +12,165 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
-import { usePermitTypesWithCustomizations, useUpsertMunicipalPermitType } from '@/hooks/useMunicipalPermitTypes';
+import { Edit2, Save, X, Plus } from 'lucide-react';
+import { usePermitTypesWithCustomizations, useUpsertMunicipalPermitType, useCreateMunicipalPermitType, useMunicipalPermitTypes } from '@/hooks/useMunicipalPermitTypes';
 import { useAuth } from '@/contexts/SimpleAuthContext';
-import { useDebounce } from '@/hooks/useDebounce';
 import { toast } from 'sonner';
 
-interface InlineEditFieldProps {
+interface EditableFieldProps {
   value: string | number | boolean;
-  onSave: (value: any) => void;
-  type: 'text' | 'number' | 'boolean' | 'select';
-  options?: { value: string; label: string }[];
+  onChange: (value: any) => void;
+  type: 'text' | 'number' | 'boolean';
   placeholder?: string;
   prefix?: string;
-  isLoading?: boolean;
+  isEditMode: boolean;
 }
 
-const InlineEditField: React.FC<InlineEditFieldProps> = ({
+const EditableField: React.FC<EditableFieldProps> = ({
   value,
-  onSave,
+  onChange,
   type,
-  options,
   placeholder,
   prefix,
-  isLoading
+  isEditMode
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(value);
-
-  const handleSave = () => {
-    if (editValue !== value) {
-      onSave(editValue);
-    }
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setEditValue(value);
-    setIsEditing(false);
-  };
+  if (!isEditMode) {
+    return (
+      <span className="text-sm">
+        {type === 'boolean' ? (value ? 'Yes' : 'No') : `${prefix || ''}${value || placeholder}`}
+      </span>
+    );
+  }
 
   if (type === 'boolean') {
     return (
-      <div className="flex items-center space-x-2">
-        <Switch
-          checked={value as boolean}
-          onCheckedChange={onSave}
-          disabled={isLoading}
-        />
-        {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-      </div>
-    );
-  }
-
-  if (type === 'select' && options) {
-    return (
-      <div className="flex items-center space-x-2">
-        <Select value={value as string} onValueChange={onSave} disabled={isLoading}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder={placeholder} />
-          </SelectTrigger>
-          <SelectContent>
-            {options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-      </div>
-    );
-  }
-
-  if (!isEditing) {
-    return (
-      <div 
-        className="cursor-pointer hover:bg-muted/50 p-1 rounded min-h-[32px] flex items-center"
-        onClick={() => setIsEditing(true)}
-      >
-        <span className="text-muted-foreground text-sm">
-          {prefix}{value || placeholder}
-        </span>
-        {isLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-      </div>
+      <Switch
+        checked={value as boolean}
+        onCheckedChange={onChange}
+      />
     );
   }
 
   return (
-    <div className="flex items-center space-x-2">
-      <Input
-        type={type === 'number' ? 'number' : 'text'}
-        value={String(editValue)}
-        onChange={(e) => setEditValue(type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value)}
-        onBlur={handleSave}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') handleSave();
-          if (e.key === 'Escape') handleCancel();
-        }}
-        autoFocus
-        className="w-[200px]"
-        disabled={isLoading}
-      />
-      {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-    </div>
+    <Input
+      type={type === 'number' ? 'number' : 'text'}
+      value={String(value)}
+      onChange={(e) => onChange(type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value)}
+      placeholder={placeholder}
+      className="w-full"
+    />
+  );
+};
+
+interface NewPermitTypeRowProps {
+  onAdd: (permitType: { name: string; fee_cents: number; processing_days: number; requires_inspection: boolean }) => void;
+  isLoading: boolean;
+}
+
+const NewPermitTypeRow: React.FC<NewPermitTypeRowProps> = ({ onAdd, isLoading }) => {
+  const [name, setName] = useState('');
+  const [feeCents, setFeeCents] = useState(0);
+  const [processingDays, setProcessingDays] = useState(30);
+  const [requiresInspection, setRequiresInspection] = useState(false);
+
+  const handleAdd = () => {
+    if (!name.trim()) {
+      toast.error('Please enter a permit type name');
+      return;
+    }
+    
+    onAdd({
+      name: name.trim(),
+      fee_cents: Math.round(feeCents * 100),
+      processing_days: processingDays,
+      requires_inspection: requiresInspection,
+    });
+
+    // Reset form
+    setName('');
+    setFeeCents(0);
+    setProcessingDays(30);
+    setRequiresInspection(false);
+  };
+
+  return (
+    <TableRow className="bg-muted/10">
+      <TableCell>
+        <div className="flex items-center space-x-2">
+          <Input
+            placeholder="Enter permit type name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full"
+          />
+          <Badge variant="outline" className="text-xs shrink-0">
+            Custom
+          </Badge>
+        </div>
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          placeholder="0.00"
+          value={feeCents}
+          onChange={(e) => setFeeCents(parseFloat(e.target.value) || 0)}
+          className="w-full"
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          placeholder="30"
+          value={processingDays}
+          onChange={(e) => setProcessingDays(parseInt(e.target.value) || 30)}
+          className="w-full"
+        />
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={requiresInspection}
+            onCheckedChange={setRequiresInspection}
+          />
+          <Button
+            onClick={handleAdd}
+            disabled={isLoading || !name.trim()}
+            size="sm"
+            variant="outline"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
   );
 };
 
 export const PermitsSettingsTab = () => {
-  const { data: permitTypes, isLoading } = usePermitTypesWithCustomizations();
+  const { data: standardPermitTypes, isLoading: isLoadingStandard } = usePermitTypesWithCustomizations();
+  const { data: customPermitTypes, isLoading: isLoadingCustom } = useMunicipalPermitTypes();
   const upsertMutation = useUpsertMunicipalPermitType();
-  const [savingFields, setSavingFields] = useState<Set<string>>(new Set());
+  const createMutation = useCreateMunicipalPermitType();
+  
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [changes, setChanges] = useState<Record<string, any>>({});
+  const [isSaving, setIsSaving] = useState(false);
+
+  const isLoading = isLoadingStandard || isLoadingCustom;
+
+  // Combine standard and custom permit types
+  const allPermitTypes = [
+    ...(standardPermitTypes || []),
+    ...(customPermitTypes?.filter(ct => ct.is_custom) || []).map(ct => ({
+      permit_type_id: ct.id,
+      permit_type_name: ct.municipal_label,
+      standard_fee_cents: ct.base_fee_cents,
+      standard_processing_days: ct.processing_days,
+      standard_requires_inspection: ct.requires_inspection,
+      is_customized: false,
+      is_custom: true,
+    }))
+  ];
 
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -138,73 +179,141 @@ export const PermitsSettingsTab = () => {
     }).format(cents / 100);
   };
 
-  const handleFieldUpdate = async (
-    permitTypeId: string,
-    field: string,
-    value: any
-  ) => {
-    const fieldKey = `${permitTypeId}-${field}`;
-    setSavingFields(prev => new Set(prev).add(fieldKey));
-
-    try {
-      const updates: any = {};
-      
-      switch (field) {
-        case 'base_fee_cents':
-          updates.base_fee_cents = Math.round(value * 100);
-          break;
-        case 'processing_days':
-          updates.processing_days = value;
-          break;
-        case 'requires_inspection':
-          updates.requires_inspection = value;
-          break;
-      }
-
-      await upsertMutation.mutateAsync({
-        permitTypeId,
-        updates,
-      });
-
-      toast.success('Permit type updated successfully');
-    } catch (error) {
-      toast.error('Failed to update permit type');
-      console.error('Error updating permit type:', error);
-    } finally {
-      setSavingFields(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(fieldKey);
-        return newSet;
-      });
-    }
+  const handleFieldChange = (permitTypeId: string, field: string, value: any) => {
+    setChanges(prev => ({
+      ...prev,
+      [`${permitTypeId}-${field}`]: value
+    }));
   };
 
-
   const getFieldValue = (permit: any, field: string, defaultValue: any) => {
+    const changeKey = `${permit.permit_type_id}-${field}`;
+    if (changes[changeKey] !== undefined) {
+      return changes[changeKey];
+    }
+    
+    if (permit.is_custom) {
+      return defaultValue;
+    }
+    
     const customValue = permit[`custom_${field}`];
     return customValue !== undefined && customValue !== null ? customValue : defaultValue;
   };
 
-  const isFieldLoading = (permitTypeId: string, field: string) => {
-    return savingFields.has(`${permitTypeId}-${field}`);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const updates = Object.entries(changes).reduce((acc, [key, value]) => {
+        const [permitTypeId, field] = key.split('-');
+        if (!acc[permitTypeId]) acc[permitTypeId] = {};
+        
+        switch (field) {
+          case 'fee_cents':
+            acc[permitTypeId].base_fee_cents = Math.round(value * 100);
+            break;
+          case 'processing_days':
+            acc[permitTypeId].processing_days = value;
+            break;
+          case 'requires_inspection':
+            acc[permitTypeId].requires_inspection = value;
+            break;
+        }
+        return acc;
+      }, {} as Record<string, any>);
+
+      // Save all updates
+      await Promise.all(
+        Object.entries(updates).map(([permitTypeId, updateData]) =>
+          upsertMutation.mutateAsync({
+            permitTypeId,
+            updates: updateData,
+          })
+        )
+      );
+
+      setChanges({});
+      setIsEditMode(false);
+      toast.success('Permit types updated successfully');
+    } catch (error) {
+      toast.error('Failed to update permit types');
+      console.error('Error updating permit types:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setChanges({});
+    setIsEditMode(false);
+  };
+
+  const handleAddCustomType = async (permitType: { name: string; fee_cents: number; processing_days: number; requires_inspection: boolean }) => {
+    try {
+      await createMutation.mutateAsync({
+        municipal_label: permitType.name,
+        base_fee_cents: permitType.fee_cents,
+        processing_days: permitType.processing_days,
+        requires_inspection: permitType.requires_inspection,
+        is_custom: true,
+      });
+      
+      toast.success('Custom permit type added successfully');
+    } catch (error) {
+      toast.error('Failed to add custom permit type');
+      console.error('Error adding custom permit type:', error);
+    }
   };
 
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle>Municipal Permit Types</CardTitle>
-          <CardDescription>
-            Configure permit fees, processing times, and inspection requirements for your municipality. Click on any field to edit it inline.
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="space-y-1">
+            <CardTitle>Municipal Permit Types</CardTitle>
+            <CardDescription>
+              Configure permit fees, processing times, and inspection requirements for your municipality.
+              {isEditMode && ' Make changes and click Save to apply them.'}
+            </CardDescription>
+          </div>
+          <div className="flex items-center space-x-2">
+            {!isEditMode ? (
+              <Button
+                onClick={() => setIsEditMode(true)}
+                variant="outline"
+                size="sm"
+              >
+                <Edit2 className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            ) : (
+              <>
+                <Button
+                  onClick={handleCancel}
+                  variant="outline"
+                  size="sm"
+                  disabled={isSaving}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  size="sm"
+                  disabled={isSaving || Object.keys(changes).length === 0}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mr-2" />
               <div className="text-muted-foreground">Loading permit types...</div>
             </div>
-          ) : !permitTypes?.length ? (
+          ) : !allPermitTypes?.length ? (
             <div className="text-center py-8">
               <div className="text-muted-foreground">
                 No permit types available.
@@ -222,15 +331,21 @@ export const PermitsSettingsTab = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {permitTypes.map((permit) => {
+                  {allPermitTypes.map((permit) => {
                     const isCustomized = permit.is_customized;
+                    const isCustom = permit.is_custom;
                     
                     return (
                       <TableRow key={permit.permit_type_id} className={isCustomized ? 'bg-muted/20' : ''}>
                         <TableCell className="font-medium">
                           <div className="flex items-center space-x-2">
                             <span>{permit.permit_type_name}</span>
-                            {isCustomized && (
+                            {isCustom && (
+                              <Badge variant="default" className="text-xs">
+                                Custom
+                              </Badge>
+                            )}
+                            {isCustomized && !isCustom && (
                               <Badge variant="secondary" className="text-xs">
                                 Customized
                               </Badge>
@@ -239,37 +354,44 @@ export const PermitsSettingsTab = () => {
                         </TableCell>
                         
                         <TableCell>
-                          <InlineEditField
+                          <EditableField
                             value={getFieldValue(permit, 'fee_cents', permit.standard_fee_cents) / 100}
-                            onSave={(value) => handleFieldUpdate(permit.permit_type_id, 'base_fee_cents', value)}
+                            onChange={(value) => handleFieldChange(permit.permit_type_id, 'fee_cents', value)}
                             type="number"
                             prefix="$"
                             placeholder={formatCurrency(permit.standard_fee_cents)}
-                            isLoading={isFieldLoading(permit.permit_type_id, 'base_fee_cents')}
+                            isEditMode={isEditMode}
                           />
                         </TableCell>
                         
                         <TableCell>
-                          <InlineEditField
+                          <EditableField
                             value={getFieldValue(permit, 'processing_days', permit.standard_processing_days)}
-                            onSave={(value) => handleFieldUpdate(permit.permit_type_id, 'processing_days', value)}
+                            onChange={(value) => handleFieldChange(permit.permit_type_id, 'processing_days', value)}
                             type="number"
                             placeholder={`${permit.standard_processing_days} days`}
-                            isLoading={isFieldLoading(permit.permit_type_id, 'processing_days')}
+                            isEditMode={isEditMode}
                           />
                         </TableCell>
                         
                         <TableCell>
-                          <InlineEditField
+                          <EditableField
                             value={getFieldValue(permit, 'requires_inspection', permit.standard_requires_inspection)}
-                            onSave={(value) => handleFieldUpdate(permit.permit_type_id, 'requires_inspection', value)}
+                            onChange={(value) => handleFieldChange(permit.permit_type_id, 'requires_inspection', value)}
                             type="boolean"
-                            isLoading={isFieldLoading(permit.permit_type_id, 'requires_inspection')}
+                            isEditMode={isEditMode}
                           />
                         </TableCell>
                       </TableRow>
                     );
                   })}
+                  
+                  {isEditMode && (
+                    <NewPermitTypeRow
+                      onAdd={handleAddCustomType}
+                      isLoading={createMutation.isPending}
+                    />
+                  )}
                 </TableBody>
               </Table>
             </div>
