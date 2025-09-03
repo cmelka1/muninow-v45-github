@@ -491,14 +491,42 @@ const MunicipalServiceApplicationDetail = () => {
                     {application.payment_status === 'paid' ? 'Paid' : 
                      application.payment_status === 'processing' ? 'Processing' : 'Pending'}
                   </Badge>
-                </div>
-                {application.tile?.amount_cents && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-muted-foreground">Amount</span>
-                    <span className="text-sm font-medium">
-                      {formatCurrency(application.tile.amount_cents / 100)}
-                    </span>
+                 </div>
+                
+                {/* Payment Amount Display */}
+                {application.payment_status === 'paid' ? (
+                  // Detailed breakdown for paid applications
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Service Amount</span>
+                      <span className="text-sm font-medium">
+                        {formatCurrency((application.amount_cents || application.tile?.amount_cents || 0) / 100)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Service Fee</span>
+                      <span className="text-sm font-medium">
+                        {formatCurrency(((application.total_amount_cents || 0) - (application.amount_cents || application.tile?.amount_cents || 0)) / 100)}
+                      </span>
+                    </div>
+                    <Separator />
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-medium">Total Paid</span>
+                      <span className="text-base font-bold">
+                        {formatCurrency((application.total_amount_cents || 0) / 100)}
+                      </span>
+                    </div>
                   </div>
+                ) : (
+                  // Simple display for unpaid applications
+                  (application.amount_cents || application.tile?.amount_cents) && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-muted-foreground">Service Amount</span>
+                      <span className="text-sm font-medium">
+                        {formatCurrency((application.amount_cents || application.tile?.amount_cents || 0) / 100)}
+                      </span>
+                    </div>
+                  )
                 )}
               </div>
             </CardContent>
