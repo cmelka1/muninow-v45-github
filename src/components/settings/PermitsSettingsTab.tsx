@@ -24,6 +24,7 @@ interface EditableFieldProps {
   placeholder?: string;
   prefix?: string;
   isEditMode: boolean;
+  className?: string;
 }
 
 const EditableField: React.FC<EditableFieldProps> = ({
@@ -32,7 +33,8 @@ const EditableField: React.FC<EditableFieldProps> = ({
   type,
   placeholder,
   prefix,
-  isEditMode
+  isEditMode,
+  className
 }) => {
   if (!isEditMode) {
     return (
@@ -57,7 +59,7 @@ const EditableField: React.FC<EditableFieldProps> = ({
       value={String(value)}
       onChange={(e) => onChange(type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value)}
       placeholder={placeholder}
-      className="w-full"
+      className={`w-full ${className || ''}`}
     />
   );
 };
@@ -111,7 +113,7 @@ const NewPermitTypeRow: React.FC<NewPermitTypeRowProps> = ({ onAdd, isLoading })
           placeholder="0.00"
           value={feeCents}
           onChange={(e) => setFeeCents(parseFloat(e.target.value) || 0)}
-          className="w-full"
+          className="w-full text-right"
         />
       </TableCell>
       <TableCell className="text-center">
@@ -345,6 +347,7 @@ export const PermitsSettingsTab = () => {
                             prefix="$"
                             placeholder={formatCurrency(permit.standard_fee_cents)}
                             isEditMode={isEditMode}
+                            className="text-right"
                           />
                         </TableCell>
                         
