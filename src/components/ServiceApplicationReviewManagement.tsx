@@ -72,7 +72,7 @@ export const ServiceApplicationReviewManagement: React.FC<ServiceApplicationRevi
   const getStatusCardStyle = (status: ServiceApplicationStatus) => {
     switch (status) {
       case 'approved':
-      case 'paid':
+      case 'issued':
         return 'bg-green-50 border border-green-200 text-green-700';
       case 'information_requested':
         return 'bg-orange-50 border border-orange-200 text-orange-700';
@@ -105,7 +105,7 @@ export const ServiceApplicationReviewManagement: React.FC<ServiceApplicationRevi
     { status: 'denied', timestamp: application?.denied_at, label: 'Denied' },
     { status: 'withdrawn', timestamp: application?.withdrawn_at, label: 'Withdrawn' },
     { status: 'expired', timestamp: application?.expired_at, label: 'Expired' },
-    { status: 'paid', timestamp: application?.paid_at, label: 'Payment Completed' }
+    { status: 'issued', timestamp: application?.paid_at, label: 'Service Issued' }
   ].filter(item => item.timestamp);
 
   if (!isMunicipalUser) {

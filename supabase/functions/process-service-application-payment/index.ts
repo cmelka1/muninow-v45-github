@@ -384,7 +384,7 @@ serve(async (req) => {
       const { error: appUpdateError } = await supabase
         .from('municipal_service_applications')
         .update({ 
-          status: 'submitted',
+          status: 'issued',
           payment_status: 'paid',
           payment_processed_at: new Date().toISOString(),
           finix_transfer_id: finixData.id,
@@ -446,7 +446,7 @@ serve(async (req) => {
         success: true,
         application_id: applicationId,
         transfer_id: finixData.id,
-        status: 'submitted',
+        status: 'issued',
         amount: totalAmountCents,
         payment_status: 'completed'
       }),

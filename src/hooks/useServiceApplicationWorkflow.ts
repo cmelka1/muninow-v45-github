@@ -12,7 +12,7 @@ export type ServiceApplicationStatus =
   | 'denied' 
   | 'withdrawn' 
   | 'expired'
-  | 'paid';
+  | 'issued';
 
 export const getStatusDisplayName = (status: ServiceApplicationStatus): string => {
   const statusMap: Record<ServiceApplicationStatus, string> = {
@@ -25,7 +25,7 @@ export const getStatusDisplayName = (status: ServiceApplicationStatus): string =
     denied: 'Denied',
     withdrawn: 'Withdrawn',
     expired: 'Expired',
-    paid: 'Paid'
+    issued: 'Issued'
   };
   return statusMap[status] || status;
 };
@@ -37,11 +37,11 @@ export const getStatusDescription = (status: ServiceApplicationStatus): string =
     under_review: 'Application is actively being reviewed by municipal staff',
     information_requested: 'Reviewer has requested additional documentation or clarification from applicant',
     resubmitted: 'Applicant has submitted the requested follow-up information',
-    approved: 'Application has been approved',
+    approved: 'Application has been approved and is ready for issuance',
     denied: 'Application was reviewed but did not meet requirements. Explanation provided',
     withdrawn: 'Applicant has voluntarily withdrawn the application',
     expired: 'Application has been inactive past the allowable time window',
-    paid: 'Payment has been completed and service is active'
+    issued: 'Service has been issued and is active'
   };
   return descriptions[status] || '';
 };
@@ -53,11 +53,11 @@ export const getValidStatusTransitions = (currentStatus: ServiceApplicationStatu
     under_review: ['information_requested', 'approved', 'denied'],
     information_requested: ['resubmitted', 'withdrawn', 'expired'],
     resubmitted: ['under_review'],
-    approved: ['paid'],
+    approved: ['issued'],
     denied: [],
     withdrawn: [],
     expired: [],
-    paid: []
+    issued: []
   };
   return transitions[currentStatus] || [];
 };

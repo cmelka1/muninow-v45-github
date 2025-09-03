@@ -75,7 +75,7 @@ const ServiceApplicationStatusBadge: React.FC<ServiceApplicationStatusBadgeProps
       case 'issued':
         return {
           variant: 'outline' as const,
-          className: 'bg-blue-600 text-white border-blue-600',
+          className: 'bg-emerald-600 text-white border-emerald-600',
           label: 'Issued'
         };
       case 'completed':
