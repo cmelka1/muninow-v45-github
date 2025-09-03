@@ -19,9 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, RotateCcw } from 'lucide-react';
-import { usePermitTypesWithCustomizations, useUpsertMunicipalPermitType, useDeleteMunicipalPermitType } from '@/hooks/useMunicipalPermitTypes';
-import { useMerchants } from '@/hooks/useMerchants';
+import { Loader2 } from 'lucide-react';
+import { usePermitTypesWithCustomizations, useUpsertMunicipalPermitType } from '@/hooks/useMunicipalPermitTypes';
 import { useAuth } from '@/contexts/SimpleAuthContext';
 import { useDebounce } from '@/hooks/useDebounce';
 import { toast } from 'sonner';
@@ -128,18 +127,9 @@ const InlineEditField: React.FC<InlineEditFieldProps> = ({
 };
 
 export const PermitsSettingsTab = () => {
-  const { profile } = useAuth();
   const { data: permitTypes, isLoading } = usePermitTypesWithCustomizations();
-  const { merchants, fetchMerchantsByCustomer } = useMerchants();
   const upsertMutation = useUpsertMunicipalPermitType();
-  const deleteMutation = useDeleteMunicipalPermitType();
   const [savingFields, setSavingFields] = useState<Set<string>>(new Set());
-
-  React.useEffect(() => {
-    if (profile?.customer_id) {
-      fetchMerchantsByCustomer(profile.customer_id);
-    }
-  }, [profile?.customer_id, fetchMerchantsByCustomer]);
 
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -160,9 +150,6 @@ export const PermitsSettingsTab = () => {
       const updates: any = {};
       
       switch (field) {
-        case 'municipal_label':
-          updates.municipal_label = value;
-          break;
         case 'base_fee_cents':
           updates.base_fee_cents = Math.round(value * 100);
           break;
@@ -171,13 +158,6 @@ export const PermitsSettingsTab = () => {
           break;
         case 'requires_inspection':
           updates.requires_inspection = value;
-          break;
-        case 'merchant_id':
-          updates.merchant_id = value === 'none' ? null : value;
-          updates.merchant_name = value === 'none' ? null : merchants.find(m => m.id === value)?.merchant_name || null;
-          break;
-        case 'is_active':
-          updates.is_active = value;
           break;
       }
 
@@ -199,26 +179,6 @@ export const PermitsSettingsTab = () => {
     }
   };
 
-  const handleResetToStandard = async (permitTypeId: string) => {
-    const permit = permitTypes?.find(p => p.permit_type_id === permitTypeId);
-    if (!permit?.municipal_permit_type_id) return;
-
-    try {
-      await deleteMutation.mutateAsync(permit.municipal_permit_type_id);
-      toast.success('Reset to standard settings');
-    } catch (error) {
-      toast.error('Failed to reset permit type');
-      console.error('Error resetting permit type:', error);
-    }
-  };
-
-  const merchantOptions = [
-    { value: 'none', label: 'No merchant assigned' },
-    ...merchants.map(m => ({
-      value: m.id,
-      label: `${m.merchant_name} (${m.subcategory || 'General'})`
-    }))
-  ];
 
   const getFieldValue = (permit: any, field: string, defaultValue: any) => {
     const customValue = permit[`custom_${field}`];
@@ -235,8 +195,7 @@ export const PermitsSettingsTab = () => {
         <CardHeader>
           <CardTitle>Municipal Permit Types</CardTitle>
           <CardDescription>
-            Customize permit types for your municipality. Click on any field to edit it inline.
-            Customized fields are highlighted, and you can reset them to standard values.
+            Configure permit fees, processing times, and inspection requirements for your municipality. Click on any field to edit it inline.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -257,13 +216,9 @@ export const PermitsSettingsTab = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Permit Type</TableHead>
-                    <TableHead>Municipal Label</TableHead>
                     <TableHead>Fee</TableHead>
                     <TableHead>Processing Days</TableHead>
                     <TableHead>Inspection Required</TableHead>
-                    <TableHead>Merchant</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[70px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -281,16 +236,6 @@ export const PermitsSettingsTab = () => {
                               </Badge>
                             )}
                           </div>
-                        </TableCell>
-                        
-                        <TableCell>
-                          <InlineEditField
-                            value={getFieldValue(permit, 'municipal_label', permit.permit_type_name) || permit.permit_type_name}
-                            onSave={(value) => handleFieldUpdate(permit.permit_type_id, 'municipal_label', value)}
-                            type="text"
-                            placeholder={permit.permit_type_name}
-                            isLoading={isFieldLoading(permit.permit_type_id, 'municipal_label')}
-                          />
                         </TableCell>
                         
                         <TableCell>
@@ -321,44 +266,6 @@ export const PermitsSettingsTab = () => {
                             type="boolean"
                             isLoading={isFieldLoading(permit.permit_type_id, 'requires_inspection')}
                           />
-                        </TableCell>
-                        
-                        <TableCell>
-                          <InlineEditField
-                            value={permit.merchant_id || 'none'}
-                            onSave={(value) => handleFieldUpdate(permit.permit_type_id, 'merchant_id', value)}
-                            type="select"
-                            options={merchantOptions}
-                            placeholder="Select merchant"
-                            isLoading={isFieldLoading(permit.permit_type_id, 'merchant_id')}
-                          />
-                        </TableCell>
-                        
-                        <TableCell>
-                          <InlineEditField
-                            value={permit.is_active ?? true}
-                            onSave={(value) => handleFieldUpdate(permit.permit_type_id, 'is_active', value)}
-                            type="boolean"
-                            isLoading={isFieldLoading(permit.permit_type_id, 'is_active')}
-                          />
-                        </TableCell>
-                        
-                        <TableCell>
-                          {isCustomized && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleResetToStandard(permit.permit_type_id)}
-                              disabled={deleteMutation.isPending}
-                              title="Reset to standard settings"
-                            >
-                              {deleteMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <RotateCcw className="h-4 w-4" />
-                              )}
-                            </Button>
-                          )}
                         </TableCell>
                       </TableRow>
                     );
