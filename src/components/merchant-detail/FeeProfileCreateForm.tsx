@@ -34,10 +34,10 @@ const FeeProfileCreateForm: React.FC<FeeProfileCreateFormProps> = ({
 }) => {
   const { register, handleSubmit, formState: { errors } } = useForm<FeeFormData>({
     defaultValues: initialValues || {
-      ach_basis_points: 25,
-      ach_fixed_fee: 25,
-      basis_points: 289,
-      fixed_fee: 30,
+      ach_basis_points: 150,
+      ach_fixed_fee: 50,
+      basis_points: 300,
+      fixed_fee: 50,
       ach_credit_return_fixed_fee: 500,
       ach_debit_return_fixed_fee: 500,
       dispute_fixed_fee: 1500,
