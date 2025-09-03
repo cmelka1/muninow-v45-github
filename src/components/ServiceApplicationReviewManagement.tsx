@@ -6,13 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { ServiceApplicationStatusChangeDialog } from '@/components/ServiceApplicationStatusChangeDialog';
 import { useServiceApplicationComments, useCreateServiceApplicationComment } from '@/hooks/useServiceApplicationComments';
 import { useMunicipalTeamMembers } from '@/hooks/useMunicipalTeamMembers';
 import { useServiceApplicationWorkflow, ServiceApplicationStatus, getStatusDisplayName, getStatusDescription } from '@/hooks/useServiceApplicationWorkflow';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
-import { ClipboardList, Users, Calendar, MessageSquare, Send, User, Clock } from 'lucide-react';
+import { Users, Calendar, MessageSquare, Send, User, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ServiceApplicationReviewManagementProps {
@@ -117,50 +118,22 @@ export const ServiceApplicationReviewManagement: React.FC<ServiceApplicationRevi
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ClipboardList className="h-5 w-5" />
+            <Users className="h-5 w-5" />
             Review Management
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Status Change */}
-          <div>
-            <label className="text-sm font-medium text-gray-500 mb-2 block">Application Status</label>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-sm">
-                {getStatusDisplayName(application?.status as ServiceApplicationStatus)}
-              </Badge>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowStatusDialog(true)}
-              >
-                Change Status
-              </Button>
-            </div>
-          </div>
-
-          <Separator />
-
           {/* Reviewer Assignment */}
-          <div>
-            <label className="text-sm font-medium text-gray-500 mb-2 block">Assigned Reviewer</label>
-            <div className="flex items-center gap-2">
-              {application?.assigned_reviewer_id ? (
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm">
-                    {teamMembers?.find(m => m.member_id === application.assigned_reviewer_id)?.first_name}{' '}
-                    {teamMembers?.find(m => m.member_id === application.assigned_reviewer_id)?.last_name}
-                  </span>
-                </div>
-              ) : (
-                <span className="text-sm text-gray-500">No reviewer assigned</span>
-              )}
-            </div>
+          <div className="space-y-2">
+            <Label>Assigned Reviewer</Label>
             {teamMembers && teamMembers.length > 0 && (
-              <Select onValueChange={handleAssignReviewer} disabled={isUpdating}>
-                <SelectTrigger className="w-full mt-2">
-                  <SelectValue placeholder="Assign reviewer..." />
+              <Select 
+                onValueChange={handleAssignReviewer} 
+                disabled={isUpdating}
+                value={application?.assigned_reviewer_id || ""}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select reviewer" />
                 </SelectTrigger>
                 <SelectContent>
                   {teamMembers.map((member) => (
@@ -172,6 +145,16 @@ export const ServiceApplicationReviewManagement: React.FC<ServiceApplicationRevi
               </Select>
             )}
           </div>
+
+          <Separator />
+
+          {/* Update Status Button */}
+          <Button 
+            onClick={() => setShowStatusDialog(true)}
+            className="w-full"
+          >
+            Update Status
+          </Button>
         </CardContent>
       </Card>
 
