@@ -29,9 +29,7 @@ interface FinixTransferRequest {
   merchant: string;
   source: string;
   idempotency_id: string;
-  tags?: {
-    fraud_session_id?: string;
-  };
+  fraud_session_id?: string;
 }
 
 interface FinixTransferResponse {
@@ -167,7 +165,7 @@ serve(async (req) => {
     const { data: paymentInstrument, error: piError } = await supabaseAdmin
       .from('user_payment_instruments')
       .select('*')
-      .eq('finix_payment_instrument_id', requestBody.payment_instrument_id)
+      .eq('id', requestBody.payment_instrument_id)
       .eq('user_id', user.id)
       .eq('enabled', true)
       .single();
@@ -365,9 +363,7 @@ serve(async (req) => {
         merchant: merchant.finix_merchant_id,
         source: paymentInstrument.finix_payment_instrument_id,
         idempotency_id: requestBody.idempotency_id,
-        tags: requestBody.fraud_session_id ? {
-          fraud_session_id: requestBody.fraud_session_id
-        } : undefined,
+        fraud_session_id: requestBody.fraud_session_id || undefined,
       };
 
       console.log('Creating Finix transfer with payload:', JSON.stringify(finixTransferPayload, null, 2));
