@@ -37,11 +37,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadProfile = async (userId: string) => {
+  const loadProfile = async (userId: string): Promise<boolean> => {
+    if (!userId) {
+      console.log('No userId provided to loadProfile');
+      return false;
+    }
+
+    setProfileLoading(true);
+    console.log('Loading profile for user:', userId);
+
     try {
-      console.log('Loading profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -50,46 +58,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error loading profile:', error);
-        return;
+        setError('Failed to load user profile');
+        return false;
       }
 
       if (data) {
-        console.log('Profile loaded:', data);
+        console.log('Profile loaded successfully:', data);
         setProfile({
           user_id: data.id,
           account_type: data.account_type || 'resident',
           customer_id: data.customer_id,
           ...data
         });
+        setError(null);
+        return true;
       } else {
-        console.log('No profile found for user');
-        setProfile(null);
+        console.log('No profile found for user, creating default profile data');
+        setProfile({
+          user_id: userId,
+          account_type: 'resident',
+        });
+        return true;
       }
     } catch (err) {
       console.error('Profile loading error:', err);
+      setError('Profile loading failed');
+      return false;
+    } finally {
+      setProfileLoading(false);
     }
   };
 
   useEffect(() => {
-    let profileLoading = false;
-
-    // Set up auth state listener
+    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('Auth state change:', event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user && !profileLoading) {
-          profileLoading = true;
-          await loadProfile(session.user.id);
-          profileLoading = false;
-        } else if (!session?.user) {
+        if (session?.user) {
+          // Use setTimeout to avoid blocking auth state change
+          setTimeout(async () => {
+            const profileLoaded = await loadProfile(session.user.id);
+            console.log('Profile loading completed:', profileLoaded);
+            setIsLoading(false);
+          }, 0);
+        } else {
+          console.log('No user, clearing profile and setting loading to false');
           setProfile(null);
-        }
-        
-        // Only set loading to false after profile is loaded (or no user)
-        if (!session?.user || profile !== null) {
+          setProfileLoading(false);
           setIsLoading(false);
         }
       }
@@ -97,18 +115,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Check for existing session
     const initializeAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('Initial session check:', session?.user?.id);
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user && !profileLoading) {
-        profileLoading = true;
-        await loadProfile(session.user.id);
-        profileLoading = false;
+      try {
+        console.log('Initializing auth...');
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Initial session check:', session?.user?.id);
+        
+        // Don't duplicate the auth state change logic here
+        // The onAuthStateChange will handle the session
+        if (!session?.user) {
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.error('Auth initialization error:', err);
+        setError('Authentication initialization failed');
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
 
     initializeAuth();
