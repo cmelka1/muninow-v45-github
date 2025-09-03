@@ -91,7 +91,7 @@ export function ApplicationDetailModal({ application, serviceTile, onClose }: Ap
         <div>
           <h3 className="text-xl font-semibold">{serviceTile?.title || 'Unknown Service'}</h3>
           <p className="text-sm text-muted-foreground">
-            Application ID: {application.id}
+            Application #{application.application_number || application.id}
           </p>
         </div>
         <Badge variant={getStatusBadgeVariant(application.status)}>

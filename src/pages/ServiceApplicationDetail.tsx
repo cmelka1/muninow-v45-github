@@ -262,7 +262,7 @@ const ServiceApplicationDetail: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">{application.tile?.title || 'Service Application'}</h1>
-            <p className="text-muted-foreground">Application #{application.id}</p>
+            <p className="text-muted-foreground">Application #{application.application_number || application.id}</p>
           </div>
           <ServiceApplicationStatusBadge status={application.status} />
         </div>
@@ -283,8 +283,8 @@ const ServiceApplicationDetail: React.FC = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Application ID</Label>
-                  <p className="text-base font-mono">{application.id}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">Application Number</Label>
+                  <p className="text-base font-mono">{application.application_number || application.id}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Service</Label>
