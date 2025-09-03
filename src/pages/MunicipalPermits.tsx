@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import PermitsFilter, { PermitFilters } from '@/components/PermitsFilter';
 import MunicipalPermitsTable from '@/components/MunicipalPermitsTable';
 
 const MunicipalPermits = () => {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<PermitFilters>({});
 
   // Guard against non-municipal users
@@ -34,7 +36,7 @@ const MunicipalPermits = () => {
       <MunicipalPermitsTable 
         filters={filters} 
         onViewClick={(permitId) => {
-          window.location.href = `/municipal/permit/${permitId}`;
+          navigate(`/municipal/permit/${permitId}`);
         }}
       />
     </div>

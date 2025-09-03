@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import BusinessLicenseFilter, { BusinessLicenseFilters } from '@/components/BusinessLicenseFilter';
 import { MunicipalBusinessLicenseTable } from '@/components/MunicipalBusinessLicenseTable';
 
 const MunicipalBusinessLicenses = () => {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<BusinessLicenseFilters>({});
 
   // Guard against non-municipal users
@@ -34,7 +36,7 @@ const MunicipalBusinessLicenses = () => {
       <MunicipalBusinessLicenseTable 
         filters={filters} 
         onViewClick={(licenseId) => {
-          window.location.href = `/municipal/business-license/${licenseId}`;
+          navigate(`/municipal/business-license/${licenseId}`);
         }}
       />
     </div>
