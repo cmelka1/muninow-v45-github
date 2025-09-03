@@ -1722,6 +1722,82 @@ export type Database = {
           },
         ]
       }
+      municipal_permit_types: {
+        Row: {
+          base_fee_cents: number
+          created_at: string
+          customer_id: string
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          is_custom: boolean | null
+          merchant_id: string | null
+          merchant_name: string | null
+          municipal_label: string
+          permit_type_id: string | null
+          processing_days: number | null
+          requires_inspection: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          base_fee_cents?: number
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_custom?: boolean | null
+          merchant_id?: string | null
+          merchant_name?: string | null
+          municipal_label: string
+          permit_type_id?: string | null
+          processing_days?: number | null
+          requires_inspection?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          base_fee_cents?: number
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_custom?: boolean | null
+          merchant_id?: string | null
+          merchant_name?: string | null
+          municipal_label?: string
+          permit_type_id?: string | null
+          processing_days?: number | null
+          requires_inspection?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "municipal_permit_types_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "municipal_permit_types_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "municipal_permit_types_permit_type_id_fkey"
+            columns: ["permit_type_id"]
+            isOneToOne: false
+            referencedRelation: "permit_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       municipal_service_application_comments: {
         Row: {
           application_id: string
