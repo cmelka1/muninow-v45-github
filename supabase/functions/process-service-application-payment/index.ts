@@ -6,7 +6,6 @@ interface ProcessServiceApplicationPaymentRequest {
   tile_id: string;
   amount_cents: number;
   payment_instrument_id: string;
-  total_amount_cents: number;
   idempotency_id: string;
   fraud_session_id?: string;
   // Application data
@@ -154,24 +153,13 @@ serve(async (req) => {
       ? (feeProfile.ach_fixed_fee || 0) + Math.round((requestBody.amount_cents * (feeProfile.ach_basis_points || 0)) / 10000)
       : (feeProfile.fixed_fee || 0) + Math.round((requestBody.amount_cents * (feeProfile.basis_points || 0)) / 10000);
 
-    // Validate total amount
-    const expectedTotal = requestBody.amount_cents + calculatedServiceFee;
-    if (Math.abs(requestBody.total_amount_cents - expectedTotal) > 1) {
-      console.error('Amount mismatch:', {
-        provided: requestBody.total_amount_cents,
-        expected: expectedTotal,
-        baseAmount: requestBody.amount_cents,
-        serviceFee: calculatedServiceFee
-      });
-      return new Response(
-        JSON.stringify({ 
-          error: 'Amount validation failed',
-          expected: expectedTotal,
-          provided: requestBody.total_amount_cents
-        }),
-        { status: 400, headers: corsHeaders }
-      );
-    }
+    // Calculate total amount (backend is the single source of truth)
+    const totalAmountCents = requestBody.amount_cents + calculatedServiceFee;
+    console.log('Payment calculation:', {
+      baseAmount: requestBody.amount_cents,
+      serviceFee: calculatedServiceFee,
+      totalAmount: totalAmountCents
+    });
 
     // Get Finix credentials
     const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
@@ -211,7 +199,7 @@ serve(async (req) => {
         payment_status: 'pending',
         amount_cents: requestBody.amount_cents,
         service_fee_cents: calculatedServiceFee,
-        total_amount_cents: requestBody.total_amount_cents,
+        total_amount_cents: totalAmountCents,
         payment_instrument_id: requestBody.payment_instrument_id,
         finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
         merchant_id: serviceTile.merchant_id,
@@ -245,7 +233,7 @@ serve(async (req) => {
         finix_merchant_id: serviceTile.finix_merchant_id,
         amount_cents: requestBody.amount_cents,
         service_fee_cents: calculatedServiceFee,
-        total_amount_cents: requestBody.total_amount_cents,
+        total_amount_cents: totalAmountCents,
         currency: 'USD',
         payment_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
         idempotency_id: requestBody.idempotency_id,
@@ -321,7 +309,7 @@ serve(async (req) => {
 
     // Now process payment with Finix
     const finixTransferPayload: FinixTransferRequest = {
-      amount: requestBody.total_amount_cents,
+      amount: totalAmountCents,
       currency: 'USD',
       merchant: serviceTile.finix_merchant_id!,
       source: paymentInstrument.finix_payment_instrument_id,
@@ -429,7 +417,7 @@ serve(async (req) => {
         application_id: applicationId,
         transfer_id: finixData.id,
         status: 'submitted',
-        amount: requestBody.total_amount_cents,
+        amount: totalAmountCents,
         payment_status: 'completed'
       }),
       { headers: corsHeaders }

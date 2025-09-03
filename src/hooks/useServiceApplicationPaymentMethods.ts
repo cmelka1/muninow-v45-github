@@ -193,7 +193,8 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
       return { success: false, error: "Session validation failed", retryable: false };
     }
 
-    if (totalWithFee <= 0) {
+    // Validate base amount
+    if (baseAmount <= 0) {
       const errorMsg = "Invalid payment amount. Please try again.";
       toast({
         title: "Error",
@@ -214,7 +215,7 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
         body: {
           ...applicationData,
           payment_instrument_id: selectedPaymentMethod,
-          total_amount_cents: totalWithFee,
+          amount_cents: baseAmount,
           idempotency_id: idempotencyId,
           fraud_session_id: fraudSessionId,
         }
@@ -412,7 +413,8 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
       return { success: false, error: "Session validation failed", retryable: false };
     }
 
-    if (totalWithFee <= 0) {
+    // Validate base amount
+    if (baseAmount <= 0) {
       const errorMsg = "Invalid payment amount. Please try again.";
       toast({
         title: "Error",
@@ -446,7 +448,7 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
         transactionInfo: {
           countryCode: 'US',
           currencyCode: 'USD',
-          totalPrice: (totalWithFee / 100).toFixed(2),
+          totalPrice: (totalAmount / 100).toFixed(2),
           totalPriceStatus: 'FINAL' as const
         },
         merchantInfo: {
@@ -469,7 +471,7 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
           application_id: applicationId,
           google_pay_token: paymentToken,
           billing_contact: billingAddress,
-          total_amount_cents: totalWithFee,
+          amount_cents: baseAmount,
           idempotency_id: idempotencyId,
           fraud_session_id: fraudSessionId,
         }
