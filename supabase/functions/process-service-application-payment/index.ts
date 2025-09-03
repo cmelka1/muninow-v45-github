@@ -3,13 +3,12 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Data Structures
 interface ProcessServiceApplicationPaymentRequest {
-  application_id?: string; // Add application ID for existing applications
+  application_id?: string;
   tile_id: string;
   amount_cents: number;
   payment_instrument_id: string;
   idempotency_id: string;
   fraud_session_id?: string;
-  // Application data
   applicant_name?: string;
   applicant_email?: string;
   applicant_phone?: string;
@@ -38,6 +37,7 @@ interface FinixTransferRequest {
 interface FinixTransferResponse {
   id: string;
   state: string;
+  amount: number;
   failure_code?: string;
   failure_message?: string;
   [key: string]: any;
@@ -56,131 +56,135 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Initialize Supabase clients
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: false }
+  });
+
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { persistSession: false }
+  });
+
   try {
-    // Initialize Supabase clients
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
     // Authenticate user
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'No authorization header' }), {
-        status: 401,
-        headers: corsHeaders,
-      });
+      throw new Error('No authorization header');
     }
 
-    const supabaseAuth = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!);
-    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
       authHeader.replace('Bearer ', '')
     );
 
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Invalid token' }), {
-        status: 401,
-        headers: corsHeaders,
-      });
+      throw new Error('Authentication failed');
     }
 
     // Parse request body
     const requestBody: ProcessServiceApplicationPaymentRequest = await req.json();
     console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
-    // First, check if we're paying for an existing application
-    let existingApplication = null;
-    if (requestBody.application_id) {
-      const { data: app, error: appError } = await supabase
-        .from('municipal_service_applications')
-        .select('id, payment_status, status, user_id')
-        .eq('id', requestBody.application_id)
-        .eq('user_id', user.id) // Ensure user owns this application
-        .single();
-
-      if (appError) {
-        console.error('Error fetching existing application:', appError);
-        return new Response(
-          JSON.stringify({ error: 'Application not found or access denied' }),
-          { status: 404, headers: corsHeaders }
-        );
-      }
-
-      if (app.payment_status === 'paid') {
-        return new Response(
-          JSON.stringify({ error: 'Application has already been paid for' }),
-          { status: 409, headers: corsHeaders }
-        );
-      }
-
-      if (app.status !== 'approved') {
-        return new Response(
-          JSON.stringify({ error: 'Application must be approved before payment' }),
-          { status: 400, headers: corsHeaders }
-        );
-      }
-
-      existingApplication = app;
+    // Validate required fields
+    if (!requestBody.payment_instrument_id || !requestBody.idempotency_id) {
+      throw new Error('Missing required payment fields');
     }
 
-    // Check for duplicate idempotency ID in payment history
-    const { data: existingPayment } = await supabase
+    // Check for duplicate idempotency ID to prevent double processing
+    const { data: existingPayment } = await supabaseAdmin
       .from('payment_history')
-      .select('id')
+      .select('id, finix_transfer_id, transfer_state')
       .eq('idempotency_id', requestBody.idempotency_id)
       .single();
 
     if (existingPayment) {
+      console.log('Duplicate payment request detected:', requestBody.idempotency_id);
       return new Response(
-        JSON.stringify({ error: 'Payment already processed with this idempotency ID' }),
-        { status: 409, headers: corsHeaders }
+        JSON.stringify({
+          success: true,
+          message: 'Payment already processed',
+          payment_id: existingPayment.id,
+          transfer_id: existingPayment.finix_transfer_id,
+          transfer_state: existingPayment.transfer_state
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get service tile data
-    const { data: serviceTile, error: tileError } = await supabase
+    // Get application details and validate ownership
+    let application = null;
+    if (requestBody.application_id) {
+      const { data: app, error: appError } = await supabaseAdmin
+        .from('municipal_service_applications')
+        .select('*')
+        .eq('id', requestBody.application_id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (appError || !app) {
+        throw new Error('Application not found or access denied');
+      }
+
+      if (app.status !== 'approved') {
+        throw new Error('Application must be approved before payment');
+      }
+
+      if (app.payment_status === 'paid') {
+        throw new Error('Application has already been paid for');
+      }
+
+      application = app;
+    }
+
+    // Get service tile data with merchant information
+    const { data: serviceTile, error: tileError } = await supabaseAdmin
       .from('municipal_service_tiles')
-      .select('*')
+      .select(`
+        *,
+        merchants!inner (
+          id,
+          finix_merchant_id,
+          merchant_name,
+          finix_identity_id
+        )
+      `)
       .eq('id', requestBody.tile_id)
       .single();
 
     if (tileError || !serviceTile) {
-      console.error('Service tile not found:', tileError);
-      return new Response(
-        JSON.stringify({ error: 'Service tile not found' }),
-        { status: 404, headers: corsHeaders }
-      );
+      throw new Error('Service tile not found');
     }
 
-    // Get payment instrument details
-    const { data: paymentInstrument, error: instrumentError } = await supabase
+    const merchant = serviceTile.merchants;
+    if (!merchant?.finix_merchant_id) {
+      throw new Error('Merchant not properly configured for payments');
+    }
+
+    // Get user payment instrument and validate ownership
+    const { data: paymentInstrument, error: piError } = await supabaseAdmin
       .from('user_payment_instruments')
       .select('*')
-      .eq('id', requestBody.payment_instrument_id)
+      .eq('finix_payment_instrument_id', requestBody.payment_instrument_id)
       .eq('user_id', user.id)
+      .eq('enabled', true)
       .single();
 
-    if (instrumentError || !paymentInstrument) {
-      console.error('Payment instrument not found:', instrumentError);
-      return new Response(
-        JSON.stringify({ error: 'Payment instrument not found' }),
-        { status: 404, headers: corsHeaders }
-      );
+    if (piError || !paymentInstrument) {
+      throw new Error('Payment instrument not found or not accessible');
     }
 
     // Get merchant fee profile
-    const { data: feeProfile, error: feeError } = await supabase
+    const { data: feeProfile, error: feeError } = await supabaseAdmin
       .from('merchant_fee_profiles')
       .select('*')
-      .eq('merchant_id', serviceTile.merchant_id)
+      .eq('merchant_id', merchant.id)
       .single();
 
     if (feeError || !feeProfile) {
-      console.error('Fee profile not found:', feeError);
-      return new Response(
-        JSON.stringify({ error: 'Fee profile not found for merchant' }),
-        { status: 404, headers: corsHeaders }
-      );
+      throw new Error('Fee profile not found for merchant');
     }
 
     // Calculate service fee based on payment type
@@ -189,7 +193,6 @@ serve(async (req) => {
       ? (feeProfile.ach_fixed_fee || 0) + Math.round((requestBody.amount_cents * (feeProfile.ach_basis_points || 0)) / 10000)
       : (feeProfile.fixed_fee || 0) + Math.round((requestBody.amount_cents * (feeProfile.basis_points || 0)) / 10000);
 
-    // Calculate total amount (backend is the single source of truth)
     const totalAmountCents = requestBody.amount_cents + calculatedServiceFee;
     console.log('Payment calculation:', {
       baseAmount: requestBody.amount_cents,
@@ -203,316 +206,336 @@ serve(async (req) => {
     const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
 
     if (!finixApplicationId || !finixApiSecret) {
-      return new Response(
-        JSON.stringify({ error: 'Finix API credentials not configured' }),
-        { status: 500, headers: corsHeaders }
-      );
+      throw new Error('Finix API credentials not configured');
     }
 
     const FINIX_API_URL = finixEnvironment === 'live' 
       ? 'https://finix.payments-api.com'
       : 'https://finix.sandbox-payments-api.com';
 
-    // Use existing application or create new one if not provided
-    let application;
-    if (existingApplication) {
-      // Update existing application with payment details
-      const { data: updatedApp, error: updateError } = await supabase
-        .from('municipal_service_applications')
-        .update({
-          payment_status: 'unpaid',
-          payment_instrument_id: requestBody.payment_instrument_id,
-          finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
-          payment_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
-          fraud_session_id: requestBody.fraud_session_id || null,
-          idempotency_id: requestBody.idempotency_id,
-          service_fee_cents: calculatedServiceFee,
-          total_amount_cents: totalAmountCents
-        })
-        .eq('id', existingApplication.id)
-        .select()
-        .single();
+    // Variables for rollback tracking
+    let createdApplicationId: string | null = null;
+    let createdPaymentHistoryId: string | null = null;
+    let finixTransferResponse: FinixTransferResponse | null = null;
+    let rollbackRequired = false;
 
-      if (updateError || !updatedApp) {
-        console.error('Failed to update existing application:', updateError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to update application for payment' }),
-          { status: 400, headers: corsHeaders }
-        );
+    // BEGIN ATOMIC TRANSACTION
+    try {
+      // Step 1: Create or update application record
+      if (application) {
+        // Update existing application
+        const { data: updatedApp, error: updateError } = await supabaseAdmin
+          .from('municipal_service_applications')
+          .update({
+            payment_status: 'pending',
+            payment_instrument_id: requestBody.payment_instrument_id,
+            finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
+            payment_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
+            fraud_session_id: requestBody.fraud_session_id || null,
+            idempotency_id: requestBody.idempotency_id,
+            service_fee_cents: calculatedServiceFee,
+            total_amount_cents: totalAmountCents,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', application.id)
+          .select()
+          .single();
+
+        if (updateError || !updatedApp) {
+          throw new Error('Failed to update application for payment');
+        }
+
+        application = updatedApp;
+        console.log('Updated existing application for payment:', application.id);
+      } else {
+        // Create new application
+        const { data: newApp, error: appError } = await supabaseAdmin
+          .from('municipal_service_applications')
+          .insert({
+            tile_id: requestBody.tile_id,
+            user_id: user.id,
+            customer_id: serviceTile.customer_id,
+            applicant_name: requestBody.applicant_name || null,
+            applicant_email: requestBody.applicant_email || null,
+            applicant_phone: requestBody.applicant_phone || null,
+            business_legal_name: requestBody.business_legal_name || null,
+            street_address: requestBody.street_address || null,
+            apt_number: requestBody.apt_number || null,
+            city: requestBody.city || null,
+            state: requestBody.state || null,
+            zip_code: requestBody.zip_code || null,
+            additional_information: requestBody.additional_information || null,
+            service_specific_data: requestBody.service_specific_data || {},
+            status: 'approved',
+            payment_status: 'pending',
+            amount_cents: requestBody.amount_cents,
+            service_fee_cents: calculatedServiceFee,
+            total_amount_cents: totalAmountCents,
+            payment_instrument_id: requestBody.payment_instrument_id,
+            finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
+            merchant_id: merchant.id,
+            finix_merchant_id: merchant.finix_merchant_id,
+            merchant_name: serviceTile.title,
+            payment_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
+            fraud_session_id: requestBody.fraud_session_id || null,
+            idempotency_id: requestBody.idempotency_id,
+            approved_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (appError || !newApp) {
+          throw new Error('Failed to create service application');
+        }
+
+        application = newApp;
+        createdApplicationId = application.id;
+        console.log('Service application created:', application.id);
       }
 
-      application = updatedApp;
-      console.log('Updated existing application for payment:', application.id);
-    } else {
-      // Create new service application record
-      const { data: newApp, error: appError } = await supabase
-        .from('municipal_service_applications')
+      // Step 2: Create payment history record
+      const { data: paymentHistory, error: phError } = await supabaseAdmin
+        .from('payment_history')
         .insert({
-          tile_id: requestBody.tile_id,
           user_id: user.id,
+          service_application_id: application.id,
           customer_id: serviceTile.customer_id,
-          applicant_name: requestBody.applicant_name || null,
-          applicant_email: requestBody.applicant_email || null,
-          applicant_phone: requestBody.applicant_phone || null,
-          business_legal_name: requestBody.business_legal_name || null,
-          street_address: requestBody.street_address || null,
-          apt_number: requestBody.apt_number || null,
-          city: requestBody.city || null,
-          state: requestBody.state || null,
-          zip_code: requestBody.zip_code || null,
-          additional_information: requestBody.additional_information || null,
-          service_specific_data: requestBody.service_specific_data || {},
-          status: 'draft',
-          payment_status: 'unpaid',
+          finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
+          finix_merchant_id: merchant.finix_merchant_id,
           amount_cents: requestBody.amount_cents,
           service_fee_cents: calculatedServiceFee,
           total_amount_cents: totalAmountCents,
-          payment_instrument_id: requestBody.payment_instrument_id,
-          finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
-          merchant_id: serviceTile.merchant_id,
-          finix_merchant_id: serviceTile.finix_merchant_id,
-          merchant_name: serviceTile.title,
+          currency: 'USD',
           payment_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
+          idempotency_id: requestBody.idempotency_id,
           fraud_session_id: requestBody.fraud_session_id || null,
-          idempotency_id: requestBody.idempotency_id
+          transfer_state: 'PENDING',
+          card_brand: paymentInstrument.card_brand,
+          card_last_four: paymentInstrument.card_last_four,
+          bank_last_four: paymentInstrument.bank_last_four,
+          merchant_name: serviceTile.title,
+          category: 'Administrative & Civic Fees',
+          subcategory: 'Other Specialized Payments',
+          statement_descriptor: serviceTile.title.substring(0, 22),
+          payment_status: 'pending',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
         .select()
         .single();
 
-      if (appError || !newApp) {
-        console.error('Failed to create service application:', appError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to create service application' }),
-          { status: 400, headers: corsHeaders }
-        );
+      if (phError || !paymentHistory) {
+        rollbackRequired = true;
+        throw new Error('Failed to create payment history record');
       }
 
-      application = newApp;
-      console.log('Service application created:', application.id);
-    }
+      createdPaymentHistoryId = paymentHistory.id;
+      console.log('Payment history created:', paymentHistory.id);
 
-    // Create payment history record
-    const { data: paymentHistory, error: phError } = await supabase
-      .from('payment_history')
-      .insert({
-        user_id: user.id,
-        service_application_id: application.id,
-        customer_id: serviceTile.customer_id,
-        finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
-        finix_merchant_id: serviceTile.finix_merchant_id,
-        amount_cents: requestBody.amount_cents,
-        service_fee_cents: calculatedServiceFee,
-        total_amount_cents: totalAmountCents,
+      // Step 3: Process documents if provided
+      if (requestBody.documents && requestBody.documents.length > 0) {
+        const documentInserts = requestBody.documents.map(doc => ({
+          application_id: application.id,
+          user_id: user.id,
+          customer_id: serviceTile.customer_id,
+          file_name: doc.name,
+          file_size: doc.size,
+          content_type: doc.type,
+          storage_path: doc.storage_path,
+          document_type: doc.document_type || 'general',
+          description: doc.description || null
+        }));
+
+        const { error: docError } = await supabaseAdmin
+          .from('service_application_documents')
+          .insert(documentInserts);
+
+        if (docError) {
+          console.error('Failed to create documents:', docError);
+          // Continue with payment processing, documents are not critical for payment
+        } else {
+          console.log('Documents created successfully');
+        }
+      }
+
+      // Step 4: Process payment with Finix
+      const finixTransferPayload: FinixTransferRequest = {
+        amount: totalAmountCents,
         currency: 'USD',
-        payment_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
+        merchant: merchant.finix_merchant_id,
+        source: paymentInstrument.finix_payment_instrument_id,
         idempotency_id: requestBody.idempotency_id,
-        fraud_session_id: requestBody.fraud_session_id || null,
-        transfer_state: 'PENDING',
-        card_brand: paymentInstrument.card_brand,
-        card_last_four: paymentInstrument.card_last_four,
-        bank_last_four: paymentInstrument.bank_last_four,
-        merchant_name: serviceTile.title,
-        category: 'Municipal Services',
-        subcategory: serviceTile.category || 'Other Services',
-        doing_business_as: serviceTile.title,
-        statement_descriptor: serviceTile.title,
-        customer_first_name: requestBody.applicant_name?.split(' ')[0] || null,
-        customer_last_name: requestBody.applicant_name?.split(' ').slice(1).join(' ') || null,
-        customer_email: requestBody.applicant_email || null,
-        customer_street_address: requestBody.street_address || null,
-        customer_apt_number: requestBody.apt_number || null,
-        customer_city: requestBody.city || null,
-        customer_state: requestBody.state || null,
-        customer_zip_code: requestBody.zip_code || null,
-        business_legal_name: requestBody.business_legal_name || null,
-        bill_type: 'service_application',
-        issue_date: new Date().toISOString(),
-        due_date: new Date().toISOString(),
-        original_amount_cents: requestBody.amount_cents,
-        payment_status: 'unpaid',
-        bill_status: 'unpaid'
-      })
-      .select()
-      .single();
+        tags: requestBody.fraud_session_id ? {
+          fraud_session_id: requestBody.fraud_session_id
+        } : undefined,
+      };
 
-    if (phError || !paymentHistory) {
-      console.error('Failed to create payment history:', phError);
-      // Clean up application record
-      await supabase.from('municipal_service_applications').delete().eq('id', application.id);
-      return new Response(
-        JSON.stringify({ error: 'Failed to create payment record' }),
-        { status: 400, headers: corsHeaders }
-      );
-    }
+      console.log('Creating Finix transfer with payload:', JSON.stringify(finixTransferPayload, null, 2));
 
-    console.log('Payment history created:', paymentHistory.id);
-
-    // Process documents if provided
-    if (requestBody.documents && requestBody.documents.length > 0) {
-      const documentInserts = requestBody.documents.map(doc => ({
-        application_id: application.id,
-        user_id: user.id,
-        customer_id: serviceTile.customer_id,
-        file_name: doc.name,
-        file_size: doc.size,
-        content_type: doc.type,
-        storage_path: doc.storage_path,
-        document_type: doc.document_type || 'general',
-        description: doc.description || null
-      }));
-
-      const { error: docError } = await supabase
-        .from('service_application_documents')
-        .insert(documentInserts);
-
-      if (docError) {
-        console.error('Failed to create documents:', docError);
-        // Continue with payment processing, documents are not critical
-      } else {
-        console.log('Documents created successfully');
-      }
-    }
-
-    const applicationId = application.id;
-    const paymentHistoryId = paymentHistory.id;
-
-    // Now process payment with Finix
-    const finixTransferPayload: FinixTransferRequest = {
-      amount: totalAmountCents,
-      currency: 'USD',
-      merchant: serviceTile.finix_merchant_id!,
-      source: paymentInstrument.finix_payment_instrument_id,
-      idempotency_id: requestBody.idempotency_id,
-      tags: requestBody.fraud_session_id ? {
-        fraud_session_id: requestBody.fraud_session_id
-      } : undefined,
-    };
-
-    console.log('Creating Finix transfer with payload:', JSON.stringify(finixTransferPayload, null, 2));
-
-    const finixResponse = await fetch(`${FINIX_API_URL}/transfers`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${btoa(`${finixApplicationId}:${finixApiSecret}`)}`,
-        'Finix-Version': '2022-02-01',
-      },
-      body: JSON.stringify(finixTransferPayload),
-    });
-
-    if (!finixResponse.ok) {
-      const errorText = await finixResponse.text();
-      console.error('Finix transfer failed:', {
-        status: finixResponse.status,
-        statusText: finixResponse.statusText,
-        body: errorText,
+      const finixResponse = await fetch(`${FINIX_API_URL}/transfers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${btoa(`${finixApplicationId}:${finixApiSecret}`)}`,
+          'Finix-Version': '2022-02-01',
+        },
+        body: JSON.stringify(finixTransferPayload),
       });
 
-      // Simple rollback: Delete application and payment records
-      console.log('Payment failed, cleaning up records...');
-      try {
-        await supabase.from('service_application_documents').delete().eq('application_id', applicationId);
-        await supabase.from('payment_history').delete().eq('id', paymentHistoryId);
-        await supabase.from('municipal_service_applications').delete().eq('id', applicationId);
-        console.log('Cleanup successful');
-      } catch (cleanupError) {
-        console.error('Cleanup failed:', cleanupError);
+      if (!finixResponse.ok) {
+        const errorText = await finixResponse.text();
+        console.error('Finix transfer failed:', errorText);
+        rollbackRequired = true;
+        throw new Error(`Finix payment failed: ${errorText}`);
       }
 
-      return new Response(
-        JSON.stringify({ 
-          error: 'Payment processing failed',
-          details: errorText
-        }),
-        { status: 400, headers: corsHeaders }
-      );
-    }
+      finixTransferResponse = await finixResponse.json();
+      console.log('Finix response:', JSON.stringify(finixTransferResponse, null, 2));
 
-    const finixData: FinixTransferResponse = await finixResponse.json();
-    console.log('Finix response:', JSON.stringify(finixData, null, 2));
-
-    // Handle different transfer states with complete rollback on failure
-    if (finixData.state === 'SUCCEEDED') {
-      console.log('Payment succeeded, updating records...');
-      
-      // Update application and payment status for success
-      const { error: appUpdateError } = await supabase
-        .from('municipal_service_applications')
-        .update({ 
-          status: 'issued',
-          payment_status: 'paid',
-          payment_processed_at: new Date().toISOString(),
-          finix_transfer_id: finixData.id,
-          paid_at: new Date().toISOString(),
-          payment_method_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD'
-        })
-        .eq('id', applicationId);
-
-      if (appUpdateError) {
-        console.error('Failed to update application payment status:', appUpdateError);
-      } else {
-        console.log('Application payment status updated successfully');
+      if (!finixTransferResponse || finixTransferResponse.state === 'FAILED') {
+        rollbackRequired = true;
+        throw new Error(`Finix transfer failed: ${finixTransferResponse?.failure_message || 'Unknown error'}`);
       }
 
-      const { error: phUpdateError } = await supabase
+      // Step 5: Update payment history with Finix response
+      const { error: updatePaymentError } = await supabaseAdmin
         .from('payment_history')
-        .update({ 
-          payment_status: 'paid',
-          transfer_state: 'SUCCEEDED',
-          finix_transfer_id: finixData.id,
-          payment_processed_at: new Date().toISOString()
+        .update({
+          finix_transfer_id: finixTransferResponse.id,
+          transfer_state: finixTransferResponse.state,
+          payment_status: finixTransferResponse.state === 'SUCCEEDED' ? 'completed' : 'pending',
+          payment_processed_at: finixTransferResponse.state === 'SUCCEEDED' ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString()
         })
-        .eq('id', paymentHistoryId);
+        .eq('id', paymentHistory.id);
 
-      if (phUpdateError) {
-        console.error('Failed to update payment history status:', phUpdateError);
-      } else {
-        console.log('Payment history status updated successfully');
-      }
-        
-    } else if (finixData.state === 'FAILED') {
-      console.error('Transfer failed:', finixData);
-      const errorText = finixData.failure_message || 'Payment processing failed';
-      
-      // Simple rollback: Delete application and payment records  
-      console.log('Payment failed, cleaning up records...');
-      try {
-        await supabase.from('service_application_documents').delete().eq('application_id', applicationId);
-        await supabase.from('payment_history').delete().eq('id', paymentHistoryId);
-        await supabase.from('municipal_service_applications').delete().eq('id', applicationId);
-        console.log('Cleanup successful');
-      } catch (cleanupError) {
-        console.error('Cleanup failed:', cleanupError);
+      if (updatePaymentError) {
+        console.error('Failed to update payment history:', updatePaymentError);
+        rollbackRequired = true;
+        throw new Error('Failed to update payment status');
       }
 
+      // Step 6: If Finix payment succeeded, update application status
+      if (finixTransferResponse.state === 'SUCCEEDED') {
+        console.log('Payment succeeded, updating application status...');
+
+        const { error: updateAppError } = await supabaseAdmin
+          .from('municipal_service_applications')
+          .update({
+            payment_status: 'paid',
+            status: 'issued',
+            paid_at: new Date().toISOString(),
+            completed_at: new Date().toISOString(),
+            finix_transfer_id: finixTransferResponse.id,
+            payment_method_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', application.id);
+
+        if (updateAppError) {
+          console.error('Failed to update application status:', updateAppError);
+          rollbackRequired = true;
+          throw new Error('Failed to update application status');
+        }
+
+        console.log('Service application payment processed successfully');
+      }
+
+      // TRANSACTION COMPLETED SUCCESSFULLY
       return new Response(
-        JSON.stringify({ 
-          error: 'Payment processing failed',
-          details: errorText
+        JSON.stringify({
+          success: true,
+          message: 'Payment processed successfully',
+          payment_id: paymentHistory.id,
+          application_id: application.id,
+          transfer_id: finixTransferResponse.id,
+          transfer_state: finixTransferResponse.state,
+          amount: totalAmountCents
         }),
-        { status: 400, headers: corsHeaders }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+
+    } catch (transactionError) {
+      console.error('Transaction error:', transactionError);
+
+      // ROLLBACK LOGIC
+      if (rollbackRequired) {
+        console.log('Starting rollback process...');
+
+        // If we have a successful Finix payment but database operations failed,
+        // initiate a refund through Finix
+        if (finixTransferResponse?.id && finixTransferResponse.state === 'SUCCEEDED') {
+          console.log('Initiating Finix refund due to database failure...');
+          
+          try {
+            const refundResponse = await fetch(`${FINIX_API_URL}/transfers/${finixTransferResponse.id}/reversals`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Basic ${btoa(`${finixApplicationId}:${finixApiSecret}`)}`,
+                'Finix-Version': '2022-02-01',
+              },
+              body: JSON.stringify({
+                refund_amount: finixTransferResponse.amount
+              })
+            });
+
+            if (refundResponse.ok) {
+              const refundData = await refundResponse.json();
+              console.log('Finix refund initiated:', refundData.id);
+              
+              // Update payment history to reflect the rollback
+              if (createdPaymentHistoryId) {
+                await supabaseAdmin
+                  .from('payment_history')
+                  .update({
+                    payment_status: 'refunded',
+                    transfer_state: 'REFUNDED',
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', createdPaymentHistoryId);
+              }
+            } else {
+              console.error('Failed to initiate Finix refund:', await refundResponse.text());
+            }
+          } catch (refundError) {
+            console.error('Error during refund process:', refundError);
+          }
+        }
+
+        // Clean up database records for failed transactions
+        try {
+          if (createdApplicationId) {
+            await supabaseAdmin.from('service_application_documents').delete().eq('application_id', createdApplicationId);
+            await supabaseAdmin.from('municipal_service_applications').delete().eq('id', createdApplicationId);
+            console.log('Cleaned up application record:', createdApplicationId);
+          }
+          
+          if (createdPaymentHistoryId) {
+            await supabaseAdmin.from('payment_history').delete().eq('id', createdPaymentHistoryId);
+            console.log('Cleaned up payment history record:', createdPaymentHistoryId);
+          }
+        } catch (cleanupError) {
+          console.error('Error during cleanup:', cleanupError);
+        }
+      }
+
+      throw transactionError;
     }
-
-    console.log('Service application payment processed successfully');
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        application_id: applicationId,
-        transfer_id: finixData.id,
-        status: 'issued',
-        amount: totalAmountCents,
-        payment_status: 'completed'
-      }),
-      { headers: corsHeaders }
-    );
 
   } catch (error) {
-    console.error('Unexpected error in service application payment:', error);
+    console.error('Service application payment error:', error);
+    
     return new Response(
-      JSON.stringify({ error: 'An unexpected error occurred', details: error.message }),
-      { status: 500, headers: corsHeaders }
+      JSON.stringify({
+        success: false,
+        error: error.message,
+        retryable: error.message.includes('network') || error.message.includes('timeout')
+      }),
+      { 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
     );
   }
 });

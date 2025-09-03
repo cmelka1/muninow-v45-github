@@ -2210,6 +2210,7 @@ export type Database = {
           merchant_name: string | null
           original_amount_cents: number | null
           payment_instrument_id: string | null
+          payment_processed_at: string | null
           payment_status: string | null
           payment_type: string
           permit_id: string | null
@@ -2277,6 +2278,7 @@ export type Database = {
           merchant_name?: string | null
           original_amount_cents?: number | null
           payment_instrument_id?: string | null
+          payment_processed_at?: string | null
           payment_status?: string | null
           payment_type: string
           permit_id?: string | null
@@ -2344,6 +2346,7 @@ export type Database = {
           merchant_name?: string | null
           original_amount_cents?: number | null
           payment_instrument_id?: string | null
+          payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: string
           permit_id?: string | null
@@ -4356,6 +4359,7 @@ export type Database = {
         | "completed"
         | "withdrawn"
         | "expired"
+        | "issued"
       sync_status: "synced" | "pending" | "error"
       vehicle_type: "personal" | "business"
     }
@@ -4559,6 +4563,7 @@ export const Constants = {
         "completed",
         "withdrawn",
         "expired",
+        "issued",
       ],
       sync_status: ["synced", "pending", "error"],
       vehicle_type: ["personal", "business"],
