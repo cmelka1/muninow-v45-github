@@ -20,11 +20,11 @@ export const ServiceApplicationCommunication: React.FC<ServiceApplicationCommuni
 }) => {
   const [newComment, setNewComment] = useState('');
   const { profile } = useAuth();
-  // Set isInternal default based on user type - false for residents, true for municipal
-  const [isInternal, setIsInternal] = useState(profile?.account_type === 'municipal');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: comments, isLoading } = useServiceApplicationComments(applicationId);
   const { mutate: createComment, isPending } = useCreateServiceApplicationComment();
+
+  const isMunicipalUser = profile?.account_type === 'municipal';
 
   const handleSubmit = async () => {
     if (!newComment.trim()) {
@@ -38,7 +38,7 @@ export const ServiceApplicationCommunication: React.FC<ServiceApplicationCommuni
       await createComment({
         application_id: applicationId,
         comment_text: newComment,
-        is_internal: isInternal
+        is_internal: false // Always external for simplified communication
       });
 
       setNewComment('');
@@ -51,13 +51,8 @@ export const ServiceApplicationCommunication: React.FC<ServiceApplicationCommuni
     }
   };
 
-  // Filter comments based on user role
-  const filteredComments = comments?.filter(comment => {
-    if (profile?.account_type === 'municipal') {
-      return true; // Municipal users see all comments
-    }
-    return !comment.is_internal; // Regular users only see external comments
-  }) || [];
+  // Filter comments based on user role - only show external comments in communication
+  const filteredComments = comments?.filter(comment => !comment.is_internal) || [];
 
   if (isLoading) {
     return (
@@ -139,32 +134,10 @@ export const ServiceApplicationCommunication: React.FC<ServiceApplicationCommuni
 
         {/* Add Comment Form */}
         <div className="space-y-3 pt-4 border-t">
-          {profile?.account_type === 'municipal' && (
-            <div className="flex items-center gap-2">
-              <Button
-                variant={isInternal ? "default" : "outline"}
-                size="sm"
-                onClick={() => setIsInternal(true)}
-              >
-                Internal
-              </Button>
-              <Button
-                variant={!isInternal ? "default" : "outline"}
-                size="sm"
-                onClick={() => setIsInternal(false)}
-              >
-                External
-              </Button>
-            </div>
-          )}
           <Textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            placeholder={
-              profile?.account_type === 'municipal' 
-                ? (isInternal ? "Add internal note..." : "Add comment for applicant...")
-                : "Add a comment..."
-            }
+            placeholder="Add a comment..."
             className="min-h-[80px]"
           />
           <div className="flex items-center justify-end">

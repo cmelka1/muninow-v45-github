@@ -32,18 +32,20 @@ import { useServiceApplication } from '@/hooks/useServiceApplication';
 import ServiceApplicationStatusBadge from '@/components/ServiceApplicationStatusBadge';
 import { ServiceApplicationStatusChangeDialog } from '@/components/ServiceApplicationStatusChangeDialog';
 import { ServiceApplicationCommunication } from '@/components/ServiceApplicationCommunication';
+import { ServiceApplicationReviewManagement } from '@/components/ServiceApplicationReviewManagement';
 import { ServiceApplicationStatus, getStatusDisplayName } from '@/hooks/useServiceApplicationWorkflow';
 import { useServiceApplicationDocuments } from '@/hooks/useServiceApplicationDocuments';
 import { DocumentViewerModal } from '@/components/DocumentViewerModal';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, formatDate, smartAbbreviateFilename } from '@/lib/formatters';
-import { toast } from '@/hooks/use-toast';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const MunicipalServiceApplicationDetail = () => {
   const { applicationId } = useParams<{ applicationId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { profile } = useAuth();
   const [reviewNotes, setReviewNotes] = useState('');
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
@@ -502,66 +504,18 @@ const MunicipalServiceApplicationDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Review Management */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Review Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="assignee">Assigned Reviewer</Label>
-                <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select reviewer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="john-doe">John Doe</SelectItem>
-                    <SelectItem value="jane-smith">Jane Smith</SelectItem>
-                    <SelectItem value="unassigned">Unassigned</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-2">
-                <Button 
-                  className="w-full" 
-                  onClick={handleStatusChange}
-                >
-                  Update Status
-                </Button>
-              </div>
-              
-              <Separator />
-              
-              <div>
-                <Label htmlFor="review-notes">Add Review Notes</Label>
-                <Textarea
-                  id="review-notes"
-                  value={reviewNotes}
-                  onChange={(e) => setReviewNotes(e.target.value)}
-                  placeholder="Add notes about this application review..."
-                  className="mt-1"
-                  rows={4}
-                />
-              </div>
-              
-              <Button 
-                onClick={handleSaveNotes} 
-                disabled={!reviewNotes.trim() || isSavingNotes}
-                className="w-full"
-              >
-                {isSavingNotes ? 'Saving...' : 'Save Notes'}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Communication */}
-          <ServiceApplicationCommunication applicationId={applicationId!} />
+          {/* Review Management and Communication */}
+          {profile?.account_type === 'municipal' ? (
+            <>
+              <ServiceApplicationReviewManagement 
+                application={application} 
+                onStatusChange={() => window.location.reload()} 
+              />
+              <ServiceApplicationCommunication applicationId={applicationId!} />
+            </>
+          ) : (
+            <ServiceApplicationCommunication applicationId={applicationId!} />
+          )}
         </div>
       </div>
 
