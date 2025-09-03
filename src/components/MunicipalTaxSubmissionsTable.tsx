@@ -131,7 +131,7 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
             <Table>
               <TableHeader className="bg-muted/50">
                 <TableRow>
-                  <TableHead>Submission Date</TableHead>
+                  <TableHead>Date</TableHead>
                   <TableHead>Taxpayer Name</TableHead>
                   <TableHead>Tax Type</TableHead>
                   <TableHead>Tax Period</TableHead>
