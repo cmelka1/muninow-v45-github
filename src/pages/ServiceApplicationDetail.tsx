@@ -438,7 +438,7 @@ const ServiceApplicationDetail: React.FC = () => {
                     <div className="border-t pt-3">
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Total Amount</span>
-                        <span className="font-medium">{formatCurrency((application.amount_cents || 0) / 100)}</span>
+                        <span className="font-medium">{formatCurrency((application.total_amount_cents || application.amount_cents || 0) / 100)}</span>
                       </div>
                     </div>
                   </div>
@@ -448,37 +448,15 @@ const ServiceApplicationDetail: React.FC = () => {
                   </p>
                 </div>
               ) : application.payment_status === 'paid' ? (
-                <div className="space-y-4">
-                  {/* Payment Summary for Paid Status */}
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Base Amount</span>
-                      <span className="text-sm">{formatCurrency((application.amount_cents || 0) / 100)}</span>
-                    </div>
-                    {application.service_fee_cents && application.service_fee_cents > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Service Fee</span>
-                        <span className="text-sm">{formatCurrency(application.service_fee_cents / 100)}</span>
-                      </div>
-                    )}
-                    <div className="border-t pt-3">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">Total Paid</span>
-                        <span className="font-medium">{formatCurrency((application.total_amount_cents || application.amount_cents || 0) / 100)}</span>
-                      </div>
-                    </div>
-                  </div>
+                <div className="pt-2 space-y-2">
+                  <Button className="w-full" disabled variant="outline">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Payment Complete
+                  </Button>
                   
-                  <div className="pt-2 space-y-2">
-                    <Button className="w-full" disabled variant="outline">
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      Payment Complete
-                    </Button>
-                    
-                    <p className="text-xs text-green-600 mt-2">
-                      Your application fee has been paid
-                    </p>
-                  </div>
+                  <p className="text-xs text-green-600 mt-2">
+                    Your application fee has been paid
+                  </p>
                 </div>
               ) : (
                 <div className="pt-2">
