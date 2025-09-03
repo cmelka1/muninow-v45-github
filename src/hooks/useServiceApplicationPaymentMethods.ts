@@ -30,9 +30,8 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
     })
     .slice(0, 3);
 
-  const baseAmount = tile?.allow_user_defined_amount && userDefinedAmount 
-    ? userDefinedAmount * 100 
-    : tile?.amount_cents || 0;
+  // For service applications, prioritize userDefinedAmount (application amount) over tile amount
+  const baseAmount = userDefinedAmount || tile?.amount_cents || 0;
   
   // Use service fee calculation hook for frontend display
   const { totalAmount, serviceFee: calculatedServiceFee, isLoading: feeCalculationLoading } = useServiceFeeCalculation(
