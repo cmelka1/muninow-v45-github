@@ -12,7 +12,10 @@ import {
   Building,
   Download,
   Eye,
-  CalendarIcon
+  CalendarIcon,
+  CheckCircle,
+  AlertCircle,
+  XCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,10 +25,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { usePermit } from '@/hooks/usePermit';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 import { PermitStatusChangeDialog } from '@/components/PermitStatusChangeDialog';
-import { getStatusDisplayName, getStatusDescription, PermitStatus } from '@/hooks/usePermitWorkflow';
+import { getStatusDisplayName, getStatusDescription, PermitStatus, getValidStatusTransitions, usePermitWorkflow } from '@/hooks/usePermitWorkflow';
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
 import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { ScheduleInspectionDialog } from '@/components/ScheduleInspectionDialog';
@@ -45,6 +49,8 @@ const MunicipalPermitDetail = () => {
   const [isInspectionDialogOpen, setIsInspectionDialogOpen] = useState(false);
   const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [isQuickApproveDialogOpen, setIsQuickApproveDialogOpen] = useState(false);
+  const [approvalNotes, setApprovalNotes] = useState('');
   
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
@@ -55,6 +61,7 @@ const MunicipalPermitDetail = () => {
     permit?.merchant_id
   );
   const { data: documents } = usePermitDocuments(permitId!);
+  const { updatePermitStatus, isUpdating } = usePermitWorkflow();
 
   const handleSaveNotes = async () => {
     if (!permitId || !reviewNotes.trim()) {
@@ -100,6 +107,30 @@ const MunicipalPermitDetail = () => {
   const handleStatusChange = () => {
     setIsStatusDialogOpen(true);
   };
+
+  const handleQuickApprove = async () => {
+    if (!permit?.permit_id) return;
+    
+    const success = await updatePermitStatus(
+      permit.permit_id,
+      'approved',
+      approvalNotes.trim() || undefined
+    );
+
+    if (success) {
+      toast({
+        title: "Success",
+        description: "Permit has been approved successfully"
+      });
+      setIsQuickApproveDialogOpen(false);
+      setApprovalNotes('');
+      window.location.reload();
+    }
+  };
+
+  const canApprove = permit && getValidStatusTransitions(permit.application_status as PermitStatus).includes('approved');
+  const canRequestInfo = permit && getValidStatusTransitions(permit.application_status as PermitStatus).includes('information_requested');
+  const canDeny = permit && getValidStatusTransitions(permit.application_status as PermitStatus).includes('denied');
 
   const formatMunicipalQuestionResponse = (questionId: string, response: any) => {
     const question = questions?.find(q => q.id === questionId);
@@ -208,9 +239,59 @@ const MunicipalPermitDetail = () => {
                    <Label className="text-sm font-medium text-muted-foreground">Permit Fee</Label>
                    <p className="text-base">{formatCurrency((permit.base_fee_cents || 0) / 100)}</p>
                  </div>
-              </div>
-            </CardContent>
-          </Card>
+               </div>
+               
+               {/* Quick Actions */}
+               {(canApprove || canRequestInfo || canDeny) && (
+                 <>
+                   <Separator className="my-4" />
+                   <div>
+                     <Label className="text-sm font-medium text-muted-foreground mb-3 block">Quick Actions</Label>
+                     <div className="flex flex-wrap gap-2">
+                       {canApprove && (
+                         <Button
+                           size="sm"
+                           className="bg-green-600 hover:bg-green-700 text-white"
+                           onClick={() => setIsQuickApproveDialogOpen(true)}
+                         >
+                           <CheckCircle className="h-4 w-4 mr-1" />
+                           Approve
+                         </Button>
+                       )}
+                       {canRequestInfo && (
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           className="border-orange-200 text-orange-700 hover:bg-orange-50"
+                           onClick={() => {
+                             // TODO: Add quick request info dialog
+                             setIsStatusDialogOpen(true);
+                           }}
+                         >
+                           <AlertCircle className="h-4 w-4 mr-1" />
+                           Request Info
+                         </Button>
+                       )}
+                       {canDeny && (
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           className="border-red-200 text-red-700 hover:bg-red-50"
+                           onClick={() => {
+                             // TODO: Add quick deny dialog
+                             setIsStatusDialogOpen(true);
+                           }}
+                         >
+                           <XCircle className="h-4 w-4 mr-1" />
+                           Deny
+                         </Button>
+                       )}
+                     </div>
+                   </div>
+                 </>
+               )}
+             </CardContent>
+           </Card>
 
           {/* Property Information */}
           <Card>
@@ -524,6 +605,49 @@ const MunicipalPermitDetail = () => {
           window.location.reload();
         }}
       />
+
+      {/* Quick Approve Confirmation Dialog */}
+      <Dialog open={isQuickApproveDialogOpen} onOpenChange={setIsQuickApproveDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              Approve Permit
+            </DialogTitle>
+            <DialogDescription>
+              You are about to approve permit {permit?.permit_number}. This action will change the status from{' '}
+              <span className="font-medium">{getStatusDisplayName(permit?.application_status as PermitStatus)}</span> to{' '}
+              <span className="font-medium text-green-600">Approved</span>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="approval-notes">Approval Notes (Optional)</Label>
+              <Textarea
+                id="approval-notes"
+                value={approvalNotes}
+                onChange={(e) => setApprovalNotes(e.target.value)}
+                placeholder="Add any notes about the approval..."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsQuickApproveDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleQuickApprove}
+              disabled={isUpdating}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {isUpdating ? 'Approving...' : 'Approve Permit'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Document Viewer Modal */}
       <DocumentViewerModal
