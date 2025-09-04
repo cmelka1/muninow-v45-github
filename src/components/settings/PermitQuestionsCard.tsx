@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Table,
@@ -25,175 +23,51 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Edit2, Save, X, Plus, Trash2, GripVertical } from 'lucide-react';
+import { Edit2, Save, X, Plus, Trash2 } from 'lucide-react';
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
 import {
   useCreateMunicipalPermitQuestion,
   useUpdateMunicipalPermitQuestion,
   useDeleteMunicipalPermitQuestion,
 } from '@/hooks/useMunicipalPermitQuestionsMutations';
-import { useMerchants } from '@/hooks/useMerchants';
 import { useAuth } from '@/contexts/SimpleAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
-const QUESTION_TYPES = [
-  { value: 'text', label: 'Text' },
-  { value: 'textarea', label: 'Long Text' },
-  { value: 'number', label: 'Number' },
-  { value: 'email', label: 'Email' },
-  { value: 'phone', label: 'Phone' },
-  { value: 'select', label: 'Dropdown' },
-  { value: 'checkbox', label: 'Checkbox' },
-  { value: 'radio', label: 'Multiple Choice' },
-  { value: 'date', label: 'Date' },
-];
-
-interface EditableQuestionFieldProps {
-  value: string | number | boolean;
-  onChange: (value: any) => void;
-  type: 'text' | 'textarea' | 'boolean' | 'select';
-  options?: Array<{ value: string; label: string }>;
-  isEditMode: boolean;
-}
-
-const EditableQuestionField: React.FC<EditableQuestionFieldProps> = ({
-  value,
-  onChange,
-  type,
-  options,
-  isEditMode
-}) => {
-  if (!isEditMode) {
-    if (type === 'boolean') {
-      return <Badge variant={value ? 'default' : 'secondary'}>{value ? 'Yes' : 'No'}</Badge>;
-    }
-    return <span className="text-sm">{String(value)}</span>;
-  }
-
-  if (type === 'boolean') {
-    return (
-      <Switch
-        checked={value as boolean}
-        onCheckedChange={onChange}
-      />
-    );
-  }
-
-  if (type === 'textarea') {
-    return (
-      <Textarea
-        value={String(value)}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full min-h-[80px]"
-      />
-    );
-  }
-
-  if (type === 'select' && options) {
-    return (
-      <Select value={String(value)} onValueChange={onChange}>
-        <SelectTrigger className="w-full">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map(option => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    );
-  }
-
-  return (
-    <Input
-      value={String(value)}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full"
-    />
-  );
-};
-
 const NewQuestionRow: React.FC<{
-  merchants: any[];
   onAdd: (question: any) => void;
   nextDisplayOrder: number;
-}> = ({ merchants, onAdd, nextDisplayOrder }) => {
+}> = ({ onAdd, nextDisplayOrder }) => {
   const [questionText, setQuestionText] = useState('');
-  const [questionType, setQuestionType] = useState('text');
-  const [isRequired, setIsRequired] = useState(false);
-  const [merchantId, setMerchantId] = useState('all');
-  const [helpText, setHelpText] = useState('');
 
   const handleAdd = () => {
     if (!questionText.trim()) return;
 
     onAdd({
       question_text: questionText,
-      question_type: questionType,
-      is_required: isRequired,
-      merchant_id: merchantId === 'all' ? null : merchantId,
-      help_text: helpText || null,
+      question_type: 'checkbox', // Hardcoded to checkbox for yes/no questions
+      is_required: false, // Not needed for yes/no questions
+      merchant_id: null, // Applies to all merchants
+      help_text: null,
       display_order: nextDisplayOrder,
-      is_active: true,
+      is_active: true, // Auto-active when added
     });
 
     // Reset form
     setQuestionText('');
-    setQuestionType('text');
-    setIsRequired(false);
-    setMerchantId('all');
-    setHelpText('');
   };
 
   return (
     <TableRow className="bg-muted/50">
       <TableCell>
         <Input
-          placeholder="Enter question text..."
+          placeholder="Enter yes/no question..."
           value={questionText}
           onChange={(e) => setQuestionText(e.target.value)}
           className="w-full"
         />
       </TableCell>
-      <TableCell>
-        <Select value={questionType} onValueChange={setQuestionType}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {QUESTION_TYPES.map(type => (
-              <SelectItem key={type.value} value={type.value}>
-                {type.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </TableCell>
       <TableCell className="text-center">
-        <Switch
-          checked={isRequired}
-          onCheckedChange={setIsRequired}
-        />
-      </TableCell>
-      <TableCell>
-        <Select value={merchantId} onValueChange={setMerchantId}>
-          <SelectTrigger>
-            <SelectValue placeholder="All Merchants" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Merchants</SelectItem>
-            {merchants.map(merchant => (
-              <SelectItem key={merchant.id} value={merchant.id}>
-                {merchant.merchant_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </TableCell>
-      <TableCell>
-        <Badge variant="default">Yes</Badge>
+        <Switch checked={true} disabled />
       </TableCell>
       <TableCell>
         <Button 
@@ -235,7 +109,6 @@ export const PermitQuestionsCard: React.FC = () => {
   }, [user]);
 
   const { data: questions = [], isLoading } = useMunicipalPermitQuestions(customerId);
-  const { merchants } = useMerchants();
   
   const createMutation = useCreateMunicipalPermitQuestion();
   const updateMutation = useUpdateMunicipalPermitQuestion();
@@ -312,7 +185,7 @@ export const PermitQuestionsCard: React.FC = () => {
           <div>
             <CardTitle>Permit Questions</CardTitle>
             <CardDescription>
-              Configure custom questions for permit applications
+              Configure yes/no questions that will be asked on permit applications
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -353,10 +226,7 @@ export const PermitQuestionsCard: React.FC = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Question</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead className="text-center">Required</TableHead>
-              <TableHead>Merchant</TableHead>
-              <TableHead>Active</TableHead>
+              <TableHead className="text-center">Active</TableHead>
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -364,40 +234,25 @@ export const PermitQuestionsCard: React.FC = () => {
             {questions.map((question) => (
               <TableRow key={question.id}>
                 <TableCell>
-                  <EditableQuestionField
-                    value={getFieldValue(question, 'question_text')}
-                    onChange={(value) => handleFieldChange(question.id, 'question_text', value)}
-                    type="textarea"
-                    isEditMode={isEditMode}
-                  />
-                </TableCell>
-                <TableCell>
-                  <EditableQuestionField
-                    value={getFieldValue(question, 'question_type')}
-                    onChange={(value) => handleFieldChange(question.id, 'question_type', value)}
-                    type="select"
-                    options={QUESTION_TYPES}
-                    isEditMode={isEditMode}
-                  />
+                  {isEditMode ? (
+                    <Textarea
+                      value={getFieldValue(question, 'question_text')}
+                      onChange={(e) => handleFieldChange(question.id, 'question_text', e.target.value)}
+                      className="w-full min-h-[60px]"
+                    />
+                  ) : (
+                    <span className="text-sm">{question.question_text}</span>
+                  )}
                 </TableCell>
                 <TableCell className="text-center">
-                  <EditableQuestionField
-                    value={getFieldValue(question, 'is_required')}
-                    onChange={(value) => handleFieldChange(question.id, 'is_required', value)}
-                    type="boolean"
-                    isEditMode={isEditMode}
-                  />
-                </TableCell>
-                <TableCell>
-                  {question.merchant_name || 'All Merchants'}
-                </TableCell>
-                <TableCell>
-                  <EditableQuestionField
-                    value={getFieldValue(question, 'is_active')}
-                    onChange={(value) => handleFieldChange(question.id, 'is_active', value)}
-                    type="boolean"
-                    isEditMode={isEditMode}
-                  />
+                  {isEditMode ? (
+                    <Switch
+                      checked={getFieldValue(question, 'is_active')}
+                      onCheckedChange={(value) => handleFieldChange(question.id, 'is_active', value)}
+                    />
+                  ) : (
+                    <Switch checked={question.is_active} disabled />
+                  )}
                 </TableCell>
                 <TableCell className="text-center">
                   {isEditMode && (
@@ -428,7 +283,6 @@ export const PermitQuestionsCard: React.FC = () => {
             ))}
             {isEditMode && (
               <NewQuestionRow
-                merchants={merchants}
                 onAdd={handleAddQuestion}
                 nextDisplayOrder={nextDisplayOrder}
               />
