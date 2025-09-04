@@ -253,7 +253,6 @@ export const BusinessLicensesSettingsTab = () => {
             <CardDescription>
               Configure business license fees for your municipality.
               {isEditMode && ' Make changes and click Save to apply them.'}
-              {businessLicensesMerchant && ` Associated with ${businessLicensesMerchant.merchant_name}.`}
             </CardDescription>
           </div>
           <div className="flex items-center space-x-2">
