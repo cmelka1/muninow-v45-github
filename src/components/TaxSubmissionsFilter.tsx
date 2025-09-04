@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { useMunicipalTaxTypes } from '@/hooks/useMunicipalTaxTypes';
 
 export interface TaxSubmissionFilters {
   taxType?: string;
@@ -14,14 +15,18 @@ export interface TaxSubmissionFilters {
 interface TaxSubmissionsFilterProps {
   filters: TaxSubmissionFilters;
   onFiltersChange: (filters: TaxSubmissionFilters) => void;
+  customerId?: string; // Optional customer ID for filtering municipal tax types
 }
 
-const TaxSubmissionsFilter: React.FC<TaxSubmissionsFilterProps> = ({ filters, onFiltersChange }) => {
-  const taxTypeOptions = [
-    { value: 'food_beverage', label: 'Food & Beverage' },
-    { value: 'hotel_motel', label: 'Hotel & Motel' },
-    { value: 'amusement', label: 'Amusement' },
-  ];
+const TaxSubmissionsFilter: React.FC<TaxSubmissionsFilterProps> = ({ filters, onFiltersChange, customerId }) => {
+  // Fetch dynamic tax types from the database
+  const { data: municipalTaxTypes = [] } = useMunicipalTaxTypes(customerId);
+  
+  // Convert municipal tax types to dropdown options
+  const taxTypeOptions = municipalTaxTypes.map(taxType => ({
+    value: taxType.tax_type_code,
+    label: taxType.tax_type_name,
+  }));
 
   const periodRangeOptions = [
     { value: 'current_year', label: 'Current Year' },

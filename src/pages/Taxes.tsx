@@ -59,7 +59,11 @@ const Taxes = () => {
               <p className="text-muted-foreground">Manage and pay your tax bills</p>
             </header>
 
-            <TaxSubmissionsFilter filters={filters} onFiltersChange={setFilters} />
+            <TaxSubmissionsFilter 
+              filters={filters} 
+              onFiltersChange={setFilters} 
+              customerId={undefined} // Regular users don't have a specific customer_id filter
+            />
             <TaxSubmissionsTable 
               filters={filters}
               title="Paid Taxes"

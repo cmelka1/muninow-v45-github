@@ -2138,6 +2138,54 @@ export type Database = {
           },
         ]
       }
+      municipal_tax_types: {
+        Row: {
+          created_at: string
+          customer_id: string
+          description: string | null
+          display_order: number
+          id: string
+          instructions_document_path: string | null
+          is_active: boolean
+          merchant_id: string | null
+          merchant_name: string | null
+          required_documents: Json | null
+          tax_type_code: string
+          tax_type_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          instructions_document_path?: string | null
+          is_active?: boolean
+          merchant_id?: string | null
+          merchant_name?: string | null
+          required_documents?: Json | null
+          tax_type_code: string
+          tax_type_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          instructions_document_path?: string | null
+          is_active?: boolean
+          merchant_id?: string | null
+          merchant_name?: string | null
+          required_documents?: Json | null
+          tax_type_code?: string
+          tax_type_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       municipal_team_members: {
         Row: {
           admin_id: string

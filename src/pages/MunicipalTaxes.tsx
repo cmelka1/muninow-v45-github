@@ -30,7 +30,11 @@ const MunicipalTaxes = () => {
         </p>
       </div>
 
-      <TaxSubmissionsFilter filters={filters} onFiltersChange={setFilters} />
+      <TaxSubmissionsFilter 
+        filters={filters} 
+        onFiltersChange={setFilters} 
+        customerId={profile?.customer_id}
+      />
       <MunicipalTaxSubmissionsTable 
         filters={filters} 
         title="Municipal Tax Submissions"

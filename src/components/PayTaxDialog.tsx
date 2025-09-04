@@ -14,7 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -28,6 +28,7 @@ import { useTaxPaymentMethods } from '@/hooks/useTaxPaymentMethods';
 import { AddPaymentMethodDialog } from './profile/AddPaymentMethodDialog';
 import { TaxDocumentUpload } from './TaxDocumentUpload';
 import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
+import { useMunicipalTaxTypes } from '@/hooks/useMunicipalTaxTypes';
 
 
 interface PayTaxDialogProps {
@@ -103,6 +104,14 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
   // Generate staging ID for document uploads
   const [stagingId] = useState(() => crypto.randomUUID());
+
+  // Fetch dynamic tax types for selected municipality
+  const { data: availableTaxTypes = [] } = useMunicipalTaxTypes(selectedMunicipality?.customer_id);
+  const [selectedTaxTypeData, setSelectedTaxTypeData] = useState<{
+    name: string;
+    code: string;
+    instructions_document_path?: string;
+  } | null>(null);
 
   // Submission state and errors
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -528,17 +537,54 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
                       <div className="space-y-2">
                         <Label>Tax Type</Label>
-                        <Select value={taxType} onValueChange={setTaxType}>
+                        <Select 
+                          value={taxType} 
+                          onValueChange={(value) => {
+                            setTaxType(value);
+                            // Find the selected tax type data for displaying instructions
+                            const selectedType = availableTaxTypes.find(t => t.tax_type_code === value);
+                            if (selectedType) {
+                              setSelectedTaxTypeData({
+                                name: selectedType.tax_type_name,
+                                code: selectedType.tax_type_code,
+                                instructions_document_path: selectedType.instructions_document_path,
+                              });
+                            }
+                          }}
+                        >
                           <SelectTrigger aria-label="Tax type">
                             <SelectValue placeholder="Select tax type" />
                           </SelectTrigger>
                           <SelectContent className="z-50 bg-popover">
-                            <SelectItem value="Food & Beverage">Food &amp; Beverage</SelectItem>
-                            <SelectItem value="Hotel & Motel">Hotel &amp; Motel</SelectItem>
-                            <SelectItem value="Amusement">Amusement</SelectItem>
+                            {availableTaxTypes.map((taxType) => (
+                              <SelectItem key={taxType.id} value={taxType.tax_type_code}>
+                                {taxType.tax_type_name}
+                              </SelectItem>
+                            ))}
+                            {availableTaxTypes.length === 0 && selectedMunicipality && (
+                              <SelectItem value="" disabled>
+                                No tax types available for this municipality
+                              </SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                         {errors.taxType && <p className="text-sm text-destructive">{errors.taxType}</p>}
+                        
+                        {/* Show tax type instructions if available */}
+                        {selectedTaxTypeData?.instructions_document_path && (
+                          <div className="mt-3 p-3 bg-muted/50 rounded-md border">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm font-medium">Tax Instructions Available</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mb-2">
+                              Instructions document available for {selectedTaxTypeData.name}
+                            </p>
+                            <Button size="sm" variant="outline" className="h-7 text-xs">
+                              View Instructions
+                            </Button>
+                          </div>
+                        )}
                       </div>
 
                       <Separator className="my-4" />
