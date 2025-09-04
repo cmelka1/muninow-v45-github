@@ -9,7 +9,7 @@ const corsHeaders = {
 interface ProcessBusinessLicensePaymentRequest {
   license_id: string;
   payment_instrument_id: string;
-  total_amount_cents: number;
+  amount_cents: number;
   idempotency_id: string;
   fraud_session_id: string;
 }
@@ -78,7 +78,7 @@ serve(async (req) => {
     const { 
       license_id, 
       payment_instrument_id, 
-      total_amount_cents, 
+      amount_cents, 
       idempotency_id,
       fraud_session_id 
     } = body;
@@ -86,12 +86,12 @@ serve(async (req) => {
     console.log("Processing business license payment:", { 
       license_id, 
       payment_instrument_id, 
-      total_amount_cents, 
+      amount_cents, 
       user_id: user.id 
     });
 
     // Validate input
-    if (!license_id || !payment_instrument_id || !total_amount_cents || !idempotency_id || !fraud_session_id) {
+    if (!license_id || !payment_instrument_id || !amount_cents || !idempotency_id || !fraud_session_id) {
       throw new Error("Missing required parameters");
     }
 
@@ -140,22 +140,31 @@ serve(async (req) => {
       throw new Error("Payment instrument not found or access denied");
     }
 
-    // Calculate service fee based on payment instrument type using grossed-up method
-    const isCard = paymentInstrument.instrument_type === 'PAYMENT_CARD';
-    const basisPoints = isCard ? (license.basis_points || 250) : (license.ach_basis_points || 20);
-    const fixedFee = isCard ? (license.fixed_fee || 50) : (license.ach_fixed_fee || 50);
-    
-    const baseAmount = license.base_fee_cents || license.total_amount_cents || 0;
-    
-    // Use grossed-up calculation to match frontend
-    const percentageDecimal = basisPoints / 10000;
-    const expectedTotal = Math.round((baseAmount + fixedFee) / (1 - percentageDecimal));
-    const calculatedServiceFee = expectedTotal - baseAmount;
+    // Get merchant fee profile for service fee calculation
+    const { data: feeProfile, error: feeError } = await supabaseService
+      .from('merchant_fee_profiles')
+      .select('*')
+      .eq('merchant_id', license.merchant_id)
+      .single();
 
-    // Validate total amount matches calculation
-    if (Math.abs(total_amount_cents - expectedTotal) > 1) { // Allow 1 cent rounding difference
-      throw new Error(`Total amount mismatch. Expected: ${expectedTotal}, Received: ${total_amount_cents}`);
+    if (feeError || !feeProfile) {
+      throw new Error('Fee profile not found for merchant');
     }
+
+    // Calculate service fee based on payment instrument type
+    const isACH = paymentInstrument.instrument_type === 'BANK_ACCOUNT';
+    const calculatedServiceFee = isACH 
+      ? (feeProfile.ach_fixed_fee || 0) + Math.round((amount_cents * (feeProfile.ach_basis_points || 0)) / 10000)
+      : (feeProfile.fixed_fee || 0) + Math.round((amount_cents * (feeProfile.basis_points || 0)) / 10000);
+
+    const totalAmountCents = amount_cents + calculatedServiceFee;
+    
+    console.log('Payment calculation:', {
+      baseAmount: amount_cents,
+      serviceFee: calculatedServiceFee,
+      totalAmount: totalAmountCents,
+      isACH: isACH
+    });
 
     // Get Finix merchant ID from the license
     const finixMerchantId = license.finix_merchant_id;
@@ -182,9 +191,9 @@ serve(async (req) => {
         customer_id: license.customer_id,
         finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
         finix_merchant_id: finixMerchantId,
-        amount_cents: baseAmount,
+        amount_cents: amount_cents,
         service_fee_cents: calculatedServiceFee,
-        total_amount_cents: total_amount_cents,
+        total_amount_cents: totalAmountCents,
         currency: 'USD',
         payment_type: paymentType,
         idempotency_id: idempotency_id,
@@ -215,7 +224,7 @@ serve(async (req) => {
         bill_type: 'business_license',
         issue_date: license.created_at,
         due_date: license.created_at, // Licenses are due immediately upon approval
-        original_amount_cents: baseAmount,
+        original_amount_cents: amount_cents,
         payment_status: 'unpaid',
         bill_status: 'unpaid'
       })
@@ -231,7 +240,7 @@ serve(async (req) => {
     const finixRequest: FinixTransferRequest = {
       merchant: finixMerchantId,
       currency: "USD",
-      amount: total_amount_cents,
+      amount: totalAmountCents,
       source: paymentInstrument.finix_payment_instrument_id,
       idempotency_id: idempotency_id
     };
@@ -302,7 +311,7 @@ serve(async (req) => {
           .from("business_license_applications")
           .update({
             service_fee_cents: calculatedServiceFee,
-            total_amount_cents: total_amount_cents,
+            total_amount_cents: totalAmountCents,
             payment_status: 'paid',
             application_status: 'issued',
             finix_transfer_id: finixData.id,
@@ -347,7 +356,7 @@ serve(async (req) => {
         payment_history_id: paymentHistory.id,
         transfer_id: finixData.id,
         transfer_state: finixData.state,
-        amount_cents: total_amount_cents
+        amount_cents: totalAmountCents
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -173,7 +173,7 @@ export const useBusinessLicensePaymentMethods = (license: any) => {
         body: {
           license_id: license.id,
           payment_instrument_id: selectedPaymentMethod,
-          base_amount_cents: license.base_fee_cents || license.total_amount_cents,
+          amount_cents: license.base_fee_cents || license.total_amount_cents,
           idempotency_id: idempotencyId,
           fraud_session_id: currentFraudSessionId
         }
