@@ -64,11 +64,11 @@ export const useCreateMunicipalBusinessLicenseType = () => {
     mutationFn: async (data: CreateMunicipalBusinessLicenseTypeData) => {
       const { data: result, error } = await supabase.rpc('create_municipal_business_license_type', {
         p_customer_id: data.customer_id,
+        p_municipal_label: data.municipal_label,
+        p_base_fee_cents: data.base_fee_cents,
         p_business_license_type_id: data.business_license_type_id || null,
         p_merchant_id: data.merchant_id,
         p_merchant_name: data.merchant_name,
-        p_municipal_label: data.municipal_label,
-        p_base_fee_cents: data.base_fee_cents,
         p_is_custom: data.is_custom ?? true,
         p_display_order: data.display_order ?? 999
       });

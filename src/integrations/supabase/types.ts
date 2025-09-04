@@ -1614,6 +1614,51 @@ export type Database = {
           },
         ]
       }
+      municipal_business_license_types: {
+        Row: {
+          base_fee_cents: number
+          business_license_type_id: string | null
+          created_at: string
+          customer_id: string
+          display_order: number
+          id: string
+          is_active: boolean
+          is_custom: boolean
+          merchant_id: string | null
+          merchant_name: string | null
+          municipal_label: string
+          updated_at: string
+        }
+        Insert: {
+          base_fee_cents?: number
+          business_license_type_id?: string | null
+          created_at?: string
+          customer_id: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_custom?: boolean
+          merchant_id?: string | null
+          merchant_name?: string | null
+          municipal_label: string
+          updated_at?: string
+        }
+        Update: {
+          base_fee_cents?: number
+          business_license_type_id?: string | null
+          created_at?: string
+          customer_id?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_custom?: boolean
+          merchant_id?: string | null
+          merchant_name?: string | null
+          municipal_label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       municipal_permit_merchants: {
         Row: {
           active: boolean
@@ -3988,16 +4033,27 @@ export type Database = {
         Returns: undefined
       }
       create_municipal_business_license_type: {
-        Args: {
-          p_base_fee_cents: number
-          p_business_license_type_id: string
-          p_customer_id: string
-          p_display_order?: number
-          p_is_custom?: boolean
-          p_merchant_id: string
-          p_merchant_name: string
-          p_municipal_label: string
-        }
+        Args:
+          | {
+              p_base_fee_cents: number
+              p_business_license_type_id: string
+              p_customer_id: string
+              p_display_order?: number
+              p_is_custom?: boolean
+              p_merchant_id: string
+              p_merchant_name: string
+              p_municipal_label: string
+            }
+          | {
+              p_base_fee_cents: number
+              p_business_license_type_id?: string
+              p_customer_id: string
+              p_display_order?: number
+              p_is_custom?: boolean
+              p_merchant_id?: string
+              p_merchant_name?: string
+              p_municipal_label: string
+            }
         Returns: string
       }
       create_municipal_team_invitation: {

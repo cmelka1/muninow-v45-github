@@ -35,12 +35,17 @@ export const BusinessLicensesSettingsTab = () => {
     base_fee_cents: 0,
   });
 
-  // Initialize standard types if none exist
+  // Initialize standard types if none exist and prevent infinite retries
   useEffect(() => {
-    if (profile?.customer_id && municipalTypes.length === 0 && !isLoading && businessLicensesMerchant) {
+    if (profile?.customer_id && 
+        municipalTypes.length === 0 && 
+        !isLoading && 
+        businessLicensesMerchant && 
+        !initializeMutation.isPending &&
+        !initializeMutation.isError) {
       initializeMutation.mutate(profile.customer_id);
     }
-  }, [profile?.customer_id, municipalTypes.length, isLoading, businessLicensesMerchant, initializeMutation]);
+  }, [profile?.customer_id, municipalTypes.length, isLoading, businessLicensesMerchant, initializeMutation.isPending, initializeMutation.isError]);
 
   const handleEdit = (type: MunicipalBusinessLicenseType) => {
     setEditingType(type);
@@ -182,6 +187,19 @@ export const BusinessLicensesSettingsTab = () => {
                 : 'Loading business license types...'
               }
             </p>
+          ) : initializeMutation.isError ? (
+            <div className="text-center py-8">
+              <p className="text-destructive mb-4">
+                Failed to initialize business license types.
+              </p>
+              <Button 
+                onClick={() => initializeMutation.mutate(profile?.customer_id!)} 
+                variant="outline"
+                disabled={!profile?.customer_id}
+              >
+                Retry Initialization
+              </Button>
+            </div>
           ) : municipalTypes.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">
               No business license types configured yet.
