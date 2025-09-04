@@ -131,7 +131,7 @@ const MunicipalPermitsTable: React.FC<MunicipalPermitsTableProps> = ({ filters =
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Municipal Permits</CardTitle>
+          <CardTitle>Building Permits</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-destructive">Error loading permits: {error.message}</p>
@@ -144,7 +144,7 @@ const MunicipalPermitsTable: React.FC<MunicipalPermitsTableProps> = ({ filters =
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Municipal Permits</CardTitle>
+          <CardTitle>Building Permits</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -161,7 +161,7 @@ const MunicipalPermitsTable: React.FC<MunicipalPermitsTableProps> = ({ filters =
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Municipal Permits ({totalCount})</CardTitle>
+          <CardTitle>Building Permits ({totalCount})</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">No permits found.</p>
@@ -175,7 +175,7 @@ const MunicipalPermitsTable: React.FC<MunicipalPermitsTableProps> = ({ filters =
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle>Municipal Permits ({totalCount})</CardTitle>
+            <CardTitle>Building Permits ({totalCount})</CardTitle>
             <Button 
               onClick={() => setIsNewPermitDialogOpen(true)}
               className="flex items-center space-x-2"

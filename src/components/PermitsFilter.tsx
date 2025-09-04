@@ -80,7 +80,7 @@ const PermitsFilter: React.FC<PermitsFilterProps> = ({ filters, onFiltersChange 
     <Card className="mb-6">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-medium">Filter Permits</CardTitle>
+          <CardTitle className="text-lg font-medium">Filter Building Permits</CardTitle>
           {hasActiveFilters && (
             <Button
               variant="ghost"
