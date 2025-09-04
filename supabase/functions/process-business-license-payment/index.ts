@@ -19,8 +19,8 @@ interface FinixTransferRequest {
   currency: string;
   amount: number;
   source: string;
-  fraud_session_id?: string;
   idempotency_id: string;
+  fraud_session_id: string;
 }
 
 interface FinixTransferResponse {
@@ -242,12 +242,9 @@ serve(async (req) => {
       currency: "USD",
       amount: totalAmountCents,
       source: paymentInstrument.finix_payment_instrument_id,
-      idempotency_id: idempotency_id
+      idempotency_id: idempotency_id,
+      fraud_session_id: fraud_session_id
     };
-
-    if (fraud_session_id) {
-      finixRequest.fraud_session_id = fraud_session_id;
-    }
 
     // Get Finix credentials
     const finixApplicationId = Deno.env.get("FINIX_APPLICATION_ID");
