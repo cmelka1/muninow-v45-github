@@ -22,11 +22,13 @@ const TaxSubmissionsFilter: React.FC<TaxSubmissionsFilterProps> = ({ filters, on
   // Fetch dynamic tax types from the database
   const { data: municipalTaxTypes = [] } = useMunicipalTaxTypes(customerId);
   
-  // Convert municipal tax types to dropdown options
-  const taxTypeOptions = municipalTaxTypes.map(taxType => ({
-    value: taxType.tax_type_code,
-    label: taxType.tax_type_name,
-  }));
+  // Convert municipal tax types to dropdown options, filtering out empty codes
+  const taxTypeOptions = municipalTaxTypes
+    .filter(taxType => taxType.tax_type_code && taxType.tax_type_code.trim() !== '')
+    .map(taxType => ({
+      value: taxType.tax_type_code,
+      label: taxType.tax_type_name,
+    }));
 
   const periodRangeOptions = [
     { value: 'current_year', label: 'Current Year' },
