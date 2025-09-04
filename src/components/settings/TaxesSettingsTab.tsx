@@ -108,6 +108,13 @@ export const TaxesSettingsTab = () => {
   const createTaxTypeMutation = useCreateMunicipalTaxType();
   const uploadDocumentMutation = useUploadTaxInstructionDocument();
 
+  // Auto-enable edit mode when there are no tax types
+  React.useEffect(() => {
+    if (!isLoading && taxTypes.length === 0 && !isEditMode) {
+      setIsEditMode(true);
+    }
+  }, [taxTypes.length, isLoading, isEditMode]);
+
   const handleFieldChange = (taxTypeId: string, field: string, value: any) => {
     setChanges(prev => ({
       ...prev,
@@ -270,18 +277,6 @@ export const TaxesSettingsTab = () => {
             <div className="flex items-center justify-center py-8">
               <div className="text-muted-foreground">Loading tax types...</div>
             </div>
-          ) : taxTypes.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <div className="mb-4">
-                <FileText className="h-12 w-12 mx-auto text-muted-foreground/50" />
-              </div>
-              <p className="text-lg font-medium mb-2">No tax types configured</p>
-              <p className="text-sm mb-4">Create your first custom tax type to get started.</p>
-              <Button onClick={() => setIsEditMode(true)} size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                Add Tax Type
-              </Button>
-            </div>
           ) : (
             <div className="rounded-md border">
               <Table>
@@ -339,7 +334,7 @@ export const TaxesSettingsTab = () => {
                     </TableRow>
                   ))}
                   
-                  {isEditMode && (
+                  {(isEditMode || taxTypes.length === 0) && (
                     <NewTaxTypeRow
                       onAdd={handleAddCustomType}
                       isLoading={createTaxTypeMutation.isPending}
