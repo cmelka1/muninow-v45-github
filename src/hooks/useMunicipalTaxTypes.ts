@@ -171,19 +171,38 @@ export const useDeleteMunicipalTaxType = () => {
 
 // Hook to upload tax instruction document
 export const useUploadTaxInstructionDocument = () => {
+  const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: async ({ file, taxTypeId }: { file: File; taxTypeId: string }) => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${taxTypeId}-instructions.${fileExt}`;
       const filePath = `${taxTypeId}/${fileName}`;
 
+      // Upload file to storage
       const { error: uploadError } = await supabase.storage
         .from('tax-instructions')
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
+      // Update the database with the document path
+      const { error: updateError } = await supabase
+        .from('municipal_tax_types')
+        .update({ 
+          instructions_document_path: filePath,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', taxTypeId);
+
+      if (updateError) throw updateError;
+
       return filePath;
+    },
+    onSuccess: () => {
+      // Invalidate queries to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ['municipal-tax-types'] });
+      queryClient.invalidateQueries({ queryKey: ['all-municipal-tax-types'] });
     },
   });
 };

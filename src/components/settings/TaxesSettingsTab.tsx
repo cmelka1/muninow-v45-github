@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
-import { Edit2, Save, X, Upload, Plus, FileText } from 'lucide-react';
+import { Edit2, Save, X, Upload, Plus, FileText, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import {
   useAllMunicipalTaxTypes,
   useUpdateMunicipalTaxTypes,
@@ -212,11 +213,11 @@ export const TaxesSettingsTab = () => {
 
   const handleFileUpload = async (file: File, taxTypeId: string) => {
     try {
-      await uploadDocumentMutation.mutateAsync({ file, taxTypeId });
+      const filePath = await uploadDocumentMutation.mutateAsync({ file, taxTypeId });
       
       toast({
         title: "Document uploaded",
-        description: "Instruction document has been uploaded successfully.",
+        description: "Instruction document has been uploaded and saved successfully.",
       });
     } catch (error) {
       console.error('Error uploading document:', error);
@@ -236,6 +237,7 @@ export const TaxesSettingsTab = () => {
             <CardTitle>Tax Types</CardTitle>
             <CardDescription>
               Configure tax types and upload instruction documents for your municipality.
+              Documents are saved immediately upon upload. Other changes require clicking Save.
               {isEditMode && ' Make changes and click Save to apply them.'}
             </CardDescription>
           </div>
@@ -301,11 +303,29 @@ export const TaxesSettingsTab = () => {
                         <div className="flex items-center gap-2">
                           {taxType.instructions_document_path ? (
                             <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm text-muted-foreground">Document uploaded</span>
+                              <FileText className="h-4 w-4 text-green-600" />
+                              <span className="text-sm text-green-600 font-medium">Document uploaded</span>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                onClick={() => {
+                                  const { data } = supabase.storage
+                                    .from('tax-instructions')
+                                    .getPublicUrl(taxType.instructions_document_path);
+                                  if (data?.publicUrl) {
+                                    window.open(data.publicUrl, '_blank');
+                                  }
+                                }}
+                                className="h-6 px-2"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                              </Button>
                             </div>
                           ) : (
-                            <span className="text-sm text-muted-foreground">No document</span>
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm text-muted-foreground">No document</span>
+                            </div>
                           )}
                           {isEditMode && (
                             <>
@@ -313,7 +333,7 @@ export const TaxesSettingsTab = () => {
                                 <Button size="sm" variant="outline" asChild>
                                   <span>
                                     <Upload className="h-4 w-4 mr-1" />
-                                    Upload
+                                    {taxType.instructions_document_path ? 'Replace' : 'Upload'}
                                   </span>
                                 </Button>
                               </Label>
