@@ -257,7 +257,7 @@ export const PermitsSettingsTab = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div className="space-y-1">
-            <CardTitle>Municipal Permit Types</CardTitle>
+            <CardTitle>Permit Types</CardTitle>
             <CardDescription>
               Configure permit fees and inspection requirements for your municipality.
               {isEditMode && ' Make changes and click Save to apply them.'}
