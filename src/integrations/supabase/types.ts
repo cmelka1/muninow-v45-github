@@ -394,7 +394,7 @@ export type Database = {
             foreignKeyName: "business_license_applications_license_type_id_fkey"
             columns: ["license_type_id"]
             isOneToOne: false
-            referencedRelation: "business_license_types"
+            referencedRelation: "municipal_business_license_types"
             referencedColumns: ["id"]
           },
         ]
