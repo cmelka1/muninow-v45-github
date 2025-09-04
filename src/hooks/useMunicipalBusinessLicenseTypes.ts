@@ -41,18 +41,14 @@ export const useMunicipalBusinessLicenseTypes = (customerId?: string) => {
       if (!customerId) return [];
 
       const { data, error } = await supabase
-        .from('municipal_business_license_types')
-        .select('*')
-        .eq('customer_id', customerId)
-        .eq('is_active', true)
-        .order('display_order');
+        .rpc('get_municipal_business_license_types', { p_customer_id: customerId });
 
       if (error) {
         console.error('Error fetching municipal business license types:', error);
         throw error;
       }
 
-      return data as MunicipalBusinessLicenseType[];
+      return (data as any[]) || [];
     },
     enabled: !!customerId,
   });
