@@ -395,7 +395,7 @@ serve(async (req) => {
           calculated_fee_cents: calculatedServiceFee,
           total_paid_cents: newPaidAmount,
           remaining_balance_cents: Math.max(0, newRemainingBalance),
-          payment_status: newRemainingBalance <= 0 ? 'paid' : 'partially_paid',
+          payment_status: newRemainingBalance <= 0 ? 'paid' : 'unpaid',
           external_payment_reference: transferData.id,
           payment_processed_by: 'finix_apple_pay',
           updated_at: new Date().toISOString()

@@ -115,7 +115,7 @@ export const RefundDialog: React.FC<RefundDialogProps> = ({
       // Handle different refund statuses
       const status = parsedData.refund?.refund_status || 'unknown';
       
-      if (status === 'pending') {
+      if (status === 'unpaid') {
         toast({
           title: "Refund Submitted Successfully",
           description: `Refund request for ${paymentDetails.master_bills.external_bill_number} has been submitted and is being processed. You will be notified when the refund is completed.`,

@@ -225,7 +225,7 @@ serve(async (req) => {
         const { data: updatedApp, error: updateError } = await supabaseAdmin
           .from('municipal_service_applications')
           .update({
-            payment_status: 'pending',
+            payment_status: 'unpaid',
             payment_instrument_id: requestBody.payment_instrument_id,
             finix_payment_instrument_id: paymentInstrument.finix_payment_instrument_id,
             payment_type: isACH ? 'BANK_ACCOUNT' : 'PAYMENT_CARD',
@@ -265,7 +265,7 @@ serve(async (req) => {
             additional_information: requestBody.additional_information || null,
             service_specific_data: requestBody.service_specific_data || {},
             status: 'approved',
-            payment_status: 'pending',
+            payment_status: 'unpaid',
             amount_cents: requestBody.amount_cents,
             service_fee_cents: calculatedServiceFee,
             total_amount_cents: totalAmountCents,
@@ -315,7 +315,7 @@ serve(async (req) => {
           category: 'Administrative & Civic Fees',
           subcategory: 'Other Specialized Payments',
           statement_descriptor: serviceTile.title.substring(0, 22),
-          payment_status: 'pending',
+          payment_status: 'unpaid',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -399,7 +399,7 @@ serve(async (req) => {
         .update({
           finix_transfer_id: finixTransferResponse.id,
           transfer_state: finixTransferResponse.state,
-          payment_status: finixTransferResponse.state === 'SUCCEEDED' ? 'completed' : 'pending',
+          payment_status: finixTransferResponse.state === 'SUCCEEDED' ? 'paid' : 'unpaid',
           payment_processed_at: finixTransferResponse.state === 'SUCCEEDED' ? new Date().toISOString() : null,
           updated_at: new Date().toISOString()
         })
@@ -485,7 +485,7 @@ serve(async (req) => {
                 await supabaseAdmin
                   .from('payment_history')
                   .update({
-                    payment_status: 'refunded',
+                    payment_status: 'unpaid',
                     transfer_state: 'REFUNDED',
                     updated_at: new Date().toISOString()
                   })

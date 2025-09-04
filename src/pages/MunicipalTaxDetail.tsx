@@ -92,7 +92,7 @@ const MunicipalTaxDetail = () => {
     switch (status) {
       case 'paid':
         return <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Paid</Badge>;
-      case 'pending':
+      case 'unpaid':
         return <Badge variant="secondary">Pending</Badge>;
       case 'failed':
         return <Badge variant="destructive">Failed</Badge>;

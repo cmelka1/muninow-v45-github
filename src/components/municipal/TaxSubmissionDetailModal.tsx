@@ -70,11 +70,10 @@ export function TaxSubmissionDetailModal({ submissionId, onClose }: TaxSubmissio
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       paid: { label: 'Paid', variant: 'default' as const },
-      pending: { label: 'Pending', variant: 'secondary' as const },
-      failed: { label: 'Failed', variant: 'destructive' as const },
+      unpaid: { label: 'Unpaid', variant: 'secondary' as const },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || { label: status, variant: 'secondary' as const };
+    const config = statusConfig[status as keyof typeof statusConfig] || { label: 'Unpaid', variant: 'secondary' as const };
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 

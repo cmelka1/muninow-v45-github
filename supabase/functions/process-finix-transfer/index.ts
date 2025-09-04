@@ -316,7 +316,7 @@ serve(async (req) => {
           calculated_fee_cents: calculatedServiceFee,
           total_paid_cents: newPaidAmount,
           remaining_balance_cents: Math.max(0, newRemainingBalance),
-          payment_status: newRemainingBalance <= 0 ? 'paid' : 'partially_paid',
+          payment_status: newRemainingBalance <= 0 ? 'paid' : 'unpaid',
           external_payment_reference: finixData.id,
           payment_processed_by: 'finix',
           updated_at: new Date().toISOString()

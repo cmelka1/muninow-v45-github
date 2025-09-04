@@ -273,7 +273,7 @@ serve(async (req) => {
         base_amount_cents: baseAmount,
         service_fee_cents: serviceFeeAmount,
         total_amount_cents: total_amount_cents,
-        payment_status: 'processing',
+        payment_status: 'unpaid',
         idempotency_id: idempotency_id,
         fraud_session_id: fraud_session_id,
         billing_address: billing_contact ? JSON.stringify(billing_contact) : null,
@@ -322,7 +322,7 @@ serve(async (req) => {
       .from('payment_history')
       .update({
         finix_transfer_id: transferData.id,
-        payment_status: transferSuccess ? 'paid' : 'failed',
+        payment_status: transferSuccess ? 'paid' : 'unpaid',
         finix_raw_response: transferData,
         processed_at: new Date().toISOString(),
         ...(transferData.failure_code && { 
@@ -363,7 +363,7 @@ serve(async (req) => {
         success: true,
         payment_id: paymentRecord.id,
         transfer_id: transferData.id,
-        payment_status: 'completed',
+        payment_status: 'paid',
         redirect_url: `/payment-confirmation?payment_id=${paymentRecord.id}`
       }),
       { 

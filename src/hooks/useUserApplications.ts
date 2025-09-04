@@ -125,7 +125,7 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
           dateSubmitted: tax.submission_date || tax.created_at,
           municipality: customerMap.get(tax.customer_id) || 'Unknown',
           status: tax.submission_status,
-          paymentStatus: tax.payment_status || 'pending',
+          paymentStatus: tax.payment_status || 'unpaid',
           customerId: tax.customer_id,
           detailPath: `/taxes`
         })),
