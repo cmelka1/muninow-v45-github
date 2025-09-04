@@ -478,6 +478,17 @@ const PermitDetail = () => {
                         isDisabled={isProcessingPayment}
                       />
                       
+                      {/* Payment Buttons */}
+                      {selectedPaymentMethod && (
+                        <Button 
+                          className="w-full" 
+                          onClick={handlePayment}
+                          disabled={isProcessingPayment}
+                        >
+                          {isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency((totalWithFee || 0) / 100)}`}
+                        </Button>
+                      )}
+                      
                       <Button 
                         variant="outline" 
                         className="w-full" 
@@ -487,19 +498,6 @@ const PermitDetail = () => {
                         Add New Payment Method
                       </Button>
                     </div>
-                  </div>
-                  
-                  {/* Payment Buttons */}
-                  <div className="space-y-2">
-                    {selectedPaymentMethod && (
-                      <Button 
-                        className="w-full" 
-                        onClick={handlePayment}
-                        disabled={isProcessingPayment}
-                      >
-                        {isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency((totalWithFee || 0) / 100)}`}
-                      </Button>
-                    )}
                   </div>
                   
                   <p className="text-xs text-muted-foreground">
