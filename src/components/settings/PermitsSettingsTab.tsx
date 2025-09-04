@@ -259,7 +259,7 @@ export const PermitsSettingsTab = () => {
           <div className="space-y-1">
             <CardTitle>Municipal Permit Types</CardTitle>
             <CardDescription>
-              Configure permit fees, processing times, and inspection requirements for your municipality.
+              Configure permit fees and inspection requirements for your municipality.
               {isEditMode && ' Make changes and click Save to apply them.'}
             </CardDescription>
           </div>
