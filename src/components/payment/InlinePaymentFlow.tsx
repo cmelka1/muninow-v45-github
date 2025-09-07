@@ -163,21 +163,29 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={handleGooglePayment}
+            onClick={() => {
+              if (!isProcessingPayment) {
+                handleGooglePayment();
+              }
+            }}
             disabled={!googlePayMerchantId || isProcessingPayment}
             className="flex-1 text-xs"
             size="sm"
           >
-            Google Pay
+            {isProcessingPayment ? 'Processing...' : 'Google Pay'}
           </Button>
           <Button
             variant="outline"
-            onClick={handleApplePayment}
+            onClick={() => {
+              if (!isProcessingPayment) {
+                handleApplePayment();
+              }
+            }}
             disabled={isProcessingPayment}
             className="flex-1 text-xs"
             size="sm"
           >
-            Apple Pay
+            {isProcessingPayment ? 'Processing...' : 'Apple Pay'}
           </Button>
         </div>
       </div>
@@ -186,14 +194,19 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
 
       <div className="space-y-3">
         <Button
-          onClick={handlePayment}
+          onClick={() => {
+            // Prevent double-clicking
+            if (!isProcessingPayment) {
+              handlePayment();
+            }
+          }}
           disabled={!selectedPaymentMethod || isProcessingPayment || !serviceFee}
           className="w-full"
         >
           {isProcessingPayment ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Processing...
+              Processing Payment...
             </>
           ) : (
             `Pay $${(totalWithFee / 100).toFixed(2)}`
@@ -203,6 +216,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
         <Button
           variant="outline"
           onClick={onAddPaymentMethod}
+          disabled={isProcessingPayment}
           className="w-full"
           size="sm"
         >
@@ -213,6 +227,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
         <Button
           variant="ghost"
           onClick={() => setIsExpanded(false)}
+          disabled={isProcessingPayment}
           className="w-full"
           size="sm"
         >

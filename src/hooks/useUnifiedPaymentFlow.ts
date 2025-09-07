@@ -38,6 +38,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [serviceFee, setServiceFee] = useState<UnifiedServiceFee | null>(null);
   const [googlePayMerchantId, setGooglePayMerchantId] = useState<string | null>(null);
+  const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
 
   // Load Google Pay merchant ID
   useEffect(() => {
@@ -116,9 +117,27 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       throw new Error('Missing payment information');
     }
 
+    // Prevent duplicate requests
+    const requestId = generateIdempotencyId('payment_request');
+    if (processingRequestId === requestId || isProcessingPayment) {
+      console.log('Payment already in progress, ignoring duplicate request');
+      throw new Error('Payment already in progress');
+    }
+
     setIsProcessingPayment(true);
+    setProcessingRequestId(requestId);
 
     try {
+      // Refresh auth token to ensure it's valid
+      console.log('Refreshing auth session before payment...');
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.warn('Failed to refresh auth session:', refreshError);
+        // Continue anyway - might still work with current token
+      }
+
+      // Wait a moment for token refresh to take effect
+      await new Promise(resolve => setTimeout(resolve, 100));
       const paymentInstrument = paymentInstruments.find(p => p.id === selectedPaymentMethod);
       const paymentType = paymentInstrument ? 
         (paymentInstrument.instrument_type === 'PAYMENT_CARD' ? 'card' : 'ach') : 
@@ -149,7 +168,13 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         body: requestBody
       });
 
-      if (error) throw error;
+      if (error) {
+        // Distinguish between auth errors and payment errors
+        if (error.message?.includes('JWT') || error.message?.includes('401') || error.message?.includes('unauthorized')) {
+          throw new Error('Authentication expired. Please refresh the page and try again.');
+        }
+        throw error;
+      }
 
       if (data.success) {
         const response: PaymentResponse = {
@@ -184,6 +209,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       throw classifiedError;
     } finally {
       setIsProcessingPayment(false);
+      setProcessingRequestId(null);
     }
   };
 
