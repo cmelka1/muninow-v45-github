@@ -4606,10 +4606,10 @@ export type Database = {
         Args: {
           p_finix_transfer_id: string
           p_payment_history_id: string
-          p_payment_status?: string
+          p_payment_status: string
           p_transfer_state: string
         }
-        Returns: boolean
+        Returns: Json
       }
       validate_merchant_category_subcategory: {
         Args: { p_category: string; p_subcategory: string }
