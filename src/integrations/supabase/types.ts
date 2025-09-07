@@ -4042,6 +4042,19 @@ export type Database = {
         Args: { _entity_id?: string; _role_name: string; _user_id: string }
         Returns: boolean
       }
+      calculate_unified_service_fee: {
+        Args: {
+          p_base_amount_cents: number
+          p_is_card: boolean
+          p_merchant_id: string
+        }
+        Returns: {
+          basis_points: number
+          fixed_fee: number
+          service_fee_cents: number
+          total_amount_cents: number
+        }[]
+      }
       can_view_profile_for_permits: {
         Args: { target_user_id: string }
         Returns: boolean
@@ -4257,6 +4270,32 @@ export type Database = {
             }
         Returns: Json
       }
+      create_unified_payment_transaction: {
+        Args: {
+          p_bank_last_four?: string
+          p_base_amount_cents: number
+          p_card_brand?: string
+          p_card_last_four?: string
+          p_category?: string
+          p_customer_id: string
+          p_entity_id: string
+          p_entity_type: string
+          p_first_name?: string
+          p_fraud_session_id?: string
+          p_idempotency_id: string
+          p_is_card: boolean
+          p_last_name?: string
+          p_merchant_id: string
+          p_merchant_name?: string
+          p_payment_instrument_id: string
+          p_payment_type: string
+          p_statement_descriptor?: string
+          p_subcategory?: string
+          p_user_email?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       disable_user_payment_instrument: {
         Args: { p_id: string }
         Returns: undefined
@@ -4292,6 +4331,15 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_merchant_fee_profile: {
+        Args: { p_merchant_id: string }
+        Returns: {
+          ach_basis_points: number
+          ach_fixed_fee: number
+          basis_points: number
+          fixed_fee: number
+        }[]
       }
       get_municipal_business_license_types: {
         Args: { p_customer_id: string }
@@ -4554,8 +4602,21 @@ export type Database = {
         Args: { p_customer_id: string; p_member_id: string; p_new_role: string }
         Returns: boolean
       }
+      update_unified_payment_status: {
+        Args: {
+          p_finix_transfer_id: string
+          p_payment_history_id: string
+          p_payment_status?: string
+          p_transfer_state: string
+        }
+        Returns: boolean
+      }
       validate_merchant_category_subcategory: {
         Args: { p_category: string; p_subcategory: string }
+        Returns: boolean
+      }
+      validate_payment_entity: {
+        Args: { p_entity_id: string; p_entity_type: string; p_user_id: string }
         Returns: boolean
       }
     }
