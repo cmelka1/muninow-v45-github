@@ -13,15 +13,11 @@ import { usePermit } from '@/hooks/usePermit';
 import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
 import { UnifiedPaymentDialog } from '@/components/unified/UnifiedPaymentDialog';
-import { usePermitPaymentMethods } from '@/hooks/usePermitPaymentMethods';
+import { useUnifiedPaymentFlow } from '@/hooks/useUnifiedPaymentFlow';
 import { AddPermitDocumentDialog } from '@/components/AddPermitDocumentDialog';
-import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 import { PermitCommunication } from '@/components/PermitCommunication';
 import { DocumentViewerModal } from '@/components/DocumentViewerModal';
-import PermitPaymentSummary from '@/components/PermitPaymentSummary';
-import PaymentMethodSelector from '@/components/PaymentMethodSelector';
-import PaymentButtonsContainer from '@/components/PaymentButtonsContainer';
 import { getStatusDescription, PermitStatus } from '@/hooks/usePermitWorkflow';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
@@ -38,7 +34,7 @@ const PermitDetail = () => {
   const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
-  const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   
   const isMunicipalUser = user?.user_metadata?.account_type === 'municipal';
   
@@ -49,27 +45,25 @@ const PermitDetail = () => {
     permit?.merchant_id
   );
 
-  // Payment methods hook
-  const {
-    selectedPaymentMethod,
-    serviceFee,
-    paymentInstruments,
-    isProcessingPayment,
-    totalWithFee,
-    handlePayment,
-    handleGooglePayment,
-    handleApplePayment,
-    setSelectedPaymentMethod,
-    loadPaymentInstruments,
-    paymentMethodsLoading
-  } = usePermitPaymentMethods(permit);
-
-  const handleAddPaymentMethodSuccess = async (paymentMethodId?: string) => {
-    await loadPaymentInstruments();
-    if (paymentMethodId) {
-      setSelectedPaymentMethod(paymentMethodId);
-    }
-  };
+  // Unified payment flow hook
+  const unifiedPaymentFlow = permit ? useUnifiedPaymentFlow({
+    entityType: 'permit',
+    entityId: permit.permit_id,
+    customerId: permit.customer_id,
+    merchantId: permit.merchant_id,
+    baseAmountCents: permit.base_fee_cents || permit.total_amount_cents || 0,
+    onSuccess: () => {
+      toast({
+        title: "Payment Successful",
+        description: "Your permit payment has been processed successfully.",
+      });
+      refetchPermit();
+      setShowPaymentDialog(false);
+    },
+    onError: (error) => {
+      console.error('Payment error:', error);
+    },
+  }) : null;
 
   const handleDocumentView = (document: any) => {
     setSelectedDocument(document);
@@ -451,59 +445,24 @@ const PermitDetail = () => {
               
               {permit.application_status === 'approved' && permit.payment_status !== 'paid' ? (
                 <div className="space-y-4">
-                  {/* Payment Summary */}
-                  <PermitPaymentSummary 
-                    baseAmount={(permit.base_fee_cents || permit.total_amount_cents || 0)}
-                    selectedPaymentMethod={selectedPaymentMethod}
-                    compact={true}
-                  />
-                  
-                  {/* Payment Method Selection */}
-                  <div>
-                    <Label className="text-sm font-medium mb-3 block">Payment Method</Label>
-                    <div className="space-y-3">
-                      <PaymentMethodSelector
-                        paymentInstruments={paymentInstruments}
-                        selectedPaymentMethod={selectedPaymentMethod}
-                        onSelectPaymentMethod={setSelectedPaymentMethod}
-                        isLoading={paymentMethodsLoading}
-                        maxMethods={5}
-                      />
-                      
-                      <PaymentButtonsContainer
-                        bill={permit}
-                        totalAmount={totalWithFee || 0}
-                        merchantId={permit?.finix_merchant_id}
-                        onGooglePayment={() => handleGooglePayment().then(() => {})}
-                        onApplePayment={() => handleApplePayment().then(() => {})}
-                        isDisabled={isProcessingPayment}
-                      />
-                      
-                      {/* Payment Buttons */}
-                      {selectedPaymentMethod && (
-                        <Button 
-                          className="w-full" 
-                          onClick={handlePayment}
-                          disabled={isProcessingPayment}
-                        >
-                          {isProcessingPayment ? 'Processing...' : `Pay ${formatCurrency((totalWithFee || 0) / 100)}`}
-                        </Button>
-                      )}
-                      
-                      <Button 
-                        variant="outline" 
-                        className="w-full" 
-                        onClick={() => setIsAddPaymentDialogOpen(true)}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add New Payment Method
-                      </Button>
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium">Permit Fee</span>
+                      <span className="font-semibold">{formatCurrency((permit.base_fee_cents || permit.total_amount_cents || 0) / 100)}</span>
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                      Complete payment to receive your permit
+                    </p>
                   </div>
                   
-                  <p className="text-xs text-muted-foreground">
-                    Complete payment to receive your permit
-                  </p>
+                  <Button 
+                    className="w-full" 
+                    onClick={() => setShowPaymentDialog(true)}
+                    disabled={unifiedPaymentFlow?.isProcessingPayment}
+                  >
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Pay Now
+                  </Button>
                 </div>
               ) : permit.payment_status === 'paid' ? (
                 <div className="pt-2 space-y-2">
@@ -623,11 +582,21 @@ const PermitDetail = () => {
         document={selectedDocument}
       />
       
-      <AddPaymentMethodDialog
-        open={isAddPaymentDialogOpen}
-        onOpenChange={setIsAddPaymentDialogOpen}
-        onSuccess={handleAddPaymentMethodSuccess}
-      />
+      {/* Unified Payment Dialog */}
+      {permit && unifiedPaymentFlow && (
+        <UnifiedPaymentDialog
+          open={showPaymentDialog}
+          onOpenChange={setShowPaymentDialog}
+          entityType="permit"
+          entityId={permit.permit_id}
+          entityName={`${permit.permit_type} - ${permit.permit_number}`}
+          customerId={permit.customer_id}
+          merchantId={permit.merchant_id}
+          baseAmountCents={permit.base_fee_cents || permit.total_amount_cents || 0}
+          onPaymentSuccess={unifiedPaymentFlow.handlePayment}
+          onPaymentError={(error) => console.error('Payment error:', error)}
+        />
+      )}
     </div>
   );
 };
