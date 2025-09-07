@@ -252,14 +252,24 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         throw error;
       }
 
-      // Check for success with explicit boolean conversion and detailed logging
-      const isSuccess = data?.success === true || data?.success === 'true' || (data?.success && String(data.success).toLowerCase() === 'true');
-      console.log('🔍 Success condition evaluation:', {
-        rawSuccess: data?.success,
-        successType: typeof data?.success,
-        booleanCheck: data?.success === true,
-        stringCheck: data?.success === 'true',
-        finalResult: isSuccess
+      // Enhanced success detection with multiple fallback strategies
+      const directSuccess = data?.success === true || data?.success === 'true';
+      const nestedSuccess = data?.data?.success === true || data?.data?.success === 'true';
+      const transactionSuccess = !!(data?.transaction_id || data?.finix_transfer_id);
+      const statusSuccess = data?.status === 200 || data?.status === 'success';
+      
+      const isSuccess = directSuccess || nestedSuccess || (transactionSuccess && !data?.error);
+      
+      console.log('🔍 Comprehensive success evaluation:', {
+        directSuccess,
+        nestedSuccess,
+        transactionSuccess,
+        statusSuccess,
+        hasTransactionId: !!data?.transaction_id,
+        hasFinixId: !!data?.finix_transfer_id,
+        hasError: !!data?.error,
+        finalSuccess: isSuccess,
+        rawDataKeys: data ? Object.keys(data) : 'N/A'
       });
 
       if (isSuccess) {
