@@ -1,9 +1,22 @@
 import { PaymentError } from '@/types/payment';
 
 export const classifyPaymentError = (error: any): PaymentError => {
+  // Enhanced logging for error classification
+  console.group('🔍 PAYMENT_ERROR_CLASSIFICATION');
+  console.log('Raw error object:', error);
+  console.log('Error structure analysis:', {
+    hasValue: !!error?.value,
+    hasMessage: !!error?.message,
+    hasStringRepresentation: !!error?.toString,
+    errorKeys: Object.keys(error || {}),
+    valueKeys: error?.value ? Object.keys(error.value) : 'N/A'
+  });
+
   const errorMessage = error?.value?.message || error?.message || error?.toString() || '';
   const statusCode = error?.value?.statusCode;
   const errorName = error?.value?.name;
+  
+  console.log('Extracted values:', { errorMessage, statusCode, errorName });
   
   // Check for user cancellation
   const isUserCancellation = statusCode === 'CANCELED' ||
@@ -17,6 +30,8 @@ export const classifyPaymentError = (error: any): PaymentError => {
                             errorMessage.includes('Payment request was aborted');
   
   if (isUserCancellation) {
+    console.log('✅ Classified as: USER_CANCELLED');
+    console.groupEnd();
     return {
       type: 'user_cancelled',
       message: 'Payment was cancelled by user',
@@ -30,6 +45,8 @@ export const classifyPaymentError = (error: any): PaymentError => {
       errorMessage.includes('connection') ||
       errorMessage.includes('timeout') ||
       error?.code === 'NETWORK_ERROR') {
+    console.log('✅ Classified as: NETWORK_ERROR');
+    console.groupEnd();
     return {
       type: 'network',
       message: 'Network error occurred. Please check your connection and try again.',
@@ -43,6 +60,8 @@ export const classifyPaymentError = (error: any): PaymentError => {
       errorMessage.includes('insufficient') ||
       errorMessage.includes('invalid card') ||
       statusCode === 'PAYMENT_DECLINED') {
+    console.log('✅ Classified as: PAYMENT_DECLINED');
+    console.groupEnd();
     return {
       type: 'payment_declined',
       message: 'Payment was declined. Please check your payment method and try again.',
@@ -56,6 +75,8 @@ export const classifyPaymentError = (error: any): PaymentError => {
       errorMessage.includes('invalid') ||
       errorMessage.includes('required') ||
       statusCode === 'VALIDATION_ERROR') {
+    console.log('✅ Classified as: VALIDATION_ERROR');
+    console.groupEnd();
     return {
       type: 'validation',
       message: 'Payment information is invalid. Please check your details.',
@@ -68,6 +89,8 @@ export const classifyPaymentError = (error: any): PaymentError => {
   if (errorMessage.includes('merchant') ||
       errorMessage.includes('configuration') ||
       errorMessage.includes('not configured')) {
+    console.log('✅ Classified as: CONFIGURATION_ERROR');
+    console.groupEnd();
     return {
       type: 'configuration',
       message: 'Payment service is not properly configured. Please contact support.',
@@ -77,6 +100,8 @@ export const classifyPaymentError = (error: any): PaymentError => {
   }
   
   // Default to unknown error
+  console.log('⚠️ Classified as: UNKNOWN_ERROR');
+  console.groupEnd();
   return {
     type: 'unknown',
     message: errorMessage || 'An unexpected error occurred. Please try again.',

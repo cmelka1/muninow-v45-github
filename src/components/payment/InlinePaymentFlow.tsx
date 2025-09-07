@@ -54,14 +54,39 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
     merchantId,
     baseAmountCents,
     onSuccess: (response) => {
+      console.group('🎊 INLINE_PAYMENT_SUCCESS');
+      console.log('Payment success response:', response);
+      console.log('Component state before success:', { 
+        isExpanded, 
+        showSuccess,
+        timestamp: new Date().toISOString()
+      });
       setShowSuccess(true);
       onPaymentSuccess?.(response);
+      console.log('Setting success timeout for 3 seconds');
+      console.groupEnd();
       setTimeout(() => {
+        console.log('🎊 Success timeout elapsed - hiding success message');
         setShowSuccess(false);
         setIsExpanded(false);
       }, 3000);
     },
     onError: (error) => {
+      console.group('❌ INLINE_PAYMENT_ERROR');
+      console.log('Payment error received in component:', {
+        error,
+        errorType: error?.type,
+        errorMessage: error?.message,
+        isRetryable: error?.retryable,
+        timestamp: new Date().toISOString()
+      });
+      console.log('Component state when error occurred:', {
+        isExpanded,
+        showSuccess,
+        selectedPaymentMethod,
+        isProcessingPayment
+      });
+      console.groupEnd();
       onPaymentError?.(error);
     },
   });
@@ -195,10 +220,22 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
       <div className="space-y-3">
         <Button
           onClick={() => {
+            console.group('🖱️ PAY_BUTTON_CLICKED');
+            console.log('Button click state:', {
+              isProcessingPayment,
+              selectedPaymentMethod,
+              hasServiceFee: !!serviceFee,
+              timestamp: new Date().toISOString()
+            });
+            
             // Prevent double-clicking
             if (!isProcessingPayment) {
+              console.log('✅ Initiating payment from button click');
               handlePayment();
+            } else {
+              console.log('⚠️ Payment already processing - ignoring click');
             }
+            console.groupEnd();
           }}
           disabled={!selectedPaymentMethod || isProcessingPayment || !serviceFee}
           className="w-full"
