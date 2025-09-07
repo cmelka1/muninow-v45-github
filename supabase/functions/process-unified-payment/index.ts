@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
 
     // Create Finix transfer
     const transferPayload = {
-      merchant_id: transactionData.finix_merchant_id,
+      merchant: transactionData.finix_merchant_id,
       currency: 'USD',
       amount: transactionData.total_amount_cents,
       source: payment_instrument_id,
