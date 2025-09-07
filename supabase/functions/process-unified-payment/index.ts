@@ -35,6 +35,8 @@ interface UnifiedPaymentResponse {
 }
 
 Deno.serve(async (req) => {
+  console.log('=== UNIFIED PAYMENT REQUEST ===');
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -48,6 +50,8 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const body: UnifiedPaymentRequest = await req.json();
+    console.log('Request body:', JSON.stringify(body, null, 2));
+    
     const {
       entity_type,
       entity_id,
@@ -88,10 +92,12 @@ Deno.serve(async (req) => {
       );
     }
 
+    console.log('Authenticated user:', user.id);
+
     // Get merchant information
     const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
-      .select('finix_merchant_id, merchant_name, category, subcategory')
+      .select('finix_merchant_id, finix_identity_id, merchant_name, category, subcategory')
       .eq('id', merchant_id)
       .single();
 
@@ -103,83 +109,45 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get payment instrument and validate ownership
-    const { data: paymentInstrument, error: piError } = await supabase
-      .from('user_payment_instruments')  
-      .select('*')
-      .eq('id', payment_instrument_id)
-      .eq('user_id', user.id)
-      .eq('enabled', true)
-      .single();
-
-    if (piError || !paymentInstrument) {
-      console.error('Payment instrument fetch error:', piError);
+    if (!merchant.finix_merchant_id || !merchant.finix_identity_id) {
+      console.error('Merchant missing Finix IDs');
       return new Response(
-        JSON.stringify({ success: false, error: 'Payment instrument not found or access denied', retryable: false }),
-        { status: 404, headers: corsHeaders }
-      );
-    }
-
-    // Generate idempotency ID
-    const idempotency_id = generateIdempotencyId('unified_payment', entity_id);
-    
-    // Determine if it's a card payment
-    const is_card = ['card', 'google-pay', 'apple-pay'].includes(payment_type);
-
-    console.log('Creating unified payment transaction:', {
-      entity_type,
-      entity_id,
-      user_id: user.id,
-      customer_id,
-      merchant_id,
-      base_amount_cents,
-      is_card,
-      idempotency_id
-    });
-
-    // Create unified payment transaction in database
-    const { data: transactionData, error: transactionError } = await supabase.rpc(
-      'create_unified_payment_transaction',
-      {
-        p_entity_type: entity_type,
-        p_entity_id: entity_id,
-        p_user_id: user.id,
-        p_customer_id: customer_id,
-        p_merchant_id: merchant_id,
-        p_base_amount_cents: base_amount_cents,
-        p_payment_instrument_id: payment_instrument_id,
-        p_payment_type: payment_type,
-        p_is_card: is_card,
-        p_idempotency_id: idempotency_id,
-        p_fraud_session_id: fraud_session_id,
-        p_card_brand: card_brand,
-        p_card_last_four: card_last_four,
-        p_bank_last_four: bank_last_four,
-        p_merchant_name: merchant.merchant_name,
-        p_category: merchant.category,
-        p_subcategory: merchant.subcategory,
-        p_statement_descriptor: `${merchant.merchant_name} ${entity_type}`,
-        p_first_name: first_name,
-        p_last_name: last_name,
-        p_user_email: user_email
-      }
-    );
-
-    if (transactionError || !transactionData?.success) {
-      console.error('Transaction creation error:', transactionError, transactionData);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: transactionData?.error || 'Failed to create payment transaction',
-          retryable: true
-        }),
+        JSON.stringify({ success: false, error: 'Merchant not properly configured', retryable: false }),
         { status: 400, headers: corsHeaders }
       );
     }
 
-    console.log('Transaction created successfully:', transactionData);
+    // Get user's Finix payment instrument ID
+    let finixPaymentInstrumentId = payment_instrument_id;
+    
+    // If payment_instrument_id is a UUID, get the Finix payment instrument ID
+    if (['card', 'PAYMENT_CARD'].includes(payment_type) && payment_instrument_id.length === 36) {
+      const { data: paymentInstrument, error: piError } = await supabase
+        .from('user_payment_instruments')
+        .select('finix_payment_instrument_id')
+        .eq('id', payment_instrument_id)
+        .eq('user_id', user.id)
+        .eq('enabled', true)
+        .single();
 
-    // Prepare Finix transfer request
+      if (piError || !paymentInstrument) {
+        console.error('Payment instrument fetch error:', piError);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Payment instrument not found or access denied', retryable: false }),
+          { status: 404, headers: corsHeaders }
+        );
+      }
+
+      finixPaymentInstrumentId = paymentInstrument.finix_payment_instrument_id;
+    }
+
+    // Generate idempotency ID
+    const idempotency_id = generateIdempotencyId('unified_payment', entity_id);
+    console.log('Generated idempotency ID:', idempotency_id);
+
+    // STEP 1: Call Finix API first (fail fast if payment fails)
+    console.log('=== CALLING FINIX API FIRST ===');
+    
     const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
     const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
     const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
@@ -197,12 +165,62 @@ Deno.serve(async (req) => {
 
     const finixCredentials = btoa(`${finixApplicationId}:${finixApiSecret}`);
 
+    // Calculate total amount using same logic as database function
+    // We'll get the exact amounts from the database function, but we need total for Finix
+    let serviceFeeFromDB = 0;
+    let totalAmountFromDB = 0;
+    
+    // Get fee calculation from database to match exactly
+    const { data: feeCalcResult, error: feeCalcError } = await supabase.rpc(
+      'create_unified_payment_transaction',
+      {
+        p_user_id: user.id,
+        p_customer_id: customer_id,
+        p_merchant_id: merchant_id,
+        p_entity_type: entity_type,
+        p_entity_id: entity_id,
+        p_base_amount_cents: base_amount_cents,
+        p_payment_instrument_id: finixPaymentInstrumentId,
+        p_payment_type: payment_type,
+        p_fraud_session_id: fraud_session_id || null,
+        p_idempotency_id: idempotency_id,
+        p_card_brand: card_brand || null,
+        p_card_last_four: card_last_four || null,
+        p_bank_last_four: bank_last_four || null,
+        p_first_name: first_name || null,
+        p_last_name: last_name || null,
+        p_user_email: user_email || null
+      }
+    );
+
+    if (feeCalcError || !feeCalcResult?.success) {
+      console.error('Fee calculation error:', feeCalcError, feeCalcResult);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: feeCalcResult?.error || 'Failed to calculate fees',
+          retryable: true
+        }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    serviceFeeFromDB = feeCalcResult.service_fee_cents;
+    totalAmountFromDB = feeCalcResult.total_amount_cents;
+    const paymentHistoryId = feeCalcResult.payment_history_id;
+
+    console.log('Database fee calculation:', {
+      service_fee: serviceFeeFromDB,
+      total_amount: totalAmountFromDB,
+      payment_history_id: paymentHistoryId
+    });
+
     // Create Finix transfer
     const transferPayload = {
-      merchant: transactionData.finix_merchant_id,
+      merchant: merchant.finix_merchant_id,
       currency: 'USD',
-      amount: transactionData.total_amount_cents,
-      source: paymentInstrument.finix_payment_instrument_id,
+      amount: totalAmountFromDB,
+      source: finixPaymentInstrumentId,
       idempotency_id: idempotency_id,
       ...(fraud_session_id && { fraud_session_id })
     };
@@ -220,9 +238,17 @@ Deno.serve(async (req) => {
     });
 
     const finixData = await finixResponse.json();
+    console.log('Finix API response:', JSON.stringify(finixData, null, 2));
 
     if (!finixResponse.ok) {
-      console.error('Finix API error:', finixData);
+      console.error('Finix transfer failed:', finixData);
+      
+      // ROLLBACK: Delete the payment history record since Finix failed
+      console.log('Rolling back payment history record:', paymentHistoryId);
+      await supabase
+        .from('payment_history')
+        .delete()
+        .eq('id', paymentHistoryId);
       
       // Classify the error for appropriate handling
       const classifiedError = classifyPaymentError(finixData);
@@ -238,31 +264,114 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Finix transfer created:', finixData);
+    console.log('Finix transfer created successfully:', finixData);
 
-    // Update payment status in database
-    const { data: updateData, error: updateError } = await supabase.rpc(
-      'update_unified_payment_status',
-      {
-        p_payment_history_id: transactionData.payment_history_id,
-        p_finix_transfer_id: finixData.id,
-        p_transfer_state: finixData.state,
-        p_payment_status: finixData.state === 'SUCCEEDED' ? 'completed' : 'pending'
-      }
-    );
+    // STEP 2: Update payment record with success details and entity status atomically
+    console.log('=== UPDATING PAYMENT STATUS AND ENTITY ===');
+    
+    const finalPaymentStatus = finixData.state === 'SUCCEEDED' ? 'paid' : 'unpaid';
+    
+    // Update payment history with Finix results
+    const { error: updateError } = await supabase
+      .from('payment_history')
+      .update({
+        payment_status: finalPaymentStatus,
+        transfer_state: finixData.state,
+        finix_transfer_id: finixData.id,
+        finix_response: finixData,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', paymentHistoryId);
 
-    if (updateError || !updateData) {
-      console.error('Status update error:', updateError);
-      // Log error but don't fail the payment since Finix succeeded
+    if (updateError) {
+      console.error('Failed to update payment status:', updateError);
+      // Continue anyway - the payment went through
     }
+
+    // STEP 3: Update entity status if payment succeeded
+    if (finixData.state === 'SUCCEEDED') {
+      console.log('=== UPDATING ENTITY STATUS ===');
+      
+      try {
+        let entityUpdateError = null;
+        
+        switch (entity_type) {
+          case 'permit':
+            const { error: permitError } = await supabase
+              .from('permit_applications')
+              .update({
+                payment_status: 'paid',
+                payment_processed_at: new Date().toISOString(),
+                finix_transfer_id: finixData.id,
+                transfer_state: 'SUCCEEDED'
+              })
+              .eq('permit_id', entity_id);
+            entityUpdateError = permitError;
+            break;
+
+          case 'business_license':
+            const { error: licenseError } = await supabase
+              .from('business_license_applications')
+              .update({
+                payment_status: 'paid',
+                payment_processed_at: new Date().toISOString(),
+                finix_transfer_id: finixData.id,
+                transfer_state: 'SUCCEEDED'
+              })
+              .eq('id', entity_id);
+            entityUpdateError = licenseError;
+            break;
+
+          case 'service_application':
+            const { error: serviceError } = await supabase
+              .from('municipal_service_applications')
+              .update({
+                payment_status: 'paid',
+                payment_processed_at: new Date().toISOString(),
+                finix_transfer_id: finixData.id
+              })
+              .eq('id', entity_id);
+            entityUpdateError = serviceError;
+            break;
+
+          case 'tax_submission':
+            const { error: taxError } = await supabase
+              .from('tax_submissions')
+              .update({
+                payment_status: 'paid',
+                transfer_state: 'SUCCEEDED',
+                finix_transfer_id: finixData.id
+              })
+              .eq('id', entity_id);
+            entityUpdateError = taxError;
+            break;
+
+          default:
+            console.warn(`Unknown entity type: ${entity_type}`);
+            break;
+        }
+
+        if (entityUpdateError) {
+          console.error(`Failed to update ${entity_type} status:`, entityUpdateError);
+          // Continue anyway - the payment went through
+        } else {
+          console.log(`Successfully updated ${entity_type} status to paid`);
+        }
+      } catch (entityError) {
+        console.error('Error updating entity status:', entityError);
+        // Continue anyway - the payment went through
+      }
+    }
+
+    console.log('=== PAYMENT COMPLETED SUCCESSFULLY ===');
 
     const response: UnifiedPaymentResponse = {
       success: true,
-      payment_history_id: transactionData.payment_history_id,
+      payment_history_id: paymentHistoryId,
       finix_transfer_id: finixData.id,
       transaction_id: finixData.id,
-      service_fee_cents: transactionData.service_fee_cents,
-      total_amount_cents: transactionData.total_amount_cents
+      service_fee_cents: serviceFeeFromDB,
+      total_amount_cents: totalAmountFromDB
     };
 
     return new Response(
