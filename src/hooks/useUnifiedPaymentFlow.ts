@@ -132,7 +132,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         base_amount_cents: params.baseAmountCents,
         payment_instrument_id: ['google-pay', 'apple-pay'].includes(selectedPaymentMethod) 
           ? selectedPaymentMethod 
-          : paymentInstrument?.finix_payment_instrument_id || selectedPaymentMethod,
+          : paymentInstrument?.id || selectedPaymentMethod,
         payment_type: paymentType,
         fraud_session_id: generateIdempotencyId('fraud_session'),
         card_brand: paymentInstrument?.card_brand,
