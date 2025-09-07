@@ -45,13 +45,13 @@ const PermitDetail = () => {
     permit?.merchant_id
   );
 
-  // Unified payment flow hook
-  const unifiedPaymentFlow = permit ? useUnifiedPaymentFlow({
+  // Unified payment flow hook - always call, never conditional
+  const unifiedPaymentFlow = useUnifiedPaymentFlow({
     entityType: 'permit',
-    entityId: permit.permit_id,
-    customerId: permit.customer_id,
-    merchantId: permit.merchant_id,
-    baseAmountCents: permit.base_fee_cents || permit.total_amount_cents || 0,
+    entityId: permit?.permit_id || '',
+    customerId: permit?.customer_id || '',
+    merchantId: permit?.merchant_id || '',
+    baseAmountCents: permit?.base_fee_cents || permit?.total_amount_cents || 0,
     onSuccess: () => {
       toast({
         title: "Payment Successful",
@@ -63,7 +63,7 @@ const PermitDetail = () => {
     onError: (error) => {
       console.error('Payment error:', error);
     },
-  }) : null;
+  });
 
   const handleDocumentView = (document: any) => {
     setSelectedDocument(document);
@@ -583,7 +583,7 @@ const PermitDetail = () => {
       />
       
       {/* Unified Payment Dialog */}
-      {permit && unifiedPaymentFlow && (
+      {permit && (
         <UnifiedPaymentDialog
           open={showPaymentDialog}
           onOpenChange={setShowPaymentDialog}
