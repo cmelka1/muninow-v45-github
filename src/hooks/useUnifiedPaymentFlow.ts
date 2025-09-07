@@ -252,38 +252,56 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         throw error;
       }
 
-      // Enhanced success detection with multiple fallback strategies
-      const directSuccess = data?.success === true || data?.success === 'true';
-      const nestedSuccess = data?.data?.success === true || data?.data?.success === 'true';
-      const transactionSuccess = !!(data?.transaction_id || data?.finix_transfer_id);
-      const statusSuccess = data?.status === 200 || data?.status === 'success';
+      // Parse response if it's returned as a JSON string
+      let parsedData = data;
+      if (typeof data === 'string') {
+        try {
+          parsedData = JSON.parse(data);
+          console.log('📝 Parsed string response to object:', { 
+            originalType: typeof data, 
+            parsedType: typeof parsedData,
+            success: parsedData?.success 
+          });
+        } catch (parseError) {
+          console.error('❌ Failed to parse response string:', parseError);
+          throw new Error('Invalid response format from payment service');
+        }
+      } else {
+        console.log('📝 Response already an object:', { type: typeof data });
+      }
+
+      // Enhanced success detection with multiple fallback strategies (using parsed data)
+      const directSuccess = parsedData?.success === true || parsedData?.success === 'true';
+      const nestedSuccess = parsedData?.data?.success === true || parsedData?.data?.success === 'true';
+      const transactionSuccess = !!(parsedData?.transaction_id || parsedData?.finix_transfer_id);
+      const statusSuccess = parsedData?.status === 200 || parsedData?.status === 'success';
       
-      const isSuccess = directSuccess || nestedSuccess || (transactionSuccess && !data?.error);
+      const isSuccess = directSuccess || nestedSuccess || (transactionSuccess && !parsedData?.error);
       
       console.log('🔍 Comprehensive success evaluation:', {
         directSuccess,
         nestedSuccess,
         transactionSuccess,
         statusSuccess,
-        hasTransactionId: !!data?.transaction_id,
-        hasFinixId: !!data?.finix_transfer_id,
-        hasError: !!data?.error,
+        hasTransactionId: !!parsedData?.transaction_id,
+        hasFinixId: !!parsedData?.finix_transfer_id,
+        hasError: !!parsedData?.error,
         finalSuccess: isSuccess,
-        rawDataKeys: data ? Object.keys(data) : 'N/A'
+        rawDataKeys: parsedData ? Object.keys(parsedData) : 'N/A'
       });
 
       if (isSuccess) {
         console.log('✅ Payment completed successfully:', {
-          transactionId: data.finix_transfer_id,
-          paymentId: data.payment_history_id,
+          transactionId: parsedData.finix_transfer_id,
+          paymentId: parsedData.payment_history_id,
           totalAmount: serviceFee.totalAmountToCharge,
           timestamp: new Date().toISOString()
         });
 
         const response: PaymentResponse = {
           success: true,
-          transaction_id: data.finix_transfer_id,
-          payment_id: data.payment_history_id,
+          transaction_id: parsedData.finix_transfer_id,
+          payment_id: parsedData.payment_history_id,
           status: 'completed'
         };
 
@@ -300,14 +318,14 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         return response;
       } else {
         console.error('❌ Edge function returned unsuccessful response:', {
-          fullResponse: data,
-          successValue: data?.success,
-          successType: typeof data?.success,
-          errorValue: data?.error,
-          allKeys: data ? Object.keys(data) : 'N/A'
+          fullResponse: parsedData,
+          successValue: parsedData?.success,
+          successType: typeof parsedData?.success,
+          errorValue: parsedData?.error,
+          allKeys: parsedData ? Object.keys(parsedData) : 'N/A'
         });
         console.groupEnd();
-        throw new Error(data?.error || 'Payment failed - no success flag received');
+        throw new Error(parsedData?.error || 'Payment failed - no success flag received');
       }
     } catch (error) {
       console.error('💥 Payment processing error caught:', {
