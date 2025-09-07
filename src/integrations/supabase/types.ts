@@ -2727,6 +2727,7 @@ export type Database = {
           service_fee_cents: number | null
           submitted_at: string | null
           total_amount_cents: number | null
+          transfer_state: string | null
           under_review_at: string | null
           updated_at: string
           use_personal_info: boolean
@@ -2796,6 +2797,7 @@ export type Database = {
           service_fee_cents?: number | null
           submitted_at?: string | null
           total_amount_cents?: number | null
+          transfer_state?: string | null
           under_review_at?: string | null
           updated_at?: string
           use_personal_info?: boolean
@@ -2865,6 +2867,7 @@ export type Database = {
           service_fee_cents?: number | null
           submitted_at?: string | null
           total_amount_cents?: number | null
+          transfer_state?: string | null
           under_review_at?: string | null
           updated_at?: string
           use_personal_info?: boolean
