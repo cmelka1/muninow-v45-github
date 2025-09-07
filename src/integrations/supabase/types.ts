@@ -4621,7 +4621,7 @@ export type Database = {
           p_payment_status: string
           p_transfer_state: string
         }
-        Returns: Json
+        Returns: boolean
       }
       validate_merchant_category_subcategory: {
         Args: { p_category: string; p_subcategory: string }
