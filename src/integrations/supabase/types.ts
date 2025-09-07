@@ -4395,21 +4395,6 @@ export type Database = {
               p_user_email?: string
               p_user_id: string
             }
-          | {
-              p_bank_last_four?: string
-              p_base_amount_cents: number
-              p_card_brand?: string
-              p_card_last_four?: string
-              p_entity_id: string
-              p_entity_type: string
-              p_first_name?: string
-              p_fraud_session_id?: string
-              p_idempotency_id?: string
-              p_last_name?: string
-              p_payment_instrument_id: string
-              p_payment_type: string
-              p_user_email?: string
-            }
         Returns: Json
       }
       disable_user_payment_instrument: {
