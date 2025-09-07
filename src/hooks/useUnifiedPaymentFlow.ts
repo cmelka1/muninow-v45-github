@@ -143,16 +143,6 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
     setLastPaymentAttempt(now);
 
     try {
-      // Refresh auth token to ensure it's valid
-      console.log('Refreshing auth session before payment...');
-      const { error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError) {
-        console.warn('Failed to refresh auth session:', refreshError);
-        // Continue anyway - might still work with current token
-      }
-
-      // Wait a moment for token refresh to take effect
-      await new Promise(resolve => setTimeout(resolve, 100));
       const paymentInstrument = paymentInstruments.find(p => p.id === selectedPaymentMethod);
       const paymentType = paymentInstrument ? 
         (paymentInstrument.instrument_type === 'PAYMENT_CARD' ? 'card' : 'ach') : 
