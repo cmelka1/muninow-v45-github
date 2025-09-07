@@ -299,51 +299,144 @@ Deno.serve(async (req) => {
         
         switch (entity_type) {
           case 'permit':
+            // Get current permit status
+            const { data: permit, error: permitFetchError } = await supabase
+              .from('permit_applications')
+              .select('application_status, municipal_review_status')
+              .eq('permit_id', entity_id)
+              .single();
+            
+            if (permitFetchError) {
+              console.error('Failed to fetch permit status:', permitFetchError);
+              entityUpdateError = permitFetchError;
+              break;
+            }
+            
+            // Prepare update data
+            const permitUpdate: any = {
+              payment_status: 'paid',
+              payment_processed_at: new Date().toISOString(),
+              finix_transfer_id: finixData.id,
+              transfer_state: 'SUCCEEDED'
+            };
+            
+            // Auto-issue if approved
+            if (permit.application_status === 'approved') {
+              permitUpdate.application_status = 'issued';
+              permitUpdate.issued_at = new Date().toISOString();
+              permitUpdate.municipal_review_status = 'issued';
+              console.log('Auto-issuing permit after successful payment');
+            }
+            
             const { error: permitError } = await supabase
               .from('permit_applications')
-              .update({
-                payment_status: 'paid',
-                payment_processed_at: new Date().toISOString(),
-                finix_transfer_id: finixData.id,
-                transfer_state: 'SUCCEEDED'
-              })
+              .update(permitUpdate)
               .eq('permit_id', entity_id);
             entityUpdateError = permitError;
             break;
 
           case 'business_license':
+            // Get current license status
+            const { data: license, error: licenseFetchError } = await supabase
+              .from('business_license_applications')
+              .select('application_status')
+              .eq('id', entity_id)
+              .single();
+            
+            if (licenseFetchError) {
+              console.error('Failed to fetch license status:', licenseFetchError);
+              entityUpdateError = licenseFetchError;
+              break;
+            }
+            
+            // Prepare update data
+            const licenseUpdate: any = {
+              payment_status: 'paid',
+              payment_processed_at: new Date().toISOString(),
+              finix_transfer_id: finixData.id,
+              transfer_state: 'SUCCEEDED'
+            };
+            
+            // Auto-issue if approved
+            if (license.application_status === 'approved') {
+              licenseUpdate.application_status = 'issued';
+              licenseUpdate.issued_at = new Date().toISOString();
+              console.log('Auto-issuing business license after successful payment');
+            }
+            
             const { error: licenseError } = await supabase
               .from('business_license_applications')
-              .update({
-                payment_status: 'paid',
-                payment_processed_at: new Date().toISOString(),
-                finix_transfer_id: finixData.id,
-                transfer_state: 'SUCCEEDED'
-              })
+              .update(licenseUpdate)
               .eq('id', entity_id);
             entityUpdateError = licenseError;
             break;
 
           case 'service_application':
+            // Get current service application status
+            const { data: serviceApp, error: serviceFetchError } = await supabase
+              .from('municipal_service_applications')
+              .select('status')
+              .eq('id', entity_id)
+              .single();
+            
+            if (serviceFetchError) {
+              console.error('Failed to fetch service application status:', serviceFetchError);
+              entityUpdateError = serviceFetchError;
+              break;
+            }
+            
+            // Prepare update data
+            const serviceUpdate: any = {
+              payment_status: 'paid',
+              payment_processed_at: new Date().toISOString(),
+              finix_transfer_id: finixData.id
+            };
+            
+            // Auto-issue if approved
+            if (serviceApp.status === 'approved') {
+              serviceUpdate.status = 'issued';
+              serviceUpdate.issued_at = new Date().toISOString();
+              console.log('Auto-issuing service application after successful payment');
+            }
+            
             const { error: serviceError } = await supabase
               .from('municipal_service_applications')
-              .update({
-                payment_status: 'paid',
-                payment_processed_at: new Date().toISOString(),
-                finix_transfer_id: finixData.id
-              })
+              .update(serviceUpdate)
               .eq('id', entity_id);
             entityUpdateError = serviceError;
             break;
 
           case 'tax_submission':
+            // Get current tax submission status
+            const { data: taxSub, error: taxFetchError } = await supabase
+              .from('tax_submissions')
+              .select('submission_status')
+              .eq('id', entity_id)
+              .single();
+            
+            if (taxFetchError) {
+              console.error('Failed to fetch tax submission status:', taxFetchError);
+              entityUpdateError = taxFetchError;
+              break;
+            }
+            
+            // Prepare update data
+            const taxUpdate: any = {
+              payment_status: 'paid',
+              transfer_state: 'SUCCEEDED',
+              finix_transfer_id: finixData.id
+            };
+            
+            // Auto-complete tax submission after payment
+            if (['draft', 'pending', 'submitted'].includes(taxSub.submission_status)) {
+              taxUpdate.submission_status = 'filed';
+              taxUpdate.filed_at = new Date().toISOString();
+              console.log('Auto-filing tax submission after successful payment');
+            }
+            
             const { error: taxError } = await supabase
               .from('tax_submissions')
-              .update({
-                payment_status: 'paid',
-                transfer_state: 'SUCCEEDED',
-                finix_transfer_id: finixData.id
-              })
+              .update(taxUpdate)
               .eq('id', entity_id);
             entityUpdateError = taxError;
             break;
@@ -357,7 +450,7 @@ Deno.serve(async (req) => {
           console.error(`Failed to update ${entity_type} status:`, entityUpdateError);
           // Continue anyway - the payment went through
         } else {
-          console.log(`Successfully updated ${entity_type} status to paid`);
+          console.log(`Successfully updated ${entity_type} status to paid and auto-issued if applicable`);
         }
       } catch (entityError) {
         console.error('Error updating entity status:', entityError);
