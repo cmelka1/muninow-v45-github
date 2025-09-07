@@ -169,6 +169,9 @@ Deno.serve(async (req) => {
     let serviceFeeFromDB = 0;
     let totalAmountFromDB = 0;
     
+    // Calculate if this is a card payment
+    const isCard = ['card', 'google-pay', 'apple-pay'].includes(payment_type);
+    
     // Get fee calculation from database to match exactly
     const { data: feeCalcResult, error: feeCalcError } = await supabase.rpc(
       'create_unified_payment_transaction',
@@ -183,6 +186,7 @@ Deno.serve(async (req) => {
         p_payment_type: payment_type,
         p_fraud_session_id: fraud_session_id || null,
         p_idempotency_id: idempotency_id,
+        p_is_card: isCard,
         p_card_brand: card_brand || null,
         p_card_last_four: card_last_four || null,
         p_bank_last_four: bank_last_four || null,
