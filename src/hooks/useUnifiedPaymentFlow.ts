@@ -226,7 +226,11 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         hasData: !!data,
         hasError: !!error,
         dataStructure: data ? Object.keys(data) : 'N/A',
-        errorStructure: error ? Object.keys(error) : 'N/A'
+        errorStructure: error ? Object.keys(error) : 'N/A',
+        fullDataResponse: data,
+        successValue: data?.success,
+        successType: typeof data?.success,
+        successStringified: JSON.stringify(data?.success)
       });
 
       if (error) {
@@ -248,7 +252,17 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         throw error;
       }
 
-      if (data.success) {
+      // Check for success with explicit boolean conversion and detailed logging
+      const isSuccess = data?.success === true || data?.success === 'true' || (data?.success && String(data.success).toLowerCase() === 'true');
+      console.log('🔍 Success condition evaluation:', {
+        rawSuccess: data?.success,
+        successType: typeof data?.success,
+        booleanCheck: data?.success === true,
+        stringCheck: data?.success === 'true',
+        finalResult: isSuccess
+      });
+
+      if (isSuccess) {
         console.log('✅ Payment completed successfully:', {
           transactionId: data.finix_transfer_id,
           paymentId: data.payment_history_id,
@@ -275,9 +289,15 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         params.onSuccess?.(response);
         return response;
       } else {
-        console.error('❌ Edge function returned unsuccessful response:', data);
+        console.error('❌ Edge function returned unsuccessful response:', {
+          fullResponse: data,
+          successValue: data?.success,
+          successType: typeof data?.success,
+          errorValue: data?.error,
+          allKeys: data ? Object.keys(data) : 'N/A'
+        });
         console.groupEnd();
-        throw new Error(data.error || 'Payment failed');
+        throw new Error(data?.error || 'Payment failed - no success flag received');
       }
     } catch (error) {
       console.error('💥 Payment processing error caught:', {
