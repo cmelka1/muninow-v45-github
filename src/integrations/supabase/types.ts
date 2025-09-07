@@ -2553,13 +2553,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "payment_history_payment_instrument_id_fkey"
-            columns: ["payment_instrument_id"]
-            isOneToOne: false
-            referencedRelation: "user_payment_instruments"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "payment_history_permit_id_fkey"
             columns: ["permit_id"]
             isOneToOne: false
