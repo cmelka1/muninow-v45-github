@@ -15,6 +15,7 @@ import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions
 import { InlinePaymentFlow } from '@/components/payment/InlinePaymentFlow';
 import { useUnifiedPaymentFlow } from '@/hooks/useUnifiedPaymentFlow';
 import { AddPermitDocumentDialog } from '@/components/AddPermitDocumentDialog';
+import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 import { PermitCommunication } from '@/components/PermitCommunication';
 import { DocumentViewerModal } from '@/components/DocumentViewerModal';
@@ -34,6 +35,7 @@ const PermitDetail = () => {
   const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
+  const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
   
   
   const isMunicipalUser = user?.user_metadata?.account_type === 'municipal';
@@ -450,9 +452,10 @@ const PermitDetail = () => {
                   customerId={permit.customer_id}
                   merchantId={permit.merchant_id}
                   baseAmountCents={permit.base_fee_cents || permit.total_amount_cents || 0}
+                  initialExpanded={true}
                   onPaymentSuccess={unifiedPaymentFlow.handlePayment}
                   onPaymentError={(error) => console.error('Payment error:', error)}
-                  onAddPaymentMethod={() => navigate('/profile?tab=payment-methods')}
+                  onAddPaymentMethod={() => setIsAddPaymentDialogOpen(true)}
                 />
               ) : permit.payment_status === 'paid' ? (
                 <div className="pt-2 space-y-2">
@@ -570,6 +573,17 @@ const PermitDetail = () => {
         isOpen={documentViewerOpen}
         onClose={() => setDocumentViewerOpen(false)}
         document={selectedDocument}
+      />
+
+      {/* Add Payment Method Dialog */}
+      <AddPaymentMethodDialog
+        open={isAddPaymentDialogOpen}
+        onOpenChange={setIsAddPaymentDialogOpen}
+        onSuccess={() => {
+          // Refresh payment instruments
+          unifiedPaymentFlow.loadPaymentInstruments();
+          setIsAddPaymentDialogOpen(false);
+        }}
       />
       
     </div>

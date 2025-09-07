@@ -14,6 +14,7 @@ interface InlinePaymentFlowProps {
   customerId: string;
   merchantId: string;
   baseAmountCents: number;
+  initialExpanded?: boolean;
   onPaymentSuccess?: (response: PaymentResponse) => void;
   onPaymentError?: (error: any) => void;
   onAddPaymentMethod?: () => void;
@@ -26,11 +27,12 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
   customerId,
   merchantId,
   baseAmountCents,
+  initialExpanded = false,
   onPaymentSuccess,
   onPaymentError,
   onAddPaymentMethod,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [showSuccess, setShowSuccess] = useState(false);
 
   const {
