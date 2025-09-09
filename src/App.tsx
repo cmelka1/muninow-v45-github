@@ -88,7 +88,7 @@ const App = () => (
                   <SidebarProvider>
                     <div className="min-h-screen flex w-full">
                       <AppSidebar />
-                      <main className="flex-1 overflow-auto">
+                      <main className="flex-1 overflow-auto bg-gray-100">
                         <Notifications />
                       </main>
                     </div>
