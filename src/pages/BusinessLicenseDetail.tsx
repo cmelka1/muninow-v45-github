@@ -138,7 +138,7 @@ export const BusinessLicenseDetail = () => {
         <div className="absolute bottom-4 right-4 w-20 h-20 border-r-4 border-b-4 border-primary"></div>
 
         {/* Certificate Border */}
-        <div className="border-4 border-primary/20 p-6 relative flex-1 flex flex-col m-2">
+        <div className="border-4 border-primary/20 p-6 absolute inset-2 flex flex-col">
           {/* Decorative Corner Elements */}
           <div className="absolute top-2 left-2 w-12 h-12 border-l-2 border-t-2 border-primary/30"></div>
           <div className="absolute top-2 right-2 w-12 h-12 border-r-2 border-t-2 border-primary/30"></div>
