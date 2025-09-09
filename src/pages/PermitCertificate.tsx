@@ -242,6 +242,86 @@ const PermitCertificate = () => {
     );
   };
 
+  // Helper function to parse HTML content and extract text
+  const parseHtmlContent = (html: string): { text: string; isBold?: boolean; isItalic?: boolean; isList?: boolean }[] => {
+    if (!html) return [];
+    
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    const elements: { text: string; isBold?: boolean; isItalic?: boolean; isList?: boolean }[] = [];
+    
+    const processNode = (node: Node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent?.trim();
+        if (text) {
+          const parent = node.parentElement;
+          elements.push({
+            text,
+            isBold: parent?.tagName === 'STRONG' || parent?.tagName === 'B',
+            isItalic: parent?.tagName === 'EM' || parent?.tagName === 'I',
+            isList: parent?.tagName === 'LI'
+          });
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as Element;
+        
+        // Handle paragraph breaks
+        if (element.tagName === 'P' && elements.length > 0) {
+          elements.push({ text: '\n' });
+        }
+        
+        // Handle list items
+        if (element.tagName === 'LI') {
+          elements.push({ text: '• ', isList: true });
+        }
+        
+        // Process child nodes
+        Array.from(node.childNodes).forEach(processNode);
+        
+        // Add line break after paragraphs and list items
+        if (element.tagName === 'P' || element.tagName === 'LI') {
+          elements.push({ text: '\n' });
+        }
+      }
+    };
+    
+    Array.from(tempDiv.childNodes).forEach(processNode);
+    return elements.filter(el => el.text.trim() !== '');
+  };
+
+  // Helper function to add text with automatic page breaks
+  const addTextWithPageBreaks = (
+    pdf: jsPDF, 
+    text: string, 
+    x: number, 
+    y: number, 
+    maxWidth: number, 
+    fontSize: number = 10,
+    isBold: boolean = false,
+    isItalic: boolean = false
+  ): number => {
+    pdf.setFontSize(fontSize);
+    pdf.setFont('helvetica', isBold ? 'bold' : isItalic ? 'italic' : 'normal');
+    
+    const lines = pdf.splitTextToSize(text, maxWidth);
+    const lineHeight = (fontSize / 72) * 1.2; // Convert to inches with spacing
+    let currentY = y;
+    
+    for (const line of lines) {
+      // Check if we need a new page
+      if (currentY + lineHeight > 10.5) { // 11" - 0.5" bottom margin
+        pdf.addPage();
+        currentY = 0.5; // Top margin
+      }
+      
+      pdf.text(line, x, currentY);
+      currentY += lineHeight;
+    }
+    
+    return currentY;
+  };
+
   const handleDownloadPDF = async () => {
     if (!permit) return;
     
@@ -249,54 +329,175 @@ const PermitCertificate = () => {
     toast.loading('Generating PDF certificate...');
     
     try {
-      // Create PDF using jsPDF's html method for better page break handling
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'in',
         format: 'letter'
       });
 
-      // Create a temporary container for PDF generation
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.top = '0';
-      tempContainer.style.width = '8.5in';
-      tempContainer.style.backgroundColor = 'white';
-      document.body.appendChild(tempContainer);
+      const pageWidth = 8.5;
+      const pageHeight = 11;
+      const margin = 0.5;
+      const contentWidth = pageWidth - (margin * 2);
+      let currentY = margin;
 
-      // Render the PDF version directly in the container
-      const { createRoot } = await import('react-dom/client');
-      const reactRoot = createRoot(tempContainer);
+      // Header Section
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('BUILDING PERMIT CERTIFICATE', pageWidth / 2, currentY, { align: 'center' });
+      currentY += 0.4;
+
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(permit.merchant_name || 'Municipality', pageWidth / 2, currentY, { align: 'center' });
+      currentY += 0.3;
+
+      pdf.text('Building Department', pageWidth / 2, currentY, { align: 'center' });
+      currentY += 0.5;
+
+      // Border around certificate
+      pdf.rect(margin, margin, contentWidth, pageHeight - (margin * 2));
+      currentY += 0.2;
+
+      // Permit Information Section
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('PERMIT AUTHORIZED', pageWidth / 2, currentY, { align: 'center' });
+      currentY += 0.4;
+
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
       
-      await new Promise<void>((resolve) => {
-        reactRoot.render(renderPDFVersion(permit));
-        setTimeout(resolve, 1500); // Allow time for rendering
-      });
+      const permitInfo = [
+        [`Permit Number:`, permit.permit_number],
+        [`Permit Type:`, permit.permit_type],
+        [`Status:`, permit.application_status.replace('_', ' ').toUpperCase()],
+        [`Issue Date:`, permit.issued_at ? formatDate(permit.issued_at) : 'Pending'],
+        [`Construction Value:`, formatCurrency(permit.estimated_construction_value_cents / 100)]
+      ];
 
-      // Use jsPDF's html method which respects CSS page breaks
-      await pdf.html(tempContainer, {
-        callback: function (doc) {
-          // Download the PDF
-          const filename = `Permit-Certificate-${permit.permit_number}.pdf`;
-          doc.save(filename);
-        },
-        x: 0,
-        y: 0,
-        width: 8.5, // Letter width in inches
-        windowWidth: 816, // 8.5 inches at 96 DPI
-        margin: [0.5, 0.5, 0.5, 0.5], // top, left, bottom, right margins
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
+      for (const [label, value] of permitInfo) {
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(label, margin + 0.2, currentY);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(value, margin + 2, currentY);
+        currentY += 0.2;
+      }
+
+      currentY += 0.3;
+
+      // Property Information Section
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('PROPERTY INFORMATION', margin + 0.2, currentY);
+      currentY += 0.3;
+
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Property Address:', margin + 0.2, currentY);
+      pdf.setFont('helvetica', 'normal');
+      currentY = addTextWithPageBreaks(pdf, permit.property_address, margin + 0.2, currentY + 0.2, contentWidth - 0.4);
+      currentY += 0.3;
+
+      // Permit Holder Information
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('PERMIT HOLDER INFORMATION', margin + 0.2, currentY);
+      currentY += 0.3;
+
+      pdf.setFontSize(10);
+      const holderInfo = [
+        [`Name:`, permit.applicant_full_name],
+        [`Email:`, permit.applicant_email],
+        [`Phone:`, permit.applicant_phone || 'N/A'],
+        [`Address:`, permit.applicant_address || 'N/A']
+      ];
+
+      for (const [label, value] of holderInfo) {
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(label, margin + 0.2, currentY);
+        pdf.setFont('helvetica', 'normal');
+        currentY = addTextWithPageBreaks(pdf, value, margin + 1.5, currentY, contentWidth - 1.7, 10);
+        currentY += 0.1;
+      }
+
+      currentY += 0.3;
+
+      // Scope of Work Section (can span multiple pages)
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('SCOPE OF WORK', margin + 0.2, currentY);
+      currentY += 0.3;
+
+      if (permit.scope_of_work) {
+        const scopeElements = parseHtmlContent(permit.scope_of_work);
+        
+        for (const element of scopeElements) {
+          if (element.text === '\n') {
+            currentY += 0.15;
+            continue;
+          }
+          
+          currentY = addTextWithPageBreaks(
+            pdf, 
+            element.text, 
+            margin + 0.2, 
+            currentY, 
+            contentWidth - 0.4, 
+            10,
+            element.isBold,
+            element.isItalic
+          );
+          
+          if (element.isList) {
+            currentY += 0.1;
+          }
         }
-      });
+      } else {
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('See application for details', margin + 0.2, currentY);
+        currentY += 0.2;
+      }
 
-      // Cleanup
-      reactRoot.unmount();
-      document.body.removeChild(tempContainer);
+      // Check if we need a new page for the legal notice
+      if (currentY > 9) {
+        pdf.addPage();
+        currentY = margin;
+      } else {
+        currentY += 0.5;
+      }
+
+      // Legal Notice Section
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('IMPORTANT NOTICE', margin + 0.2, currentY);
+      currentY += 0.3;
+
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      const legalNotices = [
+        '• DISPLAY REQUIREMENT: This permit must be displayed in a conspicuous location on or near the job site where it can be easily seen by inspectors and officials.',
+        '• INSPECTION REQUIRED: Work performed under this permit may require inspections. Contact the issuing authority before beginning work to schedule required inspections.',
+        '• VALIDITY: This permit is valid only for the work described in the approved application. Any changes or additional work may require a separate permit.',
+        '• COMPLIANCE: All work must comply with applicable building codes, zoning ordinances, and other regulations in effect at the time of permit issuance.'
+      ];
+      
+      for (const notice of legalNotices) {
+        currentY = addTextWithPageBreaks(pdf, notice, margin + 0.2, currentY, contentWidth - 0.4, 9);
+        currentY += 0.1;
+      }
+
+      currentY += 0.3;
+
+      // Footer
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'italic');
+      pdf.text(`Generated on ${formatDate(new Date().toISOString())}`, margin + 0.2, currentY);
+      pdf.text('Building Department Seal', pageWidth - margin - 0.2, currentY, { align: 'right' });
+
+      // Download the PDF
+      const filename = `Permit-Certificate-${permit.permit_number}.pdf`;
+      pdf.save(filename);
       
       toast.dismiss();
       toast.success('PDF certificate downloaded successfully!');
