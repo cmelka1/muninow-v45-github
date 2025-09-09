@@ -102,9 +102,11 @@ const PermitCertificate = () => {
           <div className="border-t-2 border-gray-200 pt-6">
             <div>
               <p className="font-medium text-blue-600 mb-4">SCOPE OF WORK</p>
-              <div className="text-base leading-relaxed whitespace-pre-wrap">
-                {cleanHtmlForPdf(permit.scope_of_work)}
-              </div>
+              <SafeHtmlRenderer 
+                content={permit.scope_of_work}
+                fallback="See application for details"
+                className="text-base leading-relaxed whitespace-pre-wrap"
+              />
             </div>
           </div>
 
