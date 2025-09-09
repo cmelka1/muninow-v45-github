@@ -1,22 +1,201 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { usePermit } from '@/hooks/usePermit';
 import { formatDate, formatCurrency } from '@/lib/formatters';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { toast } from 'sonner';
 
 const PermitCertificate = () => {
   const { permitId } = useParams<{ permitId: string }>();
   const navigate = useNavigate();
   const printRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
   const { data: permit, isLoading, error } = usePermit(permitId!);
   
   const handlePrint = () => {
     window.print();
+  };
+
+  const renderPDFVersion = (permit: any) => {
+    return (
+      <div className="max-w-4xl mx-auto bg-white border-2 border-gray-300 shadow-xl" style={{ width: '8.5in', minHeight: '11in' }}>
+        {/* Header */}
+        <div className="bg-blue-600 text-white p-8 text-center border-b-4 border-blue-800">
+          <h1 className="text-3xl font-bold tracking-wide">BUILDING PERMIT CERTIFICATE</h1>
+          <h2 className="text-xl font-semibold">{permit.merchant_name}</h2>
+        </div>
+
+        {/* Certificate Body */}
+        <div className="p-8 space-y-8">
+          {/* Permit Information */}
+          <div className="text-center border-b-2 border-gray-200 pb-6">
+            <h3 className="text-2xl font-bold text-blue-600 mb-2">PERMIT AUTHORIZED</h3>
+            <div className="grid grid-cols-3 gap-6 mt-6">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">PERMIT NUMBER</p>
+                <p className="text-2xl font-mono font-bold">{permit.permit_number}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">PERMIT TYPE</p>
+                <p className="text-xl font-semibold">{permit.permit_type}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">CONSTRUCTION VALUE</p>
+                <p className="text-xl font-semibold">
+                  {permit.estimated_construction_value_cents 
+                    ? formatCurrency(permit.estimated_construction_value_cents / 100)
+                    : 'Not specified'
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Property and Permit Information */}
+          <div className="space-y-6">
+            <div>
+              <p className="font-medium text-blue-600 mb-2">PROPERTY ADDRESS</p>
+              <p className="text-lg">{permit.property_address}</p>
+            </div>
+            
+            <div>
+              <p className="font-medium text-blue-600 mb-2">PERMIT HOLDER</p>
+              <p className="text-lg">{permit.applicant_full_name}</p>
+              <p className="text-sm text-gray-600">{permit.applicant_email}</p>
+            </div>
+            
+            <div>
+              <p className="font-medium text-blue-600 mb-2">DATE ISSUED</p>
+              <p className="text-lg">{formatDate(permit.issued_at)}</p>
+            </div>
+          </div>
+
+          {/* Scope of Work */}
+          <div className="border-t-2 border-gray-200 pt-6">
+            <div>
+              <p className="font-medium text-blue-600 mb-4">SCOPE OF WORK</p>
+              <div className="text-base leading-relaxed whitespace-pre-wrap">
+                {permit.scope_of_work || 'See application for details'}
+              </div>
+            </div>
+          </div>
+
+          {/* Legal Notice */}
+          <div className="bg-gray-50 border-2 border-gray-200 p-6 rounded">
+            <h4 className="font-bold text-center text-lg mb-4">IMPORTANT NOTICE</h4>
+            <div className="space-y-3 text-sm">
+              <p>
+                <strong>• DISPLAY REQUIREMENT:</strong> This permit must be displayed in a conspicuous location 
+                on or near the job site where it can be easily seen by inspectors and officials.
+              </p>
+              <p>
+                <strong>• INSPECTION REQUIRED:</strong> Work performed under this permit may require inspections. 
+                Contact the issuing authority before beginning work to schedule required inspections.
+              </p>
+              <p>
+                <strong>• VALIDITY:</strong> This permit is valid only for the work described in the approved application. 
+                Any changes or additional work may require a separate permit.
+              </p>
+              <p>
+                <strong>• COMPLIANCE:</strong> All work must comply with applicable building codes, zoning ordinances, 
+                and other regulations in effect at the time of permit issuance.
+              </p>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="border-t-2 border-gray-200 pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <p className="font-medium text-blue-600 mb-2">ISSUING AUTHORITY</p>
+                <p className="text-sm">{permit.merchant_name}</p>
+                <p className="text-sm text-gray-600">Building Department</p>
+              </div>
+              <div>
+                <p className="font-medium text-blue-600 mb-2">VERIFICATION</p>
+                <p className="text-sm">
+                  This permit can be verified online at muninow.com using permit number: {permit.permit_number}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!permit) return;
+    
+    setIsGeneratingPDF(true);
+    toast.loading('Generating PDF certificate...');
+    
+    try {
+      // Create a temporary container for PDF generation
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      tempContainer.style.width = '816px'; // 8.5in at 96dpi
+      document.body.appendChild(tempContainer);
+
+      // Render the PDF version
+      const root = document.createElement('div');
+      tempContainer.appendChild(root);
+      
+      // Use React to render the PDF version
+      const { createRoot } = await import('react-dom/client');
+      const reactRoot = createRoot(root);
+      
+      await new Promise<void>((resolve) => {
+        reactRoot.render(renderPDFVersion(permit));
+        setTimeout(resolve, 1000); // Allow time for rendering
+      });
+
+      // Generate canvas from the rendered content
+      const canvas = await html2canvas(root, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 816,
+        height: 1056, // 11in at 96dpi
+      });
+
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'in',
+        format: 'letter'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 0, 0, 8.5, 11);
+
+      // Download the PDF
+      const filename = `Permit-Certificate-${permit.permit_number}.pdf`;
+      pdf.save(filename);
+
+      // Cleanup
+      reactRoot.unmount();
+      document.body.removeChild(tempContainer);
+      
+      toast.dismiss();
+      toast.success('PDF certificate downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.dismiss();
+      toast.error('Failed to generate PDF certificate. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   if (isLoading) {
@@ -190,13 +369,25 @@ const PermitCertificate = () => {
               Back to Permit Details
             </Button>
             
-            <Button
-              onClick={handlePrint}
-              className="flex items-center gap-2"
-            >
-              <Printer className="h-4 w-4" />
-              Print Certificate
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                onClick={handleDownloadPDF}
+                disabled={isGeneratingPDF}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
+              </Button>
+              
+              <Button
+                onClick={handlePrint}
+                className="flex items-center gap-2"
+              >
+                <Printer className="h-4 w-4" />
+                Print Certificate
+              </Button>
+            </div>
           </div>
         </div>
         
