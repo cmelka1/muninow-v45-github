@@ -56,7 +56,7 @@ import OtherServices from "./pages/OtherServices";
 import PermitOverview from "./pages/PermitOverview";
 import PermitDetail from "./pages/PermitDetail";
 import PermitCertificate from "./pages/PermitCertificate";
-
+import BusinessLicenseCertificate from "./pages/BusinessLicenseCertificate";
 import TaxDetail from "./pages/TaxDetail";
 import ServiceApplicationDetail from "@/pages/ServiceApplicationDetail";
 import MunicipalServiceApplicationDetail from "@/pages/MunicipalServiceApplicationDetail";
@@ -103,6 +103,16 @@ const App = () => (
                       <AppSidebar />
                       <main className="flex-1 overflow-auto">
                         <BusinessLicenseDetail />
+                      </main>
+                    </div>
+                  </SidebarProvider>
+                } />
+                <Route path="/business-license/:licenseId/certificate" element={
+                  <SidebarProvider>
+                    <div className="min-h-screen flex w-full">
+                      <AppSidebar />
+                      <main className="flex-1 overflow-auto">
+                        <BusinessLicenseCertificate />
                       </main>
                     </div>
                   </SidebarProvider>

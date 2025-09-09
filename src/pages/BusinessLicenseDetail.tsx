@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Eye, Download, Loader2 } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Eye, Download, Loader2, Award } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
@@ -17,7 +15,6 @@ import { Label } from '@/components/ui/label';
 import { useBusinessLicense } from '@/hooks/useBusinessLicense';
 import { useBusinessLicenseDocumentsList } from '@/hooks/useBusinessLicenseDocumentsList';
 import { useBusinessLicenseDocuments } from '@/hooks/useBusinessLicenseDocuments';
-import { useCustomerById } from '@/hooks/useCustomerById';
 import { BusinessLicenseStatusBadge } from '@/components/BusinessLicenseStatusBadge';
 import { BusinessLicenseCommunication } from '@/components/BusinessLicenseCommunication';
 import { BusinessLicenseStatusChangeDialog } from '@/components/BusinessLicenseStatusChangeDialog';
@@ -44,13 +41,11 @@ export const BusinessLicenseDetail = () => {
   const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
   const [withdrawReason, setWithdrawReason] = useState('');
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
   const { data: license, isLoading, error, refetch } = useBusinessLicense(id!);
   const { data: documents, isLoading: documentsLoading, refetch: refetchDocuments } = useBusinessLicenseDocumentsList(id!);
   const { getDocumentUrl } = useBusinessLicenseDocuments();
   const { updateLicenseStatus, isUpdating, getValidStatusTransitions } = useBusinessLicenseWorkflow();
-  const { customer: municipality } = useCustomerById(license?.customer_id);
   
   const isMunicipalUser = user?.user_metadata?.account_type === 'municipal';
   const isOwner = license?.user_id === user?.id;
@@ -123,214 +118,6 @@ export const BusinessLicenseDetail = () => {
       setShowWithdrawDialog(false);
       setWithdrawReason('');
       refetch();
-    }
-  };
-
-  const renderPDFVersion = () => {
-    if (!license || !municipality) return null;
-
-    return (
-      <div className="w-[1200px] min-h-[800px] bg-white p-6 font-serif relative flex flex-col">
-        {/* Enhanced decorative corners */}
-        <div className="absolute top-4 left-4 w-20 h-20 border-l-4 border-t-4 border-primary"></div>
-        <div className="absolute top-4 right-4 w-20 h-20 border-r-4 border-t-4 border-primary"></div>
-        <div className="absolute bottom-4 left-4 w-20 h-20 border-l-4 border-b-4 border-primary"></div>
-        <div className="absolute bottom-4 right-4 w-20 h-20 border-r-4 border-b-4 border-primary"></div>
-
-        {/* Inner decorative frame */}
-        <div className="absolute top-12 left-12 right-12 bottom-12 border-2 border-muted-foreground/20 rounded-lg"></div>
-
-        {/* Header */}
-        <div className="text-center mb-8 relative z-10">
-          <div className="mb-4">
-            <div className="w-16 h-16 bg-primary rounded-full mx-auto mb-4 flex items-center justify-center">
-              <Building className="h-8 w-8 text-white" />
-            </div>
-          </div>
-          
-          <h1 className="text-4xl font-bold text-primary mb-2">BUSINESS LICENSE CERTIFICATE</h1>
-          <div className="w-32 h-1 bg-primary mx-auto mb-4"></div>
-          <p className="text-xl text-muted-foreground">
-            Official License Certification
-          </p>
-        </div>
-
-        {/* Main Content - Flexible Layout */}
-        <div className="flex-1 flex flex-col justify-between space-y-4">
-          {/* License Information Row */}
-          <div className="bg-muted/10 p-6 rounded-lg">
-            <div className="grid grid-cols-3 gap-6">
-              <div className="text-center">
-                <span className="font-medium text-xl text-muted-foreground block mb-2">License Number:</span>
-                <div className="text-2xl font-bold text-primary">
-                  #{license.license_number || license.id.slice(0, 8)}
-                </div>
-              </div>
-              <div className="text-center">
-                <span className="font-medium text-xl text-muted-foreground block mb-2">License Type:</span>
-                <div className="text-2xl font-semibold break-words leading-tight">
-                  {license.business_type || 'Business License'}
-                </div>
-              </div>
-              <div className="text-center">
-                <span className="font-medium text-xl text-muted-foreground block mb-2">Issue Date:</span>
-                <div className="text-2xl font-semibold">
-                  {license.issued_at ? new Date(license.issued_at).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  }) : new Date().toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Business Information Row */}
-          <div className="bg-muted/10 p-6 rounded-lg">
-            <h3 className="text-2xl font-bold text-primary mb-6 text-center">LICENSED BUSINESS INFORMATION</h3>
-            <div className="grid grid-cols-2 gap-8">
-              <div>
-                <div className="space-y-4">
-                  <div>
-                    <span className="font-medium text-lg text-muted-foreground block">Business Legal Name:</span>
-                    <div className="text-xl font-semibold">{license.business_legal_name}</div>
-                  </div>
-                  {license.doing_business_as && (
-                    <div>
-                      <span className="font-medium text-lg text-muted-foreground block">Doing Business As (DBA):</span>
-                      <div className="text-xl font-semibold">{license.doing_business_as}</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div>
-                <div className="space-y-4">
-                  <div>
-                    <span className="font-medium text-lg text-muted-foreground block">Business Owner:</span>
-                    <div className="text-xl font-semibold">{license.owner_first_name} {license.owner_last_name}</div>
-                  </div>
-                  <div>
-                    <span className="font-medium text-lg text-muted-foreground block">Business Address:</span>
-                    <div className="text-lg">
-                      {license.business_street_address}
-                      {license.business_apt_number && `, ${license.business_apt_number}`}
-                      <br />
-                      {license.business_city}, {license.business_state} {license.business_zip_code}
-                    </div>
-                  </div>
-                  {license.federal_ein && (
-                    <div>
-                      <span className="font-medium text-lg text-muted-foreground block">Federal EIN:</span>
-                      <div className="text-lg">{license.federal_ein}</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Legal Notice Row - Flexible */}
-          <div className="bg-muted/10 p-3 rounded-lg mt-auto">
-            <h3 className="text-base font-bold text-primary mb-2">LEGAL NOTICE</h3>
-            <div className="space-y-1 text-sm leading-tight">
-              <p>
-                This certificate serves as official documentation that the above-named business 
-                is duly licensed to operate within the jurisdiction of {municipality?.legal_entity_name || 'this municipality'}.
-              </p>
-              <p>
-                This license is subject to all applicable local, state, and federal laws and regulations. 
-                The business must comply with all zoning requirements, health and safety standards, and other applicable ordinances.
-              </p>
-              <p>
-                This certificate does not constitute permission to operate in violation of any law or regulation. 
-                For questions regarding this license, contact the municipal licensing department.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Signature Area */}
-        <div className="flex justify-between items-end mt-8 relative z-10">
-          <div className="text-center">
-            <div className="w-48 border-t border-muted-foreground mb-2"></div>
-            <span className="text-sm text-muted-foreground">Municipal Authority Signature</span>
-          </div>
-          <div className="text-center">
-            <div className="w-48 border-t border-muted-foreground mb-2"></div>
-            <span className="text-sm text-muted-foreground">Date of Issuance</span>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const handleDownloadPDF = async () => {
-    if (!license || !municipality) return;
-
-    setIsGeneratingPDF(true);
-    try {
-      // Create a temporary container for PDF generation
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.top = '-9999px';
-      tempContainer.style.left = '-9999px';
-      document.body.appendChild(tempContainer);
-
-      // Render the PDF version into the temporary container
-      const { createRoot } = await import('react-dom/client');
-      const root = createRoot(tempContainer);
-      
-      await new Promise<void>((resolve) => {
-        root.render(
-          <div>
-            {renderPDFVersion()}
-          </div>
-        );
-        // Allow React to render
-        setTimeout(resolve, 100);
-      });
-
-      // Generate PDF
-      const canvas = await html2canvas(tempContainer.firstChild as HTMLElement, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        width: 1200,
-        height: 800
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'px',
-        format: [1200, 800]
-      });
-
-      pdf.addImage(imgData, 'PNG', 0, 0, 1200, 800);
-      pdf.save(`business-license-certificate-${license.license_number || license.id.slice(0, 8)}.pdf`);
-
-      // Cleanup
-      root.unmount();
-      document.body.removeChild(tempContainer);
-
-      toast({
-        title: "Success",
-        description: "Certificate downloaded successfully",
-      });
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF certificate",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGeneratingPDF(false);
     }
   };
 
@@ -452,16 +239,11 @@ export const BusinessLicenseDetail = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleDownloadPDF}
-                disabled={isGeneratingPDF}
+                onClick={() => navigate(`/business-license/${license.id}/certificate`)}
                 className="flex items-center gap-2"
               >
-                {isGeneratingPDF ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4" />
-                )}
-                {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
+                <Award className="h-4 w-4" />
+                View Certificate
               </Button>
             )}
             {canWithdraw && (
