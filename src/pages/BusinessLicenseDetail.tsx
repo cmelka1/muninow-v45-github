@@ -130,23 +130,29 @@ export const BusinessLicenseDetail = () => {
     if (!license || !municipality) return null;
 
     return (
-      <div className="w-[1200px] min-h-[800px] max-h-[800px] bg-white p-6 font-serif relative flex flex-col">
-        {/* Enhanced decorative corners */}
-        <div className="absolute top-4 left-4 w-20 h-20 border-l-4 border-t-4 border-primary"></div>
-        <div className="absolute top-4 right-4 w-20 h-20 border-r-4 border-t-4 border-primary"></div>
-        <div className="absolute bottom-4 left-4 w-20 h-20 border-l-4 border-b-4 border-primary"></div>
-        <div className="absolute bottom-4 right-4 w-20 h-20 border-r-4 border-b-4 border-primary"></div>
-
-        {/* Certificate Border */}
-        <div className="border-4 border-primary/20 p-6 relative flex-1 flex flex-col">
-          {/* Decorative Corner Elements */}
-          <div className="absolute top-2 left-2 w-12 h-12 border-l-2 border-t-2 border-primary/30"></div>
-          <div className="absolute top-2 right-2 w-12 h-12 border-r-2 border-t-2 border-primary/30"></div>
-          <div className="absolute bottom-2 left-2 w-12 h-12 border-l-2 border-b-2 border-primary/30"></div>
-          <div className="absolute bottom-2 right-2 w-12 h-12 border-r-2 border-b-2 border-primary/30"></div>
+      <div className="w-[1200px] min-h-[800px] max-h-[800px] bg-white p-8 font-serif box-border">
+        {/* Single Clean Certificate Border */}
+        <div className="border-8 border-double border-primary h-full p-12 box-border flex flex-col">
+          {/* Simple Corner Decorations */}
+          <div className="absolute top-12 left-12 w-16 h-16">
+            <div className="w-full h-2 bg-primary"></div>
+            <div className="w-2 h-full bg-primary absolute top-0 left-0"></div>
+          </div>
+          <div className="absolute top-12 right-12 w-16 h-16">
+            <div className="w-full h-2 bg-primary"></div>
+            <div className="w-2 h-full bg-primary absolute top-0 right-0"></div>
+          </div>
+          <div className="absolute bottom-12 left-12 w-16 h-16">
+            <div className="w-full h-2 bg-primary absolute bottom-0"></div>
+            <div className="w-2 h-full bg-primary absolute bottom-0 left-0"></div>
+          </div>
+          <div className="absolute bottom-12 right-12 w-16 h-16">
+            <div className="w-full h-2 bg-primary absolute bottom-0"></div>
+            <div className="w-2 h-full bg-primary absolute bottom-0 right-0"></div>
+          </div>
 
           {/* Header */}
-          <div className="text-center mb-6">
+          <div className="text-center mb-6 mt-8">
             <h1 className="text-4xl font-bold text-primary mb-2">
               BUSINESS LICENSE CERTIFICATE
             </h1>
