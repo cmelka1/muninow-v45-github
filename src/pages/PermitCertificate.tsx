@@ -195,7 +195,7 @@ const PermitCertificate = () => {
               className="flex items-center gap-2"
             >
               <Printer className="h-4 w-4" />
-              Print Certificate
+              Print Permit
             </Button>
           </div>
         </div>
