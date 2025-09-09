@@ -23,25 +23,89 @@ const PermitCertificate = () => {
     window.print();
   };
 
-  const cleanHtmlForPdf = (htmlContent: string | null): string => {
-    if (!htmlContent) return 'See application for details';
+  const renderHtmlContentWithInlineStyles = (htmlContent: string | null) => {
+    if (!htmlContent || htmlContent.trim() === '' || htmlContent === 'None') {
+      return <div style={{ fontSize: '16px', lineHeight: '1.6' }}>See application for details</div>;
+    }
     
     // Create a temporary div to parse HTML
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = htmlContent;
     
-    // Convert to plain text while preserving basic formatting
-    let textContent = tempDiv.textContent || tempDiv.innerText || '';
+    const processNode = (node: ChildNode): React.ReactNode => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent?.trim();
+        return text ? text : null;
+      }
+      
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as Element;
+        const children = Array.from(element.childNodes)
+          .map((child, index) => processNode(child))
+          .filter(child => child !== null);
+        
+        const key = Math.random().toString(36).substr(2, 9);
+        
+        switch (element.tagName.toLowerCase()) {
+          case 'p':
+            return (
+              <div key={key} style={{ marginBottom: '16px', fontSize: '16px', lineHeight: '1.6' }}>
+                {children.length > 0 ? children : <br />}
+              </div>
+            );
+          case 'br':
+            return <br key={key} />;
+          case 'strong':
+          case 'b':
+            return <strong key={key} style={{ fontWeight: 'bold' }}>{children}</strong>;
+          case 'em':
+          case 'i':
+            return <em key={key} style={{ fontStyle: 'italic' }}>{children}</em>;
+          case 'ul':
+            return (
+              <ul key={key} style={{ marginBottom: '16px', paddingLeft: '24px', listStyleType: 'disc' }}>
+                {children}
+              </ul>
+            );
+          case 'ol':
+            return (
+              <ol key={key} style={{ marginBottom: '16px', paddingLeft: '24px', listStyleType: 'decimal' }}>
+                {children}
+              </ol>
+            );
+          case 'li':
+            return (
+              <li key={key} style={{ marginBottom: '8px', fontSize: '16px', lineHeight: '1.6' }}>
+                {children}
+              </li>
+            );
+          case 'div':
+            return (
+              <div key={key} style={{ marginBottom: '8px', fontSize: '16px', lineHeight: '1.6' }}>
+                {children}
+              </div>
+            );
+          default:
+            return (
+              <span key={key} style={{ fontSize: '16px', lineHeight: '1.6' }}>
+                {children}
+              </span>
+            );
+        }
+      }
+      
+      return null;
+    };
     
-    // Remove extra whitespace and normalize line breaks
-    textContent = textContent.trim();
+    const processedContent = Array.from(tempDiv.childNodes)
+      .map((child, index) => processNode(child))
+      .filter(child => child !== null);
     
-    // If the content is empty or just whitespace, return fallback
-    if (!textContent || textContent === 'None' || textContent.length === 0) {
-      return 'See application for details';
-    }
-    
-    return textContent;
+    return (
+      <div style={{ fontSize: '16px', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+        {processedContent.length > 0 ? processedContent : 'See application for details'}
+      </div>
+    );
   };
 
   const renderPDFVersion = (permit: any) => {
@@ -102,11 +166,7 @@ const PermitCertificate = () => {
           <div className="border-t-2 border-gray-200 pt-6">
             <div>
               <p className="font-medium text-blue-600 mb-4">SCOPE OF WORK</p>
-              <SafeHtmlRenderer 
-                content={permit.scope_of_work}
-                fallback="See application for details"
-                className="text-base leading-relaxed whitespace-pre-wrap"
-              />
+              {renderHtmlContentWithInlineStyles(permit.scope_of_work)}
             </div>
           </div>
 
