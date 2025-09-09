@@ -917,11 +917,11 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                       PIN Number <span className="text-muted-foreground">(Optional)</span>
                     </Label>
                     <p className="text-xs text-muted-foreground mb-2">
-                      Parcel Number if available
+                      Property Identification Number if available
                     </p>
                     <Input
                       id="pin-number"
-                      placeholder="Enter parcel number"
+                      placeholder="Enter PIN number"
                       value={propertyInfo.pinNumber}
                       onChange={(e) => handlePinNumberChange(e.target.value)}
                       className="mt-1"

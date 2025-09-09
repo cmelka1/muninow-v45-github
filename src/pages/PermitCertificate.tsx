@@ -1,6 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Printer, Download } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,58 +8,15 @@ import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { usePermit } from '@/hooks/usePermit';
 import { formatDate, formatCurrency } from '@/lib/formatters';
 
-import jsPDF from 'jspdf';
-import { toast } from 'sonner';
-
 const PermitCertificate = () => {
   const { permitId } = useParams<{ permitId: string }>();
   const navigate = useNavigate();
   const printRef = useRef<HTMLDivElement>(null);
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
   const { data: permit, isLoading, error } = usePermit(permitId!);
   
   const handlePrint = () => {
     window.print();
-  };
-
-
-  const handleDownloadPDF = async () => {
-    if (!permit || !printRef.current) return;
-    
-    setIsGeneratingPDF(true);
-    toast.loading('Generating PDF certificate...');
-    
-    try {
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      // Use jsPDF's html method to convert the print-optimized content
-      await pdf.html(printRef.current, {
-        callback: function(doc) {
-          const filename = `Permit-Certificate-${permit.permit_number}.pdf`;
-          doc.save(filename);
-        },
-        x: 10,
-        y: 10,
-        width: 190, // A4 width minus margins
-        windowWidth: 816, // Match print width
-        margin: 10,
-        autoPaging: 'text' // Let jsPDF handle page breaks intelligently
-      });
-      
-      toast.dismiss();
-      toast.success('PDF certificate downloaded successfully!');
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      toast.dismiss();
-      toast.error('Failed to generate PDF certificate. Please try again.');
-    } finally {
-      setIsGeneratingPDF(false);
-    }
   };
 
   if (isLoading) {
@@ -233,25 +190,13 @@ const PermitCertificate = () => {
               Back to Permit Details
             </Button>
             
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={handleDownloadPDF}
-                disabled={isGeneratingPDF}
-                className="flex items-center gap-2"
-              >
-                <Download className="h-4 w-4" />
-                {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
-              </Button>
-              
-              <Button
-                onClick={handlePrint}
-                className="flex items-center gap-2"
-              >
-                <Printer className="h-4 w-4" />
-                Print Certificate
-              </Button>
-            </div>
+            <Button
+              onClick={handlePrint}
+              className="flex items-center gap-2"
+            >
+              <Printer className="h-4 w-4" />
+              Print Certificate
+            </Button>
           </div>
         </div>
         
@@ -298,7 +243,7 @@ const PermitCertificate = () => {
             }
           `}
         </style>
-        <div className="print-certificate" ref={printRef}>
+        <div className="print-certificate">
           {certificateContent}
         </div>
       </div>
