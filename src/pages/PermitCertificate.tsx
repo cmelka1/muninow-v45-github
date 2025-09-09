@@ -11,28 +11,6 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
 
-// Helper function to clean HTML content for PDF
-const cleanHtmlForPdf = (htmlContent: string | null): string => {
-  if (!htmlContent) return 'See application for details';
-  
-  // Create a temporary div to parse HTML
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = htmlContent;
-  
-  // Get text content and clean it up
-  let cleanText = tempDiv.textContent || tempDiv.innerText || '';
-  
-  // Remove extra whitespace and empty lines
-  cleanText = cleanText.replace(/\s+/g, ' ').trim();
-  
-  // If empty after cleaning, return fallback
-  if (!cleanText || cleanText === 'None') {
-    return 'See application for details';
-  }
-  
-  return cleanText;
-};
-
 const PermitCertificate = () => {
   const { permitId } = useParams<{ permitId: string }>();
   const navigate = useNavigate();
@@ -104,7 +82,7 @@ const PermitCertificate = () => {
             <div>
               <p className="font-medium text-blue-600 mb-4">SCOPE OF WORK</p>
               <div className="text-base leading-relaxed whitespace-pre-wrap">
-                {cleanHtmlForPdf(permit.scope_of_work)}
+                {permit.scope_of_work || 'See application for details'}
               </div>
             </div>
           </div>
