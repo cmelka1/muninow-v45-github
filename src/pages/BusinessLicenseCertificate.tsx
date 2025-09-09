@@ -31,7 +31,7 @@ const BusinessLicenseCertificate = () => {
     if (!license || !municipality) return null;
 
     return (
-      <div className="w-[1200px] min-h-[800px] max-h-[800px] bg-white p-6 font-serif relative flex flex-col">
+      <div className="w-[1200px] min-h-[800px] bg-white p-6 font-serif relative flex flex-col">
         {/* Enhanced decorative corners */}
         <div className="absolute top-4 left-4 w-20 h-20 border-l-4 border-t-4 border-primary"></div>
         <div className="absolute top-4 right-4 w-20 h-20 border-r-4 border-t-4 border-primary"></div>
@@ -58,7 +58,7 @@ const BusinessLicenseCertificate = () => {
           </div>
 
           {/* Main Content - Flexible Layout */}
-          <div className="flex-1 space-y-6">
+          <div className="flex-1 flex flex-col justify-between space-y-4">
             {/* License Information Row */}
             <div className="bg-muted/10 p-6 rounded-lg">
               <div className="grid grid-cols-3 gap-6">
@@ -70,7 +70,7 @@ const BusinessLicenseCertificate = () => {
                 </div>
                 <div className="text-center">
                   <span className="font-medium text-xl text-muted-foreground block mb-2">License Type:</span>
-                  <div className="text-2xl font-semibold">
+                  <div className="text-2xl font-semibold break-words leading-tight">
                     {license.business_type || 'Business License'}
                   </div>
                 </div>
@@ -127,10 +127,10 @@ const BusinessLicenseCertificate = () => {
               </div>
             </div>
 
-            {/* Legal Notice Row - Compact */}
-            <div className="bg-muted/10 p-2 rounded-lg">
-              <h3 className="text-base font-bold text-primary mb-4">LEGAL NOTICE</h3>
-              <div className="space-y-2 text-base leading-tight">
+            {/* Legal Notice Row - Flexible */}
+            <div className="bg-muted/10 p-3 rounded-lg mt-auto">
+              <h3 className="text-base font-bold text-primary mb-2">LEGAL NOTICE</h3>
+              <div className="space-y-1 text-sm leading-tight">
                 <p>
                   This certificate serves as official documentation that the above-named business 
                   is duly licensed to operate within the jurisdiction of {municipality?.legal_entity_name || 'this municipality'}.
