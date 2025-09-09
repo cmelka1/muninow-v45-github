@@ -298,7 +298,7 @@ const PermitCertificate = () => {
             }
           `}
         </style>
-        <div className="print-certificate">
+        <div className="print-certificate" ref={printRef}>
           {certificateContent}
         </div>
       </div>
