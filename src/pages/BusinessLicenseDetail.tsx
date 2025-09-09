@@ -475,7 +475,7 @@ export const BusinessLicenseDetail = () => {
                 className="flex items-center gap-2"
               >
                 <Download className="h-4 w-4" />
-                {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
+                {isGeneratingPDF ? 'Generating...' : 'Download License'}
               </Button>
             )}
             {canWithdraw && (
