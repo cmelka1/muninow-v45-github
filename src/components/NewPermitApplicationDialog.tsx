@@ -921,7 +921,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                     </p>
                     <Input
                       id="pin-number"
-                      placeholder="Enter PIN number"
+                      placeholder="Enter parcel number"
                       value={propertyInfo.pinNumber}
                       onChange={(e) => handlePinNumberChange(e.target.value)}
                       className="mt-1"
