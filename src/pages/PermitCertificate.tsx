@@ -4,6 +4,7 @@ import { ArrowLeft, Printer, Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
+import { createRoot } from 'react-dom/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -142,16 +143,14 @@ const PermitCertificate = () => {
       tempContainer.style.top = '-9999px';
       tempContainer.style.width = '8.5in';
       tempContainer.style.height = 'auto';
-      
-      // Render the PDF version into the container
-      const pdfElement = document.createElement('div');
-      pdfElement.innerHTML = renderPDFVersion(permit).props.children.map((child: any) => {
-        if (typeof child === 'string') return child;
-        return child.props ? `<div>${child.props.children}</div>` : '';
-      }).join('');
-      
-      tempContainer.appendChild(pdfElement);
       document.body.appendChild(tempContainer);
+      
+      // Create React root and render the PDF version
+      const root = createRoot(tempContainer);
+      root.render(renderPDFVersion(permit));
+      
+      // Wait for React to finish rendering
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Capture the element as an image
       const canvas = await html2canvas(tempContainer, {
@@ -177,6 +176,7 @@ const PermitCertificate = () => {
       pdf.save(`permit-certificate-${permit.permit_number}.pdf`);
       
       // Clean up
+      root.unmount();
       document.body.removeChild(tempContainer);
       
       toast.success('Certificate PDF downloaded successfully!');
