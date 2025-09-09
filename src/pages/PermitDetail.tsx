@@ -212,7 +212,20 @@ const PermitDetail = () => {
             <h1 className="text-2xl font-bold text-gray-900">Permit Application</h1>
             <p className="text-gray-600">{permit.permit_number}</p>
           </div>
-          <PermitStatusBadge status={permit.application_status as PermitStatus} />
+          <div className="flex items-center gap-3">
+            {permit.application_status === 'issued' && permit.payment_status === 'paid' && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate(`/permit/${permitId}/certificate`)}
+                className="flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                View Certificate
+              </Button>
+            )}
+            <PermitStatusBadge status={permit.application_status as PermitStatus} />
+          </div>
         </div>
       </div>
 
@@ -463,16 +476,6 @@ const PermitDetail = () => {
                     <CreditCard className="h-4 w-4 mr-2" />
                     Payment Complete
                   </Button>
-                  
-                  {permit.application_status === 'issued' && (
-                    <Button 
-                      className="w-full" 
-                      onClick={() => navigate(`/permit/${permitId}/certificate`)}
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      View Certificate
-                    </Button>
-                  )}
                   
                   <p className="text-xs text-green-600 mt-2">
                     Your permit fee has been paid
