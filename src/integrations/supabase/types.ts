@@ -3723,6 +3723,7 @@ export type Database = {
           email_payment_confirmations: boolean | null
           email_service_updates: boolean | null
           id: string
+          paperless_billing: boolean | null
           sms_payment_confirmations: boolean | null
           sms_service_updates: boolean | null
           updated_at: string
@@ -3733,6 +3734,7 @@ export type Database = {
           email_payment_confirmations?: boolean | null
           email_service_updates?: boolean | null
           id?: string
+          paperless_billing?: boolean | null
           sms_payment_confirmations?: boolean | null
           sms_service_updates?: boolean | null
           updated_at?: string
@@ -3743,6 +3745,7 @@ export type Database = {
           email_payment_confirmations?: boolean | null
           email_service_updates?: boolean | null
           id?: string
+          paperless_billing?: boolean | null
           sms_payment_confirmations?: boolean | null
           sms_service_updates?: boolean | null
           updated_at?: string

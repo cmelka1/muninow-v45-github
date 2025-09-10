@@ -83,7 +83,7 @@ export const NotificationsTab = () => {
               email: data.email_payment_confirmations ?? true,
               sms: data.sms_payment_confirmations ?? false
             },
-            paperlessBilling: data.paperless_billing ?? false
+            paperlessBilling: (data as any).paperless_billing ?? false
           };
           
           setPreferences(fetchedPreferences);
