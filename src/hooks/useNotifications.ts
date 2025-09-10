@@ -14,6 +14,15 @@ export interface UserNotification {
   read_at?: string;
   created_at: string;
   updated_at: string;
+  // Enhanced metadata fields
+  service_type?: string;
+  service_number?: string;
+  update_type?: string;
+  status_change_from?: string;
+  status_change_to?: string;
+  entity_details?: any;
+  payment_details?: any;
+  communication_details?: any;
 }
 
 export const useNotifications = () => {

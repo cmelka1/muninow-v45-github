@@ -3720,31 +3720,31 @@ export type Database = {
       user_notification_preferences: {
         Row: {
           created_at: string
-          email_bill_posting: boolean
-          email_payment_confirmation: boolean
+          email_payment_confirmations: boolean | null
+          email_service_updates: boolean | null
           id: string
-          sms_bill_posting: boolean
-          sms_payment_confirmation: boolean
+          sms_payment_confirmations: boolean | null
+          sms_service_updates: boolean | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          email_bill_posting?: boolean
-          email_payment_confirmation?: boolean
+          email_payment_confirmations?: boolean | null
+          email_service_updates?: boolean | null
           id?: string
-          sms_bill_posting?: boolean
-          sms_payment_confirmation?: boolean
+          sms_payment_confirmations?: boolean | null
+          sms_service_updates?: boolean | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
-          email_bill_posting?: boolean
-          email_payment_confirmation?: boolean
+          email_payment_confirmations?: boolean | null
+          email_service_updates?: boolean | null
           id?: string
-          sms_bill_posting?: boolean
-          sms_payment_confirmation?: boolean
+          sms_payment_confirmations?: boolean | null
+          sms_service_updates?: boolean | null
           updated_at?: string
           user_id?: string
         }
@@ -3753,43 +3753,67 @@ export type Database = {
       user_notifications: {
         Row: {
           action_url: string | null
+          communication_details: Json | null
           created_at: string
+          entity_details: Json | null
           id: string
           is_read: boolean
           message: string
           notification_type: string
+          payment_details: Json | null
           read_at: string | null
           related_entity_id: string | null
           related_entity_type: string | null
+          service_number: string | null
+          service_type: string | null
+          status_change_from: string | null
+          status_change_to: string | null
           title: string
+          update_type: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           action_url?: string | null
+          communication_details?: Json | null
           created_at?: string
+          entity_details?: Json | null
           id?: string
           is_read?: boolean
           message: string
           notification_type: string
+          payment_details?: Json | null
           read_at?: string | null
           related_entity_id?: string | null
           related_entity_type?: string | null
+          service_number?: string | null
+          service_type?: string | null
+          status_change_from?: string | null
+          status_change_to?: string | null
           title: string
+          update_type?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           action_url?: string | null
+          communication_details?: Json | null
           created_at?: string
+          entity_details?: Json | null
           id?: string
           is_read?: boolean
           message?: string
           notification_type?: string
+          payment_details?: Json | null
           read_at?: string | null
           related_entity_id?: string | null
           related_entity_type?: string | null
+          service_number?: string | null
+          service_type?: string | null
+          status_change_from?: string | null
+          status_change_to?: string | null
           title?: string
+          update_type?: string | null
           updated_at?: string
           user_id?: string
         }

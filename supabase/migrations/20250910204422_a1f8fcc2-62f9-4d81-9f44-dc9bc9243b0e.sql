@@ -1,0 +1,287 @@
+-- Update user_notifications table to support the new unified notification system
+ALTER TABLE public.user_notifications 
+ADD COLUMN IF NOT EXISTS service_type TEXT,
+ADD COLUMN IF NOT EXISTS service_number TEXT,
+ADD COLUMN IF NOT EXISTS update_type TEXT,
+ADD COLUMN IF NOT EXISTS status_change_from TEXT,
+ADD COLUMN IF NOT EXISTS status_change_to TEXT,
+ADD COLUMN IF NOT EXISTS entity_details JSONB DEFAULT '{}'::jsonb,
+ADD COLUMN IF NOT EXISTS payment_details JSONB DEFAULT '{}'::jsonb,
+ADD COLUMN IF NOT EXISTS communication_details JSONB DEFAULT '{}'::jsonb;
+
+-- Update user_notification_preferences to simplified structure
+ALTER TABLE public.user_notification_preferences
+DROP COLUMN IF EXISTS email_bill_posting,
+DROP COLUMN IF EXISTS email_payment_confirmation,
+DROP COLUMN IF EXISTS sms_bill_posting,
+DROP COLUMN IF EXISTS sms_payment_confirmation,
+ADD COLUMN IF NOT EXISTS email_service_updates BOOLEAN DEFAULT true,
+ADD COLUMN IF NOT EXISTS email_payment_confirmations BOOLEAN DEFAULT true,
+ADD COLUMN IF NOT EXISTS sms_service_updates BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS sms_payment_confirmations BOOLEAN DEFAULT false;
+
+-- Create function to create communication notifications
+CREATE OR REPLACE FUNCTION public.create_communication_notification()
+RETURNS TRIGGER AS $$
+DECLARE
+  notification_title TEXT;
+  notification_message TEXT;
+  recipient_id UUID;
+  action_url TEXT;
+  commenter_profile public.profiles%ROWTYPE;
+  service_info JSONB;
+  entity_type TEXT;
+  entity_id UUID;
+  service_number TEXT;
+BEGIN
+  -- Get commenter profile information
+  SELECT * INTO commenter_profile
+  FROM public.profiles
+  WHERE id = NEW.reviewer_id;
+
+  -- Determine the service type and get service information based on table
+  IF TG_TABLE_NAME = 'business_license_comments' THEN
+    entity_type := 'business_license';
+    entity_id := NEW.license_id;
+    
+    SELECT 
+      jsonb_build_object(
+        'license_number', bla.license_number,
+        'business_name', bla.business_legal_name,
+        'status', bla.application_status
+      ),
+      bla.license_number,
+      bla.user_id
+    INTO service_info, service_number, recipient_id
+    FROM public.business_license_applications bla
+    WHERE bla.id = NEW.license_id;
+    
+    action_url := '/business-licenses/' || NEW.license_id;
+    
+  ELSIF TG_TABLE_NAME = 'permit_review_comments' THEN
+    entity_type := 'permit';
+    entity_id := NEW.permit_id;
+    
+    SELECT 
+      jsonb_build_object(
+        'permit_number', pa.permit_number,
+        'permit_type', pt.name,
+        'status', pa.application_status
+      ),
+      pa.permit_number,
+      pa.user_id
+    INTO service_info, service_number, recipient_id
+    FROM public.permit_applications pa
+    LEFT JOIN public.permit_types pt ON pt.id = pa.permit_type_id
+    WHERE pa.permit_id = NEW.permit_id;
+    
+    action_url := '/permit/' || NEW.permit_id;
+    
+  ELSIF TG_TABLE_NAME = 'municipal_service_application_comments' THEN
+    entity_type := 'service_application';
+    entity_id := NEW.application_id;
+    
+    SELECT 
+      jsonb_build_object(
+        'application_number', msa.application_number,
+        'service_title', st.title,
+        'status', msa.status
+      ),
+      msa.application_number,
+      msa.user_id
+    INTO service_info, service_number, recipient_id
+    FROM public.municipal_service_applications msa
+    LEFT JOIN public.municipal_service_tiles st ON st.id = msa.service_tile_id
+    WHERE msa.id = NEW.application_id;
+    
+    action_url := '/service-applications/' || NEW.application_id;
+  END IF;
+
+  -- Don't send notification if recipient not found
+  IF recipient_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  -- Create notification title and message with full comment content
+  notification_title := 'New Message on ' || 
+    CASE entity_type
+      WHEN 'business_license' THEN 'Business License #' || service_number
+      WHEN 'permit' THEN 'Permit #' || service_number  
+      WHEN 'service_application' THEN 'Service Application #' || service_number
+    END;
+
+  -- Include commenter name, role, and full comment in message
+  notification_message := 
+    COALESCE(commenter_profile.first_name, '') || ' ' || COALESCE(commenter_profile.last_name, '') ||
+    ' (' || 
+    CASE 
+      WHEN commenter_profile.account_type = 'municipal' THEN 'Municipal Staff'
+      ELSE 'Applicant'
+    END || 
+    '): ' || NEW.comment_text;
+
+  -- Insert unified notification
+  INSERT INTO public.user_notifications (
+    user_id,
+    notification_type,
+    title,
+    message,
+    service_type,
+    service_number,
+    update_type,
+    related_entity_type,
+    related_entity_id,
+    action_url,
+    entity_details,
+    communication_details
+  ) VALUES (
+    recipient_id,
+    'service_update',
+    notification_title,
+    notification_message,
+    entity_type,
+    service_number,
+    'communication',
+    entity_type,
+    entity_id,
+    action_url,
+    service_info,
+    jsonb_build_object(
+      'commenter_id', NEW.reviewer_id,
+      'commenter_name', COALESCE(commenter_profile.first_name, '') || ' ' || COALESCE(commenter_profile.last_name, ''),
+      'commenter_role', CASE WHEN commenter_profile.account_type = 'municipal' THEN 'Municipal Staff' ELSE 'Applicant' END,
+      'comment_text', NEW.comment_text,
+      'is_internal', COALESCE(NEW.is_internal, false),
+      'comment_length', LENGTH(NEW.comment_text)
+    )
+  );
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create triggers for communication notifications
+DROP TRIGGER IF EXISTS business_license_communication_notification ON public.business_license_comments;
+CREATE TRIGGER business_license_communication_notification
+  AFTER INSERT ON public.business_license_comments
+  FOR EACH ROW
+  EXECUTE FUNCTION public.create_communication_notification();
+
+-- Update existing status notification functions to use new schema
+CREATE OR REPLACE FUNCTION public.create_permit_status_notification()
+RETURNS TRIGGER AS $$
+DECLARE
+  notification_title TEXT;
+  notification_message TEXT;
+  recipient_id UUID;
+  action_url TEXT;
+  permit_info JSONB;
+BEGIN
+  -- Only create notifications on status changes
+  IF OLD.application_status IS DISTINCT FROM NEW.application_status THEN
+    -- Get permit information
+    SELECT jsonb_build_object(
+      'permit_number', NEW.permit_number,
+      'permit_type', pt.name,
+      'customer_name', c.legal_entity_name
+    ) INTO permit_info
+    FROM public.permit_types pt, public.customers c
+    WHERE pt.id = NEW.permit_type_id AND c.customer_id = NEW.customer_id;
+    
+    -- Set notification content based on new status
+    CASE NEW.application_status
+      WHEN 'submitted' THEN
+        notification_title := 'Permit Application Submitted';
+        notification_message := 'Your permit application #' || NEW.permit_number || ' has been submitted successfully.';
+        recipient_id := NEW.user_id;
+      WHEN 'under_review' THEN
+        notification_title := 'Permit Under Review';
+        notification_message := 'Your permit application #' || NEW.permit_number || ' is now under review.';
+        recipient_id := NEW.user_id;
+      WHEN 'information_requested' THEN
+        notification_title := 'Additional Information Requested';
+        notification_message := 'Additional information has been requested for permit #' || NEW.permit_number || '.';
+        recipient_id := NEW.user_id;
+      WHEN 'approved' THEN
+        notification_title := 'Permit Approved';
+        notification_message := 'Congratulations! Your permit application #' || NEW.permit_number || ' has been approved.';
+        recipient_id := NEW.user_id;
+      WHEN 'denied' THEN
+        notification_title := 'Permit Denied';
+        notification_message := 'Your permit application #' || NEW.permit_number || ' has been denied. Please check the details for more information.';
+        recipient_id := NEW.user_id;
+      WHEN 'issued' THEN
+        notification_title := 'Permit Issued';
+        notification_message := 'Your permit #' || NEW.permit_number || ' has been issued and you can now begin legal work.';
+        recipient_id := NEW.user_id;
+      ELSE
+        RETURN NEW; -- No notification for other statuses
+    END CASE;
+    
+    -- Set action URL to permit detail page
+    action_url := '/permit/' || NEW.permit_id;
+    
+    -- Insert unified notification
+    INSERT INTO public.user_notifications (
+      user_id,
+      notification_type,
+      title,
+      message,
+      service_type,
+      service_number,
+      update_type,
+      status_change_from,
+      status_change_to,
+      related_entity_type,
+      related_entity_id,
+      action_url,
+      entity_details
+    ) VALUES (
+      recipient_id,
+      'service_update',
+      notification_title,
+      notification_message,
+      'permit',
+      NEW.permit_number,
+      'status_change',
+      OLD.application_status,
+      NEW.application_status,
+      'permit',
+      NEW.permit_id,
+      action_url,
+      permit_info
+    );
+    
+    -- Also notify assigned reviewer if status is submitted
+    IF NEW.application_status = 'submitted' AND NEW.assigned_reviewer_id IS NOT NULL THEN
+      INSERT INTO public.user_notifications (
+        user_id,
+        notification_type,
+        title,
+        message,
+        service_type,
+        service_number,
+        update_type,
+        related_entity_type,
+        related_entity_id,
+        action_url,
+        entity_details
+      ) VALUES (
+        NEW.assigned_reviewer_id,
+        'service_update',
+        'New Permit Assignment',
+        'You have been assigned to review permit application #' || NEW.permit_number || '.',
+        'permit',
+        NEW.permit_number,
+        'assignment',
+        'permit',
+        NEW.permit_id,
+        action_url,
+        permit_info
+      );
+    END IF;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;

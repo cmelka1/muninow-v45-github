@@ -4,48 +4,63 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, Mail, Smartphone, FileText, AlertTriangle, DollarSign, Shield, Edit2, Save, X } from 'lucide-react';
+import { Bell, Mail, Smartphone, FileText, DollarSign, Edit2, Save, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 interface NotificationPreferences {
-  email: {
-    billPosting: boolean;
-    paymentConfirmations: boolean;
+  serviceUpdates: {
+    email: boolean;
+    sms: boolean;
   };
-  sms: {
-    billPosting: boolean;
-    paymentConfirmations: boolean;
+  paymentConfirmations: {
+    email: boolean;
+    sms: boolean;
   };
   paperlessBilling: boolean;
 }
 
-const initialPreferences: NotificationPreferences = {
-  email: {
-    billPosting: true,
-    paymentConfirmations: true,
+// Simplified notification categories configuration
+const notificationCategories = [
+  {
+    key: 'serviceUpdates' as const,
+    icon: Bell,
+    title: 'Service Updates',
+    description: 'Status changes, communications, and updates on your services'
   },
-  sms: {
-    billPosting: false,
-    paymentConfirmations: false,
-  },
-  paperlessBilling: false,
-};
+  {
+    key: 'paymentConfirmations' as const,
+    icon: DollarSign,
+    title: 'Payment Confirmations',
+    description: 'Confirmations when payments are processed'
+  }
+];
 
 export const NotificationsTab = () => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
-  const [preferences, setPreferences] = useState<NotificationPreferences>(initialPreferences);
-  const [originalPreferences, setOriginalPreferences] = useState<NotificationPreferences>(initialPreferences);
+  
+  // Initialize preferences state
+  const [preferences, setPreferences] = useState<NotificationPreferences>({
+    serviceUpdates: { email: true, sms: false },
+    paymentConfirmations: { email: true, sms: false },
+    paperlessBilling: false
+  });
+  const [originalPreferences, setOriginalPreferences] = useState<NotificationPreferences>({
+    serviceUpdates: { email: true, sms: false },
+    paymentConfirmations: { email: true, sms: false },
+    paperlessBilling: false
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPreferences, setIsLoadingPreferences] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
   // Load user preferences on mount
   useEffect(() => {
-    const loadPreferences = async () => {
-      if (!user?.id) return;
-      
+    if (!user?.id) return;
+
+    // Fetch user notification preferences
+    const fetchPreferences = async () => {
       try {
         const { data, error } = await supabase
           .from('user_notification_preferences')
@@ -54,45 +69,43 @@ export const NotificationsTab = () => {
           .single();
 
         if (error && error.code !== 'PGRST116') {
-          console.error('Error loading preferences:', error);
+          console.error('Error fetching preferences:', error);
           return;
         }
 
         if (data) {
-          const loadedPreferences = {
-            email: {
-              billPosting: data.email_bill_posting,
-              paymentConfirmations: data.email_payment_confirmation,
+          const fetchedPreferences = {
+            serviceUpdates: {
+              email: data.email_service_updates ?? true,
+              sms: data.sms_service_updates ?? false
             },
-            sms: {
-              billPosting: data.sms_bill_posting,
-              paymentConfirmations: data.sms_payment_confirmation,
+            paymentConfirmations: {
+              email: data.email_payment_confirmations ?? true,
+              sms: data.sms_payment_confirmations ?? false
             },
-            paperlessBilling: false, // This could be stored separately if needed
+            paperlessBilling: data.paperless_billing ?? false
           };
-          setPreferences(loadedPreferences);
-          setOriginalPreferences(loadedPreferences);
+          
+          setPreferences(fetchedPreferences);
+          setOriginalPreferences(fetchedPreferences);
         }
       } catch (error) {
-        console.error('Error loading preferences:', error);
+        console.error('Error fetching notification preferences:', error);
       } finally {
         setIsLoadingPreferences(false);
       }
     };
 
-    loadPreferences();
+    fetchPreferences();
   }, [user?.id]);
 
-  const handlePreferenceChange = (
-    type: 'email' | 'sms',
-    category: keyof NotificationPreferences['email'],
-    value: boolean
-  ) => {
+  // Handle preference changes
+  const handlePreferenceChange = (category: 'serviceUpdates' | 'paymentConfirmations', type: 'email' | 'sms', value: boolean) => {
     setPreferences(prev => ({
       ...prev,
-      [type]: {
-        ...prev[type],
-        [category]: value
+      [category]: {
+        ...prev[category],
+        [type]: value
       }
     }));
   };
@@ -125,10 +138,12 @@ export const NotificationsTab = () => {
         .from('user_notification_preferences')
         .upsert({
           user_id: user.id,
-          email_bill_posting: preferences.email.billPosting,
-          sms_bill_posting: preferences.sms.billPosting,
-          email_payment_confirmation: preferences.email.paymentConfirmations,
-          sms_payment_confirmation: preferences.sms.paymentConfirmations,
+          email_service_updates: preferences.serviceUpdates.email,
+          sms_service_updates: preferences.serviceUpdates.sms,
+          email_payment_confirmations: preferences.paymentConfirmations.email,
+          sms_payment_confirmations: preferences.paymentConfirmations.sms,
+          paperless_billing: preferences.paperlessBilling,
+          updated_at: new Date().toISOString()
         });
 
       if (error) throw error;
@@ -151,30 +166,6 @@ export const NotificationsTab = () => {
     }
   };
 
-  const notificationCategories = [
-    {
-      key: 'billPosting' as const,
-      icon: FileText,
-      title: 'Bill Posting',
-      description: 'Get notified when new bills are posted to your account',
-      userControlled: true,
-    },
-    {
-      key: 'billNotice' as const,
-      icon: AlertTriangle,
-      title: 'Bill Notice',
-      description: 'Past due notices, delinquency notices, and service turn-off warnings',
-      userControlled: false,
-    },
-    {
-      key: 'paymentConfirmations' as const,
-      icon: DollarSign,
-      title: 'Payment Confirmations',
-      description: 'Confirmations when payments are processed',
-      userControlled: true,
-    }
-  ];
-
   if (isLoadingPreferences) {
     return (
       <div className="space-y-6">
@@ -185,9 +176,6 @@ export const NotificationsTab = () => {
       </div>
     );
   }
-
-  // Check if user is municipal
-  const isMunicipalUser = profile?.account_type === 'municipal';
 
   return (
     <div className="space-y-6">
@@ -223,114 +211,74 @@ export const NotificationsTab = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {isMunicipalUser ? (
-            // Simplified interface for municipal users
-            <div className="space-y-3">
-              <div className="flex items-start space-x-3">
-                <div className="bg-primary/10 p-2 rounded-lg mt-1">
-                  <Bell className="h-4 w-4 text-primary" />
+          {/* Unified interface for all users */}
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-slate-800">Notification Preferences</h3>
+              <p className="text-sm text-slate-600">
+                Choose how you'd like to receive notifications for different types of updates.
+              </p>
+            </div>
+
+            {notificationCategories.map((category) => (
+              <div key={category.key} className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <category.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-800">{category.title}</h4>
+                    <p className="text-sm text-slate-600">{category.description}</p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-slate-800">User Notifications</h4>
-                  <p className="text-sm text-slate-600 mb-3">Receive notifications about important updates and system messages</p>
-                  
-                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                    <div className="flex items-center space-x-2">
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-11">
+                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border">
+                    <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-slate-500" />
-                      <Label className="text-sm font-medium">Email Notifications</Label>
+                      <span className="text-sm font-medium text-slate-700">Email</span>
                     </div>
                     <Switch
-                      checked={preferences.email.billPosting}
-                      onCheckedChange={(value) => {
-                        handlePreferenceChange('email', 'billPosting', value);
-                        handlePreferenceChange('email', 'paymentConfirmations', value);
-                      }}
+                      checked={preferences[category.key].email}
+                      onCheckedChange={(checked) => handlePreferenceChange(category.key, 'email', checked)}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border">
+                    <div className="flex items-center gap-2">
+                      <Smartphone className="h-4 w-4 text-slate-500" />
+                      <span className="text-sm font-medium text-slate-700">SMS</span>
+                    </div>
+                    <Switch
+                      checked={preferences[category.key].sms}
+                      onCheckedChange={(checked) => handlePreferenceChange(category.key, 'sms', checked)}
                       disabled={!isEditing}
                     />
                   </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            // Full interface for non-municipal users
-            notificationCategories.map((category) => {
-              const IconComponent = category.icon;
-              return (
-                <div key={category.key} className="space-y-3">
-                  <div className="flex items-start space-x-3">
-                    <div className="bg-primary/10 p-2 rounded-lg mt-1">
-                      <IconComponent className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-slate-800">{category.title}</h4>
-                      <p className="text-sm text-slate-600 mb-3">{category.description}</p>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {category.userControlled ? (
-                          <>
-                            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                              <div className="flex items-center space-x-2">
-                                <Mail className="h-4 w-4 text-slate-500" />
-                                <Label className="text-sm font-medium">Email</Label>
-                              </div>
-                              <Switch
-                                checked={preferences.email[category.key as keyof NotificationPreferences['email']]}
-                                onCheckedChange={(value) => handlePreferenceChange('email', category.key as keyof NotificationPreferences['email'], value)}
-                                disabled={!isEditing}
-                              />
-                            </div>
-                            
-                            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                              <div className="flex items-center space-x-2">
-                                <Smartphone className="h-4 w-4 text-slate-500" />
-                                <Label className="text-sm font-medium">SMS</Label>
-                              </div>
-                              <Switch
-                                checked={preferences.sms[category.key as keyof NotificationPreferences['sms']]}
-                                onCheckedChange={(value) => handlePreferenceChange('sms', category.key as keyof NotificationPreferences['sms'], value)}
-                                disabled={!isEditing}
-                              />
-                            </div>
-                          </>
-                        ) : (
-                          <div className="col-span-full">
-                            <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                              <div className="flex items-center space-x-2">
-                                <Shield className="h-4 w-4 text-amber-600" />
-                                <Label className="text-sm font-medium text-amber-900">Municipality Controlled</Label>
-                              </div>
-                              <div className="text-xs text-amber-700 bg-amber-100 px-2 py-1 rounded">
-                                Always Enabled
-                              </div>
-                            </div>
-                            <p className="text-xs text-amber-600 mt-2">
-                              These notifications are controlled by your municipality and will always be sent for account security and compliance.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
+            ))}
+          </div>
         </CardContent>
       </Card>
 
-      {/* Paperless Billing - Hidden for municipal users */}
-      {!isMunicipalUser && (
+      {/* Paperless Billing Section - Hidden for municipal users */}
+      {user && (
         <Card className="border-slate-200 shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-slate-800 flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" />
-              Paperless Billing
+              Billing Preferences
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border">
               <div>
                 <h4 className="font-medium text-slate-800">Enable Paperless Billing</h4>
+                <p className="text-sm text-slate-600">
+                  Receive all bills and statements electronically instead of by mail
+                </p>
               </div>
               <Switch
                 checked={preferences.paperlessBilling}
