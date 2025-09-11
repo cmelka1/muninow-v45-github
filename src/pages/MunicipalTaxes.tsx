@@ -8,7 +8,8 @@ const MunicipalTaxes = () => {
   const [filters, setFilters] = useState<TaxSubmissionFilters>({});
 
   // Guard against non-municipal users
-  if (profile && profile.account_type !== 'municipal') {
+  const isMunicipal = profile?.account_type && (profile.account_type === 'municipal' || profile.account_type.startsWith('municipal'));
+  if (profile && !isMunicipal) {
     return (
       <div className="p-8">
         <div className="text-center">

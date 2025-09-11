@@ -25,7 +25,8 @@ export const useMunicipalTaxSubmissions = (params?: UseMunicipalTaxSubmissionsPa
   return useQuery({
     queryKey: ['municipal-tax-submissions', profile?.customer_id, page, pageSize, filters],
     queryFn: async () => {
-      if (!profile?.customer_id || profile.account_type !== 'municipal') {
+      const isMunicipal = profile?.account_type && (profile.account_type === 'municipal' || profile.account_type.startsWith('municipal'));
+      if (!profile?.customer_id || !isMunicipal) {
         return { data: [], count: 0 };
       }
 
@@ -84,6 +85,6 @@ export const useMunicipalTaxSubmissions = (params?: UseMunicipalTaxSubmissionsPa
 
       return { data: data || [], count: count || 0 };
     },
-    enabled: !!profile?.customer_id && profile.account_type === 'municipal',
+    enabled: !!profile?.customer_id && !!profile.account_type && (profile.account_type === 'municipal' || profile.account_type.startsWith('municipal')),
   });
 };

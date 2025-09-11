@@ -49,7 +49,8 @@ export const useMunicipalPermits = ({ filters = {}, page = 1, pageSize = 10 }: U
       if (!profile) throw new Error('User profile not available');
       
       // Ensure this is only used by municipal users
-      if (profile.account_type !== 'municipal') {
+      const isMunicipal = profile.account_type === 'municipal' || profile.account_type.startsWith('municipal');
+      if (!isMunicipal) {
         throw new Error('Access denied: Municipal users only');
       }
 
@@ -177,6 +178,6 @@ export const useMunicipalPermits = ({ filters = {}, page = 1, pageSize = 10 }: U
 
       return result;
     },
-    enabled: !!profile && profile.account_type === 'municipal'
+    enabled: !!profile && !!profile.account_type && (profile.account_type === 'municipal' || profile.account_type.startsWith('municipal'))
   });
 };
