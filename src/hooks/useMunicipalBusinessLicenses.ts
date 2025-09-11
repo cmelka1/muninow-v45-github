@@ -86,15 +86,11 @@ export const useMunicipalBusinessLicenses = ({ filters = {}, page = 1, pageSize 
         query = query.eq('license_type_id', filters.licenseType);
       }
 
-      if (filters.status) {
-        if (filters.status !== 'all') {
-          query = query.eq('application_status', filters.status as any);
-        }
-      } else {
-        // Default: exclude final/completed statuses to show only active licenses
-        const excludedStatuses = ['issued', 'denied', 'withdrawn', 'expired'];
-        query = query.not('application_status', 'in', `(${excludedStatuses.join(',')})`);
+      if (filters.status && filters.status !== 'all') {
+        // Apply specific status filter only when a specific status is selected
+        query = query.eq('application_status', filters.status as any);
       }
+      // When status is 'all' or undefined, show all statuses including issued
 
       if (filters.dateRange) {
         const now = new Date();

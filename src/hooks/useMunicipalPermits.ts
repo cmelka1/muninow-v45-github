@@ -81,17 +81,11 @@ export const useMunicipalPermits = ({ filters = {}, page = 1, pageSize = 10 }: U
         query = query.eq('permit_type', filters.permitType);
       }
 
-      if (filters.status) {
-        if (filters.status === 'all') {
-          // Show all statuses including completed ones
-        } else {
-          query = query.eq('application_status', filters.status as PermitStatus);
-        }
-      } else {
-        // Default: exclude final/completed statuses to show only active permits
-        const excludedStatuses = ['issued', 'denied', 'rejected', 'withdrawn', 'expired'];
-        query = query.not('application_status', 'in', `(${excludedStatuses.join(',')})`);
+      if (filters.status && filters.status !== 'all') {
+        // Apply specific status filter only when a specific status is selected
+        query = query.eq('application_status', filters.status as PermitStatus);
       }
+      // When status is 'all' or undefined, show all statuses including issued
 
       if (filters.dateRange) {
         const now = new Date();
