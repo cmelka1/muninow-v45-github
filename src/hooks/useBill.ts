@@ -17,7 +17,8 @@ export const useBill = (billId: string) => {
 
       // For non-municipal users, filter by user_id
       // Municipal users rely on RLS policies for access control
-      if (profile?.account_type !== 'municipal') {
+      const isMunicipal = profile?.account_type && (profile.account_type === 'municipal' || profile.account_type.startsWith('municipal'));
+      if (!isMunicipal) {
         query = query.eq('user_id', user.id);
       }
 

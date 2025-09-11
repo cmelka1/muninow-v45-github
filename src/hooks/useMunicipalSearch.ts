@@ -54,7 +54,8 @@ export const useMunicipalSearch = (params?: UseMunicipalSearchParams) => {
   return useQuery({
     queryKey: ['municipal-search', profile?.customer_id, page, pageSize, searchTerm, filters],
     queryFn: async () => {
-      if (!profile?.customer_id || profile.account_type !== 'municipal') {
+      const isMunicipal = profile?.account_type && (profile.account_type === 'municipal' || profile.account_type.startsWith('municipal'));
+      if (!profile?.customer_id || !isMunicipal) {
         return { data: [], count: 0 };
       }
 
@@ -224,7 +225,7 @@ export const useMunicipalSearch = (params?: UseMunicipalSearchParams) => {
         uniqueUsers: aggregatedData.length 
       };
     },
-    enabled: !!profile?.customer_id && profile.account_type === 'municipal',
+    enabled: !!profile?.customer_id && !!profile.account_type && (profile.account_type === 'municipal' || profile.account_type.startsWith('municipal')),
   });
 };
 
@@ -234,7 +235,8 @@ export const useMunicipalSearchFilterOptions = () => {
   return useQuery({
     queryKey: ['municipal-search-filter-options', profile?.customer_id],
     queryFn: async () => {
-      if (!profile?.customer_id || profile.account_type !== 'municipal') {
+      const isMunicipal = profile?.account_type && (profile.account_type === 'municipal' || profile.account_type.startsWith('municipal'));
+      if (!profile?.customer_id || !isMunicipal) {
         return { categories: [], subcategories: [], billStatuses: [], merchants: [] };
       }
 
@@ -280,6 +282,6 @@ export const useMunicipalSearchFilterOptions = () => {
 
       return { categories, subcategories, billStatuses, merchants };
     },
-    enabled: !!profile?.customer_id && profile.account_type === 'municipal',
+    enabled: !!profile?.customer_id && !!profile.account_type && (profile.account_type === 'municipal' || profile.account_type.startsWith('municipal')),
   });
 };
