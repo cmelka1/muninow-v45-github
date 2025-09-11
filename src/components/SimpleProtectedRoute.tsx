@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/SimpleAuthContext';
 interface SimpleProtectedRouteProps {
   children: React.ReactNode;
   redirectTo?: string;
-  requireAccountType?: 'resident' | 'municipal' | 'superadmin';
+  requireAccountType?: string | string[];
   requireCustomerId?: boolean;
 }
 
@@ -32,7 +32,19 @@ export const SimpleProtectedRoute: React.FC<SimpleProtectedRouteProps> = ({
     return <Navigate to={redirectTo} replace />;
   }
 
-  if (requireAccountType && (!profile || profile.account_type !== requireAccountType)) {
+  if (requireAccountType && profile) {
+    const allowedTypes = Array.isArray(requireAccountType) ? requireAccountType : [requireAccountType];
+    const userAccountType = profile.account_type;
+    
+    // Check if user's account type matches any allowed type or starts with allowed prefix
+    const hasAccess = allowedTypes.some(allowedType => 
+      userAccountType === allowedType || userAccountType.startsWith(allowedType)
+    );
+    
+    if (!hasAccess) {
+      return <Navigate to="/signin" replace />;
+    }
+  } else if (requireAccountType && !profile) {
     return <Navigate to="/signin" replace />;
   }
 

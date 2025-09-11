@@ -80,7 +80,7 @@ const App = () => (
                 <Route path="/signin" element={<Auth />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/dashboard" element={
-                  <SimpleProtectedRoute requireAccountType="resident">
+                  <SimpleProtectedRoute requireAccountType={["resident", "business"]}>
                     <Dashboard />
                   </SimpleProtectedRoute>
                 } />
