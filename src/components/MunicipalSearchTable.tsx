@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SearchResult, MunicipalSearchFilters } from '@/hooks/useMunicipalSearch';
+import { formatAccountType, getAccountTypeBadgeVariant } from '@/lib/formatters';
 
 interface MunicipalSearchTableProps {
   data?: SearchResult[];
@@ -42,14 +43,9 @@ const MunicipalSearchTable: React.FC<MunicipalSearchTableProps> = ({
   const totalPages = Math.ceil(totalCount / pageSize);
 
   const getAccountTypeBadge = (accountType: string) => {
-    switch (accountType) {
-      case 'business':
-        return <Badge variant="default" className="bg-blue-100 text-blue-800">Business</Badge>;
-      case 'resident':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800">Resident</Badge>;
-      default:
-        return <Badge variant="outline">{accountType}</Badge>;
-    }
+    const variant = getAccountTypeBadgeVariant(accountType);
+    const formattedType = formatAccountType(accountType);
+    return <Badge variant={variant}>{formattedType}</Badge>;
   };
 
   const formatAmount = (amount: number) => {

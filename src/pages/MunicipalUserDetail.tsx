@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Mail, Phone, MapPin, User, AlertCircle } from 'lucide-react';
 import UserBillsTable from '@/components/UserBillsTable';
 import UserPaymentHistoryTable from '@/components/UserPaymentHistoryTable';
-
+import { formatAccountType, getAccountTypeBadgeVariant } from '@/lib/formatters';
 import { useMunicipalUserSummary } from '@/hooks/useMunicipalUserSummary';
 
 const MunicipalUserDetail = () => {
@@ -72,14 +72,9 @@ const MunicipalUserDetail = () => {
   }
 
   const getAccountTypeBadge = (accountType: string) => {
-    switch (accountType) {
-      case 'resident':
-        return <Badge variant="default">Resident</Badge>;
-      case 'business':
-        return <Badge variant="secondary">Business</Badge>;
-      default:
-        return <Badge variant="outline">{accountType}</Badge>;
-    }
+    const variant = getAccountTypeBadgeVariant(accountType);
+    const formattedType = formatAccountType(accountType);
+    return <Badge variant={variant}>{formattedType}</Badge>;
   };
 
   const formatPhoneNumber = (phone: string | null) => {

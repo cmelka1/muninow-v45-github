@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { formatAccountType } from '@/lib/formatters';
 import { 
   Sidebar,
   SidebarContent,
@@ -185,8 +186,8 @@ export function AppSidebar() {
                   : user?.email?.split('@')[0] || 'User'
                 }
               </span>
-              <span className="text-xs text-muted-foreground capitalize">
-                {profile?.account_type || 'resident'} account
+              <span className="text-xs text-muted-foreground">
+                {formatAccountType(profile?.account_type || 'resident')}
               </span>
             </div>
           </div>

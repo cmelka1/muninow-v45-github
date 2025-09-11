@@ -117,3 +117,51 @@ export const smartAbbreviateFilename = (filename: string, maxLength: number = 30
   
   return name.slice(0, beginLength) + '...' + name.slice(-endLength) + extension;
 };
+
+/**
+ * Formats account type for display (removes "Account" and normalizes casing)
+ */
+export const formatAccountType = (accountType: string | null | undefined): string => {
+  if (!accountType) return 'Unknown';
+  
+  const type = accountType.toLowerCase();
+  
+  switch (type) {
+    case 'superadmin':
+      return 'Super Admin';
+    case 'municipaladmin':
+      return 'Municipal Admin';
+    case 'municipaluser':
+      return 'Municipal User';
+    case 'residentadmin':
+      return 'Resident Admin';
+    case 'residentuser':
+      return 'Resident User';
+    case 'businessadmin':
+      return 'Business Admin';
+    case 'businessuser':
+      return 'Business User';
+    default:
+      // Fallback for any other types - capitalize first letter
+      return type.charAt(0).toUpperCase() + type.slice(1);
+  }
+};
+
+/**
+ * Gets appropriate badge variant for account type
+ */
+export const getAccountTypeBadgeVariant = (accountType: string | null | undefined): "default" | "secondary" | "destructive" | "outline" => {
+  if (!accountType) return 'outline';
+  
+  const type = accountType.toLowerCase();
+  
+  if (type.includes('admin') || type === 'superadmin') {
+    return 'destructive'; // Red for admin roles
+  } else if (type.includes('municipal')) {
+    return 'default'; // Primary for municipal users
+  } else if (type.includes('business')) {
+    return 'secondary'; // Secondary for business users
+  } else {
+    return 'outline'; // Outline for resident users and others
+  }
+};
