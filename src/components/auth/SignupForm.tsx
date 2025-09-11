@@ -436,7 +436,8 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
             city: formData.city,
             state: formData.state,
             zip_code: formData.zipCode,
-            account_type: formData.accountType,
+            account_type: invitationData ? formData.accountType : 
+              (formData.accountType === 'business' ? 'businessadmin' : 'residentadmin'),
             business_legal_name: formData.accountType === 'business' ? formData.businessLegalName : null,
             industry: formData.accountType === 'business' && formData.industry ? formData.industry : null,
             role: 'user'
