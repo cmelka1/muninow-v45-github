@@ -19,6 +19,7 @@ import { GooglePlacesAutocompleteV2 } from '@/components/ui/google-places-autoco
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { mapAccountTypeForFinix } from '@/utils/accountTypeMapping';
 import { CreditCard, Building2, MapPin } from 'lucide-react';
 
 interface AddPaymentMethodDialogProps {
@@ -104,18 +105,20 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
       if (!profile?.id) return;
 
       try {
+        const mappedAccountType = mapAccountTypeForFinix(profile.account_type);
         const { data, error } = await supabase
           .from('finix_identities')
           .select('finix_identity_id')
           .eq('user_id', profile.id)
-          .eq('account_type', profile.account_type)
+          .eq('account_type', mappedAccountType)
           .single();
 
         if (error) {
           console.error('Error loading Finix identity:', error);
+          console.log('Mapped account type used for query:', mappedAccountType);
           toast({
-            title: "Error",
-            description: "Could not load payment setup information. Please try again.",
+            title: "Payment Setup Required",
+            description: "Please complete your payment profile setup to add payment methods. Contact support if this issue persists.",
             variant: "destructive",
           });
           return;

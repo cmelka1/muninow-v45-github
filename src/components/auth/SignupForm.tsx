@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/SimpleAuthContext';
 import { GooglePlacesAutocompleteV2 } from '@/components/ui/google-places-autocomplete-v2';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { mapAccountTypeForFinix } from '@/utils/accountTypeMapping';
 import { MFAVerificationStep } from '@/components/auth/MFAVerificationStep';
 
 // Phone number formatting utility
@@ -525,7 +526,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                   user_id: authData.user.id,
                   finix_identity_id: identityResult.identity.id,
                   finix_application_id: identityResult.identity.application,
-                  account_type: formData.accountType,
+                  account_type: mapAccountTypeForFinix(formData.accountType),
                   identity_type: identityResult.identity.type || 'INDIVIDUAL',
                   verification_status: identityResult.identity.verification?.status || 'pending',
                   entity_data: identityResult.identity.entity || {},

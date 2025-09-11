@@ -1,6 +1,23 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Account type mapping utility for Finix identity resolution
+function mapAccountTypeForFinix(accountType: string): string {
+  const mapping: Record<string, string> = {
+    'residentadmin': 'resident',
+    'residentuser': 'resident',
+    'businessadmin': 'business', 
+    'businessuser': 'business',
+    'municipaladmin': 'municipal',
+    'municipaluser': 'municipal',
+    'superadmin': 'business'
+  };
+  
+  const mappedType = mapping[accountType?.toLowerCase()];
+  console.log(`Account type mapping: ${accountType} → ${mappedType || 'resident'}`);
+  return mappedType || 'resident';
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -68,7 +85,7 @@ serve(async (req) => {
       .from('finix_identities')
       .select('finix_identity_id, finix_application_id')
       .eq('user_id', user.id)
-      .eq('account_type', profile.account_type)
+      .eq('account_type', mapAccountTypeForFinix(profile.account_type))
       .single();
 
     if (identityError || !finixIdentity) {
