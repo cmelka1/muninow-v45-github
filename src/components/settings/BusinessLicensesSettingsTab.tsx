@@ -164,6 +164,10 @@ export const BusinessLicensesSettingsTab = () => {
     if (changes[changeKey] !== undefined) {
       return changes[changeKey];
     }
+    // For fee_cents, convert from cents to dollars for display
+    if (field === 'fee_cents') {
+      return defaultValue / 100;
+    }
     return defaultValue;
   };
 
@@ -343,7 +347,7 @@ export const BusinessLicensesSettingsTab = () => {
                       </TableCell>
                       <TableCell>
                         <EditableField
-                          value={getFieldValue(type, 'fee_cents', type.base_fee_cents) / 100}
+                          value={getFieldValue(type, 'fee_cents', type.base_fee_cents)}
                           onChange={(value) => handleFieldChange(type.id, 'fee_cents', value)}
                           type="number"
                           prefix="$"
