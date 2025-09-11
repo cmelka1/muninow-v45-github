@@ -171,9 +171,16 @@ export const PermitsSettingsTab = () => {
   };
 
   const handleFieldChange = (permitTypeId: string, field: string, value: any) => {
+    let processedValue = value;
+    
+    // Convert fee values to cents for consistent storage
+    if (field === 'fee_cents') {
+      processedValue = Math.round(value * 100);
+    }
+    
     setChanges(prev => ({
       ...prev,
-      [`${permitTypeId}-${field}`]: value
+      [`${permitTypeId}-${field}`]: processedValue
     }));
   };
 
@@ -200,7 +207,7 @@ export const PermitsSettingsTab = () => {
         
         switch (field) {
           case 'fee_cents':
-            acc[permitTypeId].base_fee_cents = Math.round(value * 100);
+            acc[permitTypeId].base_fee_cents = value; // Already in cents from handleFieldChange
             break;
           case 'requires_inspection':
             acc[permitTypeId].requires_inspection = value;
