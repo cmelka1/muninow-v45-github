@@ -119,12 +119,12 @@ export const TaxesSettingsTab = () => {
   const handleFieldChange = (taxTypeId: string, field: string, value: any) => {
     setChanges(prev => ({
       ...prev,
-      [`${taxTypeId}-${field}`]: value
+      [`${taxTypeId}::${field}`]: value
     }));
   };
 
   const getFieldValue = (taxType: MunicipalTaxType, field: string, defaultValue: any) => {
-    const changeKey = `${taxType.id}-${field}`;
+    const changeKey = `${taxType.id}::${field}`;
     if (changes[changeKey] !== undefined) {
       return changes[changeKey];
     }
@@ -135,7 +135,7 @@ export const TaxesSettingsTab = () => {
     setIsSaving(true);
     try {
       const updates = Object.entries(changes).reduce((acc, [key, value]) => {
-        const [taxTypeId, field] = key.split('-');
+        const [taxTypeId, field] = key.split('::');
         if (!acc[taxTypeId]) acc[taxTypeId] = {};
         
         if (field === 'tax_type_name') {

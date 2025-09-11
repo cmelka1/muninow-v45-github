@@ -155,12 +155,12 @@ export const BusinessLicensesSettingsTab = () => {
   const handleFieldChange = (licenseTypeId: string, field: string, value: any) => {
     setChanges(prev => ({
       ...prev,
-      [`${licenseTypeId}-${field}`]: value
+      [`${licenseTypeId}::${field}`]: value
     }));
   };
 
   const getFieldValue = (licenseType: MunicipalBusinessLicenseType, field: string, defaultValue: any) => {
-    const changeKey = `${licenseType.id}-${field}`;
+    const changeKey = `${licenseType.id}::${field}`;
     if (changes[changeKey] !== undefined) {
       return changes[changeKey];
     }
@@ -171,7 +171,7 @@ export const BusinessLicensesSettingsTab = () => {
     setIsSaving(true);
     try {
       const updates = Object.entries(changes).reduce((acc, [key, value]) => {
-        const [licenseTypeId, field] = key.split('-');
+        const [licenseTypeId, field] = key.split('::');
         if (!acc[licenseTypeId]) acc[licenseTypeId] = {};
         
         switch (field) {

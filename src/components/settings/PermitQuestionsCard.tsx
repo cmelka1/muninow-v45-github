@@ -31,7 +31,7 @@ import {
   useDeleteMunicipalPermitQuestion,
 } from '@/hooks/useMunicipalPermitQuestionsMutations';
 import { useBuildingPermitsMerchant } from '@/hooks/useBuildingPermitsMerchant';
-import { useAuth } from '@/contexts/SimpleAuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const NewQuestionRow: React.FC<{
@@ -94,21 +94,21 @@ export const PermitQuestionsCard: React.FC = () => {
 
   React.useEffect(() => {
     const fetchCustomerId = async () => {
-      if (!user) return;
+      if (!profile) return;
       
-      const { data: profile } = await supabase
+      const { data: profileData } = await supabase
         .from('profiles')
         .select('customer_id')
-        .eq('id', user.id)
+        .eq('id', profile.id)
         .single();
       
-      if (profile?.customer_id) {
-        setCustomerId(profile.customer_id);
+      if (profileData?.customer_id) {
+        setCustomerId(profileData.customer_id);
       }
     };
 
     fetchCustomerId();
-  }, [user]);
+  }, [profile]);
 
   // Get Building Permits merchant for this customer
   const { data: buildingPermitsMerchant, isLoading: isMerchantLoading } = useBuildingPermitsMerchant(customerId);
