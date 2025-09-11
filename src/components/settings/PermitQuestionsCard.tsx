@@ -85,7 +85,7 @@ const NewQuestionRow: React.FC<{
 };
 
 export const PermitQuestionsCard: React.FC = () => {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const [isEditMode, setIsEditMode] = useState(false);
   const [changes, setChanges] = useState<Record<string, any>>({});
 
