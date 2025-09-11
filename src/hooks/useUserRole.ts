@@ -15,23 +15,21 @@ export const useUserRole = (): UseUserRoleReturn => {
   const hasRole = (role: string): boolean => {
     if (!profile) return false;
     
-    // Map role names to normalized account_type values
+    // Map role names to actual account_type values
     const roleMapping: Record<string, string[]> = {
-      'residentuser': ['resident', 'residentuser'],
       'residentadmin': ['residentadmin'],
-      'superadmin': ['superadmin'],
-      'municipaluser': ['municipal', 'municipaluser'],
+      'businessadmin': ['businessadmin'],
       'municipaladmin': ['municipaladmin'],
+      'superadmin': ['superadmin'],
       // Support legacy camelCase for backward compatibility
-      'residentUser': ['resident', 'residentuser'],
       'residentAdmin': ['residentadmin'],
-      'superAdmin': ['superadmin'],
-      'municipalUser': ['municipal', 'municipaluser'],
+      'businessAdmin': ['businessadmin'],
       'municipalAdmin': ['municipaladmin'],
+      'superAdmin': ['superadmin'],
       // Support role families
-      'municipal': ['municipal', 'municipaluser', 'municipaladmin'],
-      'resident': ['resident', 'residentuser', 'residentadmin'],
-      'business': ['business', 'businessuser', 'businessadmin']
+      'municipal': ['municipaladmin'],
+      'resident': ['residentadmin'],
+      'business': ['businessadmin']
     };
     
     const allowedAccountTypes = roleMapping[role] || [];
@@ -40,17 +38,17 @@ export const useUserRole = (): UseUserRoleReturn => {
 
   const isMunicipalUser = (): boolean => {
     if (!profile?.account_type) return false;
-    return ['municipal', 'municipaluser', 'municipaladmin'].includes(profile.account_type);
+    return profile.account_type === 'municipaladmin';
   };
 
   const isResidentUser = (): boolean => {
     if (!profile?.account_type) return false;
-    return ['resident', 'residentuser', 'residentadmin'].includes(profile.account_type);
+    return profile.account_type === 'residentadmin';
   };
 
   const isBusinessUser = (): boolean => {
     if (!profile?.account_type) return false;
-    return ['business', 'businessuser', 'businessadmin'].includes(profile.account_type);
+    return profile.account_type === 'businessadmin';
   };
 
   return { 

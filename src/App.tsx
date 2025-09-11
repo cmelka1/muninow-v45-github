@@ -80,7 +80,7 @@ const App = () => (
                 <Route path="/signin" element={<Auth />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/dashboard" element={
-                  <SimpleProtectedRoute requireAccountType={["resident", "business"]}>
+                  <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
                     <Dashboard />
                   </SimpleProtectedRoute>
                 } />
@@ -98,7 +98,7 @@ const App = () => (
                 <Route path="/permits" element={<Permits />} />
                 <Route path="/business-licenses" element={<BusinessLicenses />} />
                 <Route path="/business-license/:id" element={
-                  <SimpleProtectedRoute requireAccountType="resident">
+                  <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
                     <SidebarProvider>
                       <div className="min-h-screen flex w-full">
                         <AppSidebar />
@@ -110,7 +110,7 @@ const App = () => (
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/business-license/:licenseId/certificate" element={
-                  <SimpleProtectedRoute requireAccountType="resident">
+                  <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
                     <SidebarProvider>
                       <div className="min-h-screen flex w-full">
                         <AppSidebar />
@@ -123,7 +123,7 @@ const App = () => (
                 } />
                 <Route path="/taxes" element={<Taxes />} />
                 <Route path="/tax/:submissionId" element={
-                  <SimpleProtectedRoute requireAccountType="resident">
+                  <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
                     <SidebarProvider>
                       <div className="min-h-screen flex w-full">
                         <AppSidebar />
@@ -136,7 +136,7 @@ const App = () => (
                 } />
           <Route path="/other-services" element={<OtherServices />} />
           <Route path="/service-application/:applicationId" element={
-            <SimpleProtectedRoute requireAccountType="resident">
+            <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
               <SidebarProvider>
                 <div className="min-h-screen flex w-full">
                   <AppSidebar />
@@ -148,7 +148,7 @@ const App = () => (
             </SimpleProtectedRoute>
           } />
                 <Route path="/permit/:permitId" element={
-                  <SimpleProtectedRoute requireAccountType="resident">
+                  <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
                     <SidebarProvider>
                       <div className="min-h-screen flex w-full">
                         <AppSidebar />
@@ -160,7 +160,7 @@ const App = () => (
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/permit/:permitId/certificate" element={
-                  <SimpleProtectedRoute requireAccountType="resident">
+                  <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
                     <SidebarProvider>
                       <div className="min-h-screen flex w-full">
                         <AppSidebar />
@@ -172,12 +172,12 @@ const App = () => (
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/bill/:billId" element={
-                  <SimpleProtectedRoute requireAccountType="resident">
+                  <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
                     <BillOverview />
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/payment-confirmation/:paymentHistoryId" element={
-                  <SimpleProtectedRoute requireAccountType="resident">
+                  <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
                     <PaymentConfirmation />
                   </SimpleProtectedRoute>
                 } />
@@ -225,124 +225,124 @@ const App = () => (
                 } />
                 <Route path="/municipal/signup" element={<MunicipalSignup />} />
                 <Route path="/municipal/dashboard" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
                     <MunicipalLayout>
                       <MunicipalDashboard />
                     </MunicipalLayout>
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/municipal/search" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
                     <MunicipalLayout>
                       <MunicipalSearch />
                     </MunicipalLayout>
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/municipal/search/user/:userId" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
                     <MunicipalLayout>
                       <MunicipalUserDetail />
                     </MunicipalLayout>
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/municipal/taxes" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
                     <MunicipalLayout>
                       <MunicipalTaxes />
                     </MunicipalLayout>
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/municipal/tax/:submissionId" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
                     <MunicipalLayout>
                       <MunicipalTaxDetail />
                     </MunicipalLayout>
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/municipal/permits" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
                     <MunicipalLayout>
                       <MunicipalPermits />
                     </MunicipalLayout>
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/municipal/business-licenses" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
                     <MunicipalLayout>
                       <MunicipalBusinessLicenses />
                     </MunicipalLayout>
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/municipal/permit/:permitId" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
                     <MunicipalLayout>
                       <MunicipalPermitDetail />
                     </MunicipalLayout>
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/municipal/business-license/:id" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
                     <BusinessLicenseDetail />
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/municipal/members" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
                     <MunicipalLayout>
                       <MunicipalMembers />
                     </MunicipalLayout>
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/municipal/merchants" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
                     <MunicipalLayout>
                       <MunicipalMerchants />
                     </MunicipalLayout>
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/municipal/merchants/:merchantId" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
                     <MunicipalLayout>
                       <MunicipalMerchantDetail />
                     </MunicipalLayout>
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/municipal/profile" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
                     <MunicipalLayout>
                       <MunicipalProfile />
                     </MunicipalLayout>
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/municipal/municipal-settings" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
                     <MunicipalLayout>
                       <MunicipalSettings />
                     </MunicipalLayout>
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/municipal/notifications" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
                     <MunicipalLayout>
                       <Notifications />
                     </MunicipalLayout>
                   </SimpleProtectedRoute>
                 } />
           <Route path="/municipal/other-services" element={
-            <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+            <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
               <MunicipalLayout>
                 <MunicipalOtherServices />
               </MunicipalLayout>
             </SimpleProtectedRoute>
           } />
           <Route path="/municipal/service-application/:applicationId" element={
-            <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+            <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
               <MunicipalLayout>
                 <MunicipalServiceApplicationDetail />
               </MunicipalLayout>
             </SimpleProtectedRoute>
           } />
                 <Route path="/municipal/bill/:billId" element={
-                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
                     <MunicipalLayout>
                       <MunicipalBillOverview />
                     </MunicipalLayout>
