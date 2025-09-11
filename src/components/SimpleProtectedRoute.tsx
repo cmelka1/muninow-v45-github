@@ -42,7 +42,8 @@ export const SimpleProtectedRoute: React.FC<SimpleProtectedRouteProps> = ({
     );
     
     if (!hasAccess) {
-      return <Navigate to="/signin" replace />;
+      console.log('Access denied - redirecting to dashboard:', { userAccountType, allowedTypes });
+      return <Navigate to="/dashboard" replace />;
     }
   } else if (requireAccountType && !profile) {
     return <Navigate to="/signin" replace />;

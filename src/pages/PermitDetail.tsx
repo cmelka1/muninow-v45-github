@@ -29,7 +29,7 @@ import { useToast } from '@/hooks/use-toast';
 const PermitDetail = () => {
   const { permitId } = useParams<{ permitId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
   const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
@@ -38,7 +38,7 @@ const PermitDetail = () => {
   const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
   
   
-  const isMunicipalUser = user?.user_metadata?.account_type === 'municipal';
+  const isMunicipalUser = profile?.account_type === 'municipaladmin';
   
   const { data: permit, isLoading, error, refetch: refetchPermit } = usePermit(permitId!);
   const { data: documents = [], isLoading: documentsLoading, refetch: refetchDocuments } = usePermitDocuments(permitId!);

@@ -35,7 +35,7 @@ import jsPDF from 'jspdf';
 export const BusinessLicenseDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
@@ -52,7 +52,7 @@ export const BusinessLicenseDetail = () => {
   const { updateLicenseStatus, isUpdating, getValidStatusTransitions } = useBusinessLicenseWorkflow();
   const { customer: municipality, isLoading: municipalityLoading } = useCustomerById(license?.customer_id);
   
-  const isMunicipalUser = user?.user_metadata?.account_type === 'municipal';
+  const isMunicipalUser = profile?.account_type === 'municipaladmin';
   const isOwner = license?.user_id === user?.id;
   const canWithdraw = !isMunicipalUser && isOwner && 
     getValidStatusTransitions(license?.application_status as BusinessLicenseStatus).includes('withdrawn');

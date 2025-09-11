@@ -98,7 +98,7 @@ const App = () => (
                 <Route path="/permits" element={<Permits />} />
                 <Route path="/business-licenses" element={<BusinessLicenses />} />
                 <Route path="/business-license/:id" element={
-                  <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
+                  <SimpleProtectedRoute requireAccountType={["residentadmin", "residentuser", "businessadmin", "businessuser"]}>
                     <SidebarProvider>
                       <div className="min-h-screen flex w-full">
                         <AppSidebar />
@@ -110,7 +110,7 @@ const App = () => (
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/business-license/:licenseId/certificate" element={
-                  <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
+                  <SimpleProtectedRoute requireAccountType={["residentadmin", "residentuser", "businessadmin", "businessuser"]}>
                     <SidebarProvider>
                       <div className="min-h-screen flex w-full">
                         <AppSidebar />
@@ -123,7 +123,7 @@ const App = () => (
                 } />
                 <Route path="/taxes" element={<Taxes />} />
                 <Route path="/tax/:submissionId" element={
-                  <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
+                  <SimpleProtectedRoute requireAccountType={["residentadmin", "residentuser", "businessadmin", "businessuser"]}>
                     <SidebarProvider>
                       <div className="min-h-screen flex w-full">
                         <AppSidebar />
@@ -136,7 +136,7 @@ const App = () => (
                 } />
           <Route path="/other-services" element={<OtherServices />} />
           <Route path="/service-application/:applicationId" element={
-            <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
+            <SimpleProtectedRoute requireAccountType={["residentadmin", "residentuser", "businessadmin", "businessuser"]}>
               <SidebarProvider>
                 <div className="min-h-screen flex w-full">
                   <AppSidebar />
@@ -148,7 +148,7 @@ const App = () => (
             </SimpleProtectedRoute>
           } />
                 <Route path="/permit/:permitId" element={
-                  <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
+                  <SimpleProtectedRoute requireAccountType={["residentadmin", "residentuser", "businessadmin", "businessuser"]}>
                     <SidebarProvider>
                       <div className="min-h-screen flex w-full">
                         <AppSidebar />
@@ -160,7 +160,7 @@ const App = () => (
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/permit/:permitId/certificate" element={
-                  <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
+                  <SimpleProtectedRoute requireAccountType={["residentadmin", "residentuser", "businessadmin", "businessuser"]}>
                     <SidebarProvider>
                       <div className="min-h-screen flex w-full">
                         <AppSidebar />
@@ -172,12 +172,12 @@ const App = () => (
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/bill/:billId" element={
-                  <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
+                  <SimpleProtectedRoute requireAccountType={["residentadmin", "residentuser", "businessadmin", "businessuser"]}>
                     <BillOverview />
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/payment-confirmation/:paymentHistoryId" element={
-                  <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
+                  <SimpleProtectedRoute requireAccountType={["residentadmin", "residentuser", "businessadmin", "businessuser"]}>
                     <PaymentConfirmation />
                   </SimpleProtectedRoute>
                 } />
