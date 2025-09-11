@@ -54,10 +54,9 @@ const EditableField: React.FC<EditableFieldProps> = ({
 interface NewTaxTypeRowProps {
   onAdd: (taxType: { name: string }) => void;
   isLoading: boolean;
-  isEditMode: boolean;
 }
 
-const NewTaxTypeRow: React.FC<NewTaxTypeRowProps> = ({ onAdd, isLoading, isEditMode }) => {
+const NewTaxTypeRow: React.FC<NewTaxTypeRowProps> = ({ onAdd, isLoading }) => {
   const [name, setName] = useState('');
 
   const handleAdd = () => {
@@ -70,44 +69,31 @@ const NewTaxTypeRow: React.FC<NewTaxTypeRowProps> = ({ onAdd, isLoading, isEditM
   };
 
   return (
-    <TableRow className="bg-accent/20 border-l-4 border-l-primary/40">
+    <TableRow className="bg-muted/10">
       <TableCell>
-        <div className="space-y-2">
-          <Badge variant="secondary" className="text-xs font-medium bg-primary/10 text-primary border-primary/20 w-fit">
-            Add New Tax Type
-          </Badge>
+        <div className="flex items-center space-x-2">
           <Input
-            placeholder="Enter tax type name..."
+            placeholder="Enter tax type name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleAdd();
-              }
-            }}
             className="w-full"
           />
+          <Badge variant="outline" className="text-xs shrink-0">
+            New
+          </Badge>
         </div>
       </TableCell>
-      <TableCell className="text-muted-foreground italic">
-        Document can be uploaded after creation
+      <TableCell>
+        <Button
+          onClick={handleAdd}
+          disabled={isLoading || !name.trim()}
+          size="sm"
+          variant="outline"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
       </TableCell>
-      {isEditMode && (
-        <TableCell>
-          <Button
-            onClick={handleAdd}
-            disabled={isLoading || !name.trim()}
-            size="sm"
-            className="shrink-0"
-          >
-            {isLoading ? (
-              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-          </Button>
-        </TableCell>
-      )}
+      <TableCell />
     </TableRow>
   );
 };
@@ -430,7 +416,6 @@ export const TaxesSettingsTab = () => {
                     <NewTaxTypeRow
                       onAdd={handleAddCustomType}
                       isLoading={createTaxTypeMutation.isPending}
-                      isEditMode={isEditMode}
                     />
                   )}
                 </TableBody>
