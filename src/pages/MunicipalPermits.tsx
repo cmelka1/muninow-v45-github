@@ -7,7 +7,7 @@ import MunicipalPermitsTable from '@/components/MunicipalPermitsTable';
 const MunicipalPermits = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<PermitFilters>({});
+  const [filters, setFilters] = useState<PermitFilters>({ status: "issued" });
 
   // Guard against non-municipal users
   const isMunicipal = profile?.account_type && (profile.account_type === 'municipal' || profile.account_type.startsWith('municipal'));

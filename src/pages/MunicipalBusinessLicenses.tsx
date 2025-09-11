@@ -7,7 +7,7 @@ import { MunicipalBusinessLicenseTable } from '@/components/MunicipalBusinessLic
 const MunicipalBusinessLicenses = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<BusinessLicenseFilters>({});
+  const [filters, setFilters] = useState<BusinessLicenseFilters>({ status: "issued" });
 
   // Guard against non-municipal users
   const isMunicipal = profile?.account_type && (profile.account_type === 'municipal' || profile.account_type.startsWith('municipal'));
