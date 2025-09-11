@@ -180,12 +180,12 @@ export const PermitsSettingsTab = () => {
     
     setChanges(prev => ({
       ...prev,
-      [`${permitTypeId}-${field}`]: processedValue
+      [`${permitTypeId}::${field}`]: processedValue
     }));
   };
 
   const getFieldValue = (permit: any, field: string, defaultValue: any) => {
-    const changeKey = `${permit.permit_type_id}-${field}`;
+    const changeKey = `${permit.permit_type_id}::${field}`;
     if (changes[changeKey] !== undefined) {
       return changes[changeKey];
     }
@@ -202,7 +202,7 @@ export const PermitsSettingsTab = () => {
     setIsSaving(true);
     try {
       const updates = Object.entries(changes).reduce((acc, [key, value]) => {
-        const [permitTypeId, field] = key.split('-');
+        const [permitTypeId, field] = key.split('::');
         if (!acc[permitTypeId]) acc[permitTypeId] = {};
         
         switch (field) {
