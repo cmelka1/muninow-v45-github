@@ -108,7 +108,9 @@ export const useTaxPaymentMethods = (taxData: {
   useEffect(() => {
     const fetchGooglePayMerchantId = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('get-google-pay-merchant-id');
+        const { data, error } = await supabase.functions.invoke('get-google-pay-merchant-id', {
+          body: { merchant_id: taxData.municipality?.merchant_id }
+        });
         
         if (error) {
           console.error('Error fetching Google Pay merchant ID:', error);
@@ -127,8 +129,10 @@ export const useTaxPaymentMethods = (taxData: {
       }
     };
 
-    fetchGooglePayMerchantId();
-  }, []);
+    if (taxData.municipality?.merchant_id) {
+      fetchGooglePayMerchantId();
+    }
+  }, [taxData.municipality?.merchant_id]);
 
   // Handle regular payment processing
   const handlePayment = async (): Promise<{ taxSubmissionId?: string } | void> => {

@@ -85,6 +85,18 @@ export const classifyPaymentError = (error: any): PaymentError => {
     };
   }
   
+  // Check for Google Pay merchant identity mismatch
+  if (errorMessage.includes('Google Pay token must be associated with the merchant_identity provided')) {
+    console.log('✅ Classified as: GOOGLE_PAY_MERCHANT_MISMATCH');
+    console.groupEnd();
+    return {
+      type: 'configuration',
+      message: 'Google Pay is not available for this merchant. Please try a different payment method.',
+      retryable: false,
+      details: error
+    };
+  }
+  
   // Check for configuration errors
   if (errorMessage.includes('merchant') ||
       errorMessage.includes('configuration') ||

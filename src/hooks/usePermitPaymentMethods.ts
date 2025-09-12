@@ -91,7 +91,9 @@ export const usePermitPaymentMethods = (permit: any) => {
   useEffect(() => {
     const fetchGooglePayMerchantId = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('get-google-pay-merchant-id');
+        const { data, error } = await supabase.functions.invoke('get-google-pay-merchant-id', {
+          body: { merchant_id: permit?.merchant_id }
+        });
         
         if (error) {
           console.error('Error fetching Google Pay merchant ID:', error);
@@ -110,8 +112,10 @@ export const usePermitPaymentMethods = (permit: any) => {
       }
     };
 
-    fetchGooglePayMerchantId();
-  }, []);
+    if (permit?.merchant_id) {
+      fetchGooglePayMerchantId();
+    }
+  }, [permit?.merchant_id]);
 
   const handlePayment = async (): Promise<PaymentResponse> => {
     if (!selectedPaymentMethod || !permit) {
@@ -244,7 +248,7 @@ export const usePermitPaymentMethods = (permit: any) => {
       }
 
       console.log('Google Pay configuration:', {
-        gatewayMerchantId: permit.merchant_finix_identity_id,
+        gatewayMerchantId: googlePayMerchantId,
         merchantId: googlePayMerchantId
       });
 
@@ -265,7 +269,7 @@ export const usePermitPaymentMethods = (permit: any) => {
             type: "PAYMENT_GATEWAY" as const,
             parameters: {
               gateway: "finix" as const,
-              gatewayMerchantId: permit.merchant_finix_identity_id,
+              gatewayMerchantId: googlePayMerchantId,
             },
           },
         }],

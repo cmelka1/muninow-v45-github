@@ -140,7 +140,9 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
   useEffect(() => {
     const fetchGooglePayMerchantId = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('get-google-pay-merchant-id');
+        const { data, error } = await supabase.functions.invoke('get-google-pay-merchant-id', {
+          body: { merchant_id: tile?.merchant_id }
+        });
         
         if (error) {
           console.error('Error fetching Google Pay merchant ID:', error);
@@ -159,8 +161,10 @@ export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile |
       }
     };
 
-    fetchGooglePayMerchantId();
-  }, []);
+    if (tile?.merchant_id) {
+      fetchGooglePayMerchantId();
+    }
+  }, [tile?.merchant_id]);
 
   const handlePaymentWithData = async (applicationData: any): Promise<PaymentResponse> => {
     console.log('Processing service application payment with data:', {

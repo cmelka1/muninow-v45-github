@@ -88,7 +88,9 @@ export const usePaymentMethods = (bill: any): PaymentMethodHookReturn => {
   useEffect(() => {
     const fetchGooglePayMerchantId = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('get-google-pay-merchant-id');
+        const { data, error } = await supabase.functions.invoke('get-google-pay-merchant-id', {
+          body: { merchant_id: bill?.merchant_id }
+        });
         
         if (error) {
           console.error('Error fetching Google Pay merchant ID:', error);
@@ -107,8 +109,10 @@ export const usePaymentMethods = (bill: any): PaymentMethodHookReturn => {
       }
     };
 
-    fetchGooglePayMerchantId();
-  }, []);
+    if (bill?.merchant_id) {
+      fetchGooglePayMerchantId();
+    }
+  }, [bill?.merchant_id]);
 
   const handlePayment = async () => {
     if (!selectedPaymentMethod || !bill) {
@@ -216,7 +220,7 @@ export const usePaymentMethods = (bill: any): PaymentMethodHookReturn => {
       }
 
       console.log('Google Pay configuration:', {
-        gatewayMerchantId: bill.merchant_finix_identity_id,
+        gatewayMerchantId: googlePayMerchantId,
         merchantId: googlePayMerchantId
       });
 
@@ -237,7 +241,7 @@ export const usePaymentMethods = (bill: any): PaymentMethodHookReturn => {
             type: "PAYMENT_GATEWAY" as const,
             parameters: {
               gateway: "finix" as const,
-              gatewayMerchantId: bill.merchant_finix_identity_id, // Use merchant_finix_identity_id
+              gatewayMerchantId: googlePayMerchantId,
             },
           },
         }],

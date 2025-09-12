@@ -91,7 +91,9 @@ export const useBusinessLicensePaymentMethods = (license: any) => {
   useEffect(() => {
     const fetchGooglePayMerchantId = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('get-google-pay-merchant-id');
+        const { data, error } = await supabase.functions.invoke('get-google-pay-merchant-id', {
+          body: { merchant_id: license?.merchant_id }
+        });
         
         if (error) {
           console.error('Error fetching Google Pay merchant ID:', error);
@@ -110,8 +112,10 @@ export const useBusinessLicensePaymentMethods = (license: any) => {
       }
     };
 
-    fetchGooglePayMerchantId();
-  }, []);
+    if (license?.merchant_id) {
+      fetchGooglePayMerchantId();
+    }
+  }, [license?.merchant_id]);
 
   const handlePayment = async (): Promise<PaymentResponse> => {
     if (!selectedPaymentMethod || !license) {
@@ -239,7 +243,7 @@ export const useBusinessLicensePaymentMethods = (license: any) => {
       }
 
       console.log('Google Pay configuration:', {
-        gatewayMerchantId: license.merchant_finix_identity_id,
+        gatewayMerchantId: googlePayMerchantId,
         merchantId: googlePayMerchantId
       });
 
@@ -260,7 +264,7 @@ export const useBusinessLicensePaymentMethods = (license: any) => {
             type: "PAYMENT_GATEWAY" as const,
             parameters: {
               gateway: "finix" as const,
-              gatewayMerchantId: license.merchant_finix_identity_id,
+              gatewayMerchantId: googlePayMerchantId,
             },
           },
         }],
