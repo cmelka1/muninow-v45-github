@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Eye, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Download, Loader2 } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
@@ -20,7 +20,7 @@ import { BusinessLicenseStatusBadge } from '@/components/BusinessLicenseStatusBa
 import { BusinessLicenseCommunication } from '@/components/BusinessLicenseCommunication';
 import { BusinessLicenseStatusChangeDialog } from '@/components/BusinessLicenseStatusChangeDialog';
 import { AddBusinessLicenseDocumentDialog } from '@/components/AddBusinessLicenseDocumentDialog';
-import { DocumentViewerModal } from '@/components/DocumentViewerModal';
+
 import { BusinessLicensePaymentManagement } from '@/components/BusinessLicensePaymentManagement';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,7 +39,7 @@ export const BusinessLicenseDetail = () => {
   const { toast } = useToast();
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
   const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
@@ -65,21 +65,6 @@ export const BusinessLicenseDetail = () => {
     }
   };
 
-  const handleDocumentView = async (document: any) => {
-    try {
-      const url = await getDocumentUrl(document.storage_path);
-      if (url) {
-        setSelectedDocument({ ...document, signedUrl: url });
-      }
-    } catch (error) {
-      console.error('Error getting document URL:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load document preview",
-        variant: "destructive"
-      });
-    }
-  };
 
   const handleDocumentDownload = async (document: any) => {
     setDownloadingDocument(document.id);
@@ -712,13 +697,6 @@ export const BusinessLicenseDetail = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDocumentView(doc)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
                           onClick={() => handleDocumentDownload(doc)}
                           disabled={downloadingDocument === doc.id}
                         >
@@ -838,15 +816,6 @@ export const BusinessLicenseDetail = () => {
         }}
       />
 
-      {/* Document Viewer Modal */}
-      {selectedDocument && (
-        <DocumentViewerModal
-          isOpen={!!selectedDocument}
-          onClose={() => setSelectedDocument(null)}
-          document={selectedDocument}
-          bucketName="business-license-documents"
-        />
-      )}
       
       {/* Add Payment Method Dialog */}
       <AddPaymentMethodDialog

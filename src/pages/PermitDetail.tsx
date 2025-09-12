@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, MapPin, User, Clock, MessageSquare, Download, Eye, CreditCard, Building, Plus, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, MapPin, User, Clock, MessageSquare, Download, CreditCard, Building, Plus, Loader2 } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
@@ -18,7 +18,7 @@ import { AddPermitDocumentDialog } from '@/components/AddPermitDocumentDialog';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 import { PermitCommunication } from '@/components/PermitCommunication';
-import { DocumentViewerModal } from '@/components/DocumentViewerModal';
+
 import { getStatusDescription, PermitStatus } from '@/hooks/usePermitWorkflow';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
@@ -32,8 +32,6 @@ const PermitDetail = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
-  const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
   const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
   
@@ -66,10 +64,6 @@ const PermitDetail = () => {
     },
   });
 
-  const handleDocumentView = (document: any) => {
-    setSelectedDocument(document);
-    setDocumentViewerOpen(true);
-  };
 
   const handleDocumentDownload = async (document: any) => {
     setDownloadingDocument(document.id);
@@ -399,13 +393,6 @@ const PermitDetail = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDocumentView(doc)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
                           onClick={() => handleDocumentDownload(doc)}
                           disabled={downloadingDocument === doc.id}
                         >
@@ -571,12 +558,6 @@ const PermitDetail = () => {
       ) : (
         <PageContent />
       )}
-      {/* Document Viewer Modal */}
-      <DocumentViewerModal
-        isOpen={documentViewerOpen}
-        onClose={() => setDocumentViewerOpen(false)}
-        document={selectedDocument}
-      />
 
       {/* Add Payment Method Dialog */}
       <AddPaymentMethodDialog

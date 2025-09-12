@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User, FileText, DollarSign, Calendar, FolderOpen, Download, Eye } from 'lucide-react';
+import { User, FileText, DollarSign, Calendar, FolderOpen, Download } from 'lucide-react';
 import { useTaxSubmissionDetail } from '@/hooks/useTaxSubmissionDetail';
 import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
-import { DocumentViewerModal } from '@/components/DocumentViewerModal';
+
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { format } from 'date-fns';
 
@@ -16,8 +16,6 @@ interface TaxSubmissionDetailModalProps {
 }
 
 export function TaxSubmissionDetailModal({ submissionId, onClose }: TaxSubmissionDetailModalProps) {
-  const [selectedDocument, setSelectedDocument] = useState<any>(null);
-  const [isDocumentViewerOpen, setIsDocumentViewerOpen] = useState(false);
   
   const { data: submission, isLoading, error } = useTaxSubmissionDetail(submissionId);
   const { getDocuments } = useTaxSubmissionDocuments();
@@ -77,10 +75,6 @@ export function TaxSubmissionDetailModal({ submissionId, onClose }: TaxSubmissio
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const handleViewDocument = (document: any) => {
-    setSelectedDocument(document);
-    setIsDocumentViewerOpen(true);
-  };
 
   if (isLoading) {
     return (
@@ -269,13 +263,6 @@ export function TaxSubmissionDetailModal({ submissionId, onClose }: TaxSubmissio
                           </p>
                         </div>
                         <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleViewDocument(doc)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
                         </div>
                       </div>
                     ))}
@@ -287,12 +274,6 @@ export function TaxSubmissionDetailModal({ submissionId, onClose }: TaxSubmissio
         </div>
       </div>
 
-      <DocumentViewerModal
-        isOpen={isDocumentViewerOpen}
-        onClose={() => setIsDocumentViewerOpen(false)}
-        document={selectedDocument}
-        bucketName="tax-documents"
-      />
     </>
   );
 }
