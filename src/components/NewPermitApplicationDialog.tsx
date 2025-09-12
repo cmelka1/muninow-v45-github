@@ -909,11 +909,11 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                             Base Permit Fee:
                           </span>
                           <span className="text-sm font-semibold text-primary">
-                            {formatCurrency(selectedPermitType.base_fee_cents)}
+                            {formatCurrency(selectedPermitType.base_fee_cents / 100)}
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Additional fees may apply based on project scope
+                          Additional fees may apply
                         </p>
                       </div>
                     )}
