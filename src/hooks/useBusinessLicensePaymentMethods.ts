@@ -422,6 +422,26 @@ export const useBusinessLicensePaymentMethods = (license: any) => {
       
       const classifiedError = classifyPaymentError(error);
       
+      // For ambiguous payment failures, verify in database first
+      if (classifiedError.type === 'unknown' && error?.message?.includes('Payment failed')) {
+        try {
+          const { verifyPaymentInDatabase } = await import('@/utils/paymentVerification');
+          const verification = await verifyPaymentInDatabase('business_license', license.license_id);
+          
+          if (verification.isVerified) {
+            console.log('✅ Database verification: Business license payment actually succeeded!');
+            toast({
+              title: "Payment Successful",
+              description: "Your Apple Pay business license payment has been processed successfully.",
+            });
+            window.location.reload();
+            return { success: true, status: verification.status };
+          }
+        } catch (verificationError) {
+          console.error('Failed to verify business license payment:', verificationError);
+        }
+      }
+      
       if (classifiedError.type !== 'user_cancelled') {
         toast({
           title: "Payment Failed",

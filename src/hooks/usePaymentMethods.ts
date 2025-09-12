@@ -303,6 +303,18 @@ export const usePaymentMethods = (bill: any): PaymentMethodHookReturn => {
       
       const classifiedError = classifyPaymentError(error);
       
+      // For ambiguous payment failures, verify in database first
+      if (classifiedError.type === 'unknown' && error?.message?.includes('Payment failed')) {
+        try {
+          const { verifyPaymentInDatabase } = await import('@/utils/paymentVerification');
+          // Note: This hook doesn't have entity context, so we skip database verification
+          // and just use softer error messaging
+          console.log('⚠️ Cannot verify payment in database - no entity context');
+        } catch (verificationError) {
+          console.error('Payment verification skipped:', verificationError);
+        }
+      }
+      
       if (classifiedError.type !== 'user_cancelled') {
         toast({
           title: "Payment Failed",

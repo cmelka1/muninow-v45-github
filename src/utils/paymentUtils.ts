@@ -1,122 +1,103 @@
 import { PaymentError } from '@/types/payment';
 
 export const classifyPaymentError = (error: any): PaymentError => {
-  // Enhanced logging for error classification
-  console.group('🔍 PAYMENT_ERROR_CLASSIFICATION');
-  console.log('Raw error object:', error);
-  console.log('Error structure analysis:', {
-    hasValue: !!error?.value,
-    hasMessage: !!error?.message,
-    hasStringRepresentation: !!error?.toString,
-    errorKeys: Object.keys(error || {}),
-    valueKeys: error?.value ? Object.keys(error.value) : 'N/A'
-  });
+  console.log('🔍 Classifying payment error:', error);
+  
+  // Handle potential false negatives (payment may have succeeded but response indicates failure)
+  if (error?.message?.includes('Payment failed') || error?.message?.includes('Google Pay payment failed')) {
+    return {
+      type: 'unknown',
+      message: 'Payment status unclear. Please check your account or contact support if you were charged.',
+      retryable: false,
+      details: error
+    };
+  }
+  
+  // Handle network errors
+  if (error?.name === 'TypeError' && error?.message?.includes('fetch')) {
+    return {
+      type: 'network',
+      message: 'Network connection failed. Please check your internet connection and try again.',
+      retryable: true,
+      details: error
+    };
+  }
 
-  const errorMessage = error?.value?.message || error?.message || error?.toString() || '';
-  const statusCode = error?.value?.statusCode;
-  const errorName = error?.value?.name;
-  
-  console.log('Extracted values:', { errorMessage, statusCode, errorName });
-  
-  // Check for user cancellation
-  const isUserCancellation = statusCode === 'CANCELED' ||
-                            errorName === 'AbortError' ||
-                            errorMessage.includes('CANCELED') || 
-                            errorMessage.includes('canceled') || 
-                            errorMessage.includes('cancelled') ||
-                            errorMessage.includes('User canceled') ||
-                            errorMessage.includes('User closed the Payment Request UI') ||
-                            errorMessage.includes('AbortError') ||
-                            errorMessage.includes('Payment request was aborted');
-  
-  if (isUserCancellation) {
-    console.log('✅ Classified as: USER_CANCELLED');
-    console.groupEnd();
+  // Handle user cancellation
+  if (error?.message?.toLowerCase().includes('user') && 
+      (error?.message?.toLowerCase().includes('cancel') || 
+       error?.message?.toLowerCase().includes('abort'))) {
     return {
       type: 'user_cancelled',
       message: 'Payment was cancelled by user',
-      retryable: true,
+      retryable: false,
       details: error
     };
   }
-  
-  // Check for network errors
-  if (errorMessage.includes('network') || 
-      errorMessage.includes('connection') ||
-      errorMessage.includes('timeout') ||
-      error?.code === 'NETWORK_ERROR') {
-    console.log('✅ Classified as: NETWORK_ERROR');
-    console.groupEnd();
-    return {
-      type: 'network',
-      message: 'Network error occurred. Please check your connection and try again.',
-      retryable: true,
-      details: error
-    };
-  }
-  
-  // Check for payment declined
-  if (errorMessage.includes('declined') || 
-      errorMessage.includes('insufficient') ||
-      errorMessage.includes('invalid card') ||
-      statusCode === 'PAYMENT_DECLINED') {
-    console.log('✅ Classified as: PAYMENT_DECLINED');
-    console.groupEnd();
+
+  // Handle payment declined
+  if (error?.status === 402 || 
+      error?.message?.toLowerCase().includes('declined') ||
+      error?.message?.toLowerCase().includes('insufficient') ||
+      error?.code === 'card_declined') {
     return {
       type: 'payment_declined',
-      message: 'Payment was declined. Please check your payment method and try again.',
+      message: error?.message || 'Payment was declined. Please try a different payment method.',
       retryable: false,
       details: error
     };
   }
-  
-  // Check for validation errors
-  if (errorMessage.includes('validation') ||
-      errorMessage.includes('invalid') ||
-      errorMessage.includes('required') ||
-      statusCode === 'VALIDATION_ERROR') {
-    console.log('✅ Classified as: VALIDATION_ERROR');
-    console.groupEnd();
+
+  // Handle validation errors
+  if (error?.status === 400 || 
+      error?.message?.toLowerCase().includes('invalid') ||
+      error?.message?.toLowerCase().includes('required')) {
     return {
       type: 'validation',
-      message: 'Payment information is invalid. Please check your details.',
+      message: error?.message || 'Invalid payment information. Please check your details.',
       retryable: false,
       details: error
     };
   }
-  
-  // Check for Google Pay merchant identity mismatch
-  if (errorMessage.includes('Google Pay token must be associated with the merchant_identity provided')) {
-    console.log('✅ Classified as: GOOGLE_PAY_MERCHANT_MISMATCH');
-    console.groupEnd();
+
+  // Handle configuration errors
+  if (error?.status === 500 || 
+      error?.message?.toLowerCase().includes('configuration') ||
+      error?.message?.toLowerCase().includes('merchant')) {
     return {
       type: 'configuration',
-      message: 'Google Pay is not available for this merchant. Please try a different payment method.',
+      message: 'Payment system configuration error. Please contact support.',
       retryable: false,
       details: error
     };
   }
-  
-  // Check for configuration errors
-  if (errorMessage.includes('merchant') ||
-      errorMessage.includes('configuration') ||
-      errorMessage.includes('not configured')) {
-    console.log('✅ Classified as: CONFIGURATION_ERROR');
-    console.groupEnd();
+
+  // Handle timeout or temporary errors
+  if (error?.status === 408 || error?.status === 503 || error?.status === 504 ||
+      error?.name === 'TimeoutError' ||
+      error?.message?.toLowerCase().includes('timeout')) {
+    return {
+      type: 'network',
+      message: 'Request timed out. Please try again.',
+      retryable: true,
+      details: error
+    };
+  }
+
+  // Handle authentication errors (should be rare in payment context)
+  if (error?.status === 401 || error?.status === 403) {
     return {
       type: 'configuration',
-      message: 'Payment service is not properly configured. Please contact support.',
-      retryable: false,
+      message: 'Authentication failed. Please refresh the page and try again.',
+      retryable: true,
       details: error
     };
   }
-  
-  // Default to unknown error
-  console.log('⚠️ Classified as: UNKNOWN_ERROR');
-  console.groupEnd();
+
+  // For any other error, classify as unknown but potentially retryable
   return {
     type: 'unknown',
-    message: errorMessage || 'An unexpected error occurred. Please try again.',
+    message: error?.message || 'An unexpected error occurred. Please try again.',
     retryable: true,
     details: error
   };

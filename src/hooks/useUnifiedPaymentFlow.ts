@@ -541,6 +541,32 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       console.error('💥 Google Pay error:', error);
       const classifiedError = classifyPaymentError(error);
       
+      // For payment status errors, verify in database before showing failure toast
+      if (classifiedError.type === 'unknown' && 
+          (error?.message?.includes('Payment failed') || error?.message?.includes('Google Pay payment failed'))) {
+        
+        console.log('🔍 Verifying payment status in database before showing failure toast...');
+        
+        try {
+          const { verifyPaymentInDatabase } = await import('@/utils/paymentVerification');
+          const verification = await verifyPaymentInDatabase(params.entityType, params.entityId);
+          
+          if (verification.isVerified) {
+            console.log('✅ Database verification: Payment actually succeeded!');
+            const successResponse: PaymentResponse = {
+              success: true,
+              status: verification.status
+            };
+            params.onSuccess?.(successResponse);
+            return successResponse;
+          } else {
+            console.log('❌ Database verification: Payment confirmed failed');
+          }
+        } catch (verificationError) {
+          console.error('Failed to verify payment in database:', verificationError);
+        }
+      }
+      
       // Only show toast for actual errors, not user cancellations
       if (classifiedError.type !== 'user_cancelled') {
         toast({
