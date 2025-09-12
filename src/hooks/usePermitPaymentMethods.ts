@@ -291,20 +291,26 @@ export const usePermitPaymentMethods = (permit: any) => {
       const billingAddress = paymentData.paymentMethodData.info?.billingAddress;
 
       // Generate idempotency ID
-      const idempotencyId = generateIdempotencyId('googlepay_permit', permit.permit_id);
+      const idempotencyId = generateIdempotencyId('unified_googlepay_permit', permit.permit_id);
 
-      // Call our edge function to process the payment
-      const { data, error } = await supabase.functions.invoke('process-permit-google-pay-transfer', {
+      // Call the new unified Google Pay edge function
+      const { data, error } = await supabase.functions.invoke('process-unified-google-pay', {
         body: {
-          permit_id: permit.permit_id,
-          google_pay_token: paymentToken,
+          entity_type: 'permit',
+          entity_id: permit.permit_id,
+          customer_id: permit.customer_id,
+          merchant_id: permit.merchant_id,
           base_amount_cents: permit.base_fee_cents || permit.total_amount_cents,
-          idempotency_id: idempotencyId,
+          google_pay_token: paymentToken,
           billing_address: billingAddress ? {
             name: billingAddress.name,
             postal_code: billingAddress.postalCode,
-            country: billingAddress.countryCode
-          } : undefined
+            country_code: billingAddress.countryCode
+          } : undefined,
+          fraud_session_id: fraudSessionId,
+          first_name: permit.first_name,
+          last_name: permit.last_name,
+          user_email: permit.email
         }
       });
 
