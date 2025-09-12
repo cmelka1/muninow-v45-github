@@ -190,7 +190,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
 
         {/* Digital Payment Options */}
         <div className={`flex gap-2 ${isGooglePayAvailable && isApplePayAvailable ? '' : 'justify-center'}`}>
-          <div className={isApplePayAvailable ? "flex-1" : "w-full max-w-sm"}>
+          <div className={isApplePayAvailable ? "flex-1" : "w-full"}>
             <GooglePayButton
               onPayment={async () => {
                 await handleGooglePayment();
