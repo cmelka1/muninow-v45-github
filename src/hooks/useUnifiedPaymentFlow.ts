@@ -513,11 +513,14 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       console.error('💥 Google Pay error:', error);
       const classifiedError = classifyPaymentError(error);
       
-      toast({
-        title: "Google Pay Failed",
-        description: classifiedError.message,
-        variant: "destructive",
-      });
+      // Only show toast for actual errors, not user cancellations
+      if (classifiedError.type !== 'user_cancelled') {
+        toast({
+          title: "Google Pay Failed",
+          description: classifiedError.message,
+          variant: "destructive",
+        });
+      }
 
       console.groupEnd();
       params.onError?.(classifiedError);
