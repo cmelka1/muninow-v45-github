@@ -157,10 +157,38 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     return errors;
   };
 
+  const validateStep2Fields = () => {
+    const errors: Record<string, string> = {};
+
+    // Check if scope of work is empty or contains only whitespace/HTML tags
+    const cleanScopeOfWork = scopeOfWork.replace(/<[^>]*>/g, '').trim();
+    if (!cleanScopeOfWork || cleanScopeOfWork.length === 0) {
+      errors.scopeOfWork = 'No Scope of Work detected';
+    }
+
+    return errors;
+  };
+
   const handleNext = () => {
     if (currentStep === 1) {
       // Validate step 1 mandatory fields before proceeding
       const errors = validateStep1Fields();
+      if (Object.keys(errors).length > 0) {
+        setValidationErrors(errors);
+        // Scroll to first error field
+        const firstErrorField = document.querySelector(`[data-error="true"]`);
+        if (firstErrorField) {
+          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      } else {
+        setValidationErrors({});
+      }
+    }
+
+    if (currentStep === 2) {
+      // Validate step 2 mandatory fields before proceeding
+      const errors = validateStep2Fields();
       if (Object.keys(errors).length > 0) {
         setValidationErrors(errors);
         // Scroll to first error field
@@ -1260,13 +1288,18 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                   </p>
                   <RichTextEditor
                     content={scopeOfWork}
-                    onChange={setScopeOfWork}
+                    onChange={(value) => {
+                      setScopeOfWork(value);
+                      if (value && value.replace(/<[^>]*>/g, '').trim()) {
+                        clearFieldError('scopeOfWork');
+                      }
+                    }}
                     placeholder="Enter a detailed description of the construction work, materials to be used, and any other relevant details..."
                     error={!!validationErrors.scopeOfWork}
                     className="mt-1"
                   />
                   {validationErrors.scopeOfWork && (
-                    <p className="text-sm text-red-600 mt-1">{validationErrors.scopeOfWork}</p>
+                    <p className="text-sm text-destructive mt-1">{validationErrors.scopeOfWork}</p>
                   )}
                 </div>
               </CardContent>
