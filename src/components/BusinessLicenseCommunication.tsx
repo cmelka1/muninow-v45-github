@@ -22,7 +22,7 @@ export const BusinessLicenseCommunication = ({ licenseId }: BusinessLicenseCommu
   const { data: comments, isLoading } = useBusinessLicenseComments(licenseId);
   const createComment = useCreateBusinessLicenseComment();
   
-  const isMunicipalUser = user?.user_metadata?.account_type === 'municipal';
+  const isMunicipalUser = ['municipaladmin', 'municipaluser'].includes(user?.user_metadata?.account_type);
 
   const handleSubmitComment = async () => {
     if (!newComment.trim()) return;
@@ -96,10 +96,10 @@ export const BusinessLicenseCommunication = ({ licenseId }: BusinessLicenseCommu
                           {comment.reviewer.first_name} {comment.reviewer.last_name}
                         </span>
                         <Badge 
-                          variant={comment.reviewer.account_type === 'municipal' ? 'secondary' : 'outline'} 
-                          className={`text-xs ${comment.reviewer.account_type === 'municipal' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
+                          variant={['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'secondary' : 'outline'} 
+                          className={`text-xs ${['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
                         >
-                          {comment.reviewer.account_type === 'municipal' ? 'Municipal Staff' : 'Applicant'}
+                          {['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'Municipal Staff' : 'Applicant'}
                         </Badge>
                         {comment.is_internal && (
                           <Badge variant="secondary" className="text-xs">

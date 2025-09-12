@@ -24,7 +24,7 @@ export const ServiceApplicationCommunication: React.FC<ServiceApplicationCommuni
   const { data: comments, isLoading } = useServiceApplicationComments(applicationId);
   const { mutate: createComment, isPending } = useCreateServiceApplicationComment();
 
-  const isMunicipalUser = profile?.account_type === 'municipal';
+  const isMunicipalUser = ['municipaladmin', 'municipaluser'].includes(profile?.account_type);
 
   const handleSubmit = async () => {
     if (!newComment.trim()) {
@@ -104,10 +104,10 @@ export const ServiceApplicationCommunication: React.FC<ServiceApplicationCommuni
                           {comment.reviewer?.first_name} {comment.reviewer?.last_name}
                         </span>
                         <Badge 
-                          variant={comment.reviewer?.account_type === 'municipal' ? 'secondary' : 'outline'} 
-                          className={`text-xs ${comment.reviewer?.account_type === 'municipal' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
+                          variant={['municipaladmin', 'municipaluser'].includes(comment.reviewer?.account_type) ? 'secondary' : 'outline'} 
+                          className={`text-xs ${['municipaladmin', 'municipaluser'].includes(comment.reviewer?.account_type) ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
                         >
-                          {comment.reviewer?.account_type === 'municipal' ? 'Municipal Staff' : 'Applicant'}
+                          {['municipaladmin', 'municipaluser'].includes(comment.reviewer?.account_type) ? 'Municipal Staff' : 'Applicant'}
                         </Badge>
                         {comment.is_internal && (
                           <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800">

@@ -168,10 +168,10 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
                               {item.data.reviewer?.first_name} {item.data.reviewer?.last_name}
                             </span>
                             <Badge 
-                              variant={item.data.reviewer?.account_type === 'municipal' ? 'secondary' : 'outline'} 
-                              className={`text-xs ${item.data.reviewer?.account_type === 'municipal' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
+                              variant={['municipaladmin', 'municipaluser'].includes(item.data.reviewer?.account_type) ? 'secondary' : 'outline'} 
+                              className={`text-xs ${['municipaladmin', 'municipaluser'].includes(item.data.reviewer?.account_type) ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
                             >
-                              {item.data.reviewer?.account_type === 'municipal' ? 'Municipal Staff' : 'Applicant'}
+                              {['municipaladmin', 'municipaluser'].includes(item.data.reviewer?.account_type) ? 'Municipal Staff' : 'Applicant'}
                             </Badge>
                           </>
                         )}
