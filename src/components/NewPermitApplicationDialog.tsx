@@ -941,15 +941,15 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                   </div>
                   
                   <div>
-                    <Label htmlFor="pin-number" className="text-sm font-medium text-foreground">
-                      PIN Number <span className="text-muted-foreground">(Optional)</span>
+                    <Label htmlFor="parcel-number" className="text-sm font-medium text-foreground">
+                      Parcel Number <span className="text-muted-foreground">(Optional)</span>
                     </Label>
                     <p className="text-xs text-muted-foreground mb-2">
-                      Property Identification Number if available
+                      Parcel Number if available
                     </p>
                     <Input
-                      id="pin-number"
-                      placeholder="Enter PIN number"
+                      id="parcel-number"
+                      placeholder="Enter Parcel number"
                       value={propertyInfo.pinNumber}
                       onChange={(e) => handlePinNumberChange(e.target.value)}
                       className="mt-1"
