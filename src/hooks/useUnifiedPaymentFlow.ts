@@ -482,12 +482,33 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         }
       });
 
+      const responseTime = Date.now() - Date.now();
+      console.log(`📊 Google Pay function response received in ${responseTime}ms`);
+      console.log('📦 Raw Google Pay response data:', JSON.stringify(data, null, 2));
+      console.log('❗ Raw Google Pay response error:', JSON.stringify(error, null, 2));
+
       if (error) {
         console.error('❌ Google Pay backend error:', error);
         throw error;
       }
 
-      if (data?.success) {
+      // Enhanced success detection with multiple fallbacks for Google Pay
+      const isSuccess = data?.success === true || 
+                       (data?.finix_transfer_id && !data?.error) ||
+                       (data?.status === 'completed' || data?.payment_status === 'paid') ||
+                       (data?.transaction_id && !data?.error);
+
+      console.log('🔍 Google Pay success detection:', {
+        'data?.success': data?.success,
+        'has_finix_transfer_id': !!data?.finix_transfer_id,
+        'has_transaction_id': !!data?.transaction_id,
+        'no_error': !data?.error,
+        'status_completed': data?.status === 'completed',
+        'payment_status_paid': data?.payment_status === 'paid',
+        'final_isSuccess': isSuccess
+      });
+
+      if (isSuccess) {
         console.log('✅ Google Pay payment successful:', data);
         const response: PaymentResponse = {
           success: true,
@@ -506,8 +527,15 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         params.onSuccess?.(response);
         return response;
       } else {
-        console.error('❌ Google Pay failed:', data);
-        throw new Error(data?.error || 'Google Pay payment failed');
+        console.error('❌ Google Pay failed - detailed analysis:', {
+          data,
+          error,
+          successCheck: data?.success,
+          hasTransferId: !!data?.finix_transfer_id,
+          hasTransactionId: !!data?.transaction_id,
+          hasError: !!data?.error
+        });
+        throw new Error(data?.error || data?.message || 'Google Pay payment failed');
       }
     } catch (error) {
       console.error('💥 Google Pay error:', error);
