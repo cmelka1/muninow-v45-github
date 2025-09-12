@@ -341,26 +341,6 @@ export const usePermitPaymentMethods = (permit: any) => {
       
       const classifiedError = classifyPaymentError(error);
       
-      // For ambiguous payment failures, verify in database first
-      if (classifiedError.type === 'unknown' && error?.message?.includes('Payment failed')) {
-        try {
-          const { verifyPaymentInDatabase } = await import('@/utils/paymentVerification');
-          const verification = await verifyPaymentInDatabase('permit', permit.permit_id);
-          
-          if (verification.isVerified) {
-            console.log('✅ Database verification: Permit payment actually succeeded!');
-            toast({
-              title: "Payment Successful",
-              description: "Your Google Pay permit payment has been processed successfully.",
-            });
-            window.location.href = `/permit/${permit.permit_id}/certificate`;
-            return { success: true, status: verification.status };
-          }
-        } catch (verificationError) {
-          console.error('Failed to verify permit payment:', verificationError);
-        }
-      }
-      
       if (classifiedError.type !== 'user_cancelled') {
         toast({
           title: "Payment Failed",

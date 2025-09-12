@@ -3,15 +3,6 @@ import { PaymentError } from '@/types/payment';
 export const classifyPaymentError = (error: any): PaymentError => {
   console.log('🔍 Classifying payment error:', error);
   
-  // Handle potential false negatives (payment may have succeeded but response indicates failure)
-  if (error?.message?.includes('Payment failed') || error?.message?.includes('Google Pay payment failed')) {
-    return {
-      type: 'unknown',
-      message: 'Payment status unclear. Please check your account or contact support if you were charged.',
-      retryable: false,
-      details: error
-    };
-  }
   
   // Handle network errors
   if (error?.name === 'TypeError' && error?.message?.includes('fetch')) {
