@@ -190,6 +190,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
         totalAmount={totalWithFee}
         paymentMethodType={paymentMethodType}
         selectedPaymentMethodName={selectedPaymentMethodName}
+        feeLabel={feeLabel}
       />
 
       <Separator />

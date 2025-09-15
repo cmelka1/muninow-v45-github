@@ -10,6 +10,7 @@ interface InlinePaymentSummaryProps {
   totalAmount: number;
   paymentMethodType?: 'card' | 'ach' | 'google-pay' | 'apple-pay';
   selectedPaymentMethodName?: string;
+  feeLabel?: string;
   className?: string;
 }
 
@@ -20,13 +21,14 @@ export const InlinePaymentSummary: React.FC<InlinePaymentSummaryProps> = ({
   totalAmount,
   paymentMethodType,
   selectedPaymentMethodName,
+  feeLabel,
   className = ''
 }) => {
   return (
     <div className={`bg-muted/30 rounded-lg p-4 space-y-3 ${className}`}>
       <div className="flex items-center justify-between">
         <Badge variant="secondary" className="text-xs">
-          Permit Fee
+          {feeLabel || 'Permit Fee'}
         </Badge>
       </div>
       
