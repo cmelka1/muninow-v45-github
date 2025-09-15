@@ -16,7 +16,8 @@ import {
   DollarSign,
   Plus,
   CreditCard,
-  Loader2
+  Loader2,
+  Edit
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -286,7 +287,20 @@ const MunicipalServiceApplicationDetail = () => {
             <h1 className="text-2xl font-bold">{application.tile?.title || 'Service Application'}</h1>
             <p className="text-muted-foreground">Application #{application.application_number || application.id}</p>
           </div>
-          <ServiceApplicationStatusBadge status={application.status} />
+          <div className="flex items-center gap-3">
+            <ServiceApplicationStatusBadge status={application.status} />
+            {profile?.account_type === 'municipal' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsStatusDialogOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Change Status
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
