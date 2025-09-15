@@ -449,7 +449,7 @@ const ServiceApplicationDetail: React.FC = () => {
                   customerId={application.customer_id}
                   merchantId={application.merchant_id || ''}
                   baseAmountCents={application.amount_cents || application.tile?.amount_cents || 0}
-                  initialExpanded={false}
+                  initialExpanded={true}
                   onPaymentSuccess={handlePaymentSuccess}
                   onAddPaymentMethod={() => setIsAddPaymentDialogOpen(true)}
                 />
