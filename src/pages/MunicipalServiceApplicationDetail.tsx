@@ -512,13 +512,13 @@ const MunicipalServiceApplicationDetail = () => {
                        <span className="text-sm font-medium">Payment Confirmed</span>
                      </div>
                      
-                     <div className="space-y-1 text-sm">
-                       {application.paid_at && (
-                         <div className="flex justify-between">
-                           <span className="text-muted-foreground">Payment Date:</span>
-                           <span className="font-medium">{formatDate(application.paid_at)}</span>
-                         </div>
-                       )}
+                      <div className="space-y-1 text-sm">
+                        {application.payment_processed_at && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Payment Date:</span>
+                            <span className="font-medium">{formatDate(application.payment_processed_at)}</span>
+                          </div>
+                        )}
                        {application.payment_method_type && (
                          <div className="flex justify-between">
                            <span className="text-muted-foreground">Payment Method:</span>

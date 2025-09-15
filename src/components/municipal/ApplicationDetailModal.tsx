@@ -234,7 +234,7 @@ export function ApplicationDetailModal({ application, serviceTile, onClose }: Ap
           </Card>
 
           {/* Payment Information (if applicable) */}
-          {application.payment_id && (
+          {application.payment_status === 'paid' && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -245,8 +245,8 @@ export function ApplicationDetailModal({ application, serviceTile, onClose }: Ap
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Payment ID:</span>
-                    <span className="font-mono text-sm">{application.payment_id}</span>
+                    <span className="text-sm text-muted-foreground">Transfer ID:</span>
+                    <span className="font-mono text-sm">{application.finix_transfer_id || 'N/A'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Amount Paid:</span>

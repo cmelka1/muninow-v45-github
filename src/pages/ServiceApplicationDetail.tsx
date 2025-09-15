@@ -603,9 +603,9 @@ const ServiceApplicationDetail: React.FC = () => {
                   <span className="text-xs">{formatDate(application.updated_at)}</span>
                 </div>
               )}
-              {application.payment_status === 'paid' && (
+              {application.status === 'issued' && (
                 <div className="flex justify-between items-center py-1 text-emerald-700">
-                  <span className="text-sm font-medium">Payment Complete</span>
+                  <span className="text-sm font-medium">Issued</span>
                   <span className="text-xs">{formatDate(application.updated_at)}</span>
                 </div>
               )}

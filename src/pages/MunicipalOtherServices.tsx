@@ -30,7 +30,7 @@ const MunicipalOtherServices = () => {
     .filter(app => {
       const appDate = new Date(app.created_at);
       const now = new Date();
-      return appDate.getMonth() === now.getMonth() && appDate.getFullYear() === now.getFullYear() && app.status === 'paid';
+      return appDate.getMonth() === now.getMonth() && appDate.getFullYear() === now.getFullYear() && app.status === 'issued';
     })
     .reduce((sum, app) => {
       const tile = serviceTiles?.find(t => t.id === app.tile_id);

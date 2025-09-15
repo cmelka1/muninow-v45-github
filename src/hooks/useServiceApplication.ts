@@ -24,7 +24,7 @@ export interface ServiceApplicationWithTile {
   country?: string;
   
   // Application Status & Workflow
-  status: string;
+  status: 'draft' | 'submitted' | 'under_review' | 'information_requested' | 'resubmitted' | 'approved' | 'denied' | 'withdrawn' | 'expired' | 'issued';
   assigned_reviewer_id?: string;
   review_notes?: string;
   
@@ -32,17 +32,18 @@ export interface ServiceApplicationWithTile {
   submitted_at?: string;
   under_review_at?: string;
   information_requested_at?: string;
+  resubmitted_at?: string;
   approved_at?: string;
   denied_at?: string;
-  paid_at?: string;
-  completed_at?: string;
+  withdrawn_at?: string;
+  expired_at?: string;
+  issued_at?: string;
   
   // Payment Information
   amount_cents?: number;
   service_fee_cents?: number;
   total_amount_cents?: number;
   payment_status?: string;
-  payment_id?: string;
   payment_method_type?: string;
   payment_instrument_id?: string;
   payment_processed_at?: string;

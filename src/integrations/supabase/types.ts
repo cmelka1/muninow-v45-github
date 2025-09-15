@@ -1897,11 +1897,11 @@ export type Database = {
           basis_points: number | null
           business_legal_name: string | null
           city: string | null
-          completed_at: string | null
           country: string | null
           created_at: string | null
           customer_id: string
           denied_at: string | null
+          expired_at: string | null
           finix_identity_id: string | null
           finix_merchant_id: string | null
           finix_payment_instrument_id: string | null
@@ -1916,8 +1916,6 @@ export type Database = {
           merchant_finix_identity_id: string | null
           merchant_id: string | null
           merchant_name: string | null
-          paid_at: string | null
-          payment_id: string | null
           payment_instrument_id: string | null
           payment_method_type: string | null
           payment_processed_at: string | null
@@ -1940,6 +1938,7 @@ export type Database = {
           under_review_at: string | null
           updated_at: string | null
           user_id: string
+          withdrawn_at: string | null
           zip_code: string | null
         }
         Insert: {
@@ -1957,11 +1956,11 @@ export type Database = {
           basis_points?: number | null
           business_legal_name?: string | null
           city?: string | null
-          completed_at?: string | null
           country?: string | null
           created_at?: string | null
           customer_id: string
           denied_at?: string | null
+          expired_at?: string | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
           finix_payment_instrument_id?: string | null
@@ -1976,8 +1975,6 @@ export type Database = {
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
-          paid_at?: string | null
-          payment_id?: string | null
           payment_instrument_id?: string | null
           payment_method_type?: string | null
           payment_processed_at?: string | null
@@ -2000,6 +1997,7 @@ export type Database = {
           under_review_at?: string | null
           updated_at?: string | null
           user_id: string
+          withdrawn_at?: string | null
           zip_code?: string | null
         }
         Update: {
@@ -2017,11 +2015,11 @@ export type Database = {
           basis_points?: number | null
           business_legal_name?: string | null
           city?: string | null
-          completed_at?: string | null
           country?: string | null
           created_at?: string | null
           customer_id?: string
           denied_at?: string | null
+          expired_at?: string | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
           finix_payment_instrument_id?: string | null
@@ -2036,8 +2034,6 @@ export type Database = {
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
-          paid_at?: string | null
-          payment_id?: string | null
           payment_instrument_id?: string | null
           payment_method_type?: string | null
           payment_processed_at?: string | null
@@ -2060,6 +2056,7 @@ export type Database = {
           under_review_at?: string | null
           updated_at?: string | null
           user_id?: string
+          withdrawn_at?: string | null
           zip_code?: string | null
         }
         Relationships: []
@@ -4797,14 +4794,12 @@ export type Database = {
         | "submitted"
         | "under_review"
         | "information_requested"
+        | "resubmitted"
         | "approved"
         | "denied"
-        | "paid"
-        | "completed"
         | "withdrawn"
         | "expired"
         | "issued"
-        | "resubmitted"
       sync_status: "synced" | "pending" | "error"
       vehicle_type: "personal" | "business"
     }
@@ -5002,14 +4997,12 @@ export const Constants = {
         "submitted",
         "under_review",
         "information_requested",
+        "resubmitted",
         "approved",
         "denied",
-        "paid",
-        "completed",
         "withdrawn",
         "expired",
         "issued",
-        "resubmitted",
       ],
       sync_status: ["synced", "pending", "error"],
       vehicle_type: ["personal", "business"],
