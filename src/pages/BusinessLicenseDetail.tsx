@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Download, Loader2, CreditCard } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
@@ -725,51 +725,61 @@ export const BusinessLicenseDetail = () => {
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
           {/* Payment Management */}
-          {license.application_status === 'approved' && license.payment_status !== 'paid' && (
-            <InlinePaymentFlow
-              entityType="business_license"
-              entityId={license.id}
-              entityName={`Business License - ${license.business_legal_name}`}
-              customerId={license.customer_id}
-              merchantId={license.merchant_id || ''}
-              baseAmountCents={license.base_fee_cents || license.total_amount_cents || 0}
-              initialExpanded={true}
-              onPaymentSuccess={() => {
-                toast({
-                  title: "Payment Successful",
-                  description: "Your business license payment has been processed successfully.",
-                });
-                refetch();
-              }}
-              onPaymentError={(error) => {
-                console.error('Payment error:', error);
-              }}
-              onAddPaymentMethod={() => setIsAddPaymentDialogOpen(true)}
-            />
-          )}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Payment Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {license.application_status === 'approved' && license.payment_status !== 'paid' && (
+                <InlinePaymentFlow
+                  entityType="business_license"
+                  entityId={license.id}
+                  entityName={`Business License - ${license.business_legal_name}`}
+                  customerId={license.customer_id}
+                  merchantId={license.merchant_id || ''}
+                  baseAmountCents={license.base_fee_cents || license.total_amount_cents || 0}
+                  initialExpanded={true}
+                  onPaymentSuccess={() => {
+                    toast({
+                      title: "Payment Successful",
+                      description: "Your business license payment has been processed successfully.",
+                    });
+                    refetch();
+                  }}
+                  onPaymentError={(error) => {
+                    console.error('Payment error:', error);
+                  }}
+                  onAddPaymentMethod={() => setIsAddPaymentDialogOpen(true)}
+                />
+              )}
 
-          {license.payment_status === 'paid' && (
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <h3 className="font-semibold text-green-800 dark:text-green-200">Payment Complete</h3>
-              </div>
-              <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                Your business license payment has been successfully processed.
-              </p>
-            </div>
-          )}
+              {license.payment_status === 'paid' && (
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <h3 className="font-semibold text-green-800 dark:text-green-200">Payment Complete</h3>
+                  </div>
+                  <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                    Your business license payment has been successfully processed.
+                  </p>
+                </div>
+              )}
 
-          {license.application_status !== 'approved' && (
-            <div className="p-4 bg-muted/50 rounded-lg">
-              <h3 className="font-medium text-muted-foreground">Payment Unavailable</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Payment will be available once your application is approved.
-              </p>
-            </div>
-          )}
+              {license.application_status !== 'approved' && (
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <h3 className="font-medium text-muted-foreground">Payment Unavailable</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Payment will be available once your application is approved.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Status Timeline */}
           <Card>
