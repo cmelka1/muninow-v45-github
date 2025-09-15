@@ -415,17 +415,20 @@ Deno.serve(async (req) => {
           case 'service_application':
             console.log('Updating service application payment status');
             
-            // Fetch current status to decide auto-issue
+            // Fetch current status to decide auto-approve
             const { data: serviceApp, error: serviceFetchError } = await supabase
               .from('municipal_service_applications')
-              .select('status')
+              .select('status, application_number')
               .eq('id', entity_id)
               .single();
+            
             if (serviceFetchError) {
               console.error('Failed to fetch service application status:', serviceFetchError);
               entityUpdateError = serviceFetchError;
               break;
             }
+            
+            console.log('Current service application status:', serviceApp?.status);
             
             // Prepare update data
             const serviceUpdate: any = {
@@ -435,17 +438,20 @@ Deno.serve(async (req) => {
               transfer_state: 'SUCCEEDED'
             };
             
-            // Auto-issue if approved
-            if (serviceApp.status === 'approved') {
-              serviceUpdate.status = 'issued';
-              serviceUpdate.issued_at = new Date().toISOString();
-              console.log('Auto-issuing service application after successful payment');
-            }
+            // Auto-approve service application after successful payment
+            console.log('Auto-approving service application after successful payment');
+            serviceUpdate.status = 'approved';
+            serviceUpdate.approved_at = new Date().toISOString();
             
-            const { error: serviceError } = await supabase
+            console.log('Service application update data:', serviceUpdate);
+            
+            const { data: serviceUpdateData, error: serviceError } = await supabase
               .from('municipal_service_applications')
               .update(serviceUpdate)
-              .eq('id', entity_id);
+              .eq('id', entity_id)
+              .select();
+            
+            console.log('Service application update result:', { data: serviceUpdateData, error: serviceError });
             entityUpdateError = serviceError;
             break;
 

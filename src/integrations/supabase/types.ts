@@ -1923,6 +1923,7 @@ export type Database = {
           payment_processed_at: string | null
           payment_status: string | null
           payment_type: Database["public"]["Enums"]["payment_type_enum"] | null
+          resubmitted_at: string | null
           review_notes: string | null
           service_fee_cents: number | null
           service_name: string | null
@@ -1982,6 +1983,7 @@ export type Database = {
           payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: Database["public"]["Enums"]["payment_type_enum"] | null
+          resubmitted_at?: string | null
           review_notes?: string | null
           service_fee_cents?: number | null
           service_name?: string | null
@@ -2041,6 +2043,7 @@ export type Database = {
           payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: Database["public"]["Enums"]["payment_type_enum"] | null
+          resubmitted_at?: string | null
           review_notes?: string | null
           service_fee_cents?: number | null
           service_name?: string | null
@@ -4801,6 +4804,7 @@ export type Database = {
         | "withdrawn"
         | "expired"
         | "issued"
+        | "resubmitted"
       sync_status: "synced" | "pending" | "error"
       vehicle_type: "personal" | "business"
     }
@@ -5005,6 +5009,7 @@ export const Constants = {
         "withdrawn",
         "expired",
         "issued",
+        "resubmitted",
       ],
       sync_status: ["synced", "pending", "error"],
       vehicle_type: ["personal", "business"],
