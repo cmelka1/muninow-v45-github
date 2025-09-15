@@ -124,6 +124,7 @@ const MunicipalOtherServices = () => {
             applications={municipalApplications}
             serviceTiles={serviceTiles || []}
             isLoading={applicationsLoading}
+            totalCount={totalApplications}
           />
         </TabsContent>
       </Tabs>
