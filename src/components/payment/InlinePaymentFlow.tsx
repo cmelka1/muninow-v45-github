@@ -22,6 +22,21 @@ interface InlinePaymentFlowProps {
   onAddPaymentMethod?: () => void;
 }
 
+const getEntityLabels = (entityType: EntityType) => {
+  switch (entityType) {
+    case 'permit':
+      return { feeLabel: 'Permit Fee', completionText: 'Complete payment to receive your permit' };
+    case 'business_license':
+      return { feeLabel: 'License Fee', completionText: 'Complete payment to receive your license' };
+    case 'service_application':
+      return { feeLabel: 'Service Fee', completionText: 'Complete payment to process your application' };
+    case 'tax_submission':
+      return { feeLabel: 'Tax Payment', completionText: 'Complete payment to submit your tax' };
+    default:
+      return { feeLabel: 'Fee', completionText: 'Complete payment to proceed' };
+  }
+};
+
 export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
   entityType,
   entityId,
@@ -107,6 +122,8 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
                                    isApplePay ? 'Apple Pay' :
                                    selectedPaymentInstrument?.display_name || '';
 
+  const { feeLabel, completionText } = getEntityLabels(entityType);
+
   if (showSuccess) {
     return (
       <div className="space-y-4">
@@ -144,11 +161,11 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
       <div className="space-y-4">
         <div className="p-3 bg-muted/50 rounded-lg">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Permit Fee</span>
+            <span className="text-sm font-medium">{feeLabel}</span>
             <span className="font-semibold">${(baseAmountCents / 100).toFixed(2)}</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Complete payment to receive your permit
+            {completionText}
           </p>
         </div>
         
