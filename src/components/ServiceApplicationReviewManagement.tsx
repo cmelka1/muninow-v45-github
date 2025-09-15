@@ -35,7 +35,7 @@ export const ServiceApplicationReviewManagement: React.FC<ServiceApplicationRevi
   const { mutate: createComment } = useCreateServiceApplicationComment();
   const { assignReviewer, isUpdating } = useServiceApplicationWorkflow();
 
-  const isMunicipalUser = profile?.account_type === 'municipal';
+  const isMunicipalUser = profile?.account_type?.startsWith('municipal');
 
   // Filter for internal comments only
   const internalComments = comments?.filter(comment => comment.is_internal) || [];

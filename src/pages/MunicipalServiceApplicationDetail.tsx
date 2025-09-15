@@ -289,7 +289,7 @@ const MunicipalServiceApplicationDetail = () => {
           </div>
           <div className="flex items-center gap-3">
             <ServiceApplicationStatusBadge status={application.status} />
-            {profile?.account_type === 'municipal' && (
+            {profile?.account_type?.startsWith('municipal') && (
               <Button
                 variant="outline"
                 size="sm"
