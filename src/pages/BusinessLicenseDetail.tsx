@@ -21,7 +21,7 @@ import { BusinessLicenseCommunication } from '@/components/BusinessLicenseCommun
 import { BusinessLicenseStatusChangeDialog } from '@/components/BusinessLicenseStatusChangeDialog';
 import { AddBusinessLicenseDocumentDialog } from '@/components/AddBusinessLicenseDocumentDialog';
 
-import { BusinessLicensePaymentManagement } from '@/components/BusinessLicensePaymentManagement';
+import { InlinePaymentFlow } from '@/components/payment/InlinePaymentFlow';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
@@ -51,6 +51,7 @@ export const BusinessLicenseDetail = () => {
   const { getDocumentUrl } = useBusinessLicenseDocuments();
   const { updateLicenseStatus, isUpdating, getValidStatusTransitions } = useBusinessLicenseWorkflow();
   const { customer: municipality, isLoading: municipalityLoading } = useCustomerById(license?.customer_id);
+
   
   const isMunicipalUser = profile?.account_type === 'municipaladmin';
   const isOwner = license?.user_id === user?.id;
@@ -724,8 +725,23 @@ export const BusinessLicenseDetail = () => {
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
           {/* Payment Management */}
-          <BusinessLicensePaymentManagement 
-            license={license}
+          <InlinePaymentFlow
+            entityType="business_license"
+            entityId={license.id}
+            entityName={`Business License - ${license.business_legal_name}`}
+            customerId={license.customer_id}
+            merchantId={license.merchant_id || ''}
+            baseAmountCents={license.base_fee_cents || license.total_amount_cents || 0}
+            onPaymentSuccess={() => {
+              toast({
+                title: "Payment Successful",
+                description: "Your business license payment has been processed successfully.",
+              });
+              refetch();
+            }}
+            onPaymentError={(error) => {
+              console.error('Payment error:', error);
+            }}
             onAddPaymentMethod={() => setIsAddPaymentDialogOpen(true)}
           />
 
@@ -822,8 +838,7 @@ export const BusinessLicenseDetail = () => {
         open={isAddPaymentDialogOpen}
         onOpenChange={setIsAddPaymentDialogOpen}
         onSuccess={() => {
-          // Payment method added successfully - no need to do anything specific
-          // The BusinessLicensePaymentManagement component will auto-refresh
+          // Payment method added successfully - the InlinePaymentFlow will auto-refresh
         }}
       />
 
