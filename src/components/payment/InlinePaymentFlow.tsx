@@ -29,7 +29,7 @@ const getEntityLabels = (entityType: EntityType) => {
     case 'business_license':
       return { feeLabel: 'License Fee', completionText: 'Complete payment to receive your license' };
     case 'service_application':
-      return { feeLabel: 'Service Fee', completionText: 'Complete payment to process your application' };
+      return { feeLabel: 'Application Fee', completionText: 'Complete payment to process your application' };
     case 'tax_submission':
       return { feeLabel: 'Tax Payment', completionText: 'Complete payment to submit your tax' };
     default:
