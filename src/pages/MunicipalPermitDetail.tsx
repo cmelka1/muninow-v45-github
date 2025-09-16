@@ -135,9 +135,9 @@ const MunicipalPermitDetail = () => {
     return (
       <div className="p-6">
         <div className="flex items-center gap-4 mb-6">
-          <Button variant="outline" onClick={() => navigate('/municipal/permits')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Permits
+          <Button variant="ghost" size="sm" onClick={() => navigate('/municipal/permits')} className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back
           </Button>
         </div>
         <Card>
@@ -154,9 +154,9 @@ const MunicipalPermitDetail = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate('/municipal/permits')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Permits
+          <Button variant="ghost" size="sm" onClick={() => navigate('/municipal/permits')} className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Permit Review</h1>
