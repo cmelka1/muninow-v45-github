@@ -1,3 +1,7 @@
+// DEPRECATED: This hook has been replaced by useUnifiedPaymentFlow
+// This file is kept for reference during migration but should not be used
+// Use useUnifiedPaymentFlow with entityType 'service_application' instead
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
@@ -8,6 +12,9 @@ import { classifyPaymentError, generateIdempotencyId, initializeApplePaySession 
 import { useSessionValidation } from '@/hooks/useSessionValidation';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 
+/**
+ * @deprecated Use useUnifiedPaymentFlow instead with entityType 'service_application'
+ */
 export const useServiceApplicationPaymentMethods = (tile: MunicipalServiceTile | null, userDefinedAmount?: number) => {
   const { toast } = useToast();
   const { paymentInstruments, isLoading: paymentMethodsLoading, loadPaymentInstruments } = useUserPaymentInstruments();

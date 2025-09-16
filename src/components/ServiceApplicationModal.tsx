@@ -22,7 +22,7 @@ import PaymentMethodSelector from './PaymentMethodSelector';
 
 import { AddPaymentMethodDialog } from './profile/AddPaymentMethodDialog';
 import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
-import { useServiceApplicationPaymentMethods } from '@/hooks/useServiceApplicationPaymentMethods';
+import { UnifiedPaymentDialog } from '@/components/unified/UnifiedPaymentDialog';
 import { formatCurrency } from '@/lib/formatters';
 import ServiceApplicationReviewStep from './ServiceApplicationReviewStep';
 
@@ -81,25 +81,14 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     loadPaymentInstruments,
   } = useUserPaymentInstruments();
 
-  // Get user-defined amount from form data for fee calculation
-  const userDefinedAmount = tile?.allow_user_defined_amount ? formData.amount_cents / 100 : undefined;
-  
-  // Use the service application payment hook for fee calculations
-  const {
-    serviceFee,
-    totalWithFee,
-    baseAmount,
-    selectedPaymentMethod,
-    setSelectedPaymentMethod,
-    handlePaymentWithData: handleServicePayment,
-    merchantFeeProfile,
-  } = useServiceApplicationPaymentMethods(tile, userDefinedAmount);
+  // For modal, we'll use the service application submission with payment redirect
+  const baseAmountCents = tile?.allow_user_defined_amount ? formData.amount_cents : tile?.amount_cents || 0;
 
   useEffect(() => {
     if (tile && isOpen) {
       // Reset state when modal opens
       setCurrentStep(1);
-      setSelectedPaymentMethod(null);
+      // Reset payment state when modal opens
       setIsSubmitting(false);
       setUploadedDocuments([]);
       setValidationErrors({});
@@ -327,17 +316,18 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   };
 
   const handlePayment = async () => {
-    if (!tile || !selectedPaymentMethod || isSubmitting) return;
+    if (!tile) return;
     
     setIsSubmitting(true);
     
     try {
-      console.log('Starting atomic payment process for tile:', tile.id);
-      
-      // Prepare application data for atomic processing
-      const applicationData = {
+      // For services that don't require review, create application and redirect to payment
+      const applicationData = await createApplication.mutateAsync({
         tile_id: tile.id,
-        amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
+        user_id: profile?.id || '',
+        customer_id: tile.customer_id,
+        status: 'submitted',
+        amount_cents: baseAmountCents,
         // Map form data to structured fields
         applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
         applicant_email: formData.email || undefined,
@@ -350,49 +340,45 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         zip_code: formData.zip || formData.zip_code || formData.postal_code || undefined,
         additional_information: formData.additional_information || formData.notes || formData.comments || undefined,
         service_specific_data: formData,
-        documents: uploadedDocuments
-          .filter(doc => doc.uploadStatus === 'completed')
-          .map(doc => ({
-            name: doc.name,
-            size: doc.size,
-            type: doc.type,
-            storage_path: doc.filePath,
-            document_type: doc.documentType,
-          })),
-      };
+      });
 
-      console.log('Calling atomic payment processing with application data');
-      const paymentResult = await handleServicePayment(applicationData);
-      
-      if (paymentResult?.success) {
-        console.log('Payment successful, closing modal');
-        onClose();
-        // Refresh the page or navigate to show updated status
-        window.location.reload();
-      } else {
-        console.error('Payment failed:', paymentResult);
-        // Payment hook already shows error toast, but ensure we don't leave modal in loading state
-        if (!paymentResult?.retryable) {
-          toast({
-            title: "Payment Failed",
-            description: paymentResult?.error || "Payment could not be processed. Please try again.",
-            variant: "destructive",
-          });
-        }
+      // Link uploaded documents to the application
+      if (uploadedDocuments.length > 0) {
+        const documentPromises = uploadedDocuments
+          .filter(doc => doc.uploadStatus === 'completed')
+          .map(doc => 
+            supabase.from('service_application_documents').insert({
+              application_id: applicationData.id,
+              user_id: profile?.id || '',
+              customer_id: tile.customer_id,
+              file_name: doc.name,
+              document_type: doc.documentType,
+              description: doc.description || null,
+              storage_path: doc.filePath || '',
+              file_size: doc.size,
+              content_type: doc.type
+            })
+          );
+
+        await Promise.all(documentPromises);
       }
       
-    } catch (error) {
-      console.error('Error during payment process:', error);
-      
-      // Classify the error for better user feedback
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : "An unexpected error occurred during payment processing.";
-      
       toast({
-        title: "Payment Failed",
-        description: errorMessage,
-        variant: "destructive",
+        title: 'Application Created',
+        description: 'Your application has been created. Please complete payment to finalize.',
+      });
+      
+      onClose();
+      
+      // Navigate to application detail page for payment
+      window.location.href = `/service-application/${applicationData.id}`;
+      
+    } catch (error) {
+      console.error('Error creating application:', error);
+      toast({
+        title: 'Creation Failed',
+        description: 'There was an error creating your application. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
@@ -1033,8 +1019,8 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                       </CardHeader>
                       <CardContent>
                         <PaymentSummary 
-                          baseAmount={baseAmount}
-                          selectedPaymentMethod={selectedPaymentMethod}
+                          baseAmount={baseAmountCents}
+                selectedPaymentMethod={null}
                           compact={true}
                         />
                       </CardContent>
@@ -1051,13 +1037,9 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <PaymentMethodSelector
-                        paymentInstruments={paymentInstruments.slice(0, 3)}
-                        selectedPaymentMethod={selectedPaymentMethod}
-                        onSelectPaymentMethod={setSelectedPaymentMethod}
-                        isLoading={paymentMethodsLoading}
-                        maxMethods={3}
-                      />
+                      <div className="text-sm text-muted-foreground">
+                        Payment methods will be available after application creation.
+                      </div>
 
                        {/* Show message when alternative payment methods are not available */}
                        <div className="text-sm text-muted-foreground text-center py-2">
@@ -1074,10 +1056,10 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                     <Button 
                       className="w-full" 
                       size="lg"
-                      disabled={!selectedPaymentMethod || isSubmitting}
+                      disabled={isSubmitting}
                       onClick={handlePayment}
                     >
-                      {isSubmitting ? 'Processing...' : totalWithFee > 0 ? `Pay ${formatCurrency(totalWithFee / 100)}` : 'Submit Application'}
+                      {isSubmitting ? 'Creating...' : baseAmountCents > 0 ? 'Create Application & Pay' : 'Submit Application'}
                     </Button>
                    
                     <Button 
