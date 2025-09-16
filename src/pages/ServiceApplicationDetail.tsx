@@ -417,8 +417,15 @@ const ServiceApplicationDetail: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Payment Status:</span>
-                  <Badge variant={application.payment_status === 'paid' ? 'default' : 'outline'}>
+                  <Label className="text-sm font-medium text-muted-foreground">Payment Status</Label>
+                  <Badge 
+                    variant={application.payment_status === 'paid' ? 'default' : 'outline'}
+                    className={
+                      application.payment_status === 'paid' 
+                        ? 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200' 
+                        : 'bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200'
+                    }
+                  >
                     {application.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
                   </Badge>
                 </div>
