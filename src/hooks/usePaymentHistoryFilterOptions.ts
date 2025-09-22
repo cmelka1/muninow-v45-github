@@ -10,19 +10,31 @@ export const useMerchantOptions = () => {
     queryFn: async () => {
       if (!user?.id) return [];
 
-      const { data, error } = await supabase
-        .from('payment_history')
-        .select('merchant_name')
+      const { data: transactions, error } = await supabase
+        .from('payment_transactions')
+        .select('merchant_id')
         .eq('user_id', user.id)
-        .not('merchant_name', 'is', null);
+        .not('merchant_id', 'is', null);
 
       if (error) {
         console.error('Error fetching merchant options:', error);
         throw error;
       }
 
+      if (!transactions || transactions.length === 0) return [];
+
+      // Get unique merchant IDs
+      const merchantIds = [...new Set(transactions.map(t => t.merchant_id).filter(Boolean))];
+      
+      // Fetch merchant names
+      const { data: merchants } = await supabase
+        .from('merchants')
+        .select('merchant_name')
+        .in('id', merchantIds)
+        .not('merchant_name', 'is', null);
+
       // Get unique merchants
-      const uniqueMerchants = [...new Set(data.map(payment => payment.merchant_name))];
+      const uniqueMerchants = [...new Set(merchants?.map(m => m.merchant_name).filter(Boolean) || [])];
       return uniqueMerchants.sort();
     },
     enabled: !!user?.id,
@@ -37,19 +49,31 @@ export const useCategoryOptions = () => {
     queryFn: async () => {
       if (!user?.id) return [];
 
-      const { data, error } = await supabase
-        .from('payment_history')
-        .select('category')
+      const { data: transactions, error } = await supabase
+        .from('payment_transactions')
+        .select('merchant_id')
         .eq('user_id', user.id)
-        .not('category', 'is', null);
+        .not('merchant_id', 'is', null);
 
       if (error) {
         console.error('Error fetching category options:', error);
         throw error;
       }
 
+      if (!transactions || transactions.length === 0) return [];
+
+      // Get unique merchant IDs
+      const merchantIds = [...new Set(transactions.map(t => t.merchant_id).filter(Boolean))];
+      
+      // Fetch merchant categories
+      const { data: merchants } = await supabase
+        .from('merchants')
+        .select('category')
+        .in('id', merchantIds)
+        .not('category', 'is', null);
+
       // Get unique categories
-      const uniqueCategories = [...new Set(data.map(payment => payment.category))];
+      const uniqueCategories = [...new Set(merchants?.map(m => m.category).filter(Boolean) || [])];
       return uniqueCategories.sort();
     },
     enabled: !!user?.id,
@@ -65,7 +89,7 @@ export const usePaymentMethodOptions = () => {
       if (!user?.id) return [];
 
       const { data, error } = await supabase
-        .from('payment_history')
+        .from('payment_transactions')
         .select('payment_type, card_brand')
         .eq('user_id', user.id);
 
