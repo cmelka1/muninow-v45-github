@@ -29,6 +29,7 @@ import { AddPaymentMethodDialog } from './profile/AddPaymentMethodDialog';
 import { TaxDocumentUpload } from './TaxDocumentUpload';
 import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
 import { useMunicipalTaxTypes } from '@/hooks/useMunicipalTaxTypes';
+import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 
 
 interface PayTaxDialogProps {
@@ -870,7 +871,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                         </div>
                         <div>
                           <span className="text-muted-foreground">Tax Type:</span>
-                          <p className="font-medium">{taxType || 'Not selected'}</p>
+                          <p className="font-medium">{selectedTaxTypeData?.name || taxType || 'Not selected'}</p>
                         </div>
                         <div className="col-span-2">
                           <span className="text-muted-foreground">Reporting Period:</span>
@@ -890,9 +891,13 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                           <div className="space-y-3 text-sm">
                             <div>
                               <span className="text-muted-foreground block mb-1">Calculation Details:</span>
-                              <p className="whitespace-pre-wrap bg-background p-2 rounded border text-sm">
-                                {calculationNotes}
-                              </p>
+                              <div className="bg-background p-2 rounded border">
+                                <SafeHtmlRenderer 
+                                  content={calculationNotes} 
+                                  fallback="No calculation details provided"
+                                  className="text-sm"
+                                />
+                              </div>
                             </div>
                             <div className="flex justify-between font-medium pt-2 border-t">
                               <span>Total Amount Due:</span>
