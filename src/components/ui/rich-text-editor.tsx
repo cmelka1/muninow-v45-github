@@ -44,7 +44,13 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     ],
     content,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      const html = editor.getHTML();
+      // Don't send empty paragraphs
+      if (html === '<p></p>' || html === '<p><br></p>') {
+        onChange('');
+      } else {
+        onChange(html);
+      }
     },
     editorProps: {
       attributes: {
