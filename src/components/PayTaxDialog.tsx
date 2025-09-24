@@ -113,15 +113,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     instructions_document_path?: string;
   } | null>(null);
 
-  const formatTaxType = (taxType: string) => {
-    const typeMap: Record<string, string> = {
-      'food_beverage': 'Food & Beverage',
-      'hotel_motel': 'Hotel & Motel',
-      'amusement': 'Amusement'
-    };
-    return typeMap[taxType] || taxType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
-
   // Submission state and errors
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -769,7 +760,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     <CardHeader className="pb-4">
                       <CardTitle className="text-base flex items-center gap-2">
                         <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        Tax Calculation - {selectedTaxTypeData?.name || formatTaxType(taxType)}
+                        Tax Calculation - {selectedTaxTypeData?.name || taxType}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
