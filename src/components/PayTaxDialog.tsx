@@ -29,6 +29,7 @@ import { useMunicipalTaxTypes } from '@/hooks/useMunicipalTaxTypes';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { supabase } from '@/integrations/supabase/client';
 import { UnifiedPaymentDialog } from '@/components/unified/UnifiedPaymentDialog';
+import { InlinePaymentFlow } from '@/components/payment/InlinePaymentFlow';
 import type { PaymentResponse } from '@/types/payment';
 
 // PayTax Dialog Component - Updated to use direct download instead of modal viewer
@@ -1054,30 +1055,31 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     </Card>
                   )}
 
-                  {/* Payment will be handled by UnifiedPaymentDialog */}
-                  <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        Ready to Submit
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <p className="text-sm text-muted-foreground">
-                          Your tax submission is ready. Click "Submit & Pay" to proceed with payment processing.
-                        </p>
-                        <Button 
-                          className="w-full" 
-                          size="lg"
-                          onClick={handleSubmit}
-                          disabled={!selectedMunicipality || !getTaxAmountInCents()}
-                        >
-                          Submit & Pay
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  {/* Payment Management */}
+                  <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                    <InlinePaymentFlow
+                      entityType="tax_submission"
+                      entityId="new-submission"
+                      entityName={`${selectedTaxTypeData?.name || 'Tax'} - ${reportingPeriodStart} to ${reportingPeriodEnd}`}
+                      customerId={selectedMunicipality?.customer_id || ''}
+                      merchantId={selectedMunicipality?.finix_merchant_id || ''}
+                      baseAmountCents={getTaxAmountInCents()}
+                      onPaymentSuccess={(paymentResponse: PaymentResponse) => {
+                        setIsUnifiedPaymentOpen(false);
+                        resetForm();
+                        handleDialogOpenChange(false);
+                      }}
+                      onPaymentError={(error: any) => {
+                        console.error('Payment error:', error);
+                        toast({
+                          title: "Payment Error",
+                          description: error.message || "Payment processing failed. Please try again.",
+                          variant: "destructive",
+                        });
+                      }}
+                      onAddPaymentMethod={() => setIsAddPaymentMethodOpen(true)}
+                    />
+                  </div>
                 </div>
               )}
             </div>
