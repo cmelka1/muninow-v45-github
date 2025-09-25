@@ -1069,7 +1069,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                         entityId="new-submission"
                         entityName={`${selectedTaxTypeData?.name || 'Tax'} - ${reportingPeriodStart} to ${reportingPeriodEnd}`}
                         customerId={selectedMunicipality?.customer_id || ''}
-                        merchantId={selectedMunicipality?.finix_merchant_id || ''}
+                        merchantId={selectedMunicipality?.id || ''}
                         baseAmountCents={getTaxAmountInCents()}
                         onPaymentSuccess={(paymentResponse: PaymentResponse) => {
                           setIsUnifiedPaymentOpen(false);
