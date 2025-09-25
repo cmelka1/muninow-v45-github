@@ -1064,9 +1064,9 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <InlinePaymentFlow
+                       <InlinePaymentFlow
                         entityType="tax_submission"
-                        entityId="new-submission"
+                        entityId={createdTaxSubmissionId || "new-submission"}
                         entityName={`${selectedTaxTypeData?.name || 'Tax'} - ${reportingPeriodStart} to ${reportingPeriodEnd}`}
                         customerId={selectedMunicipality?.customer_id || ''}
                         merchantId={selectedMunicipality?.id || ''}
