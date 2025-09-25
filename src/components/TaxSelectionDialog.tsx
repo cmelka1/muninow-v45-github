@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, CreditCard } from 'lucide-react';
+import { AlertCircle, Plus } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useTaxSubmissions } from '@/hooks/useTaxSubmissions';
 
@@ -56,7 +56,7 @@ export const TaxSelectionDialog: React.FC<TaxSelectionDialogProps> = ({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
-            <CreditCard className="w-5 h-5" />
+            <Plus className="w-5 h-5" />
             <span>Select Tax to Pay</span>
           </DialogTitle>
         </DialogHeader>
@@ -81,7 +81,7 @@ export const TaxSelectionDialog: React.FC<TaxSelectionDialogProps> = ({
 
           {!isLoading && !error && data?.data && data.data.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
-              <CreditCard className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <Plus className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No unpaid tax submissions found</p>
             </div>
           )}

@@ -8,7 +8,7 @@ import TaxSubmissionsFilter, { TaxSubmissionFilters } from '@/components/TaxSubm
 import TaxSubmissionsTable from '@/components/TaxSubmissionsTable';
 import { TaxSelectionDialog } from '@/components/TaxSelectionDialog';
 import { Button } from '@/components/ui/button';
-import { CreditCard } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 const Taxes = () => {
   const navigate = useNavigate();
@@ -71,7 +71,7 @@ const Taxes = () => {
               title="Tax Submissions"
               headerAction={
                 <Button onClick={() => setIsPayTaxOpen(true)} className="flex items-center space-x-2">
-                  <CreditCard className="w-4 h-4" />
+                  <Plus className="w-4 h-4" />
                   <span>Pay Tax</span>
                 </Button>
               }
