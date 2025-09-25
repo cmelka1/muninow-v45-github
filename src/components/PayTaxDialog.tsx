@@ -11,6 +11,7 @@ import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Loader2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
@@ -30,7 +31,7 @@ import { TaxDocumentUpload } from './TaxDocumentUpload';
 import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
 import { useMunicipalTaxTypes } from '@/hooks/useMunicipalTaxTypes';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
-import { DocumentViewerModal } from './DocumentViewerModal';
+import { supabase } from '@/integrations/supabase/client';
 
 
 interface PayTaxDialogProps {
@@ -122,14 +123,8 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   // Add payment method dialog state
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false);
   
-  // Document viewer modal state
-  const [isDocumentViewerOpen, setIsDocumentViewerOpen] = useState(false);
-  const [viewingDocument, setViewingDocument] = useState<{
-    id: string;
-    file_name: string;
-    storage_path: string;
-    file_size: number;
-  } | null>(null);
+  // Download instructions state
+  const [isDownloadingInstructions, setIsDownloadingInstructions] = useState(false);
 
   // Document upload functionality - using new staging system
   const { 
@@ -477,19 +472,45 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     });
   };
 
-  const handleViewInstructions = () => {
-    if (selectedTaxTypeData?.instructions_document_path) {
+  const handleViewInstructions = async () => {
+    if (!selectedTaxTypeData?.instructions_document_path) return;
+    
+    setIsDownloadingInstructions(true);
+    
+    try {
+      const { data, error } = await supabase.storage
+        .from('tax-instructions')
+        .download(selectedTaxTypeData.instructions_document_path);
+      
+      if (error) throw error;
+      
       // Extract filename from path
       const pathParts = selectedTaxTypeData.instructions_document_path.split('/');
       const fileName = pathParts[pathParts.length - 1] || 'Tax Instructions.pdf';
       
-      setViewingDocument({
-        id: crypto.randomUUID(),
-        file_name: fileName,
-        storage_path: selectedTaxTypeData.instructions_document_path,
-        file_size: 0 // Size will be determined by the viewer
+      // Create download link
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Download Started",
+        description: "Tax instructions document is downloading.",
       });
-      setIsDocumentViewerOpen(true);
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Download Failed",
+        description: "Unable to download the instructions document.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloadingInstructions(false);
     }
   };
 
@@ -607,8 +628,21 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                             <p className="text-xs text-muted-foreground mb-2">
                               Instructions document available for {selectedTaxTypeData.name}
                             </p>
-                            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleViewInstructions}>
-                              View Instructions
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="h-7 text-xs" 
+                              onClick={handleViewInstructions}
+                              disabled={isDownloadingInstructions}
+                            >
+                              {isDownloadingInstructions ? (
+                                <>
+                                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                  Downloading...
+                                </>
+                              ) : (
+                                'Download Instructions'
+                              )}
                             </Button>
                           </div>
                         )}
@@ -1134,13 +1168,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
         open={isAddPaymentMethodOpen}
         onOpenChange={setIsAddPaymentMethodOpen}
         onSuccess={handleAddPaymentMethodSuccess}
-      />
-      
-      <DocumentViewerModal
-        isOpen={isDocumentViewerOpen}
-        onClose={() => setIsDocumentViewerOpen(false)}
-        document={viewingDocument}
-        bucketName="tax-instructions"
       />
     </Dialog>
   );
