@@ -1056,30 +1056,38 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                   )}
 
                   {/* Payment Management */}
-                  <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                    <InlinePaymentFlow
-                      entityType="tax_submission"
-                      entityId="new-submission"
-                      entityName={`${selectedTaxTypeData?.name || 'Tax'} - ${reportingPeriodStart} to ${reportingPeriodEnd}`}
-                      customerId={selectedMunicipality?.customer_id || ''}
-                      merchantId={selectedMunicipality?.finix_merchant_id || ''}
-                      baseAmountCents={getTaxAmountInCents()}
-                      onPaymentSuccess={(paymentResponse: PaymentResponse) => {
-                        setIsUnifiedPaymentOpen(false);
-                        resetForm();
-                        handleDialogOpenChange(false);
-                      }}
-                      onPaymentError={(error: any) => {
-                        console.error('Payment error:', error);
-                        toast({
-                          title: "Payment Error",
-                          description: error.message || "Payment processing failed. Please try again.",
-                          variant: "destructive",
-                        });
-                      }}
-                      onAddPaymentMethod={() => setIsAddPaymentMethodOpen(true)}
-                    />
-                  </div>
+                  <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        Payment Management
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <InlinePaymentFlow
+                        entityType="tax_submission"
+                        entityId="new-submission"
+                        entityName={`${selectedTaxTypeData?.name || 'Tax'} - ${reportingPeriodStart} to ${reportingPeriodEnd}`}
+                        customerId={selectedMunicipality?.customer_id || ''}
+                        merchantId={selectedMunicipality?.finix_merchant_id || ''}
+                        baseAmountCents={getTaxAmountInCents()}
+                        onPaymentSuccess={(paymentResponse: PaymentResponse) => {
+                          setIsUnifiedPaymentOpen(false);
+                          resetForm();
+                          handleDialogOpenChange(false);
+                        }}
+                        onPaymentError={(error: any) => {
+                          console.error('Payment error:', error);
+                          toast({
+                            title: "Payment Error",
+                            description: error.message || "Payment processing failed. Please try again.",
+                            variant: "destructive",
+                          });
+                        }}
+                        onAddPaymentMethod={() => setIsAddPaymentMethodOpen(true)}
+                      />
+                    </CardContent>
+                  </Card>
                 </div>
               )}
             </div>
