@@ -42,6 +42,12 @@ export const useTaxPaymentMethods = (taxData: {
   const [serviceFee, setServiceFee] = useState<ServiceFee | null>(null);
   const [totalWithFee, setTotalWithFee] = useState(taxData.amount);
 
+  // Helper function to validate UUID format
+  const isValidUUID = (str: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  };
+
   // Calculate service fee when payment method changes
   useEffect(() => {
     const calculateServiceFee = async () => {
@@ -52,12 +58,18 @@ export const useTaxPaymentMethods = (taxData: {
 
       try {
         const isDigitalPayment = ['google-pay', 'apple-pay'].includes(selectedPaymentMethod);
+        const isValidPaymentInstrument = isValidUUID(selectedPaymentMethod);
+
+        // Only pass paymentInstrumentId if it's a valid UUID (stored payment instrument)
+        // For digital payments or invalid UUIDs, use paymentMethodType instead
+        const paymentInstrumentId = (!isDigitalPayment && isValidPaymentInstrument) ? selectedPaymentMethod : null;
+        const paymentMethodType = (isDigitalPayment || !isValidPaymentInstrument) ? 'card' : null;
 
         const { data, error } = await supabase.functions.invoke('calculate-service-fee', {
           body: {
             baseAmountCents: taxData.amount,
-            paymentInstrumentId: isDigitalPayment ? null : selectedPaymentMethod,
-            paymentMethodType: isDigitalPayment ? 'card' : null
+            paymentInstrumentId,
+            paymentMethodType
           }
         });
 
