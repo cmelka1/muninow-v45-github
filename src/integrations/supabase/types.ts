@@ -3584,6 +3584,7 @@ export type Database = {
           email: string | null
           failure_code: string | null
           failure_message: string | null
+          filed_at: string | null
           finix_identity_id: string | null
           finix_merchant_id: string | null
           finix_transfer_id: string | null
@@ -3603,6 +3604,7 @@ export type Database = {
           payer_state: string | null
           payer_street_address: string | null
           payer_zip_code: string | null
+          payment_instrument_id: string | null
           payment_status: string | null
           payment_type: string | null
           raw_finix_response: Json | null
@@ -3635,6 +3637,7 @@ export type Database = {
           email?: string | null
           failure_code?: string | null
           failure_message?: string | null
+          filed_at?: string | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
           finix_transfer_id?: string | null
@@ -3654,6 +3657,7 @@ export type Database = {
           payer_state?: string | null
           payer_street_address?: string | null
           payer_zip_code?: string | null
+          payment_instrument_id?: string | null
           payment_status?: string | null
           payment_type?: string | null
           raw_finix_response?: Json | null
@@ -3686,6 +3690,7 @@ export type Database = {
           email?: string | null
           failure_code?: string | null
           failure_message?: string | null
+          filed_at?: string | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
           finix_transfer_id?: string | null
@@ -3705,6 +3710,7 @@ export type Database = {
           payer_state?: string | null
           payer_street_address?: string | null
           payer_zip_code?: string | null
+          payment_instrument_id?: string | null
           payment_status?: string | null
           payment_type?: string | null
           raw_finix_response?: Json | null
@@ -4335,25 +4341,45 @@ export type Database = {
         Returns: Json
       }
       create_unified_payment_transaction: {
-        Args: {
-          p_bank_last_four?: string
-          p_base_amount_cents: number
-          p_card_brand?: string
-          p_card_last_four?: string
-          p_customer_id: string
-          p_entity_id: string
-          p_entity_type: string
-          p_first_name?: string
-          p_fraud_session_id?: string
-          p_idempotency_id: string
-          p_is_card: boolean
-          p_last_name?: string
-          p_merchant_id: string
-          p_payment_instrument_id: string
-          p_payment_type: string
-          p_user_email?: string
-          p_user_id: string
-        }
+        Args:
+          | {
+              p_bank_last_four?: string
+              p_base_amount_cents: number
+              p_card_brand?: string
+              p_card_last_four?: string
+              p_customer_id: string
+              p_entity_id: string
+              p_entity_type: string
+              p_first_name?: string
+              p_fraud_session_id?: string
+              p_idempotency_id: string
+              p_is_card: boolean
+              p_last_name?: string
+              p_merchant_id: string
+              p_payment_instrument_id: string
+              p_payment_type: string
+              p_user_email?: string
+              p_user_id: string
+            }
+          | {
+              p_bank_last_four?: string
+              p_base_amount_cents: number
+              p_card_brand?: string
+              p_card_last_four?: string
+              p_customer_id: string
+              p_entity_id: string
+              p_entity_type: string
+              p_first_name?: string
+              p_fraud_session_id?: string
+              p_idempotency_id?: string
+              p_is_card?: boolean
+              p_last_name?: string
+              p_merchant_id: string
+              p_payment_instrument_id: string
+              p_payment_type: string
+              p_user_email?: string
+              p_user_id: string
+            }
         Returns: Json
       }
       disable_user_payment_instrument: {

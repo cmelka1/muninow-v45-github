@@ -448,38 +448,37 @@ Deno.serve(async (req) => {
             break;
 
           case 'tax_submission':
-            // Get current tax submission status
-            const { data: taxSub, error: taxFetchError } = await supabase
-              .from('tax_submissions')
-              .select('submission_status')
-              .eq('id', entity_id)
-              .single();
+            // Create new tax submission record with payment data
+            // Since taxes are paid immediately, we create the submission record here
+            const { error: taxCreateError } = await supabase.rpc(
+              'create_tax_submission_with_unified_payment',
+              {
+                p_transaction_id: transactionId,
+                p_finix_transfer_id: finixData.id
+              }
+            );
             
-            if (taxFetchError) {
-              console.error('Failed to fetch tax submission status:', taxFetchError);
-              entityUpdateError = taxFetchError;
-              break;
+            if (taxCreateError) {
+              console.error('Failed to create tax submission:', taxCreateError);
+              entityUpdateError = taxCreateError;
+            } else {
+              console.log('Tax submission created and filed successfully');
             }
             
-            // Prepare update data
-            const taxUpdate: any = {
-              payment_status: 'paid',
-              transfer_state: 'SUCCEEDED',
-              finix_transfer_id: finixData.id
-            };
+            // Also confirm any staged documents for this payment
+            const { error: docConfirmError } = await supabase.rpc(
+              'confirm_staged_tax_documents_for_transaction',
+              {
+                p_transaction_id: transactionId
+              }
+            );
             
-            // Auto-complete tax submission after payment
-            if (['draft', 'pending', 'submitted'].includes(taxSub.submission_status)) {
-              taxUpdate.submission_status = 'filed';
-              taxUpdate.filed_at = new Date().toISOString();
-              console.log('Auto-filing tax submission after successful payment');
+            if (docConfirmError) {
+              console.log('Warning: Failed to confirm staged documents:', docConfirmError);
+              // Don't fail the payment for document confirmation issues
             }
             
-            const { error: taxError } = await supabase
-              .from('tax_submissions')
-              .update(taxUpdate)
-              .eq('id', entity_id);
-            entityUpdateError = taxError;
+            entityUpdateError = null;
             break;
 
           default:
