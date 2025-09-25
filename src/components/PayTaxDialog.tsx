@@ -1054,18 +1054,18 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     </Card>
                   )}
 
-                  {/* Payment Instructions */}
+                  {/* Payment will be handled by UnifiedPaymentDialog */}
                   <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
                     <CardHeader className="pb-4">
                       <CardTitle className="text-base flex items-center gap-2">
                         <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        Complete Payment
+                        Ready to Submit
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
                         <p className="text-sm text-muted-foreground">
-                          Review your tax submission details above and click "Pay Now" to proceed with payment.
+                          Your tax submission is ready. Click "Submit & Pay" to proceed with payment processing.
                         </p>
                         <Button 
                           className="w-full" 
@@ -1073,7 +1073,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                           onClick={handleSubmit}
                           disabled={!selectedMunicipality || !getTaxAmountInCents()}
                         >
-                          Pay Now
+                          Submit & Pay
                         </Button>
                       </div>
                     </CardContent>
