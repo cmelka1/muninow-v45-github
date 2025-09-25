@@ -28,7 +28,7 @@ import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
 import { useMunicipalTaxTypes } from '@/hooks/useMunicipalTaxTypes';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { supabase } from '@/integrations/supabase/client';
-import { UnifiedPaymentDialog } from '@/components/unified/UnifiedPaymentDialog';
+import { InlinePaymentFlow } from '@/components/payment/InlinePaymentFlow';
 import type { PaymentResponse } from '@/types/payment';
 
 // PayTax Dialog Component - Updated to use direct download instead of modal viewer
@@ -122,8 +122,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   // Add payment method dialog state
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false);
   
-  // Unified payment state
-  const [isUnifiedPaymentOpen, setIsUnifiedPaymentOpen] = useState(false);
   
   // Download instructions state
   const [isDownloadingInstructions, setIsDownloadingInstructions] = useState(false);
@@ -443,20 +441,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
   const [createdTaxSubmissionId, setCreatedTaxSubmissionId] = useState<string | null>(null);
 
-  const handleSubmit = async () => {
-    // Check if we already have a created tax submission
-    if (!createdTaxSubmissionId) {
-      toast({
-        title: "Error",
-        description: "Tax submission not found. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Simply open payment dialog with existing submission
-    setIsUnifiedPaymentOpen(true);
-  };
 
   const handleDialogOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
@@ -1040,30 +1024,43 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     </Card>
                   )}
 
-                  {/* Payment Instructions */}
-                  <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        Complete Payment
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <p className="text-sm text-muted-foreground">
-                          Review your tax submission details above and click "Pay Now" to proceed with payment.
-                        </p>
-                        <Button 
-                          className="w-full" 
-                          size="lg"
-                          onClick={handleSubmit}
-                          disabled={!selectedMunicipality || !getTaxAmountInCents()}
-                        >
-                          Pay Now
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  {/* Payment Section */}
+                  {createdTaxSubmissionId && (
+                    <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <div className="w-2 h-2 bg-primary rounded-full"></div>
+                          Complete Payment
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <InlinePaymentFlow
+                          entityType="tax_submission"
+                          entityId={createdTaxSubmissionId}
+                          entityName={`${taxType} Tax Payment`}
+                          customerId={selectedMunicipality?.customer_id || ''}
+                          merchantId={selectedMunicipality?.id || ''}
+                          baseAmountCents={getTaxAmountInCents()}
+                          initialExpanded={true}
+                          onPaymentSuccess={(response: PaymentResponse) => {
+                            toast({
+                              title: "Payment Successful",
+                              description: "Your tax payment has been processed successfully.",
+                            });
+                            onOpenChange(false);
+                          }}
+                          onPaymentError={(error: any) => {
+                            toast({
+                              title: "Payment Failed", 
+                              description: error.message || "There was an error processing your payment.",
+                              variant: "destructive",
+                            });
+                          }}
+                          onAddPaymentMethod={() => setIsAddPaymentMethodOpen(true)}
+                        />
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               )}
             </div>
@@ -1104,33 +1101,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
         onOpenChange={setIsAddPaymentMethodOpen}
         onSuccess={handleAddPaymentMethodSuccess}
       />
-      
-      {createdTaxSubmissionId && (
-        <UnifiedPaymentDialog
-          open={isUnifiedPaymentOpen}
-          onOpenChange={setIsUnifiedPaymentOpen}
-          entityType="tax_submission"
-          entityId={createdTaxSubmissionId}
-          entityName={`${taxType} Tax Payment`}
-          customerId={selectedMunicipality?.customer_id || ''}
-          merchantId={selectedMunicipality?.id || ''}
-          baseAmountCents={getTaxAmountInCents()}
-          onPaymentSuccess={(response: PaymentResponse) => {
-            toast({
-              title: "Payment Successful",
-              description: "Your tax payment has been processed successfully.",
-            });
-            onOpenChange(false);
-          }}
-          onPaymentError={(error: any) => {
-            toast({
-              title: "Payment Failed", 
-              description: error.message || "There was an error processing your payment.",
-              variant: "destructive",
-            });
-          }}
-        />
-      )}
     </Dialog>
   );
 };
