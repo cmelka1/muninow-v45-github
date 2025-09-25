@@ -45,20 +45,23 @@ export const useTaxPaymentMethods = (taxData: {
   // Calculate service fee when payment method changes
   useEffect(() => {
     const calculateServiceFee = async () => {
-      if (!selectedPaymentMethod || !taxData.amount) return;
+      if (!selectedPaymentMethod || !taxData.amount) {
+        setServiceFee(null);
+        return;
+      }
 
       try {
+        const isDigitalPayment = ['google-pay', 'apple-pay'].includes(selectedPaymentMethod);
+
         const { data, error } = await supabase.functions.invoke('calculate-service-fee', {
           body: {
             baseAmountCents: taxData.amount,
-            paymentInstrumentId: selectedPaymentMethod
+            paymentInstrumentId: isDigitalPayment ? null : selectedPaymentMethod,
+            paymentMethodType: isDigitalPayment ? 'card' : null
           }
         });
 
-        if (error) {
-          console.error('Service fee calculation error:', error);
-          return;
-        }
+        if (error) throw error;
 
         if (data) {
           setServiceFee({
@@ -73,7 +76,8 @@ export const useTaxPaymentMethods = (taxData: {
           setTotalWithFee(data.totalChargeCents);
         }
       } catch (error) {
-        console.error('Failed to calculate service fee:', error);
+        console.error('Service fee calculation error:', error);
+        setServiceFee(null);
       }
     };
 
