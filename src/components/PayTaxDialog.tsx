@@ -330,9 +330,70 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     return Object.keys(e).length === 0;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep === 1 && !validateStep1()) return;
     if (currentStep === 2 && !validateStep2()) return;
+    
+    // Create tax submission when moving from step 2 to step 3
+    if (currentStep === 2 && currentStep + 1 === 3) {
+      setIsSubmitting(true);
+      
+      try {
+        const { data, error } = await supabase.rpc('create_tax_submission_before_payment', {
+          p_user_id: profile?.id,
+          p_customer_id: selectedMunicipality?.customer_id,
+          p_merchant_id: selectedMunicipality?.id,
+          p_tax_type: taxType,
+          p_tax_period_start: getCurrentTaxPeriodStart(),
+          p_tax_period_end: getCurrentTaxPeriodEnd(),
+          p_tax_year: getCurrentTaxYear(),
+          p_amount_cents: getTaxAmountInCents(),
+          p_calculation_notes: calculationNotes,
+          p_total_amount_due_cents: getTaxAmountInCents(),
+          p_staging_id: stagingId,
+          p_first_name: payerName.split(' ')[0] || '',
+          p_last_name: payerName.split(' ').slice(1).join(' ') || '',
+          p_user_email: payerEmail,
+          p_payer_ein: payerEin,
+          p_payer_phone: payerPhone,
+          p_payer_street_address: payerAddress?.streetAddress,
+          p_payer_city: payerAddress?.city,
+          p_payer_state: payerAddress?.state,
+          p_payer_zip_code: payerAddress?.zipCode,
+          p_payer_business_name: payerName.includes('LLC') || payerName.includes('Inc') || payerName.includes('Corp') ? payerName : null
+        });
+
+        if (error) {
+          throw new Error(error.message || 'Failed to create tax submission');
+        }
+
+        const result = data as { success: boolean; tax_submission_id?: string; error?: string };
+
+        if (!result?.success) {
+          throw new Error(result?.error || 'Failed to create tax submission');
+        }
+
+        // Store the created tax submission ID
+        setCreatedTaxSubmissionId(result.tax_submission_id || '');
+        
+        toast({
+          title: "Tax submission created",
+          description: "Your tax submission has been prepared for payment.",
+        });
+        
+      } catch (error: any) {
+        console.error('Tax submission creation error:', error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to create tax submission. Please try again.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
     
     if (currentStep < totalSteps) {
       setCurrentStep((s) => s + 1);
@@ -385,91 +446,18 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   const [createdTaxSubmissionId, setCreatedTaxSubmissionId] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    // Enhanced validation with specific field checking
-    const missingFields = [];
-    
-    if (!selectedMunicipality) missingFields.push("Municipality");
-    if (!taxType) missingFields.push("Tax type");
-    if (!totalAmountDue) missingFields.push("Total amount due");
-    if (!payerName) missingFields.push("Payer name");
-    if (!payerEmail) missingFields.push("Payer email");
-    if (!payerAddress) missingFields.push("Payer address");
-    if (!calculationNotes) missingFields.push("Calculation details");
-    
-    if (missingFields.length > 0) {
-      console.log("Missing fields validation:", { missingFields, 
-        selectedMunicipality: !!selectedMunicipality,
-        taxType,
-        totalAmountDue,
-        payerName,
-        payerEmail,
-        payerAddress: !!payerAddress,
-        calculationNotes
-      });
-      
+    // Check if we already have a created tax submission
+    if (!createdTaxSubmissionId) {
       toast({
-        title: "Missing Information",
-        description: `Please complete: ${missingFields.join(", ")}`,
+        title: "Error",
+        description: "Tax submission not found. Please try again.",
         variant: "destructive",
       });
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      // Create tax submission first
-      const { data, error } = await supabase.rpc('create_tax_submission_before_payment', {
-        p_user_id: profile?.id,
-        p_customer_id: selectedMunicipality.customer_id,
-        p_merchant_id: selectedMunicipality.id,
-        p_tax_type: taxType,
-        p_tax_period_start: getCurrentTaxPeriodStart(),
-        p_tax_period_end: getCurrentTaxPeriodEnd(),
-        p_tax_year: getCurrentTaxYear(),
-        p_amount_cents: getTaxAmountInCents(),
-        p_calculation_notes: calculationNotes,
-        p_total_amount_due_cents: getTaxAmountInCents(),
-        p_staging_id: stagingId,
-        p_first_name: payerName.split(' ')[0] || '',
-        p_last_name: payerName.split(' ').slice(1).join(' ') || '',
-        p_user_email: payerEmail,
-        p_payer_ein: payerEin,
-        p_payer_phone: payerPhone,
-        p_payer_street_address: payerAddress?.streetAddress,
-        p_payer_city: payerAddress?.city,
-        p_payer_state: payerAddress?.state,
-        p_payer_zip_code: payerAddress?.zipCode,
-        p_payer_business_name: payerName.includes('LLC') || payerName.includes('Inc') || payerName.includes('Corp') ? payerName : null
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Failed to create tax submission');
-      }
-
-      // Type assertion for the response
-      const result = data as { success: boolean; tax_submission_id?: string; error?: string };
-
-      if (!result?.success) {
-        throw new Error(result?.error || 'Failed to create tax submission');
-      }
-
-      // Store the created tax submission ID
-      setCreatedTaxSubmissionId(result.tax_submission_id || '');
-      
-      // Now open payment dialog with real UUID
-      setIsUnifiedPaymentOpen(true);
-
-    } catch (error: any) {
-      console.error('Tax submission creation error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create tax submission. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    // Simply open payment dialog with existing submission
+    setIsUnifiedPaymentOpen(true);
   };
 
   const handleDialogOpenChange = (nextOpen: boolean) => {
