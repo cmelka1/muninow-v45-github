@@ -4307,55 +4307,41 @@ export type Database = {
         Returns: Json
       }
       create_tax_submission_before_payment: {
-        Args:
-          | {
-              p_amount_cents: number
-              p_bank_last_four?: string
-              p_calculation_notes: string
-              p_card_brand?: string
-              p_card_last_four?: string
-              p_category?: string
-              p_customer_id: string
-              p_finix_merchant_id: string
-              p_first_name?: string
-              p_fraud_session_id?: string
-              p_idempotency_id: string
-              p_last_name?: string
-              p_merchant_id: string
-              p_merchant_name?: string
-              p_payer_business_name?: string
-              p_payer_city?: string
-              p_payer_ein?: string
-              p_payer_phone?: string
-              p_payer_state?: string
-              p_payer_street_address?: string
-              p_payer_zip_code?: string
-              p_payment_instrument_id: string
-              p_payment_type: string
-              p_service_fee_cents: number
-              p_statement_descriptor?: string
-              p_subcategory?: string
-              p_tax_period_end: string
-              p_tax_period_start: string
-              p_tax_type: string
-              p_tax_year: number
-              p_total_amount_due_cents: number
-              p_user_email?: string
-              p_user_id: string
-            }
-          | {
-              p_amount_cents: number
-              p_calculation_notes: string
-              p_customer_id: string
-              p_merchant_id: string
-              p_staging_id?: string
-              p_tax_period_end: string
-              p_tax_period_start: string
-              p_tax_type: string
-              p_tax_year: number
-              p_total_amount_due_cents: number
-              p_user_id: string
-            }
+        Args: {
+          p_amount_cents: number
+          p_bank_last_four?: string
+          p_calculation_notes: string
+          p_card_brand?: string
+          p_card_last_four?: string
+          p_category?: string
+          p_customer_id: string
+          p_finix_merchant_id: string
+          p_first_name?: string
+          p_fraud_session_id?: string
+          p_idempotency_id: string
+          p_last_name?: string
+          p_merchant_id: string
+          p_merchant_name?: string
+          p_payer_business_name?: string
+          p_payer_city?: string
+          p_payer_ein?: string
+          p_payer_phone?: string
+          p_payer_state?: string
+          p_payer_street_address?: string
+          p_payer_zip_code?: string
+          p_payment_instrument_id: string
+          p_payment_type: string
+          p_service_fee_cents: number
+          p_statement_descriptor?: string
+          p_subcategory?: string
+          p_tax_period_end: string
+          p_tax_period_start: string
+          p_tax_type: string
+          p_tax_year: number
+          p_total_amount_due_cents: number
+          p_user_email?: string
+          p_user_id: string
+        }
         Returns: Json
       }
       create_tax_submission_with_payment: {
