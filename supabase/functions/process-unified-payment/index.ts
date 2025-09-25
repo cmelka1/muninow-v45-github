@@ -213,6 +213,20 @@ Deno.serve(async (req) => {
     
     // Calculate if this is a card payment
     const isCard = ['card', 'google-pay', 'apple-pay'].includes(payment_type);
+
+    // Validate entity_id for types that require a persisted UUID record
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const isEntityUUID = uuidRegex.test(entity_id);
+    if (entity_type === 'tax_submission' && !isEntityUUID) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Invalid or missing tax submission ID. Please create your submission before paying.',
+          retryable: false
+        }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
     
     // Get fee calculation from database to match exactly
     const { data: feeCalcResult, error: feeCalcError } = await supabase.rpc(

@@ -142,6 +142,19 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       throw new Error('Missing payment information');
     }
 
+    // Validate entity ID for flows that require a persisted entity
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const isEntityUUID = uuidRegex.test(params.entityId);
+    if (params.entityType === 'tax_submission' && !isEntityUUID) {
+      toast({
+        title: "Create submission first",
+        description: "Please create your tax submission before paying.",
+        variant: "destructive",
+      });
+      console.groupEnd();
+      throw new Error('Invalid entity ID for payment');
+    }
+
     // Single-flight pattern: return existing promise if payment is in progress
     if (ongoingPaymentPromise) {
       console.log('⚠️ Returning existing payment promise (single-flight protection)');

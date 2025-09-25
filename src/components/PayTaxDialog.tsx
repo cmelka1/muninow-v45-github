@@ -1064,28 +1064,46 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                       <InlinePaymentFlow
-                        entityType="tax_submission"
-                        entityId={createdTaxSubmissionId || "new-submission"}
-                        entityName={`${selectedTaxTypeData?.name || 'Tax'} - ${reportingPeriodStart} to ${reportingPeriodEnd}`}
-                        customerId={selectedMunicipality?.customer_id || ''}
-                        merchantId={selectedMunicipality?.id || ''}
-                        baseAmountCents={getTaxAmountInCents()}
-                        onPaymentSuccess={(paymentResponse: PaymentResponse) => {
-                          setIsUnifiedPaymentOpen(false);
-                          resetForm();
-                          handleDialogOpenChange(false);
-                        }}
-                        onPaymentError={(error: any) => {
-                          console.error('Payment error:', error);
-                          toast({
-                            title: "Payment Error",
-                            description: error.message || "Payment processing failed. Please try again.",
-                            variant: "destructive",
-                          });
-                        }}
-                        onAddPaymentMethod={() => setIsAddPaymentMethodOpen(true)}
-                      />
+{createdTaxSubmissionId ? (
+  <InlinePaymentFlow
+    entityType="tax_submission"
+    entityId={createdTaxSubmissionId}
+    entityName={`${selectedTaxTypeData?.name || 'Tax'} - ${reportingPeriodStart} to ${reportingPeriodEnd}`}
+    customerId={selectedMunicipality?.customer_id || ''}
+    merchantId={selectedMunicipality?.id || ''}
+    baseAmountCents={getTaxAmountInCents()}
+    onPaymentSuccess={(paymentResponse: PaymentResponse) => {
+      setIsUnifiedPaymentOpen(false);
+      resetForm();
+      handleDialogOpenChange(false);
+    }}
+    onPaymentError={(error: any) => {
+      console.error('Payment error:', error);
+      toast({
+        title: "Payment Error",
+        description: error.message || "Payment processing failed. Please try again.",
+        variant: "destructive",
+      });
+    }}
+    onAddPaymentMethod={() => setIsAddPaymentMethodOpen(true)}
+  />
+) : (
+  <div className="space-y-3">
+    <p className="text-sm text-muted-foreground">
+      Create your tax submission to proceed to payment. This will save your details and prepare the payment.
+    </p>
+    <Button onClick={handleSubmit} disabled={isSubmitting}>
+      {isSubmitting ? (
+        <>
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          Creating Submission...
+        </>
+      ) : (
+        'Create Submission & Continue to Payment'
+      )}
+    </Button>
+  </div>
+)}
                     </CardContent>
                   </Card>
                 </div>
