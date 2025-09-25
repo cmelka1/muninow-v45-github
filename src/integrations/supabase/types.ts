@@ -4375,22 +4375,22 @@ export type Database = {
       }
       create_unified_payment_transaction: {
         Args: {
-          p_bank_last_four?: string
+          p_bank_last_four: string
           p_base_amount_cents: number
-          p_card_brand?: string
-          p_card_last_four?: string
+          p_card_brand: string
+          p_card_last_four: string
           p_customer_id: string
           p_entity_id: string
           p_entity_type: string
-          p_first_name?: string
-          p_fraud_session_id?: string
-          p_idempotency_id?: string
-          p_is_card?: boolean
-          p_last_name?: string
+          p_first_name: string
+          p_fraud_session_id: string
+          p_idempotency_id: string
+          p_is_card: boolean
+          p_last_name: string
           p_merchant_id: string
           p_payment_instrument_id: string
           p_payment_type: string
-          p_user_email?: string
+          p_user_email: string
           p_user_id: string
         }
         Returns: Json
