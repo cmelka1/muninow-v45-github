@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-interface BuildingPermitsMerchant {
+export interface BuildingPermitsMerchant {
   id: string;
   merchant_name: string;
   business_name: string;

@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { useBuildingPermitsMerchants } from '@/hooks/useBuildingPermitsMerchants';
 import { cn } from '@/lib/utils';
 
-interface BuildingPermitsMerchant {
+export interface BuildingPermitsMerchant {
   id: string;
   merchant_name: string;
   business_name: string;

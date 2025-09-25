@@ -21,17 +21,15 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
 import { useAuth } from '@/contexts/AuthContext';
-import PaymentSummary from './PaymentSummary';
 import { formatCurrency } from '@/lib/formatters';
-import PaymentMethodSelector from './PaymentMethodSelector';
-import PaymentButtonsContainer from './PaymentButtonsContainer';
-import { useTaxPaymentMethods } from '@/hooks/useTaxPaymentMethods';
 import { AddPaymentMethodDialog } from './profile/AddPaymentMethodDialog';
 import { TaxDocumentUpload } from './TaxDocumentUpload';
 import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
 import { useMunicipalTaxTypes } from '@/hooks/useMunicipalTaxTypes';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { supabase } from '@/integrations/supabase/client';
+import { UnifiedPaymentDialog } from '@/components/unified/UnifiedPaymentDialog';
+import type { PaymentResponse } from '@/types/payment';
 
 // PayTax Dialog Component - Updated to use direct download instead of modal viewer
 
@@ -124,6 +122,9 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   // Add payment method dialog state
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false);
   
+  // Unified payment state
+  const [isUnifiedPaymentOpen, setIsUnifiedPaymentOpen] = useState(false);
+  
   // Download instructions state
   const [isDownloadingInstructions, setIsDownloadingInstructions] = useState(false);
 
@@ -208,32 +209,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     return new Date().getFullYear();
   };
 
-  // Payment methods integration
-  const {
-    selectedPaymentMethod,
-    setSelectedPaymentMethod,
-    isProcessingPayment,
-    serviceFee,
-    totalWithFee,
-    paymentInstruments,
-    topPaymentMethods,
-    paymentMethodsLoading,
-    googlePayMerchantId,
-    handlePayment,
-    handleGooglePayment,
-    handleApplePayment,
-    loadPaymentInstruments
-  } = useTaxPaymentMethods({
-    municipality: selectedMunicipality,
-    taxType,
-    amount: getTaxAmountInCents(),
-    calculationData: getCurrentTaxCalculationData(),
-    payer: getPayerData(),
-    taxPeriodStart: getCurrentTaxPeriodStart(),
-    taxPeriodEnd: getCurrentTaxPeriodEnd(),
-    taxYear: getCurrentTaxYear(),
-    stagingId: stagingId // Pass staging ID for document confirmation
-  });
+  // Removed old tax payment methods - now using UnifiedPaymentDialog
 
   const scrollTop = () => {
     if (contentRef.current) contentRef.current.scrollTop = 0;
@@ -404,53 +380,16 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   };
 
   const handleSubmit = async () => {
-    if (!validateStep1()) {
-      setCurrentStep(1);
-      scrollTop();
-      return;
-    }
-
-    if (!validateStep2()) {
-      setCurrentStep(2);
-      scrollTop();
-      return;
-    }
-
-    if (!selectedPaymentMethod) {
+    if (!selectedMunicipality || !taxType || !amount) {
       toast({
-        title: "Error",
-        description: "Please select a payment method.",
+        title: "Missing Information",
+        description: "Please fill in all required fields before submitting.",
         variant: "destructive",
       });
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      // Process payment - staging_id will be handled by the payment hook
-      const paymentResult = await handlePayment();
-      
-      if (paymentResult) {
-        toast({
-          title: "Tax Payment Complete",
-          description: uploadedDocuments.length > 0 
-            ? `Your tax payment has been processed and ${uploadedDocuments.length} document(s) confirmed.`
-            : "Your tax payment has been processed successfully.",
-        });
-        
-        onOpenChange(false);
-        resetForm();
-      }
-    } catch (error: any) {
-      console.error('Tax payment failed:', error);
-      toast({
-        title: "Payment Failed",
-        description: error.message || "An error occurred while processing your payment. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    setIsUnifiedPaymentOpen(true);
   };
 
   const handleDialogOpenChange = (nextOpen: boolean) => {
@@ -463,9 +402,6 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
   };
 
   const handleAddPaymentMethodSuccess = (paymentMethodId: string) => {
-    // Refresh payment instruments and auto-select the new one
-    loadPaymentInstruments();
-    setSelectedPaymentMethod(paymentMethodId);
     setIsAddPaymentMethodOpen(false);
     toast({
       title: "Payment method added",
@@ -1038,98 +974,30 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                     </Card>
                   )}
 
-                  {/* Payment Summary */}
+                  {/* Payment Instructions */}
                   <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
                     <CardHeader className="pb-4">
                       <CardTitle className="text-base flex items-center gap-2">
                         <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        Payment Summary
+                        Complete Payment
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <PaymentSummary
-                        baseAmount={getTaxAmountInCents()}
-                        selectedPaymentMethod={selectedPaymentMethod}
-                      />
+                      <div className="space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                          Review your tax submission details above and click "Pay Now" to proceed with payment.
+                        </p>
+                        <Button 
+                          className="w-full" 
+                          size="lg"
+                          onClick={handleSubmit}
+                          disabled={!selectedMunicipality || !getTaxAmountInCents()}
+                        >
+                          Pay Now
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
-
-                  {/* Separator */}
-                  <div className="border-t border-border"></div>
-
-                  {/* Payment Method Selection */}
-                  <Card className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        Payment Method
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <PaymentMethodSelector
-                        paymentInstruments={topPaymentMethods}
-                        selectedPaymentMethod={selectedPaymentMethod}
-                        onSelectPaymentMethod={setSelectedPaymentMethod}
-                        isLoading={paymentMethodsLoading}
-                        maxMethods={3}
-                      />
-
-                      {/* Payment Options - Side by Side */}
-                      {selectedMunicipality && getTaxAmountInCents() > 0 && googlePayMerchantId && (
-                        <PaymentButtonsContainer
-                          bill={{
-                            ...selectedMunicipality,
-                            taxType,
-                            amount: getTaxAmountInCents()
-                          }}
-                          totalAmount={totalWithFee}
-                          merchantId={googlePayMerchantId}
-                          isDisabled={isProcessingPayment}
-                          onGooglePayment={handleGooglePayment}
-                          onApplePayment={handleApplePayment}
-                        />
-                      )}
-                      
-                      {/* Show message when Google Pay is not available */}
-                      {(!selectedMunicipality || !googlePayMerchantId) && (
-                        <div className="text-sm text-muted-foreground text-center py-2">
-                          Alternative payment methods are not available for this tax payment.
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Separator */}
-                  <div className="border-t border-border"></div>
-
-                  {/* Pay Now Section */}
-                  <div className="space-y-3">
-                    <Button 
-                      className="w-full" 
-                      size="lg"
-                      disabled={!selectedPaymentMethod || isProcessingPayment || selectedPaymentMethod === 'google-pay' || selectedPaymentMethod === 'apple-pay'}
-                      onClick={handleSubmit}
-                    >
-                      {isProcessingPayment ? 'Processing...' : 
-                       selectedPaymentMethod === 'google-pay' ? 'Use Google Pay button above' : 
-                       selectedPaymentMethod === 'apple-pay' ? 'Use Apple Pay button above' :
-                       `Pay ${formatCurrency(totalWithFee / 100)}`}
-                    </Button>
-                   
-                    <Button 
-                      variant="outline" 
-                      className="w-full" 
-                      size="lg"
-                      onClick={() => setIsAddPaymentMethodOpen(true)}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add New Payment Method
-                    </Button>
-                    
-                    <p className="text-xs text-muted-foreground text-center">
-                      Your payment will be processed securely
-                    </p>
-                  </div>
                 </div>
               )}
             </div>
@@ -1169,6 +1037,31 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
         open={isAddPaymentMethodOpen}
         onOpenChange={setIsAddPaymentMethodOpen}
         onSuccess={handleAddPaymentMethodSuccess}
+      />
+      
+      <UnifiedPaymentDialog
+        open={isUnifiedPaymentOpen}
+        onOpenChange={setIsUnifiedPaymentOpen}
+        entityType="tax_submission"
+        entityId={`tax-${selectedMunicipality?.id || 'unknown'}-${Date.now()}`}
+        entityName={`${taxType} Tax Payment`}
+        customerId={selectedMunicipality?.customer_id || ''}
+        merchantId={selectedMunicipality?.id || ''}
+        baseAmountCents={getTaxAmountInCents()}
+        onPaymentSuccess={(response: PaymentResponse) => {
+          toast({
+            title: "Payment Successful",
+            description: "Your tax payment has been processed successfully.",
+          });
+          onOpenChange(false);
+        }}
+        onPaymentError={(error: any) => {
+          toast({
+            title: "Payment Failed", 
+            description: error.message || "There was an error processing your payment.",
+            variant: "destructive",
+          });
+        }}
       />
     </Dialog>
   );

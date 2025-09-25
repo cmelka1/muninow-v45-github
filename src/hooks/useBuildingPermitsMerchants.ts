@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-interface BuildingPermitsMerchant {
+export interface BuildingPermitsMerchant {
   id: string;
   merchant_name: string;
   business_name: string;
