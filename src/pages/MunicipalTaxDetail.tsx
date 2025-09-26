@@ -20,6 +20,7 @@ import { Separator } from '@/components/ui/separator';
 import { useTaxSubmissionDetail } from '@/hooks/useTaxSubmissionDetail';
 import { useTaxSubmissionDocuments } from '@/hooks/useTaxSubmissionDocuments';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
+import { TaxSubmissionCommunication } from '@/components/TaxSubmissionCommunication';
 
 import { formatCurrency, formatDate, smartAbbreviateFilename } from '@/lib/formatters';
 import { toast } from '@/hooks/use-toast';
@@ -475,6 +476,9 @@ const MunicipalTaxDetail = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Communication */}
+          <TaxSubmissionCommunication submissionId={submission.id} />
         </div>
       </div>
 
