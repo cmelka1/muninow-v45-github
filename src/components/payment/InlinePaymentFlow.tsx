@@ -161,10 +161,6 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
     return (
       <div className="space-y-4">
         <div className="p-3 bg-muted/50 rounded-lg">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">{feeLabel}</span>
-            <span className="font-semibold">{formatCurrency(baseAmountCents)}</span>
-          </div>
           <p className="text-xs text-muted-foreground">
             {completionText}
           </p>
