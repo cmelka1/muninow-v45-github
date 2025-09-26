@@ -114,12 +114,15 @@ const FeeProfileDisplay: React.FC<FeeProfileDisplayProps> = ({ feeProfile, onUpd
                   <span className="text-sm text-muted-foreground">ACH Fixed Fee:</span>
                   <span className="font-medium">{formatCurrency(feeProfile.ach_fixed_fee)}</span>
                 </div>
-                {feeProfile.ach_basis_points_fee_limit && (
-                  <div className="flex justify-between items-center py-2 border-b border-border">
-                    <span className="text-sm text-muted-foreground">ACH Basis Points Fee Limit:</span>
-                    <span className="font-medium">{formatCurrency(feeProfile.ach_basis_points_fee_limit)}</span>
-                  </div>
-                )}
+                <div className="flex justify-between items-center py-2 border-b border-border">
+                  <span className="text-sm text-muted-foreground">ACH Basis Points Fee Limit:</span>
+                  <span className="font-medium">
+                    {feeProfile.ach_basis_points_fee_limit 
+                      ? formatCurrency(feeProfile.ach_basis_points_fee_limit)
+                      : "Not Set"
+                    }
+                  </span>
+                </div>
               </div>
             </div>
 

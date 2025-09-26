@@ -210,7 +210,7 @@ Deno.serve(async (req) => {
     // Get merchant fee profile for fee structure
     const { data: feeProfile, error: feeProfileError } = await supabase
       .from('merchant_fee_profiles')
-      .select('basis_points, fixed_fee, ach_basis_points, ach_fixed_fee')
+      .select('basis_points, fixed_fee, ach_basis_points, ach_fixed_fee, ach_basis_points_fee_limit')
       .eq('merchant_id', merchant_id)
       .single();
 
@@ -582,7 +582,8 @@ Deno.serve(async (req) => {
                 basis_points: feeProfile.basis_points,
                 fixed_fee: feeProfile.fixed_fee,
                 ach_basis_points: feeProfile.ach_basis_points,
-                ach_fixed_fee: feeProfile.ach_fixed_fee
+                ach_fixed_fee: feeProfile.ach_fixed_fee,
+                ach_basis_points_fee_limit: feeProfile.ach_basis_points_fee_limit
               })
             };
 
