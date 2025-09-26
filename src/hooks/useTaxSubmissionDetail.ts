@@ -12,17 +12,18 @@ export const useTaxSubmissionDetail = (submissionId: string | null) => {
         return null;
       }
 
-      // Municipal users can view submissions for their customer
-      if (profile.account_type === 'municipal' && profile.customer_id) {
+      // Municipal users (admin or user) can view submissions for their customer
+      const isMunicipal = profile.account_type === 'municipal' || profile.account_type.startsWith('municipal');
+      if (isMunicipal && profile.customer_id) {
         const { data, error } = await supabase
           .from('tax_submissions')
           .select('*')
           .eq('id', submissionId)
           .eq('customer_id', profile.customer_id)
-          .single();
+          .maybeSingle();
 
         if (error) {
-          console.error('Error fetching tax submission detail:', error);
+          console.error('Error fetching tax submission detail (municipal):', error);
           throw error;
         }
 
@@ -35,10 +36,10 @@ export const useTaxSubmissionDetail = (submissionId: string | null) => {
         .select('*')
         .eq('id', submissionId)
         .eq('user_id', profile.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        console.error('Error fetching tax submission detail:', error);
+        console.error('Error fetching tax submission detail (user):', error);
         throw error;
       }
 

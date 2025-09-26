@@ -246,7 +246,7 @@ const App = () => (
                   </SimpleProtectedRoute>
                 } />
                 <Route path="/municipal/taxes" element={
-                  <SimpleProtectedRoute requireAccountType="municipaladmin" requireCustomerId>
+                  <SimpleProtectedRoute requireAccountType="municipal" requireCustomerId>
                     <MunicipalLayout>
                       <MunicipalTaxes />
                     </MunicipalLayout>
