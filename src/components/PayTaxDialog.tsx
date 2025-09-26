@@ -78,6 +78,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
 
   // Payer Information
   const [payerName, setPayerName] = useState('');
+  const [payerCompanyName, setPayerCompanyName] = useState('');
   const [payerEin, setPayerEin] = useState('');
   const [payerEmail, setPayerEmail] = useState('');
   const [payerPhone, setPayerPhone] = useState('');
@@ -247,6 +248,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
         : '';
 
       setPayerName(fullName);
+      setPayerCompanyName(profile.business_legal_name || '');
       setPayerEin(''); // EIN not stored in profile, leave empty
       setPayerPhone(profile.phone ? normalizePhoneInput(profile.phone) : '');
       setPayerEmail(profile.email || '');
@@ -263,6 +265,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     } else if (!checked) {
       // Clear payer info when toggled off
       setPayerName('');
+      setPayerCompanyName('');
       setPayerEin('');
       setPayerPhone('');
       setPayerEmail('');
@@ -356,7 +359,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
           p_payer_city: payerAddress?.city,
           p_payer_state: payerAddress?.state,
           p_payer_zip_code: payerAddress?.zipCode,
-          p_payer_business_name: payerName.includes('LLC') || payerName.includes('Inc') || payerName.includes('Corp') ? payerName : null
+          p_payer_business_name: payerCompanyName || null
         });
 
         if (error) {
@@ -414,6 +417,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     setReportingPeriodStart('');
     setReportingPeriodEnd('');
     setPayerName('');
+    setPayerCompanyName('');
     setPayerEin('');
     setPayerEmail('');
     setPayerPhone('');
@@ -716,12 +720,27 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                           {errors.payerName && (
                             <p className="text-sm text-destructive mt-1">{errors.payerName}</p>
                           )}
-                         </div>
-                         
-                         <div>
-                           <Label htmlFor="payer-ein" className="text-sm font-medium text-foreground">
-                             Employer Identification Number (EIN)
-                           </Label>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="payer-company" className="text-sm font-medium text-foreground">
+                              Company
+                            </Label>
+                            <Input
+                              id="payer-company"
+                              placeholder="Enter company name"
+                              value={payerCompanyName}
+                              onChange={(e) => {
+                                setPayerCompanyName(e.target.value);
+                              }}
+                              className="mt-1"
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="payer-ein" className="text-sm font-medium text-foreground">
+                              Employer Identification Number (EIN)
+                            </Label>
                             <Input
                               id="payer-ein"
                               placeholder="XX-XXXXXXX"
