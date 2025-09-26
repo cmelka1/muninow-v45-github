@@ -4240,8 +4240,6 @@ export type Database = {
           p_merchant_id: string
         }
         Returns: {
-          basis_points: number
-          fixed_fee: number
           service_fee_cents: number
           total_amount_cents: number
         }[]
