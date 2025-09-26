@@ -411,12 +411,6 @@ const ServiceApplicationDetail: React.FC = () => {
             <CardContent className="space-y-4">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Service Fee:</span>
-                  <span className="text-base font-semibold">
-                    {formatCurrency((application?.amount_cents || application?.tile?.amount_cents || 0) / 100)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
                   <Label className="text-sm font-medium text-muted-foreground">Payment Status</Label>
                   <Badge 
                     variant={application.payment_status === 'paid' ? 'default' : 'outline'}
