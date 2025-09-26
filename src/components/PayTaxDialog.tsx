@@ -724,8 +724,28 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                           </div>
                           
                            <div>
+                             <Label htmlFor="payer-name-individual" className="text-sm font-medium text-foreground">
+                               Name *
+                             </Label>
+                             <Input
+                               id="payer-name-individual"
+                               placeholder="Enter name"
+                               value={payerName}
+                               onChange={(e) => {
+                                 setPayerName(e.target.value);
+                                 if (e.target.value) clearFieldError('payerName');
+                               }}
+                               className={`mt-1 ${errors.payerName ? 'ring-2 ring-destructive border-destructive' : ''}`}
+                               data-error={!!errors.payerName}
+                             />
+                             {errors.payerName && (
+                               <p className="text-sm text-destructive mt-1">{errors.payerName}</p>
+                             )}
+                           </div>
+
+                           <div>
                              <Label htmlFor="payer-company" className="text-sm font-medium text-foreground">
-                               Name/Company *
+                               Company *
                              </Label>
                              <Input
                                id="payer-company"
