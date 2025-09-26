@@ -36,13 +36,13 @@ export const InlinePaymentSummary: React.FC<InlinePaymentSummaryProps> = ({
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Base Amount</span>
-          <span className="font-medium">{formatCurrency(baseAmount)}</span>
+          <span className="font-medium">{formatCurrency(baseAmount / 100)}</span>
         </div>
         
         {serviceFee > 0 && (
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Service Fee</span>
-            <span className="font-medium">{formatCurrency(serviceFee)}</span>
+            <span className="font-medium">{formatCurrency(serviceFee / 100)}</span>
           </div>
         )}
         
@@ -51,7 +51,7 @@ export const InlinePaymentSummary: React.FC<InlinePaymentSummaryProps> = ({
         <div className="flex items-center justify-between">
           <span className="font-semibold text-foreground">Total</span>
           <span className="font-bold text-lg text-primary">
-            {formatCurrency(totalAmount)}
+            {formatCurrency(totalAmount / 100)}
           </span>
         </div>
       </div>

@@ -15,9 +15,9 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 }) => {
   const feeCalculation = useServiceFeeCalculation(baseAmount, selectedPaymentMethod);
   
-  const baseAmountFormatted = formatCurrency(baseAmount);
-  const serviceFeeFormatted = formatCurrency(feeCalculation.serviceFee);
-  const totalAmountFormatted = formatCurrency(feeCalculation.totalAmount);
+  const baseAmountFormatted = formatCurrency(baseAmount / 100);
+  const serviceFeeFormatted = formatCurrency(feeCalculation.serviceFee / 100);
+  const totalAmountFormatted = formatCurrency(feeCalculation.totalAmount / 100);
 
   if (compact) {
     return (
