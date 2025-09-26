@@ -345,7 +345,16 @@ const TaxDetail = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-sm font-medium text-muted-foreground">Status</span>
-                    <Badge variant="default">Paid</Badge>
+                    <Badge 
+                      variant={submission.payment_status === 'paid' ? 'default' : 'outline'}
+                      className={
+                        submission.payment_status === 'paid' 
+                          ? 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200' 
+                          : 'bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200'
+                      }
+                    >
+                      {submission.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
+                    </Badge>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm font-medium text-muted-foreground">Amount Paid</span>
