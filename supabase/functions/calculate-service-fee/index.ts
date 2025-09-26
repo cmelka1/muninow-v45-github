@@ -30,13 +30,14 @@ const calculateServiceFeeUtil = (params: {
   const fixedFeeCents = isCard ? cardFixedFeeCents : achFixedFeeCents;
 
   let serviceFeePercentageCents = Math.round((baseAmountCents * basisPoints) / 10000);
+  let totalServiceFeeCents = serviceFeePercentageCents + fixedFeeCents;
   
-  // Apply ACH basis points fee limit if applicable
-  if (!isCard && achBasisPointsFeeLimitCents && serviceFeePercentageCents > achBasisPointsFeeLimitCents) {
-    serviceFeePercentageCents = achBasisPointsFeeLimitCents;
+  // Apply ACH fee limit to total service fee (percentage + fixed) if applicable
+  if (!isCard && achBasisPointsFeeLimitCents && totalServiceFeeCents > achBasisPointsFeeLimitCents) {
+    totalServiceFeeCents = achBasisPointsFeeLimitCents;
+    serviceFeePercentageCents = totalServiceFeeCents - fixedFeeCents;
   }
   
-  const totalServiceFeeCents = serviceFeePercentageCents + fixedFeeCents;
   const totalChargeCents = baseAmountCents + totalServiceFeeCents;
 
   return {
@@ -59,12 +60,13 @@ serve(async (req) => {
   try {
     console.log('=== SERVICE FEE CALCULATION REQUEST ===');
     
-    const { baseAmountCents, paymentMethodType, paymentInstrumentId } = await req.json();
+    const { baseAmountCents, paymentMethodType, paymentInstrumentId, merchantId } = await req.json();
     
     console.log('Request params:', {
       baseAmountCents,
       paymentMethodType,
-      paymentInstrumentId
+      paymentInstrumentId,
+      merchantId
     });
 
     // Validate inputs
@@ -108,28 +110,57 @@ serve(async (req) => {
       }
     }
 
-    // Get fee profile for merchant if we have payment instrument context
-    let achBasisPointsFeeLimitCents;
-    if (paymentInstrumentId) {
+    // Get fee profile for merchant
+    let achBasisPointsFeeLimitCents = 2500; // Default ACH limit to $25.00
+    
+    if (merchantId || paymentInstrumentId) {
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
       const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-      // Try to get merchant fee profile through the payment instrument user
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('customer_id')
-        .eq('id', (await supabase.from('user_payment_instruments').select('user_id').eq('id', paymentInstrumentId).single()).data?.user_id)
-        .single();
+      let targetMerchantId = merchantId;
+      
+      // If no direct merchantId, try to get it through payment instrument
+      if (!targetMerchantId && paymentInstrumentId) {
+        const { data: userInstrument } = await supabase
+          .from('user_payment_instruments')
+          .select('user_id')
+          .eq('id', paymentInstrumentId)
+          .single();
 
-      if (userProfile?.customer_id) {
+        if (userInstrument?.user_id) {
+          const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('customer_id')
+            .eq('id', userInstrument.user_id)
+            .single();
+
+          if (userProfile?.customer_id) {
+            const { data: merchant } = await supabase
+              .from('merchants')
+              .select('id')
+              .eq('customer_id', userProfile.customer_id)
+              .eq('subcategory', 'Other')
+              .single();
+            
+            targetMerchantId = merchant?.id;
+          }
+        }
+      }
+
+      // Get fee profile using merchant ID
+      if (targetMerchantId) {
         const { data: feeProfile } = await supabase
           .from('merchant_fee_profiles')
           .select('ach_basis_points_fee_limit')
-          .eq('merchant_id', (await supabase.from('merchants').select('id').eq('customer_id', userProfile.customer_id).eq('subcategory', 'Other').single()).data?.id)
+          .eq('merchant_id', targetMerchantId)
           .single();
         
-        achBasisPointsFeeLimitCents = feeProfile?.ach_basis_points_fee_limit;
+        if (feeProfile?.ach_basis_points_fee_limit) {
+          achBasisPointsFeeLimitCents = feeProfile.ach_basis_points_fee_limit;
+        }
+        
+        console.log('Fee profile retrieved:', { targetMerchantId, achBasisPointsFeeLimitCents });
       }
     }
 

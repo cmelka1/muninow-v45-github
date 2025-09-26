@@ -35,7 +35,7 @@ export function calculateServiceFee(params: FeeCalculationParams): FeeCalculatio
     cardFixedFeeCents = 50,
     achBasisPoints = 150,
     achFixedFeeCents = 50,
-    achBasisPointsFeeLimitCents
+    achBasisPointsFeeLimitCents = 2500
   } = params;
 
   // Select appropriate fee structure based on payment method
@@ -44,14 +44,13 @@ export function calculateServiceFee(params: FeeCalculationParams): FeeCalculatio
 
   // Calculate percentage fee: (Base Amount × Fee Percentage)
   let serviceFeePercentageCents = Math.round((baseAmountCents * basisPoints) / 10000);
+  let totalServiceFeeCents = serviceFeePercentageCents + fixedFeeCents;
   
-  // Apply ACH basis points fee limit if applicable
-  if (!isCard && achBasisPointsFeeLimitCents && serviceFeePercentageCents > achBasisPointsFeeLimitCents) {
-    serviceFeePercentageCents = achBasisPointsFeeLimitCents;
+  // Apply ACH fee limit to total service fee (percentage + fixed) if applicable
+  if (!isCard && achBasisPointsFeeLimitCents && totalServiceFeeCents > achBasisPointsFeeLimitCents) {
+    totalServiceFeeCents = achBasisPointsFeeLimitCents;
+    serviceFeePercentageCents = totalServiceFeeCents - fixedFeeCents;
   }
-  
-  // Calculate total service fee: Percentage Fee + Fixed Fee
-  const totalServiceFeeCents = serviceFeePercentageCents + fixedFeeCents;
   
   // Calculate total charge: Base Amount + Service Fee
   const totalChargeCents = baseAmountCents + totalServiceFeeCents;

@@ -84,7 +84,8 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
               : selectedPaymentMethod,
             paymentMethodType: ['google-pay', 'apple-pay'].includes(selectedPaymentMethod) 
               ? 'card' 
-              : null
+              : null,
+            merchantId: params.merchantId
           }
         });
 
