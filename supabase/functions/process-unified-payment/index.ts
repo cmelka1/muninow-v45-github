@@ -34,6 +34,95 @@ interface UnifiedPaymentResponse {
   retryable?: boolean;
 }
 
+async function reconcileEntityIfNeeded(supabase: any, transaction: any, entity_type: string, entity_id: string, user_id: string, customer_id: string, merchant_id: string, idempotency_id: string, merchant: any) {
+  console.log('=== RECONCILING ENTITY IF NEEDED ===');
+  
+  try {
+    if (entity_type === 'tax_submission') {
+      // Check if tax submission needs updating
+      const { data: taxSubmission, error: fetchError } = await supabase
+        .from('tax_submissions')
+        .select('payment_status, payment_processed_at, finix_transfer_id')
+        .eq('id', entity_id)
+        .single();
+      
+      if (fetchError) {
+        console.error('Failed to fetch tax submission for reconciliation:', fetchError);
+        return;
+      }
+      
+      // Update if payment status is not paid or missing key fields
+      if (taxSubmission.payment_status !== 'paid' || !taxSubmission.payment_processed_at || !taxSubmission.finix_transfer_id) {
+        console.log('Reconciling tax submission - updating payment status and details');
+        
+        const { error: updateError } = await supabase
+          .from('tax_submissions')
+          .update({
+            payment_status: 'paid',
+            submission_status: 'filed',
+            transfer_state: 'SUCCEEDED',
+            payment_processed_at: new Date().toISOString(),
+            finix_transfer_id: transaction.finix_transfer_id,
+            service_fee_cents: transaction.service_fee_cents,
+            idempotency_id: idempotency_id
+          })
+          .eq('id', entity_id);
+        
+        if (updateError) {
+          console.error('Failed to reconcile tax submission:', updateError);
+        } else {
+          console.log('Tax submission reconciled successfully');
+        }
+      }
+      
+      // Check if payment history record exists
+      const { data: existingHistory, error: historyFetchError } = await supabase
+        .from('payment_history')
+        .select('id')
+        .eq('idempotency_id', idempotency_id)
+        .single();
+      
+      if (historyFetchError && historyFetchError.code === 'PGRST116') {
+        // No payment history record exists, create one
+        console.log('Creating missing payment history record during reconciliation');
+        
+        const { error: historyCreateError } = await supabase
+          .from('payment_history')
+          .insert({
+            user_id: user_id,
+            customer_id: customer_id,
+            tax_submission_id: entity_id,
+            amount_cents: transaction.total_amount_cents - transaction.service_fee_cents,
+            service_fee_cents: transaction.service_fee_cents,
+            total_amount_cents: transaction.total_amount_cents,
+            payment_type: 'card', // Default assumption for reconciliation
+            payment_status: 'completed',
+            payment_method_type: 'card',
+            idempotency_id: idempotency_id,
+            merchant_id: merchant_id,
+            finix_merchant_id: merchant.finix_merchant_id,
+            merchant_name: merchant.merchant_name,
+            category: merchant.category,
+            subcategory: merchant.subcategory,
+            statement_descriptor: merchant.merchant_name,
+            transfer_state: 'SUCCEEDED',
+            finix_transfer_id: transaction.finix_transfer_id,
+            payment_processed_at: new Date().toISOString()
+          });
+        
+        if (historyCreateError) {
+          console.error('Failed to create payment history during reconciliation:', historyCreateError);
+        } else {
+          console.log('Payment history record created during reconciliation');
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error during entity reconciliation:', error);
+    // Don't throw - reconciliation is best effort
+  }
+}
+
 Deno.serve(async (req) => {
   console.log('=== UNIFIED PAYMENT REQUEST ===');
   
@@ -156,9 +245,13 @@ Deno.serve(async (req) => {
     if (existingTransaction && !existingError) {
       console.log('Found existing transaction with idempotency ID:', existingTransaction);
       
-      // If payment is already completed, return the existing result
+      // If payment is already completed, reconcile entity if needed and return result
       if (['paid', 'completed'].includes(existingTransaction.payment_status)) {
         console.log('Returning existing successful payment result');
+        
+        // Reconcile entity if it wasn't updated properly
+        await reconcileEntityIfNeeded(supabase, existingTransaction, entity_type, entity_id, user.id, customer_id, merchant_id, idempotency_id, merchant);
+        
         return new Response(
           JSON.stringify({
             success: true,
