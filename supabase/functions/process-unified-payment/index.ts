@@ -448,37 +448,82 @@ Deno.serve(async (req) => {
             break;
 
           case 'tax_submission':
-            // Create new tax submission record with payment data
-            // Since taxes are paid immediately, we create the submission record here
-            const { error: taxCreateError } = await supabase.rpc(
-              'create_tax_submission_with_unified_payment',
-              {
-                p_transaction_id: transactionId,
-                p_finix_transfer_id: finixData.id
-              }
-            );
+            // Update existing draft tax submission with payment data
+            const taxUpdate = {
+              payment_status: 'paid',
+              submission_status: 'filed',
+              transfer_state: finixData.state || 'PENDING',
+              finix_transfer_id: finixData.id,
+              service_fee_cents: serviceFeeFromDB,
+              total_amount_cents: totalAmountFromDB,
+              payment_processed_at: new Date().toISOString(),
+              payment_type: payment_type,
+              payment_instrument_id: finixPaymentInstrumentId
+            };
+
+            console.log('Updating existing tax submission with payment data');
             
-            if (taxCreateError) {
-              console.error('Failed to create tax submission:', taxCreateError);
-              entityUpdateError = taxCreateError;
+            const { error: taxUpdateError } = await supabase
+              .from('tax_submissions')
+              .update(taxUpdate)
+              .eq('id', entity_id);
+            
+            if (taxUpdateError) {
+              console.error('Failed to update tax submission:', taxUpdateError);
+              entityUpdateError = taxUpdateError;
             } else {
-              console.log('Tax submission created and filed successfully');
-            }
-            
-            // Also confirm any staged documents for this payment
-            const { error: docConfirmError } = await supabase.rpc(
-              'confirm_staged_tax_documents_for_transaction',
-              {
-                p_transaction_id: transactionId
+              console.log('Tax submission updated and filed successfully');
+              
+              // Create payment history record
+              const { error: paymentHistoryError } = await supabase
+                .from('payment_history')
+                .insert({
+                  user_id: user.id,
+                  customer_id: customer_id,
+                  tax_submission_id: entity_id,
+                  amount_cents: base_amount_cents,
+                  service_fee_cents: serviceFeeFromDB,
+                  total_amount_cents: totalAmountFromDB,
+                  payment_type: payment_type,
+                  payment_status: 'completed',
+                  payment_method_type: payment_type,
+                  payment_instrument_id: finixPaymentInstrumentId,
+                  idempotency_id: idempotency_id,
+                  fraud_session_id: fraud_session_id,
+                  card_brand: card_brand,
+                  card_last_four: card_last_four,
+                  bank_last_four: bank_last_four,
+                  merchant_id: merchant_id,
+                  finix_merchant_id: merchant.finix_merchant_id,
+                  merchant_name: merchant.merchant_name,
+                  category: merchant.category,
+                  subcategory: merchant.subcategory,
+                  statement_descriptor: merchant.merchant_name,
+                  transfer_state: finixData.state || 'PENDING',
+                  finix_transfer_id: finixData.id
+                });
+              
+              if (paymentHistoryError) {
+                console.log('Warning: Failed to create payment history:', paymentHistoryError);
+                // Don't fail the payment for history record issues
               }
-            );
-            
-            if (docConfirmError) {
-              console.log('Warning: Failed to confirm staged documents:', docConfirmError);
-              // Don't fail the payment for document confirmation issues
+              
+              // Confirm any staged documents for this tax submission
+              const { error: docConfirmError } = await supabase.rpc(
+                'confirm_staged_tax_documents',
+                {
+                  p_staging_id: idempotency_id,
+                  p_tax_submission_id: entity_id
+                }
+              );
+              
+              if (docConfirmError) {
+                console.log('Warning: Failed to confirm staged documents:', docConfirmError);
+                // Don't fail the payment for document confirmation issues
+              }
             }
             
-            entityUpdateError = null;
+            entityUpdateError = taxUpdateError;
             break;
 
           default:
