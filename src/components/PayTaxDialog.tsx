@@ -725,7 +725,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                           
                            <div>
                              <Label htmlFor="payer-company" className="text-sm font-medium text-foreground">
-                               Company *
+                               Name/Company *
                              </Label>
                              <Input
                                id="payer-company"
