@@ -163,7 +163,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
         <div className="p-3 bg-muted/50 rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium">{feeLabel}</span>
-            <span className="font-semibold">{formatCurrency(baseAmountCents)}</span>
+            <span className="font-semibold">{formatCurrency(baseAmountCents / 100)}</span>
           </div>
           <p className="text-xs text-muted-foreground">
             {completionText}
@@ -186,7 +186,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
     <div className="space-y-4">
       <InlinePaymentSummary
         entityName={entityName}
-        baseAmount={baseAmountCents}
+        baseAmount={baseAmountCents / 100}
         serviceFee={serviceFee?.serviceFeeToDisplay || 0}
         totalAmount={totalWithFee}
         paymentMethodType={paymentMethodType}
