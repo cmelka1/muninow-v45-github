@@ -148,6 +148,11 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
       // Apply filters
       let filteredApplications = allApplications;
 
+      // Filter out draft tax submissions specifically
+      filteredApplications = filteredApplications.filter(app => 
+        !(app.serviceType === 'tax' && app.status === 'draft')
+      );
+
       if (filters.serviceType && filters.serviceType !== 'all') {
         filteredApplications = filteredApplications.filter(app => app.serviceType === filters.serviceType);
       }
