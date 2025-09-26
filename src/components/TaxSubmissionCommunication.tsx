@@ -98,7 +98,7 @@ export const TaxSubmissionCommunication: React.FC<TaxSubmissionCommunicationProp
                       {comment.reviewer.first_name} {comment.reviewer.last_name}
                     </span>
                     <Badge variant={comment.reviewer.account_type === 'municipal' ? 'secondary' : 'outline'} className="text-xs">
-                      {comment.reviewer.account_type === 'municipal' ? 'Municipal Staff' : 'Applicant'}
+                      {comment.reviewer.account_type === 'municipal' ? 'Municipal Staff' : 'Official'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
                       {format(new Date(comment.created_at), 'MMM d, yyyy h:mm a')}
