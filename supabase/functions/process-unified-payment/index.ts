@@ -75,19 +75,19 @@ async function reconcileEntityIfNeeded(supabase: any, transaction: any, entity_t
         }
       }
       
-      // Check if payment history record exists
+      // Check if payment transaction record exists
       const { data: existingHistory, error: historyFetchError } = await supabase
-        .from('payment_history')
+        .from('payment_transactions')
         .select('id')
         .eq('idempotency_id', idempotency_id)
         .single();
       
       if (historyFetchError && historyFetchError.code === 'PGRST116') {
-        // No payment history record exists, create one
-        console.log('Creating missing payment history record during reconciliation');
+        // No payment transaction record exists, create one
+        console.log('Creating missing payment transaction record during reconciliation');
         
         const { error: historyCreateError } = await supabase
-          .from('payment_history')
+          .from('payment_transactions')
           .insert({
             user_id: user_id,
             customer_id: customer_id,
@@ -111,9 +111,9 @@ async function reconcileEntityIfNeeded(supabase: any, transaction: any, entity_t
           });
         
         if (historyCreateError) {
-          console.error('Failed to create payment history during reconciliation:', historyCreateError);
+          console.error('Failed to create payment transaction during reconciliation:', historyCreateError);
         } else {
-          console.log('Payment history record created during reconciliation');
+          console.log('Payment transaction record created during reconciliation');
         }
       }
     }
@@ -600,9 +600,9 @@ Deno.serve(async (req) => {
             } else {
               console.log('Tax submission updated and filed successfully');
               
-              // Create payment history record
+              // Create payment transaction record
               const { error: paymentHistoryError } = await supabase
-                .from('payment_history')
+                .from('payment_transactions')
                 .insert({
                   user_id: user.id,
                   customer_id: customer_id,
@@ -630,8 +630,8 @@ Deno.serve(async (req) => {
                 });
               
               if (paymentHistoryError) {
-                console.log('Warning: Failed to create payment history:', paymentHistoryError);
-                // Don't fail the payment for history record issues
+                console.log('Warning: Failed to create payment transaction:', paymentHistoryError);
+                // Don't fail the payment for transaction record issues
               }
               
               // Confirm any staged documents for this tax submission

@@ -55,9 +55,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch payment history record
+    // Fetch payment transaction record
     const { data: paymentHistory, error: paymentError } = await supabase
-      .from('payment_history')
+      .from('payment_transactions')
       .select('*')
       .eq('id', payment_history_id)
       .single();
@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
     const { data: existingRefund } = await supabase
       .from('refunds')
       .select('id')
-      .eq('payment_history_id', payment_history_id)
+      .eq('payment_transaction_id', payment_history_id)
       .single();
 
     if (existingRefund) {
@@ -188,7 +188,7 @@ Deno.serve(async (req) => {
         user_id: paymentHistory.user_id,
         customer_id: paymentHistory.customer_id,
         municipal_user_id: user.id,
-        payment_history_id: payment_history_id,
+        payment_transaction_id: payment_history_id,
         finix_transfer_id: paymentHistory.finix_transfer_id,
         finix_reversal_id: finixData.id,
         reason: reason,

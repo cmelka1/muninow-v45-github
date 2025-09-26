@@ -3397,7 +3397,8 @@ export type Database = {
           original_amount_cents: number
           original_due_date: string | null
           original_issue_date: string | null
-          payment_history_id: string
+          payment_history_id: string | null
+          payment_transaction_id: string | null
           payment_type: string | null
           processed_at: string | null
           reason: string
@@ -3428,7 +3429,8 @@ export type Database = {
           original_amount_cents: number
           original_due_date?: string | null
           original_issue_date?: string | null
-          payment_history_id: string
+          payment_history_id?: string | null
+          payment_transaction_id?: string | null
           payment_type?: string | null
           processed_at?: string | null
           reason: string
@@ -3459,7 +3461,8 @@ export type Database = {
           original_amount_cents?: number
           original_due_date?: string | null
           original_issue_date?: string | null
-          payment_history_id?: string
+          payment_history_id?: string | null
+          payment_transaction_id?: string | null
           payment_type?: string | null
           processed_at?: string | null
           reason?: string
@@ -3469,7 +3472,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "refunds_payment_transaction_id_fkey"
+            columns: ["payment_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       roles: {
         Row: {

@@ -141,7 +141,7 @@ serve(async (req) => {
 
     // Check for duplicate idempotency_id
     const { data: existingPayment } = await supabaseService
-      .from("payment_history")
+      .from("payment_transactions")
       .select("id, transfer_state")
       .eq("idempotency_id", idempotency_id)
       .single();
@@ -288,9 +288,9 @@ serve(async (req) => {
     const cardBrand = piData.card?.brand || null;
     const cardLastFour = piData.card?.last_four || null;
 
-    // Create payment history record with card details and bill information
+    // Create payment transaction record with card details and bill information
     const { data: paymentHistory, error: phError } = await supabaseService
-      .from("payment_history")
+      .from("payment_transactions")
       .insert({
         user_id: user.id,
         bill_id: bill_id,
@@ -406,7 +406,7 @@ serve(async (req) => {
     }
 
     await supabaseService
-      .from("payment_history")
+      .from("payment_transactions")
       .update(updateData)
       .eq("id", paymentHistory.id);
 

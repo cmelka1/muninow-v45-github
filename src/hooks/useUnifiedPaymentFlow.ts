@@ -310,7 +310,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       if (isSuccess) {
         console.log('✅ Payment completed successfully:', {
           transactionId: parsedData.finix_transfer_id,
-          paymentId: parsedData.payment_history_id,
+          paymentId: parsedData.transaction_id,
           totalAmount: serviceFee.totalAmountToCharge,
           timestamp: new Date().toISOString()
         });
@@ -318,7 +318,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         const response: PaymentResponse = {
           success: true,
           transaction_id: parsedData.finix_transfer_id,
-          payment_id: parsedData.payment_history_id,
+          payment_id: parsedData.transaction_id,
           status: 'completed'
         };
 
