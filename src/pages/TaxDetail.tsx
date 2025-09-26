@@ -325,8 +325,6 @@ const TaxDetail = () => {
               </CardContent>
             </Card>
 
-            {/* Communication */}
-            <TaxSubmissionCommunication submissionId={submission.id} />
           </div>
 
           {/* Right Column - Payment Information & Timeline */}
@@ -397,6 +395,9 @@ const TaxDetail = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Communication */}
+            <TaxSubmissionCommunication submissionId={submission.id} />
           </div>
         </div>
       </div>
