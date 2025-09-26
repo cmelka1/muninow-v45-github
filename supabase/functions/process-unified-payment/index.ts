@@ -488,7 +488,9 @@ Deno.serve(async (req) => {
               payment_status: 'paid',
               payment_processed_at: new Date().toISOString(),
               finix_transfer_id: finixData.id,
-              transfer_state: 'SUCCEEDED'
+              transfer_state: 'SUCCEEDED',
+              service_fee_cents: serviceFeeFromDB,
+              total_amount_cents: totalAmountFromDB
             };
             
             // Auto-issue if approved
