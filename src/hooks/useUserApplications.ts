@@ -127,7 +127,7 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
           status: tax.submission_status,
           paymentStatus: tax.payment_status || 'unpaid',
           customerId: tax.customer_id,
-          detailPath: `/taxes`
+          detailPath: `/tax/${tax.id}`
         })),
 
         // Transform service applications
