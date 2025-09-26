@@ -6,9 +6,9 @@ import { formatCurrency } from '@/lib/formatters';
 
 interface InlinePaymentSummaryProps {
   entityName: string;
-  baseAmount: number;
-  serviceFee?: number;
-  totalAmount: number;
+  baseAmount: number; // in cents
+  serviceFee?: number; // in cents
+  totalAmount: number; // in cents
   paymentMethodType?: 'card' | 'ach' | 'google-pay' | 'apple-pay';
   selectedPaymentMethodName?: string;
   feeLabel?: string;
