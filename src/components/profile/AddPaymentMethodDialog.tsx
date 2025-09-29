@@ -309,8 +309,15 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
 
       // Fallback 3: Timeout - if form hasn't reported ready after 3 seconds but has content, mark as ready
       const fallbackTimer = setTimeout(() => {
-        if (checkForFormElements()) {
-          console.log('⚠️ Finix ready event did not fire, but form content detected - marking as ready via timeout');
+        // Check if form is already marked as ready by looking at the DOM
+        const container = document.getElementById(containerId);
+        if (container) {
+          const iframes = container.querySelectorAll('iframe');
+          // Only log warning and set state if iframes exist but ready wasn't called
+          if (iframes.length > 0) {
+            console.log('⚠️ Finix ready event did not fire, but form content detected - marking as ready via timeout');
+            setFinixFormReady(true);
+          }
         }
       }, 3000);
 
