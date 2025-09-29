@@ -687,9 +687,6 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  🔒 Your payment information is securely handled by Finix and never touches our servers.
-                </p>
               </div>
             </div>
 
