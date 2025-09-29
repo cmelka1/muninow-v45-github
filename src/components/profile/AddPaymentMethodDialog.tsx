@@ -246,7 +246,7 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
       const containerId = `finix-${paymentType}-form-container`;
       
       // Create appropriate form type with only styles config
-      const form = paymentType === 'card'
+      form = paymentType === 'card'
         ? window.Finix.CardTokenForm(containerId, {
             styles: formStyles
           })
@@ -297,7 +297,7 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
       };
 
       // Fallback 2: Set up a mutation observer to detect when Finix injects content
-      let observer: MutationObserver | null = null;
+      observer = null;
       const container = document.getElementById(containerId);
       if (container) {
         observer = new MutationObserver(() => {
@@ -313,7 +313,7 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
       }
 
       // Fallback 3: Timeout - if form hasn't reported ready after 3 seconds but has content, mark as ready
-      const fallbackTimer = setTimeout(() => {
+      fallbackTimer = setTimeout(() => {
         // Check if form is already marked as ready by looking at the DOM
         const container = document.getElementById(containerId);
         if (container) {

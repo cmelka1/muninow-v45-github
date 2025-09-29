@@ -135,79 +135,6 @@ export const useUserPaymentInstruments = () => {
     }
   };
 
-  const createPaymentCard = async (cardData: {
-    cardholderName: string;
-    cardNickname?: string;
-    cardNumber: string;
-    expirationMonth: string;
-    expirationYear: string;
-    securityCode: string;
-    streetAddress: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country?: string;
-  }) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('create-user-payment-card', {
-        body: cardData
-      });
-
-      if (error) {
-        console.error('Error creating payment card:', error);
-        return { success: false, error };
-      }
-
-      if (!data.success) {
-        console.error('Payment card creation failed:', data);
-        return { success: false, error: data.error };
-      }
-
-      // Reload the payment instruments
-      await loadPaymentInstruments();
-      return { success: true, data: data.paymentInstrument };
-    } catch (error) {
-      console.error('Error creating payment card:', error);
-      return { success: false, error };
-    }
-  };
-
-  const createBankAccount = async (bankData: {
-    accountHolderName: string;
-    accountNickname?: string;
-    routingNumber: string;
-    accountNumber: string;
-    accountType: 'personal_checking' | 'personal_savings' | 'business_checking' | 'business_savings';
-    streetAddress: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country?: string;
-  }) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('create-user-bank-account', {
-        body: bankData
-      });
-
-      if (error) {
-        console.error('Error creating bank account:', error);
-        return { success: false, error };
-      }
-
-      if (!data.success) {
-        console.error('Bank account creation failed:', data);
-        return { success: false, error: data.error };
-      }
-
-      // Reload the payment instruments
-      await loadPaymentInstruments();
-      return { success: true, data: data.paymentInstrument };
-    } catch (error) {
-      console.error('Error creating bank account:', error);
-      return { success: false, error };
-    }
-  };
-
   useEffect(() => {
     loadPaymentInstruments();
   }, [user]);
@@ -218,7 +145,5 @@ export const useUserPaymentInstruments = () => {
     loadPaymentInstruments,
     setDefaultPaymentInstrument,
     deletePaymentInstrument,
-    createPaymentCard,
-    createBankAccount,
   };
 };

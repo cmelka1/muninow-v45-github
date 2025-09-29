@@ -27,13 +27,7 @@ verify_jwt = false
 [functions.create-tax-submission-with-payment]
 verify_jwt = false
 
-[functions.create-user-bank-account]
-verify_jwt = false
-
 [functions.create-user-bank-account-tokenized]
-verify_jwt = false
-
-[functions.create-user-payment-card]
 verify_jwt = false
 
 [functions.create-user-payment-card-tokenized]
