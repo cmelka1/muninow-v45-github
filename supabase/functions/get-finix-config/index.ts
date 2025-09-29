@@ -14,12 +14,12 @@ serve(async (req) => {
   try {
     console.log('Getting Finix client configuration...');
 
-    const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
+    const finixApplicationId = Deno.env.get('FINIX_USER_APPLICATION_ID');
     const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
 
     if (!finixApplicationId) {
-      console.error('FINIX_APPLICATION_ID not configured');
-      throw new Error('Finix configuration not available');
+      console.error('FINIX_USER_APPLICATION_ID not configured');
+      throw new Error('Finix User Application ID not configured');
     }
 
     console.log('Finix configuration retrieved successfully');
