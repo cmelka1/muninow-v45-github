@@ -144,7 +144,6 @@ serve(async (req) => {
         finix_identity_id: finixIdentity.finix_identity_id,
         instrument_type: 'PAYMENT_CARD',
         nickname: nickname || null,
-        display_name: displayName,
         is_default: isDefault,
         enabled: true,
         status: 'active',
