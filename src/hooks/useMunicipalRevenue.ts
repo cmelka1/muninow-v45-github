@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfMonth, endOfMonth } from "date-fns";
 
 interface RevenueData {
   monthlyBaseAmount: number;
@@ -18,9 +17,12 @@ export const useMunicipalRevenue = (customerId: string | undefined) => {
         throw new Error("Customer ID is required");
       }
 
+      // Get current month boundaries in UTC
       const now = new Date();
-      const monthStart = startOfMonth(now).toISOString();
-      const monthEnd = endOfMonth(now).toISOString();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const monthStart = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0)).toISOString();
+      const monthEnd = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999)).toISOString();
 
       // Get all paid transactions for this customer in current month
       const { data: transactions, error } = await supabase
