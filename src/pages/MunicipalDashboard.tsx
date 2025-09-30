@@ -34,7 +34,8 @@ const MunicipalDashboard = () => {
   const applicationsBreakdownData = applications ? [
     { name: "Building Permits", value: applications.buildingPermits, color: "hsl(var(--chart-1))" },
     { name: "Business Licenses", value: applications.businessLicenses, color: "hsl(var(--chart-2))" },
-    { name: "Service Applications", value: applications.serviceApplications, color: "hsl(var(--chart-3))" },
+    { name: "Business Taxes", value: applications.businessTaxes, color: "hsl(var(--chart-3))" },
+    { name: "Other Services", value: applications.serviceApplications, color: "hsl(var(--chart-4))" },
   ].filter(item => item.value > 0) : [];
 
   const processingTimeData = processingTimes ? [
@@ -52,13 +53,17 @@ const MunicipalDashboard = () => {
       label: "Business Licenses",
       color: "hsl(var(--chart-2))",
     },
-    serviceApplications: {
-      label: "Service Applications",
+    businessTaxes: {
+      label: "Business Taxes",
       color: "hsl(var(--chart-3))",
+    },
+    serviceApplications: {
+      label: "Other Services",
+      color: "hsl(var(--chart-4))",
     },
     days: {
       label: "Days",
-      color: "hsl(var(--chart-4))",
+      color: "hsl(var(--chart-5))",
     },
     amount: {
       label: "Revenue",
@@ -97,13 +102,13 @@ const MunicipalDashboard = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Applications Outstanding</CardTitle>
+            <CardTitle className="text-sm font-medium">Applications This Month</CardTitle>
             <FileCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{applications?.total || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Pending review across all services
+              Submitted across all services
             </p>
           </CardContent>
         </Card>
@@ -157,7 +162,7 @@ const MunicipalDashboard = () => {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Applications by Service Type</CardTitle>
-            <CardDescription>Breakdown of outstanding applications</CardDescription>
+            <CardDescription>Submitted applications this month</CardDescription>
           </CardHeader>
           <CardContent>
             {applicationsBreakdownData.length > 0 ? (
@@ -184,7 +189,7 @@ const MunicipalDashboard = () => {
               </ChartContainer>
             ) : (
               <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                No outstanding applications
+                No applications this month
               </div>
             )}
           </CardContent>
@@ -204,7 +209,7 @@ const MunicipalDashboard = () => {
                     <XAxis dataKey="service" />
                     <YAxis />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="days" fill="hsl(var(--chart-4))" name="Days" />
+                    <Bar dataKey="days" fill="hsl(var(--chart-5))" name="Days" />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -282,7 +287,11 @@ const MunicipalDashboard = () => {
             <span className="font-medium">{applications?.businessLicenses || 0}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Service Applications</span>
+            <span className="text-sm text-muted-foreground">Business Taxes</span>
+            <span className="font-medium">{applications?.businessTaxes || 0}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Other Services</span>
             <span className="font-medium">{applications?.serviceApplications || 0}</span>
           </div>
           <div className="flex items-center justify-between pt-4 border-t">
