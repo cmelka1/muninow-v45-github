@@ -88,19 +88,38 @@ export const useMunicipalSearch = (params?: UseMunicipalSearchParams) => {
       // Step 2: Search within these user profiles
       let profileQuery = supabase
         .from('profiles')
-        .select('id, first_name, last_name, email, business_legal_name, customer_id')
+        .select('id, first_name, last_name, email, business_legal_name, street_address, city, customer_id')
         .in('id', allUserIds);
 
-      // Apply search term across multiple fields
+      // Apply search term across multiple fields with full name support
       if (searchTerm) {
-        profileQuery = profileQuery.or(
-          `first_name.ilike.%${searchTerm}%,` +
-          `last_name.ilike.%${searchTerm}%,` +
-          `email.ilike.%${searchTerm}%,` +
-          `business_legal_name.ilike.%${searchTerm}%,` +
-          `street_address.ilike.%${searchTerm}%,` +
-          `city.ilike.%${searchTerm}%`
-        );
+        const searchWords = searchTerm.trim().split(/\s+/).filter(word => word.length > 0);
+        
+        if (searchWords.length >= 2) {
+          // Multiple words - match first + last name combination OR single field searches
+          const firstWord = searchWords[0];
+          const lastWord = searchWords[searchWords.length - 1];
+          
+          profileQuery = profileQuery.or(
+            `and(first_name.ilike.%${firstWord}%,last_name.ilike.%${lastWord}%),` +
+            `first_name.ilike.%${searchTerm}%,` +
+            `last_name.ilike.%${searchTerm}%,` +
+            `email.ilike.%${searchTerm}%,` +
+            `business_legal_name.ilike.%${searchTerm}%,` +
+            `street_address.ilike.%${searchTerm}%,` +
+            `city.ilike.%${searchTerm}%`
+          );
+        } else {
+          // Single word - search across all fields
+          profileQuery = profileQuery.or(
+            `first_name.ilike.%${searchTerm}%,` +
+            `last_name.ilike.%${searchTerm}%,` +
+            `email.ilike.%${searchTerm}%,` +
+            `business_legal_name.ilike.%${searchTerm}%,` +
+            `street_address.ilike.%${searchTerm}%,` +
+            `city.ilike.%${searchTerm}%`
+          );
+        }
       }
 
       const { data: profiles, error: profileError } = await profileQuery;
