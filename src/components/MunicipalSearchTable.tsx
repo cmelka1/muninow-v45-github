@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -14,12 +14,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { SearchResult, MunicipalSearchFilters } from '@/hooks/useMunicipalSearch';
-import { formatAccountType, getAccountTypeBadgeVariant } from '@/lib/formatters';
+import { ChevronLeft, ChevronRight, FileText, Building, DollarSign, Settings } from 'lucide-react';
+import { MunicipalApplication } from '@/hooks/useMunicipalSearch';
 
 interface MunicipalSearchTableProps {
-  data?: SearchResult[];
+  data?: MunicipalApplication[];
   isLoading: boolean;
   error: any;
   currentPage: number;
@@ -42,54 +41,89 @@ const MunicipalSearchTable: React.FC<MunicipalSearchTableProps> = ({
   const navigate = useNavigate();
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  const getAccountTypeBadge = (accountType: string) => {
-    const variant = getAccountTypeBadgeVariant(accountType);
-    const formattedType = formatAccountType(accountType);
-    return <Badge variant={variant}>{formattedType}</Badge>;
-  };
-
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
-  const formatDate = (date: string | null) => {
-    if (!date) return 'N/A';
-    return format(new Date(date), 'MMM dd, yyyy');
-  };
-
-  const formatAddress = (user: SearchResult) => {
-    const address = user.street_address || '';
-    const apt = user.apt_number || '';
-    const city = user.city || '';
-    const state = user.state || '';
-    const zipCode = user.zip_code || '';
-
-    let fullAddress = address;
-    if (apt) fullAddress += ` ${apt}`;
-    if (city) fullAddress += city ? `, ${city}` : city;
-    if (state) fullAddress += state ? `, ${state}` : state;
-    if (zipCode) fullAddress += ` ${zipCode}`;
-
-    return fullAddress.trim() || 'Address not available';
-  };
-
-  const getDisplayName = (user: SearchResult) => {
-    if (user.account_type === 'business') {
-      return user.business_legal_name || 'Unknown Business';
+  const getServiceTypeIcon = (serviceType: string) => {
+    switch (serviceType) {
+      case 'permit':
+        return <Building className="h-4 w-4" />;
+      case 'license':
+        return <FileText className="h-4 w-4" />;
+      case 'tax':
+        return <DollarSign className="h-4 w-4" />;
+      case 'service':
+        return <Settings className="h-4 w-4" />;
+      default:
+        return <FileText className="h-4 w-4" />;
     }
+  };
+
+  const getServiceTypeLabel = (serviceType: string) => {
+    switch (serviceType) {
+      case 'permit':
+        return 'Building Permit';
+      case 'license':
+        return 'Business License';
+      case 'tax':
+        return 'Tax';
+      case 'service':
+        return 'Service';
+      default:
+        return 'Unknown';
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const normalizedStatus = status.toLowerCase();
     
-    const name = `${user.first_name || ''} ${user.last_name || ''}`.trim();
-    return name || 'Unknown User';
+    switch (normalizedStatus) {
+      case 'draft':
+        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Draft</Badge>;
+      case 'submitted':
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Submitted</Badge>;
+      case 'under_review':
+        return <Badge variant="secondary" className="bg-purple-100 text-purple-800">Under Review</Badge>;
+      case 'information_requested':
+        return <Badge variant="secondary" className="bg-orange-100 text-orange-800">Info Requested</Badge>;
+      case 'resubmitted':
+        return <Badge variant="secondary" className="bg-indigo-100 text-indigo-800">Resubmitted</Badge>;
+      case 'approved':
+        return <Badge variant="secondary" className="bg-green-100 text-green-800">Approved</Badge>;
+      case 'denied':
+        return <Badge variant="secondary" className="bg-red-100 text-red-800">Denied</Badge>;
+      case 'issued':
+        return <Badge variant="secondary" className="bg-blue-600 text-white">Issued</Badge>;
+      case 'paid':
+        return <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">Paid</Badge>;
+      case 'withdrawn':
+        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Withdrawn</Badge>;
+      case 'expired':
+        return <Badge variant="secondary" className="bg-amber-100 text-amber-800">Expired</Badge>;
+      default:
+        return <Badge variant="outline">{status.replace('_', ' ').toUpperCase()}</Badge>;
+    }
   };
 
-  const handleRowClick = (user: SearchResult) => {
-    // Navigate to user detail view
-    if (user.user_id) {
-      navigate(`/municipal/search/user/${user.user_id}`);
+  const getPaymentStatusBadge = (paymentStatus: string) => {
+    const normalizedStatus = paymentStatus.toLowerCase();
+    
+    switch (normalizedStatus) {
+      case 'paid':
+        return <Badge variant="secondary" className="bg-green-100 text-green-800">Paid</Badge>;
+      case 'unpaid':
+      default:
+        return <Badge variant="secondary" className="bg-amber-100 text-amber-800">Unpaid</Badge>;
     }
+  };
+
+  const formatDate = (date: string) => {
+    try {
+      return format(new Date(date), 'MMM dd, yyyy');
+    } catch {
+      return 'N/A';
+    }
+  };
+
+  const handleRowClick = (application: MunicipalApplication) => {
+    navigate(application.detailPath);
   };
 
   const handlePageSizeChange = (newPageSize: string) => {
@@ -142,7 +176,7 @@ const MunicipalSearchTable: React.FC<MunicipalSearchTableProps> = ({
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            No users found matching your search criteria. Try adjusting your filters or search terms.
+            No applications found matching your search criteria. Try adjusting your filters or search terms.
           </p>
         </CardContent>
       </Card>
@@ -152,52 +186,58 @@ const MunicipalSearchTable: React.FC<MunicipalSearchTableProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Search Results</CardTitle>
+        <CardTitle>Search Results ({totalCount})</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader className="bg-muted/50">
               <TableRow>
-                <TableHead>Name/Business</TableHead>
-                <TableHead className="hidden sm:table-cell text-center">Type</TableHead>
-                <TableHead className="hidden md:table-cell">Address</TableHead>
-                <TableHead className="text-center">Email</TableHead>
-                <TableHead className="hidden sm:table-cell text-center">Phone</TableHead>
+                <TableHead className="hidden sm:table-cell">Date</TableHead>
+                <TableHead>User/Business</TableHead>
+                <TableHead className="text-center">Service Type</TableHead>
+                <TableHead className="hidden md:table-cell text-center">Category</TableHead>
+                <TableHead className="text-center">Status</TableHead>
+                <TableHead className="text-center">Payment</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((user) => (
+              {data.map((application) => (
                 <TableRow 
-                  key={user.user_id} 
-                  className="cursor-pointer hover:bg-muted/50" 
-                  onClick={() => handleRowClick(user)}
+                  key={application.id} 
+                  className="h-12 cursor-pointer hover:bg-muted/50" 
+                  onClick={() => handleRowClick(application)}
                 >
-                  <TableCell className="py-3">
+                  <TableCell className="hidden sm:table-cell py-2">
+                    <span className="text-sm text-muted-foreground">
+                      {formatDate(application.dateSubmitted)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-2">
                     <div>
-                      <div className="font-medium truncate max-w-[200px]" title={getDisplayName(user)}>
-                        {getDisplayName(user)}
+                      <div className="font-medium truncate max-w-[180px]" title={application.businessName || application.userName}>
+                        {application.businessName || application.userName}
                       </div>
-                      {user.email && (
-                        <div className="text-sm text-muted-foreground truncate max-w-[200px]" title={user.email}>
-                          {user.email}
-                        </div>
-                      )}
+                      <div className="text-xs text-muted-foreground truncate max-w-[180px]" title={application.userEmail}>
+                        {application.userEmail}
+                      </div>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell py-3 text-center">
-                    {getAccountTypeBadge(user.account_type)}
+                  <TableCell className="py-2 text-center">
+                    <span className="font-medium">
+                      {getServiceTypeLabel(application.serviceType)}
+                    </span>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell py-3">
-                    <div className="text-sm truncate max-w-[200px]" title={formatAddress(user)}>
-                      {formatAddress(user)}
-                    </div>
+                  <TableCell className="hidden md:table-cell py-2 text-center">
+                    <span className="truncate mx-auto block max-w-[150px]" title={application.serviceName}>
+                      {application.serviceName}
+                    </span>
                   </TableCell>
-                  <TableCell className="text-center py-3">
-                    <div className="text-sm">{user.email || 'N/A'}</div>
+                  <TableCell className="text-center py-2">
+                    {getStatusBadge(application.status)}
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell text-center py-3">
-                    <div className="text-sm">{user.phone || 'N/A'}</div>
+                  <TableCell className="text-center py-2">
+                    {getPaymentStatusBadge(application.paymentStatus)}
                   </TableCell>
                 </TableRow>
               ))}

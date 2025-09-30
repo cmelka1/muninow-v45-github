@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import { useMunicipalSearchFilterOptions, MunicipalSearchFilters } from '@/hooks/useMunicipalSearch';
+import { MunicipalSearchFilters } from '@/hooks/useMunicipalSearch';
 
 interface MunicipalSearchFilterProps {
   filters: MunicipalSearchFilters;
@@ -14,27 +14,6 @@ const MunicipalSearchFilter: React.FC<MunicipalSearchFilterProps> = ({
   filters, 
   onFiltersChange 
 }) => {
-  const { data: filterOptions, isLoading } = useMunicipalSearchFilterOptions();
-
-  const dueDateOptions = [
-    { value: 'next_7_days', label: 'Next 7 days' },
-    { value: 'next_30_days', label: 'Next 30 days' },
-    { value: 'past_due', label: 'Past due' },
-    { value: 'all_time', label: 'All time' },
-  ];
-
-  const amountOptions = [
-    { value: '0-100', label: '$0 - $100' },
-    { value: '101-500', label: '$101 - $500' },
-    { value: '501-1000', label: '$501 - $1,000' },
-    { value: '1000+', label: '$1,000+' },
-  ];
-
-  const accountTypeOptions = [
-    { value: 'resident', label: 'Residents' },
-    { value: 'business', label: 'Businesses' },
-  ];
-
   const updateFilter = (key: keyof MunicipalSearchFilters, value: string | undefined) => {
     onFiltersChange({
       ...filters,
@@ -67,107 +46,57 @@ const MunicipalSearchFilter: React.FC<MunicipalSearchFilterProps> = ({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          {/* Account Type Filter */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Service Type Filter */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Account Type</label>
-            <Select value={filters.accountType || 'all'} onValueChange={(value) => updateFilter('accountType', value)}>
+            <label className="text-sm font-medium text-muted-foreground">Service Type</label>
+            <Select value={filters.serviceType || 'all'} onValueChange={(value) => updateFilter('serviceType', value)}>
               <SelectTrigger className="h-9">
-                <SelectValue placeholder="Account Type" />
+                <SelectValue placeholder="Service Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                {accountTypeOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">All Services</SelectItem>
+                <SelectItem value="permit">Building Permits</SelectItem>
+                <SelectItem value="license">Business Licenses</SelectItem>
+                <SelectItem value="tax">Taxes</SelectItem>
+                <SelectItem value="service">Services</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Service-focused filters only - legacy bill system removed */}
-
-          {/* Merchant Filter */}
-          <div className="hidden sm:block space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Merchant</label>
-            <Select value={filters.merchantId || 'all'} onValueChange={(value) => updateFilter('merchantId', value)}>
+          {/* Status Filter */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">Status</label>
+            <Select value={filters.status || 'all'} onValueChange={(value) => updateFilter('status', value)}>
               <SelectTrigger className="h-9">
-                <SelectValue placeholder="Merchant" />
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Merchants</SelectItem>
-                {isLoading ? (
-                  <SelectItem value="loading" disabled>Loading...</SelectItem>
-                ) : (
-                  (filterOptions?.merchants || []).map((merchant) => (
-                    <SelectItem key={merchant.id} value={merchant.id}>
-                      {merchant.merchant_name}
-                    </SelectItem>
-                  ))
-                )}
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="submitted">Submitted</SelectItem>
+                <SelectItem value="under_review">Under Review</SelectItem>
+                <SelectItem value="information_requested">Info Requested</SelectItem>
+                <SelectItem value="resubmitted">Resubmitted</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="denied">Denied</SelectItem>
+                <SelectItem value="issued">Issued</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Category Filter */}
-          <div className="hidden sm:block space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Category</label>
-            <Select value={filters.category || 'all'} onValueChange={(value) => updateFilter('category', value)}>
+          {/* Date Range Filter */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">Date Range</label>
+            <Select value={filters.dateRange || 'all_time'} onValueChange={(value) => updateFilter('dateRange', value)}>
               <SelectTrigger className="h-9">
-                <SelectValue placeholder="Category" />
+                <SelectValue placeholder="Date Range" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {isLoading ? (
-                  <SelectItem value="loading" disabled>Loading...</SelectItem>
-                ) : (
-                  (filterOptions?.categories || []).map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Subcategory Filter */}
-          <div className="hidden sm:block space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Subcategory</label>
-            <Select value={filters.subcategory || 'all'} onValueChange={(value) => updateFilter('subcategory', value)}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Subcategory" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Subcategories</SelectItem>
-                {isLoading ? (
-                  <SelectItem value="loading" disabled>Loading...</SelectItem>
-                ) : (
-                  (filterOptions?.subcategories || []).map((subcategory) => (
-                    <SelectItem key={subcategory} value={subcategory}>
-                      {subcategory}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Amount Filter */}
-          <div className="hidden lg:block space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Amount Range</label>
-            <Select value={filters.amountRange || 'all'} onValueChange={(value) => updateFilter('amountRange', value)}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Amount" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Amounts</SelectItem>
-                {amountOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all_time">All Time</SelectItem>
+                <SelectItem value="last_30_days">Last 30 Days</SelectItem>
+                <SelectItem value="last_3_months">Last 3 Months</SelectItem>
+                <SelectItem value="last_6_months">Last 6 Months</SelectItem>
+                <SelectItem value="last_year">Last Year</SelectItem>
               </SelectContent>
             </Select>
           </div>
