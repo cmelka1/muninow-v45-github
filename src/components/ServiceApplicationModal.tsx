@@ -975,18 +975,26 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             {!tile.requires_review ? (
               /* Payment Section for Auto-Approve Services */
               <div className="mt-8 space-y-6">
-                {/* Inline Payment Flow */}
-                <InlinePaymentFlow
-                  entityType="service_application"
-                  entityId={servicePaymentMethods.applicationId || ''}
-                  entityName={tile.title}
-                  customerId={tile.customer_id}
-                  merchantId={tile.merchant_id}
-                  baseAmountCents={baseAmountCents}
-                  onPaymentSuccess={handlePaymentSuccess}
-                  onPaymentError={handlePaymentError}
-                  onAddPaymentMethod={() => setIsAddPaymentMethodOpen(true)}
-                />
+                {/* Payment Information Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Complete Payment</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <InlinePaymentFlow
+                      entityType="service_application"
+                      entityId={servicePaymentMethods.applicationId || ''}
+                      entityName={tile.title}
+                      customerId={tile.customer_id}
+                      merchantId={tile.merchant_id}
+                      baseAmountCents={baseAmountCents}
+                      initialExpanded={true}
+                      onPaymentSuccess={handlePaymentSuccess}
+                      onPaymentError={handlePaymentError}
+                      onAddPaymentMethod={() => setIsAddPaymentMethodOpen(true)}
+                    />
+                  </CardContent>
+                </Card>
 
                 {/* Navigation Actions */}
                 <div className="flex justify-between pt-6 bg-muted/20 -mx-6 px-6 -mb-6 pb-6 rounded-b-lg">

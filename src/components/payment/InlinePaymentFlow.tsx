@@ -157,7 +157,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
     );
   }
 
-  if (!isExpanded) {
+  if (!isExpanded && !initialExpanded) {
     return (
       <div className="space-y-4">
         <div className="p-3 bg-muted/50 rounded-lg">
