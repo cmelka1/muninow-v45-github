@@ -25,6 +25,9 @@ import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
 import { UnifiedPaymentDialog } from '@/components/unified/UnifiedPaymentDialog';
 import { formatCurrency } from '@/lib/formatters';
 import ServiceApplicationReviewStep from './ServiceApplicationReviewStep';
+import { useServiceApplicationPaymentMethods } from '@/hooks/useServiceApplicationPaymentMethods';
+import { InlinePaymentFlow } from './payment/InlinePaymentFlow';
+import { useNavigate } from 'react-router-dom';
 
 interface ServiceApplicationModalProps {
   tile: MunicipalServiceTile | null;
@@ -74,6 +77,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   const progress = (currentStep / totalSteps) * 100;
   
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const createApplication = useCreateServiceApplication();
   const {
     paymentInstruments,
@@ -83,6 +87,20 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
 
   // For modal, we'll use the service application submission with payment redirect
   const baseAmountCents = tile?.allow_user_defined_amount ? formData.amount_cents : tile?.amount_cents || 0;
+
+  // Prepare application data for payment hook (non-reviewed services only)
+  const applicationData = tile && !tile.requires_review ? {
+    tile_id: tile.id,
+    customer_id: tile.customer_id,
+    merchant_id: tile.merchant_id,
+    user_id: profile?.id || '',
+    form_data: formData,
+    documents: uploadedDocuments,
+    base_amount_cents: baseAmountCents,
+  } : null;
+
+  // Initialize payment methods hook for non-reviewed services
+  const servicePaymentMethods = useServiceApplicationPaymentMethods(applicationData);
 
   useEffect(() => {
     if (tile && isOpen) {
@@ -170,7 +188,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       
       // Load payment instruments if this service doesn't require review
       if (!tile.requires_review) {
-        loadPaymentInstruments();
+        servicePaymentMethods.loadPaymentInstruments();
       }
     }
   }, [tile, isOpen, useAutoPopulate, profile]);
@@ -315,74 +333,23 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     }
   };
 
-  const handlePayment = async () => {
-    if (!tile) return;
-    
-    setIsSubmitting(true);
-    
-    try {
-      // For services that don't require review, create application and redirect to payment
-      const applicationData = await createApplication.mutateAsync({
-        tile_id: tile.id,
-        user_id: profile?.id || '',
-        customer_id: tile.customer_id,
-        status: 'submitted',
-        amount_cents: baseAmountCents,
-        // Map form data to structured fields
-        applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
-        applicant_email: formData.email || undefined,
-        applicant_phone: formData.phone || formData.phone_number || undefined,
-        business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || undefined,
-        street_address: formData.address || formData.street_address || formData.street || undefined,
-        apt_number: formData.apt || formData.apt_number || formData.apartment || undefined,
-        city: formData.city || undefined,
-        state: formData.state || undefined,
-        zip_code: formData.zip || formData.zip_code || formData.postal_code || undefined,
-        additional_information: formData.additional_information || formData.notes || formData.comments || undefined,
-        service_specific_data: formData,
-      });
+  const handlePaymentSuccess = (response: any) => {
+    console.log('✅ Service application payment successful:', response);
+    toast({
+      title: 'Application Submitted',
+      description: 'Your service application has been submitted and paid successfully.',
+    });
+    onClose();
+    navigate('/dashboard');
+  };
 
-      // Link uploaded documents to the application
-      if (uploadedDocuments.length > 0) {
-        const documentPromises = uploadedDocuments
-          .filter(doc => doc.uploadStatus === 'completed')
-          .map(doc => 
-            supabase.from('service_application_documents').insert({
-              application_id: applicationData.id,
-              user_id: profile?.id || '',
-              customer_id: tile.customer_id,
-              file_name: doc.name,
-              document_type: doc.documentType,
-              description: doc.description || null,
-              storage_path: doc.filePath || '',
-              file_size: doc.size,
-              content_type: doc.type
-            })
-          );
-
-        await Promise.all(documentPromises);
-      }
-      
-      toast({
-        title: 'Application Created',
-        description: 'Your application has been created. Please complete payment to finalize.',
-      });
-      
-      onClose();
-      
-      // Navigate to application detail page for payment
-      window.location.href = `/service-application/${applicationData.id}`;
-      
-    } catch (error) {
-      console.error('Error creating application:', error);
-      toast({
-        title: 'Creation Failed',
-        description: 'There was an error creating your application. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handlePaymentError = (error: any) => {
+    console.error('❌ Service application payment failed:', error);
+    toast({
+      title: 'Payment Failed',
+      description: error?.message || 'Failed to process payment',
+      variant: 'destructive',
+    });
   };
 
   const renderFormField = (field: any) => {
@@ -605,10 +572,10 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       <DialogContent ref={dialogContentRef} className="max-w-4xl max-h-[90vh] overflow-y-auto p-8">
         <KeyboardNavigationForm
           onNext={currentStep === 1 ? handleNext : undefined}
-          onSubmit={currentStep === 2 ? (tile.requires_review ? handleSubmitApplication : handlePayment) : undefined}
+          onSubmit={currentStep === 2 && tile.requires_review ? handleSubmitApplication : undefined}
           onPrevious={currentStep === 2 ? handlePrevious : undefined}
           isNextDisabled={currentStep === 1 && Object.keys(validateStep1Fields()).length > 0}
-          isSubmitDisabled={isSubmitting || (currentStep === 2 && !tile.requires_review && !formData.payment_method_id)}
+          isSubmitDisabled={isSubmitting}
           currentStep={currentStep}
           totalSteps={2}
         >
@@ -1007,77 +974,19 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             {/* Conditional Payment or Submit Section */}
             {!tile.requires_review ? (
               /* Payment Section for Auto-Approve Services */
-              <>
-                <div className="mt-8 space-y-6">
-                  {totalAmount > 0 && (
-                    <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                          Payment Summary
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <InlinePaymentSummary 
-                          entityName={tile.title}
-                          baseAmount={baseAmountCents}
-                          totalAmount={baseAmountCents}
-                          feeLabel="Service Fee"
-                        />
-                      </CardContent>
-                    </Card>
-                  )}
-
-
-                  {/* Payment Method Selection */}
-                  <Card className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        Payment Method
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="text-sm text-muted-foreground">
-                        Payment methods will be available after application creation.
-                      </div>
-
-                       {/* Show message when alternative payment methods are not available */}
-                       <div className="text-sm text-muted-foreground text-center py-2">
-                         Alternative payment methods are not available for this service.
-                       </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Separator */}
-                  <div className="border-t border-border"></div>
-
-                  {/* Pay Now Section */}
-                  <div className="space-y-3">
-                    <Button 
-                      className="w-full" 
-                      size="lg"
-                      disabled={isSubmitting}
-                      onClick={handlePayment}
-                    >
-                      {isSubmitting ? 'Creating...' : baseAmountCents > 0 ? 'Create Application & Pay' : 'Submit Application'}
-                    </Button>
-                   
-                    <Button 
-                      variant="outline" 
-                      className="w-full" 
-                      size="lg"
-                      onClick={() => setIsAddPaymentMethodOpen(true)}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add New Payment Method
-                    </Button>
-                    
-                    <p className="text-xs text-muted-foreground text-center">
-                      Your payment will be processed securely
-                    </p>
-                  </div>
-                </div>
+              <div className="mt-8 space-y-6">
+                {/* Inline Payment Flow */}
+                <InlinePaymentFlow
+                  entityType="service_application"
+                  entityId={servicePaymentMethods.applicationId || ''}
+                  entityName={tile.title}
+                  customerId={tile.customer_id}
+                  merchantId={tile.merchant_id}
+                  baseAmountCents={baseAmountCents}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  onPaymentError={handlePaymentError}
+                  onAddPaymentMethod={() => setIsAddPaymentMethodOpen(true)}
+                />
 
                 {/* Navigation Actions */}
                 <div className="flex justify-between pt-6 bg-muted/20 -mx-6 px-6 -mb-6 pb-6 rounded-b-lg">
@@ -1099,7 +1008,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                     Cancel
                   </Button>
                 </div>
-              </>
+              </div>
             ) : (
               /* Submit Section for Manual Review Services */
               <>

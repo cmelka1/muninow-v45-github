@@ -24,6 +24,9 @@ verify_jwt = false
 [functions.create-merchant-fee-profile]
 verify_jwt = false
 
+[functions.create-service-application-with-payment]
+verify_jwt = false
+
 [functions.create-tax-submission-with-payment]
 verify_jwt = false
 
