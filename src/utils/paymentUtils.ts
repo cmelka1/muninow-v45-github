@@ -94,12 +94,12 @@ export const classifyPaymentError = (error: any): PaymentError => {
   };
 };
 
-export const generateIdempotencyId = (prefix: string, billId?: string): string => {
+export const generateIdempotencyId = (prefix: string, entityId?: string): string => {
   try {
     const timestamp = Date.now();
     const randomPart = Math.random().toString(36).substr(2, 9);
-    const billPart = billId ? `${billId}_` : '';
-    const id = `${prefix}_${billPart}${timestamp}_${randomPart}`;
+    const entityPart = entityId ? `${entityId}_` : '';
+    const id = `${prefix}_${entityPart}${timestamp}_${randomPart}`;
     
     // Validate the generated ID
     if (!id || id.trim() === '' || id.length < 10) {

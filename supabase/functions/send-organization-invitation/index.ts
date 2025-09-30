@@ -18,7 +18,7 @@ function getOrganizationLabels(type: string) {
         org: 'Household',
         team: 'household',
         action: 'managing household services',
-        description: 'Join your household to manage bills, permits, and other municipal services together.'
+        description: 'Join your household to manage permits, licenses, and other municipal services together.'
       };
     case 'businessadmin':
     case 'businessuser':

@@ -183,7 +183,6 @@ Deno.serve(async (req) => {
     const { data: refundRecord, error: refundError } = await supabase
       .from('refunds')
       .insert({
-        bill_id: paymentTransaction.bill_id,
         user_id: paymentTransaction.user_id,
         customer_id: paymentTransaction.customer_id,
         municipal_user_id: user.id,
@@ -201,14 +200,13 @@ Deno.serve(async (req) => {
         bank_last_four: paymentTransaction.bank_last_four,
         payment_type: paymentTransaction.payment_type,
         
-        // Merchant and bill information
+        // Merchant and service information
         merchant_name: paymentTransaction.merchant_name,
         category: paymentTransaction.category,
         subcategory: paymentTransaction.subcategory,
         external_account_number: paymentTransaction.external_account_number,
-        external_bill_number: paymentTransaction.external_bill_number,
         
-        // Original bill dates
+        // Service-related dates
         original_issue_date: paymentTransaction.issue_date,
         original_due_date: paymentTransaction.due_date,
         
