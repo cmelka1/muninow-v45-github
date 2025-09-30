@@ -39,7 +39,7 @@ const REFUND_REASONS = [
   'Duplicate Payment',
   'Overpayment',
   'Service Not Provided',
-  'Bill Error',
+  'Payment Error',
   'Customer Request',
   'System Error',
   'Other'

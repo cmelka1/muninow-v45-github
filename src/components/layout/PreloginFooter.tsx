@@ -46,7 +46,7 @@ export const PreloginFooter = () => {
           <div className="space-y-4">
             <Logo />
             <p className="text-sm text-muted-foreground max-w-xs">
-              Municipal Payment Portal - Pay your municipal bills quickly and securely online.
+              Municipal Payment Portal - Pay for municipal services quickly and securely online.
             </p>
             <div className="flex space-x-4">
               {socialLinks.map((social) => (
@@ -77,7 +77,7 @@ export const PreloginFooter = () => {
                   to="/signin"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Pay My Bill
+                  Pay Services
                 </Link>
               </li>
               <li>

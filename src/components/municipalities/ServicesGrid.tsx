@@ -39,17 +39,17 @@ const services: MunicipalService[] = [
   },
   {
     id: '4',
-    name: 'Scheduled Billing',
-    description: 'Set up recurring billing cycles with automated notification schedules to ensure timely collections.',
-    category: 'billing',
-    features: ['Recurring Billing', 'Automated Notifications', 'Timely Collections'],
+    name: 'Scheduled Payment Cycles',
+    description: 'Set up recurring payment cycles with automated notification schedules to ensure timely collections.',
+    category: 'payment',
+    features: ['Recurring Payments', 'Automated Notifications', 'Timely Collections'],
     icon: 'clock'
   },
   {
     id: '5',
     name: 'Custom Payment Plans',
     description: 'Create flexible payment arrangements for residents with special circumstances or financial hardships.',
-    category: 'billing',
+    category: 'payment',
     features: ['Flexible Arrangements', 'Custom Plans', 'Financial Assistance'],
     icon: 'credit-card'
   }
