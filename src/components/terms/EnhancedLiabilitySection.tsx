@@ -33,7 +33,7 @@ const EnhancedLiabilitySection: React.FC = () => {
         <li><strong>Accurate Information:</strong> Providing correct payment and billing information</li>
         <li><strong>Timely Reporting:</strong> Reporting unauthorized transactions within 60 days</li>
         <li><strong>Fee Obligations:</strong> All processing fees and charges associated with your transactions</li>
-        <li><strong>Municipal Obligations:</strong> The underlying municipal bills and obligations being paid</li>
+        <li><strong>Municipal Obligations:</strong> The underlying municipal services and obligations being paid</li>
       </ul>
       
       <h3 className="text-xl font-medium mb-3">10.4 Force Majeure and External Factors</h3>

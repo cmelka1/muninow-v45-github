@@ -41,11 +41,11 @@ const TermsOfService: React.FC = () => {
 
           <TermsSection title="2. Description of Service">
             <p>
-              MuniNow provides a platform that facilitates municipal bill payments and administration. The Service enables:
+              MuniNow provides a platform that facilitates municipal service management and payments. The Service enables:
             </p>
             <ul className="list-disc pl-6 mb-4">
-              <li>Residents to view and pay municipal bills electronically.</li>
-              <li>Municipalities to manage payments, reconcile accounts, and administer billing systems.</li>
+              <li>Residents to access and pay for municipal services electronically.</li>
+              <li>Municipalities to manage payments, reconcile accounts, and administer service systems.</li>
               <li>Integration with municipal information technology systems for data exchange and processing.</li>
               <li>Payment processing and transaction management through secure channels.</li>
             </ul>

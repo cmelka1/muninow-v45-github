@@ -21,7 +21,7 @@ const LiabilityDisclaimerSection: React.FC = () => {
         We do not warrant or guarantee:
       </p>
       <ul className="list-disc pl-6 mb-4">
-        <li>The accuracy of municipal bill information provided through the Service</li>
+        <li>The accuracy of municipal service information provided through the Service</li>
         <li>The availability or functionality of municipal systems or services</li>
         <li>That payments will be credited immediately or in any specific timeframe</li>
         <li>That municipalities will accept or process payments as expected</li>

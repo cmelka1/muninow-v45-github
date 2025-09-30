@@ -57,7 +57,7 @@ const Taxes = () => {
           <div className="p-8">
             <header className="mb-8">
               <h1 className="text-3xl font-bold text-foreground mb-2">Taxes</h1>
-              <p className="text-muted-foreground">Manage and pay your tax bills</p>
+              <p className="text-muted-foreground">Manage and pay your tax submissions</p>
             </header>
 
             <TaxSubmissionsFilter 

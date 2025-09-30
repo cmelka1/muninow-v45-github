@@ -41,7 +41,7 @@ export const getPageMetadata = (page: string): SEOMetadata => {
     home: {
       title: "MuniNow – Streamlining Municipal Payments",
       description: "MuniNow simplifies local government payments with a fast, secure, and unified platform",
-      keywords: "municipal bill pay, city bills, utility payments, autopay, bill management, local government payments, online bill pay, municipal services",
+      keywords: "municipal payments, city services, permits, licenses, taxes, local government payments, online municipal services, municipal management",
       canonical: "https://muninow.com/"
     },
     features: {
@@ -51,15 +51,15 @@ export const getPageMetadata = (page: string): SEOMetadata => {
       canonical: "https://muninow.com/features"
     },
     municipalities: {
-      title: "MuniNow for Municipalities - Streamline Municipal Bill Collection",
-      description: "Comprehensive platform for municipalities to modernize payment processes, reduce administrative overhead, and improve resident satisfaction with automated billing and reconciliation.",
-      keywords: "municipal bill collection, municipal payment processing, government billing software, municipal administration, automated billing, payment reconciliation",
+      title: "MuniNow for Municipalities - Streamline Municipal Services",
+      description: "Comprehensive platform for municipalities to modernize payment processes, reduce administrative overhead, and improve resident satisfaction with automated service management and reconciliation.",
+      keywords: "municipal services, municipal payment processing, government services software, municipal administration, automated services, payment reconciliation",
       canonical: "https://muninow.com/municipalities"
     },
     residents: {
-      title: "MuniNow for Residents - Easy Municipal Bill Pay",
-      description: "Residents can pay all municipal bills in one place. View water, electric, gas, tax, and other city bills on a single dashboard. Set up autopay and never miss a payment.",
-      keywords: "resident bill pay, municipal bills for residents, city bill payment, water bill pay, electric bill pay, property tax payment",
+      title: "MuniNow for Residents - Easy Municipal Services",
+      description: "Residents can access all municipal services in one place. Manage permits, licenses, taxes, and payments on a single dashboard. Set up autopay and never miss a payment.",
+      keywords: "resident services, municipal services for residents, city services, permits, licenses, property tax payment, municipal payments",
       canonical: "https://muninow.com/residents"
     },
     about: {

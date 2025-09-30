@@ -67,7 +67,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ isMobile }) => {
           <div className="bg-card p-2 rounded-xl shadow-lg border">
             <OptimizedImage
               src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
-              alt="MuniNow Dashboard showing simplified municipal bill payment interface"
+              alt="MuniNow Dashboard showing simplified municipal services interface"
               width={800}
               height={550}
               className="w-full rounded-lg shadow-md"

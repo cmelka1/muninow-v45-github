@@ -11,7 +11,7 @@ const CommunicationConsentSection: React.FC = () => {
       <ul className="list-disc pl-6 mb-4">
         <li>Account verification codes and security notifications</li>
         <li>Payment confirmations and receipts</li>
-        <li>Bill due date reminders and payment alerts</li>
+        <li>Service due date reminders and payment alerts</li>
         <li>Service updates and maintenance notifications</li>
         <li>Account security alerts and fraud prevention messages</li>
         <li>Customer service communications related to your account</li>

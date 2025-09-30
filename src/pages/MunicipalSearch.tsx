@@ -51,7 +51,7 @@ const MunicipalSearch = () => {
           Municipal Search
         </h1>
         <p className="text-muted-foreground">
-          Search for residents and businesses with outstanding bills
+          Search for residents and businesses with municipal service records
         </p>
       </div>
 

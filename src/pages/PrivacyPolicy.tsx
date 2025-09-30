@@ -36,7 +36,7 @@ const PrivacyPolicy: React.FC = () => {
 
             <PrivacyPolicySection title="1. Introduction">
               <p className="mb-4">
-                Muni Now, Inc. ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our municipal bill payment platform (the "Service").
+                Muni Now, Inc. ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our municipal services platform (the "Service").
               </p>
               <p>
                 Please read this Privacy Policy carefully. By accessing or using the Service, you acknowledge that you have read, understood, and agree to be bound by all the terms of this Privacy Policy. If you do not agree with our policies and practices, please do not use our Service.

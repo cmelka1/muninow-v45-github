@@ -112,22 +112,22 @@ const SuperAdminDashboard = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Water Bill Payment</p>
-                    <p className="text-sm text-muted-foreground">Springfield Water Dept</p>
+                    <p className="font-medium">Building Permit Payment</p>
+                    <p className="text-sm text-muted-foreground">Springfield Building Dept</p>
                   </div>
                   <span className="text-sm font-bold">$156.25</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Electric Bill Payment</p>
-                    <p className="text-sm text-muted-foreground">Metro Electric</p>
+                    <p className="font-medium">Business License Payment</p>
+                    <p className="text-sm text-muted-foreground">Metro Licensing</p>
                   </div>
                   <span className="text-sm font-bold">$387.50</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Gas Bill Payment</p>
-                    <p className="text-sm text-muted-foreground">City Gas Works</p>
+                    <p className="font-medium">Tax Submission Payment</p>
+                    <p className="text-sm text-muted-foreground">City Tax Office</p>
                   </div>
                   <span className="text-sm font-bold">$245.80</span>
                 </div>
