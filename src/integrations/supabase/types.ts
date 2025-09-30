@@ -2595,7 +2595,6 @@ export type Database = {
       refunds: {
         Row: {
           bank_last_four: string | null
-          bill_id: string
           card_brand: string | null
           card_last_four: string | null
           category: string | null
@@ -2626,7 +2625,6 @@ export type Database = {
         }
         Insert: {
           bank_last_four?: string | null
-          bill_id: string
           card_brand?: string | null
           card_last_four?: string | null
           category?: string | null
@@ -2657,7 +2655,6 @@ export type Database = {
         }
         Update: {
           bank_last_four?: string | null
-          bill_id?: string
           card_brand?: string | null
           card_last_four?: string | null
           category?: string | null

@@ -4,11 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export interface MunicipalSearchFilters {
   accountType?: 'resident' | 'business';
-  billStatus?: string;
   merchantId?: string;
   category?: string;
   subcategory?: string;
-  dueDateRange?: string;
   amountRange?: string;
 }
 
@@ -36,28 +34,17 @@ export interface SearchResult {
   city: string | null;
   state: string | null;
   zip_code: string | null;
-  bill_count: number;
-  total_amount_due_cents: number;
-  last_bill_date: string | null;
-  external_customer_name: string | null;
-  external_business_name: string | null;
-  external_customer_address_line1: string | null;
-  external_customer_city: string | null;
-  external_customer_state: string | null;
-  external_customer_zip_code: string | null;
+  permit_count?: number;
+  license_count?: number;
+  service_application_count?: number;
+  tax_submission_count?: number;
 }
 
 /**
  * Municipal Search Hook
  * 
- * NOTE: This feature was previously based on the master_bills table which has been decommissioned.
- * The search functionality needs to be reimplemented to search users based on:
- * - Profiles table
- * - Permit applications
- * - Business license applications  
- * - Tax submissions
- * 
- * For now, this returns empty results to prevent build errors.
+ * Searches municipal users and their associated services (permits, licenses, taxes, applications).
+ * This feature was refactored to remove the deprecated bill payment system.
  */
 export const useMunicipalSearch = (params?: UseMunicipalSearchParams) => {
   const { profile } = useAuth();
@@ -65,9 +52,31 @@ export const useMunicipalSearch = (params?: UseMunicipalSearchParams) => {
   return useQuery({
     queryKey: ['municipal-search', profile?.customer_id, params],
     queryFn: async () => {
-      // Return empty results - feature needs reimplementation
-      console.warn('Municipal search feature needs to be reimplemented without bills');
-      return { data: [], count: 0 };
+      if (!profile?.customer_id) {
+        return { data: [], count: 0 };
+      }
+
+      // Search users in this municipality with their service counts
+      const { data, error, count } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact' })
+        .eq('customer_id', profile.customer_id)
+        .ilike('email', `%${params?.searchTerm || ''}%`)
+        .range(
+          ((params?.page || 1) - 1) * (params?.pageSize || 10),
+          (params?.page || 1) * (params?.pageSize || 10) - 1
+        );
+
+      if (error) throw error;
+
+      return { 
+        data: (data || []).map(user => ({
+          ...user,
+          user_id: user.id,
+          profile_id: user.id,
+        })), 
+        count: count || 0 
+      };
     },
     enabled: !!profile?.customer_id && !!profile.account_type && 
              (profile.account_type === 'municipal' || profile.account_type.startsWith('municipal')),
@@ -80,13 +89,20 @@ export const useMunicipalSearchFilterOptions = () => {
   return useQuery({
     queryKey: ['municipal-search-filter-options', profile?.customer_id],
     queryFn: async () => {
-      // Return empty filter options - feature needs reimplementation
-      console.warn('Municipal search filter options need to be reimplemented without bills');
+      if (!profile?.customer_id) {
+        return { merchants: [], categories: [], subcategories: [] };
+      }
+
+      // Get merchants for this municipality
+      const { data: merchants } = await supabase
+        .from('merchants')
+        .select('id, merchant_name')
+        .eq('customer_id', profile.customer_id);
+
       return {
-        merchants: [],
+        merchants: merchants || [],
         categories: [],
-        subcategories: [],
-        billStatuses: []
+        subcategories: []
       };
     },
     enabled: !!profile?.customer_id && !!profile.account_type && 

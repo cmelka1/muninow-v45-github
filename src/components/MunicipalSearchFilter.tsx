@@ -67,7 +67,7 @@ const MunicipalSearchFilter: React.FC<MunicipalSearchFilterProps> = ({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {/* Account Type Filter */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Account Type</label>
@@ -86,45 +86,7 @@ const MunicipalSearchFilter: React.FC<MunicipalSearchFilterProps> = ({
             </Select>
           </div>
 
-          {/* Bill Status Filter */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Bill Status</label>
-            <Select value={filters.billStatus || 'all'} onValueChange={(value) => updateFilter('billStatus', value)}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                {isLoading ? (
-                  <SelectItem value="loading" disabled>Loading...</SelectItem>
-                ) : (
-                  (filterOptions?.billStatuses || []).map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Due Date Filter */}
-          <div className="hidden sm:block space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Due Date</label>
-            <Select value={filters.dueDateRange || 'all'} onValueChange={(value) => updateFilter('dueDateRange', value)}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Due Date" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Time</SelectItem>
-                {dueDateOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Removed bill-specific filters - feature decommissioned */}
 
           {/* Merchant Filter */}
           <div className="hidden sm:block space-y-2">

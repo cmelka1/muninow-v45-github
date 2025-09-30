@@ -78,11 +78,11 @@ const MunicipalSearchTable: React.FC<MunicipalSearchTableProps> = ({
 
   const getDisplayName = (user: SearchResult) => {
     if (user.account_type === 'business') {
-      return user.business_legal_name || user.external_business_name || 'Unknown Business';
+      return user.business_legal_name || 'Unknown Business';
     }
     
     const name = `${user.first_name || ''} ${user.last_name || ''}`.trim();
-    return name || user.external_customer_name || 'Unknown User';
+    return name || 'Unknown User';
   };
 
   const handleRowClick = (user: SearchResult) => {
@@ -162,9 +162,8 @@ const MunicipalSearchTable: React.FC<MunicipalSearchTableProps> = ({
                 <TableHead>Name/Business</TableHead>
                 <TableHead className="hidden sm:table-cell text-center">Type</TableHead>
                 <TableHead className="hidden md:table-cell">Address</TableHead>
-                <TableHead className="text-center">Bills</TableHead>
-                <TableHead className="text-center">Total Due</TableHead>
-                <TableHead className="hidden sm:table-cell text-center">Last Bill</TableHead>
+                <TableHead className="text-center">Email</TableHead>
+                <TableHead className="hidden sm:table-cell text-center">Phone</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -195,13 +194,10 @@ const MunicipalSearchTable: React.FC<MunicipalSearchTableProps> = ({
                     </div>
                   </TableCell>
                   <TableCell className="text-center py-3">
-                    <div className="font-medium">{user.bill_count}</div>
-                  </TableCell>
-                  <TableCell className="text-center font-medium py-3">
-                    {formatAmount(user.total_amount_due_cents / 100)}
+                    <div className="text-sm">{user.email || 'N/A'}</div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-center py-3">
-                    <div className="text-sm">{formatDate(user.last_bill_date)}</div>
+                    <div className="text-sm">{user.phone || 'N/A'}</div>
                   </TableCell>
                 </TableRow>
               ))}

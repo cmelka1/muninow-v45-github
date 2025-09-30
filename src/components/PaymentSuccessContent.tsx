@@ -6,23 +6,42 @@ import { formatCurrency, formatDate } from '@/lib/formatters';
 
 interface PaymentSuccessContentProps {
   paymentResult: any;
-  bill: any;
   serviceFee: any;
   selectedPaymentMethod: string | null;
+  entityType: 'permit' | 'license' | 'tax' | 'service';
+  entityData: any;
   onClose: () => void;
   onViewFullReceipt: () => void;
 }
 
 const PaymentSuccessContent: React.FC<PaymentSuccessContentProps> = ({
   paymentResult,
-  bill,
   serviceFee,
   selectedPaymentMethod,
+  entityType,
+  entityData,
   onClose,
   onViewFullReceipt
 }) => {
-  const baseAmount = bill?.total_amount_cents || 0;
+  const baseAmount = entityData?.total_amount_cents || entityData?.amount_cents || 0;
   const totalWithFee = baseAmount + (serviceFee?.totalFee || 0);
+
+  const getEntityLabel = () => {
+    switch (entityType) {
+      case 'permit': return 'Permit Application';
+      case 'license': return 'Business License';
+      case 'tax': return 'Tax Submission';
+      case 'service': return 'Service Application';
+      default: return 'Payment';
+    }
+  };
+
+  const getEntityNumber = () => {
+    return entityData?.permit_number || 
+           entityData?.license_number || 
+           entityData?.application_number || 
+           'N/A';
+  };
 
   const getPaymentMethodDisplay = () => {
     if (paymentResult?.payment_type === 'PAYMENT_CARD' && paymentResult?.card_brand && paymentResult?.card_last_four) {
@@ -64,18 +83,13 @@ const PaymentSuccessContent: React.FC<PaymentSuccessContentProps> = ({
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Merchant</span>
-              <span className="text-sm font-medium">{bill?.merchant_name || 'N/A'}</span>
+              <span className="text-sm text-muted-foreground">Type</span>
+              <span className="text-sm font-medium">{getEntityLabel()}</span>
             </div>
             
             <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Bill Number</span>
-              <span className="text-sm font-medium">{bill?.external_bill_number || 'N/A'}</span>
-            </div>
-            
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Due Date</span>
-              <span className="text-sm font-medium">{formatDate(bill?.due_date)}</span>
+              <span className="text-sm text-muted-foreground">Number</span>
+              <span className="text-sm font-medium">{getEntityNumber()}</span>
             </div>
             
             <div className="flex justify-between">

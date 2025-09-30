@@ -217,7 +217,6 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
                   console.error('Google Pay error in button:', error);
                 }
               }}
-              bill={{ id: entityId, name: entityName }}
               totalAmount={totalWithFee}
               merchantId={googlePayMerchantId || ''}
               isDisabled={!googlePayMerchantId || isProcessingPayment}

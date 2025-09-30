@@ -63,16 +63,17 @@ const ReportBuilder = ({ children }: ReportBuilderProps) => {
   const reportMetrics = [
     { id: 'total-revenue', label: 'Total Revenue', category: 'Revenue Metrics' },
     { id: 'collection-rate', label: 'Collection Rate', category: 'Revenue Metrics' },
-    { id: 'outstanding-bills', label: 'Outstanding Bills', category: 'Revenue Metrics' },
-    { id: 'bills-by-status', label: 'Bills by Status', category: 'Bill Analytics' },
-    { id: 'payment-methods', label: 'Payment Methods', category: 'Bill Analytics' },
-    { id: 'bill-types', label: 'Bill Types Distribution', category: 'Bill Analytics' },
+    { id: 'permits-issued', label: 'Permits Issued', category: 'Service Metrics' },
+    { id: 'licenses-issued', label: 'Business Licenses Issued', category: 'Service Metrics' },
+    { id: 'applications-by-status', label: 'Applications by Status', category: 'Service Analytics' },
+    { id: 'payment-methods', label: 'Payment Methods', category: 'Service Analytics' },
+    { id: 'service-types', label: 'Service Types Distribution', category: 'Service Analytics' },
     { id: 'department-performance', label: 'Department Performance', category: 'Department Analytics' },
     { id: 'growth-rates', label: 'Growth Rates', category: 'Department Analytics' },
     { id: 'monthly-trends', label: 'Monthly Revenue Trends', category: 'Financial Trends' },
     { id: 'seasonal-patterns', label: 'Seasonal Patterns', category: 'Financial Trends' },
     { id: 'online-adoption', label: 'Online Payment Adoption', category: 'Citizen Engagement' },
-    { id: 'processing-times', label: 'Processing Times', category: 'System Performance' },
+    { id: 'processing-times', label: 'Application Processing Times', category: 'System Performance' },
   ];
 
   const suggestedRecipients = [
@@ -140,26 +141,37 @@ const ReportBuilder = ({ children }: ReportBuilderProps) => {
             outstanding: `$${(3000 - i * 200).toLocaleString()}`
           }))
         };
-      case 'outstanding-bills':
+      case 'permits-issued':
         return {
-          title: 'Outstanding Bills',
+          title: 'Permits Issued',
           type: 'table',
           data: [
-            { department: 'Utilities', count: 156, amount: '$45,230' },
-            { department: 'Property Tax', count: 89, amount: '$125,400' },
-            { department: 'Permits', count: 34, amount: '$8,750' },
-            { department: 'Parking', count: 203, amount: '$15,600' }
+            { department: 'Building Permits', count: 156, amount: '$245,230' },
+            { department: 'Electrical Permits', count: 89, amount: '$95,400' },
+            { department: 'Plumbing Permits', count: 134, amount: '$128,750' },
+            { department: 'Mechanical Permits', count: 203, amount: '$175,600' }
           ]
         };
-      case 'bills-by-status':
+      case 'licenses-issued':
         return {
-          title: 'Bills by Status',
+          title: 'Business Licenses Issued',
           type: 'table',
           data: [
-            { status: 'Paid', count: 1250, percentage: '78%' },
-            { status: 'Pending', count: 234, percentage: '15%' },
-            { status: 'Overdue', count: 89, percentage: '5%' },
-            { status: 'Disputed', count: 32, percentage: '2%' }
+            { type: 'Restaurant', count: 45, amount: '$67,500' },
+            { type: 'Retail', count: 78, amount: '$58,500' },
+            { type: 'Professional Services', count: 123, amount: '$92,250' },
+            { type: 'Home Business', count: 234, amount: '$35,100' }
+          ]
+        };
+      case 'applications-by-status':
+        return {
+          title: 'Applications by Status',
+          type: 'table',
+          data: [
+            { status: 'Approved', count: 1250, percentage: '68%' },
+            { status: 'Under Review', count: 234, percentage: '13%' },
+            { status: 'Pending Documents', count: 189, percentage: '10%' },
+            { status: 'Draft', count: 162, percentage: '9%' }
           ]
         };
       case 'payment-methods':
@@ -197,13 +209,13 @@ const ReportBuilder = ({ children }: ReportBuilderProps) => {
         };
       case 'processing-times':
         return {
-          title: 'Processing Times',
+          title: 'Application Processing Times',
           type: 'table',
           data: [
-            { metric: 'Average Payment Processing', time: '2.3 minutes' },
-            { metric: 'Bill Generation Time', time: '45 seconds' },
-            { metric: 'Dispute Resolution', time: '3.2 days' },
-            { metric: 'Refund Processing', time: '1.8 days' }
+            { metric: 'Average Permit Review', time: '5.2 days' },
+            { metric: 'License Application Review', time: '3.8 days' },
+            { metric: 'Service Application Processing', time: '2.1 days' },
+            { metric: 'Payment Processing', time: '2.3 minutes' }
           ]
         };
       default:

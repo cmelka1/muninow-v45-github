@@ -3,7 +3,6 @@ import { Loader2 } from 'lucide-react';
 
 interface GooglePayButtonProps {
   onPayment: () => Promise<void>;
-  bill: any;
   totalAmount: number;
   merchantId?: string;
   isDisabled?: boolean;
@@ -12,7 +11,6 @@ interface GooglePayButtonProps {
 
 const GooglePayButton: React.FC<GooglePayButtonProps> = ({
   onPayment,
-  bill,
   totalAmount,
   merchantId,
   isDisabled = false,
