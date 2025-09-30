@@ -27,14 +27,10 @@ interface RefundDialogProps {
   onOpenChange: (open: boolean) => void;
   paymentDetails: {
     id: string;
-    bill_id?: string;
     base_amount_cents?: number;
     total_amount_cents: number;
     finix_transfer_id: string;
     user_id: string;
-    master_bills?: {
-      external_bill_number: string;
-    };
   };
   onRefundCreated: () => void;
 }
@@ -118,19 +114,19 @@ export const RefundDialog: React.FC<RefundDialogProps> = ({
       if (status === 'unpaid') {
         toast({
           title: "Refund Submitted Successfully",
-          description: `Refund request for ${paymentDetails.master_bills?.external_bill_number || 'transaction'} has been submitted and is being processed. You will be notified when the refund is completed.`,
+          description: `Refund request has been submitted and is being processed. You will be notified when the refund is completed.`,
           variant: "default"
         });
       } else if (status === 'succeeded') {
         toast({
           title: "Refund Completed",
-          description: `Refund for ${paymentDetails.master_bills?.external_bill_number || 'transaction'} has been successfully processed.`,
+          description: `Refund has been successfully processed.`,
           variant: "default"
         });
       } else {
         toast({
           title: "Refund Initiated",
-          description: `Refund request for ${paymentDetails.master_bills?.external_bill_number || 'transaction'} has been processed: ${parsedData.message}`,
+          description: `Refund request has been processed: ${parsedData.message}`,
           variant: "default"
         });
       }
@@ -168,7 +164,7 @@ export const RefundDialog: React.FC<RefundDialogProps> = ({
             Process Refund
           </DialogTitle>
           <DialogDescription>
-            Create a refund request for bill {paymentDetails.master_bills?.external_bill_number || 'N/A'}
+            Create a refund request for this transaction
           </DialogDescription>
         </DialogHeader>
         

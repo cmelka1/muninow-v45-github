@@ -1869,7 +1869,6 @@ export type Database = {
         Row: {
           bank_last_four: string | null
           base_amount_cents: number
-          bill_id: string | null
           business_license_id: string | null
           card_brand: string | null
           card_last_four: string | null
@@ -1900,7 +1899,6 @@ export type Database = {
         Insert: {
           bank_last_four?: string | null
           base_amount_cents: number
-          bill_id?: string | null
           business_license_id?: string | null
           card_brand?: string | null
           card_last_four?: string | null
@@ -1931,7 +1929,6 @@ export type Database = {
         Update: {
           bank_last_four?: string | null
           base_amount_cents?: number
-          bill_id?: string | null
           business_license_id?: string | null
           card_brand?: string | null
           card_last_four?: string | null

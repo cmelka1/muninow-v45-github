@@ -8,45 +8,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { usePermit } from '@/hooks/usePermit';
 import { usePermitNotifications } from '@/hooks/usePermitNotifications';
-import { usePaymentMethods } from '@/hooks/usePaymentMethods';
-import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 import { getStatusDisplayName, getStatusDescription, PermitStatus } from '@/hooks/usePermitWorkflow';
-import PaymentButtonsContainer from '@/components/PaymentButtonsContainer';
-import PaymentMethodSelector from '@/components/PaymentMethodSelector';
-import PaymentSummary from '@/components/PaymentSummary';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 
 const PermitOverview = () => {
   const { permitId } = useParams<{ permitId: string }>();
   const navigate = useNavigate();
-  const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
   
   const { data: permit, isLoading, error } = usePermit(permitId!);
   const { notifications } = usePermitNotifications();
-  
-  // Create a bill-like object for payment methods hook
-  const billLikeObject = permit ? {
-    bill_id: permit.permit_id,
-    total_amount_cents: permit.total_amount_cents,
-    merchant_finix_identity_id: permit.finix_merchant_id,
-    finix_merchant_id: permit.finix_merchant_id,
-  } : null;
-  
-  const {
-    selectedPaymentMethod,
-    setSelectedPaymentMethod,
-    isProcessingPayment,
-    serviceFee,
-    totalWithFee,
-    topPaymentMethods,
-    paymentMethodsLoading,
-    googlePayMerchantId,
-    handlePayment,
-    handleGooglePayment,
-    handleApplePayment,
-    loadPaymentInstruments,
-  } = usePaymentMethods(billLikeObject);
 
   const formatDate = (date: string | null) => {
     if (!date) return 'N/A';
@@ -61,35 +32,6 @@ const PermitOverview = () => {
     }).format(cents / 100);
   };
 
-  // Check if payment is available (only when approved)
-  const isPaymentAvailable = permit?.application_status === 'approved' && permit?.total_amount_cents > 0;
-
-  const handlePaymentSuccess = async (result: any) => {
-    if (result?.success && result?.redirect_url) {
-      navigate(result.redirect_url);
-    }
-  };
-
-  const handleRegularPayment = async () => {
-    const result = await handlePayment();
-    if (result) {
-      await handlePaymentSuccess(result);
-    }
-  };
-
-  const handleGooglePaymentWrapper = async () => {
-    const result = await handleGooglePayment();
-    if (result) {
-      await handlePaymentSuccess(result);
-    }
-  };
-
-  const handleApplePaymentWrapper = async () => {
-    const result = await handleApplePayment();
-    if (result) {
-      await handlePaymentSuccess(result);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -337,16 +279,16 @@ const PermitOverview = () => {
             </Card>
           </div>
 
-          {/* Right Column - Payment Section */}
+          {/* Right Column - Permit Information Summary */}
           <div className="lg:col-span-4">
             <Card className="h-fit">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5" />
-                  Payment
+                  Permit Fees
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4">
                 {/* Permit Summary Section */}
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold">Permit Summary</h3>
@@ -357,116 +299,41 @@ const PermitOverview = () => {
                   </div>
                 </div>
 
-                {/* Payment Status */}
-                {!isPaymentAvailable && (
-                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-5 w-5 text-yellow-600" />
-                      <p className="text-sm font-medium text-yellow-800">Payment Not Available</p>
-                    </div>
-                    <p className="text-sm text-yellow-700 mt-2">
-                      {permit.application_status === 'approved' 
-                        ? 'No payment required for this permit.'
-                        : 'Payment will be available once the permit is approved.'}
-                    </p>
-                  </div>
-                )}
-
-                {/* Payment Section - Only show if payment is available */}
-                {isPaymentAvailable && (
+                {/* Fee Information */}
+                {permit?.total_amount_cents > 0 && (
                   <>
-                    {/* Separator */}
                     <div className="border-t border-border"></div>
-
-                    {/* Payment Method Selection */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold">Payment Method</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Permit Fee</span>
+                        <span className="text-base font-medium">{formatCurrency(permit.total_amount_cents)}</span>
                       </div>
-
-                      <PaymentMethodSelector
-                        paymentInstruments={topPaymentMethods}
-                        selectedPaymentMethod={selectedPaymentMethod}
-                        onSelectPaymentMethod={setSelectedPaymentMethod}
-                        isLoading={paymentMethodsLoading}
-                        maxMethods={3}
-                      />
-
-                      {/* Payment Options */}
-                      {permit?.finix_merchant_id && googlePayMerchantId && (
-                        <PaymentButtonsContainer
-                          bill={billLikeObject}
-                          totalAmount={totalWithFee}
-                          merchantId={googlePayMerchantId}
-                          isDisabled={isProcessingPayment}
-                          onGooglePayment={handleGooglePaymentWrapper}
-                          onApplePayment={handleApplePaymentWrapper}
-                        />
+                      {permit.payment_status === 'paid' && (
+                        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded">
+                          <span className="text-sm font-medium text-green-700">Payment Completed</span>
+                        </div>
+                      )}
+                      {permit.payment_status === 'unpaid' && permit.application_status === 'approved' && (
+                        <div className="flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded">
+                          <Clock className="h-4 w-4 text-orange-600" />
+                          <span className="text-sm font-medium text-orange-700">Payment Required</span>
+                        </div>
                       )}
                     </div>
-
-                    {/* Payment Details */}
-                    {permit.total_amount_cents > 0 && (
-                      <>
-                        <div className="border-t border-border"></div>
-                        <div className="space-y-3">
-                          <h3 className="text-lg font-semibold">Payment Details</h3>
-                          <PaymentSummary
-                            baseAmount={permit.total_amount_cents}
-                            selectedPaymentMethod={selectedPaymentMethod}
-                          />
-                        </div>
-                      </>
-                    )}
-
-                    {/* Separator */}
-                    <div className="border-t border-border"></div>
-
-                    {/* Pay Now Section */}
-                    <div className="space-y-3">
-                      <Button 
-                        className="w-full" 
-                        size="lg"
-                        disabled={!selectedPaymentMethod || isProcessingPayment || selectedPaymentMethod === 'google-pay' || selectedPaymentMethod === 'apple-pay'}
-                        onClick={handleRegularPayment}
-                      >
-                        {isProcessingPayment ? 'Processing...' : 
-                         selectedPaymentMethod === 'google-pay' ? 'Use Google Pay button above' : 
-                         selectedPaymentMethod === 'apple-pay' ? 'Use Apple Pay button above' :
-                         `Pay ${formatCurrency(totalWithFee)}`}
-                      </Button>
-                     
-                      <Button 
-                        variant="outline" 
-                        className="w-full" 
-                        size="lg"
-                        onClick={() => setIsAddPaymentDialogOpen(true)}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add New Payment Method
-                      </Button>
-                      <p className="text-xs text-muted-foreground text-center">
-                        Your payment will be processed securely
-                      </p>
-                    </div>
                   </>
+                )}
+
+                {/* No Fee Message */}
+                {!permit?.total_amount_cents && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-700">No fee required for this permit.</p>
+                  </div>
                 )}
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
-      
-      <AddPaymentMethodDialog
-        open={isAddPaymentDialogOpen}
-        onOpenChange={setIsAddPaymentDialogOpen}
-        onSuccess={async (paymentMethodId) => {
-          await loadPaymentInstruments();
-          if (paymentMethodId) {
-            setSelectedPaymentMethod(paymentMethodId);
-          }
-        }}
-      />
     </div>
   );
 };

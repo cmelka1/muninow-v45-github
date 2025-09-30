@@ -5,7 +5,6 @@ import { CreditCard, Plus, Loader2 } from 'lucide-react';
 import { InlinePaymentSummary } from './InlinePaymentSummary';
 import PaymentMethodSelector from '@/components/PaymentMethodSelector';
 import GooglePayButton from '@/components/GooglePayButton';
-import ApplePayButton from '@/components/ApplePayButton';
 import { useUnifiedPaymentFlow, EntityType } from '@/hooks/useUnifiedPaymentFlow';
 import { PaymentResponse } from '@/types/payment';
 import { formatCurrency } from '@/lib/formatters';
@@ -208,8 +207,8 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
         />
 
         {/* Digital Payment Options */}
-        <div className={`flex gap-2 ${isGooglePayAvailable && isApplePayAvailable ? '' : 'justify-center'}`}>
-          <div className={isApplePayAvailable ? "flex-1" : "w-full"}>
+        <div className="flex justify-center">
+          <div className="w-full">
             <GooglePayButton
               onPayment={async () => {
                 try {
@@ -223,19 +222,6 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
               merchantId={googlePayMerchantId || ''}
               isDisabled={!googlePayMerchantId || isProcessingPayment}
               onAvailabilityChange={setIsGooglePayAvailable}
-            />
-          </div>
-          <div className={isGooglePayAvailable ? "flex-1" : "w-full max-w-sm"}>
-            <ApplePayButton
-              bill={{ id: entityId, name: entityName }}
-              totalAmount={totalWithFee}
-              isDisabled={isProcessingPayment}
-              onPaymentComplete={async (success: boolean, error?: string) => {
-                if (success) {
-                  await handleApplePayment();
-                }
-              }}
-              onAvailabilityChange={setIsApplePayAvailable}
             />
           </div>
         </div>

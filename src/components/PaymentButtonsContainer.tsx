@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import GooglePayButton from './GooglePayButton';
-import ApplePayButton from './ApplePayButton';
 
 interface PaymentButtonsContainerProps {
   bill: any;

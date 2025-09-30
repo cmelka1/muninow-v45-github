@@ -13,7 +13,6 @@ import { RefundDialog } from '@/components/RefundDialog';
 
 interface PaymentTransactionDetails {
   id: string;
-  bill_id?: string;
   finix_transfer_id: string;
   base_amount_cents: number;
   service_fee_cents: number;
@@ -26,12 +25,10 @@ interface PaymentTransactionDetails {
   card_brand?: string;
   card_last_four?: string;
   bank_last_four?: string;
-  master_bills?: {
-    merchant_name: string;
-    external_bill_number: string;
-    category: string;
-    due_date: string;
-  };
+  permit_id?: string;
+  business_license_id?: string;
+  service_application_id?: string;
+  tax_submission_id?: string;
 }
 
 const PaymentConfirmation = () => {
@@ -134,7 +131,7 @@ const PaymentConfirmation = () => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Payment Confirmation - ${paymentDetails.master_bills.external_bill_number}</title>
+          <title>Payment Confirmation - ${paymentDetails.finix_transfer_id}</title>
           <style>
             body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.5; }
             .header { text-align: center; margin-bottom: 30px; }
@@ -156,10 +153,6 @@ const PaymentConfirmation = () => {
           <div class="section">
             <h2>Payment Details</h2>
             <div class="grid">
-              <div><div class="label">Bill From</div><div class="value">${paymentDetails.master_bills?.merchant_name || 'N/A'}</div></div>
-              <div><div class="label">Bill Number</div><div class="value">${paymentDetails.master_bills?.external_bill_number || 'N/A'}</div></div>
-              <div><div class="label">Category</div><div class="value">${paymentDetails.master_bills?.category || 'N/A'}</div></div>
-              <div><div class="label">Due Date</div><div class="value">${paymentDetails.master_bills?.due_date ? formatDate(paymentDetails.master_bills.due_date) : 'N/A'}</div></div>
               <div><div class="label">Payment Method</div><div class="value">${getPaymentMethodDisplay()}</div></div>
               <div><div class="label">Transaction ID</div><div class="value" style="font-family: monospace; font-size: 11px;">${paymentDetails.finix_transfer_id}</div></div>
             </div>
@@ -169,7 +162,7 @@ const PaymentConfirmation = () => {
             <h2>Amount Breakdown</h2>
             <div style="margin-bottom: 10px;">
               <div style="display: flex; justify-content: space-between; padding: 8px 0;">
-                <span>Bill Amount</span>
+                <span>Base Amount</span>
                 <span>${formatCurrency(paymentDetails.base_amount_cents)}</span>
               </div>
               <div style="display: flex; justify-content: space-between; padding: 8px 0;">
@@ -339,22 +332,6 @@ const PaymentConfirmation = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Bill From</label>
-                <p className="text-base">{paymentDetails.master_bills?.merchant_name || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Bill Number</label>
-                <p className="text-base">{paymentDetails.master_bills?.external_bill_number || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Category</label>
-                <p className="text-base">{paymentDetails.master_bills?.category || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Due Date</label>
-                <p className="text-base">{paymentDetails.master_bills?.due_date ? formatDate(paymentDetails.master_bills.due_date) : 'N/A'}</p>
-              </div>
-              <div>
                 <label className="text-sm font-medium text-muted-foreground">Payment Method</label>
                 <p className="text-base">{getPaymentMethodDisplay()}</p>
               </div>
@@ -380,7 +357,7 @@ const PaymentConfirmation = () => {
           <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2">
-                <span className="text-base">Bill Amount</span>
+                <span className="text-base">Base Amount</span>
                 <span className="text-base">{formatCurrency(paymentDetails.base_amount_cents)}</span>
               </div>
               <div className="flex justify-between items-center py-2">
