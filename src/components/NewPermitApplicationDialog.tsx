@@ -737,11 +737,6 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     setUploadedDocuments(prev => prev.filter(doc => doc.id !== documentId));
   };
 
-  const handleDocumentTypeChange = (documentId: string, documentType: string) => {
-    setUploadedDocuments(prev => prev.map(doc => 
-      doc.id === documentId ? { ...doc, documentType } : doc
-    ));
-  };
 
   const handleDocumentDescriptionChange = (documentId: string, description: string) => {
     setUploadedDocuments(prev => prev.map(doc => 
@@ -1419,22 +1414,6 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Select
-                              defaultValue={doc.documentType}
-                              onValueChange={(value) => handleDocumentTypeChange(doc.id, value)}
-                            >
-                              <SelectTrigger className="w-32 h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="general">General</SelectItem>
-                                <SelectItem value="plans">Plans</SelectItem>
-                                <SelectItem value="specifications">Specifications</SelectItem>
-                                <SelectItem value="inspection">Inspection</SelectItem>
-                                <SelectItem value="survey">Survey</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
                             <Button
                               variant="ghost"
                               size="sm"
