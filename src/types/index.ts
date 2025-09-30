@@ -29,7 +29,7 @@ export interface MunicipalService {
 
 export interface ApplePayButtonProps {
   onPayment: () => Promise<void>;
-  bill: any;
+  paymentDetails: any;
   totalAmount: number;
   isDisabled?: boolean;
 }

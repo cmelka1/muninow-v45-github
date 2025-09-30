@@ -41,13 +41,13 @@ export const getPageMetadata = (page: string): SEOMetadata => {
     home: {
       title: "MuniNow – Streamlining Municipal Payments",
       description: "MuniNow simplifies local government payments with a fast, secure, and unified platform",
-      keywords: "municipal payments, city services, permits, licenses, taxes, local government payments, online municipal services, municipal management",
+      keywords: "municipal payments, city services, permits, licenses, taxes, local government payments, online municipal services, municipal management, payment automation",
       canonical: "https://muninow.com/"
     },
     features: {
       title: "MuniNow Features - Complete Municipal Payment Solution",
       description: "Explore MuniNow's powerful features including secure payments, automated reminders, detailed analytics, and seamless municipal integrations for enhanced efficiency.",
-      keywords: "muninow features, municipal payment features, secure payments, bill automation, payment analytics, municipal software, payment processing",
+      keywords: "muninow features, municipal payment features, secure payments, payment automation, payment analytics, municipal software, payment processing",
       canonical: "https://muninow.com/features"
     },
     municipalities: {

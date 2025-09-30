@@ -8,7 +8,7 @@ import { Bell, Mail, Smartphone, FileText, DollarSign, Edit2, Save, X } from 'lu
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
-// Feature flag removed - paperless billing is part of legacy bill system
+// Simplified notification preferences - legacy bill system removed
 
 interface NotificationPreferences {
   serviceUpdates: {

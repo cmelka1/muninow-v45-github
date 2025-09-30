@@ -44,7 +44,7 @@ export interface SearchResult {
  * Municipal Search Hook
  * 
  * Searches municipal users and their associated services (permits, licenses, taxes, applications).
- * This feature was refactored to remove the deprecated bill payment system.
+ * Legacy bill payment system has been fully removed from the platform.
  */
 export const useMunicipalSearch = (params?: UseMunicipalSearchParams) => {
   const { profile } = useAuth();

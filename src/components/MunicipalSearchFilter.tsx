@@ -86,7 +86,7 @@ const MunicipalSearchFilter: React.FC<MunicipalSearchFilterProps> = ({
             </Select>
           </div>
 
-          {/* Removed bill-specific filters - feature decommissioned */}
+          {/* Service-focused filters only - legacy bill system removed */}
 
           {/* Merchant Filter */}
           <div className="hidden sm:block space-y-2">

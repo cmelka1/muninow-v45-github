@@ -6,15 +6,15 @@ export const createSampleNotifications = async (userId: string) => {
       user_id: userId,
       notification_type: 'payment',
       title: 'Payment Successful',
-      message: 'Your payment of $125.00 for water bill has been processed successfully.',
+      message: 'Your payment of $125.00 for water service has been processed successfully.',
       action_url: '/payment-history',
       is_read: false
     },
     {
       user_id: userId,
-      notification_type: 'bill',
-      title: 'New Bill Available',
-      message: 'Your January water and sewer bill is now available for payment.',
+      notification_type: 'service',
+      title: 'Service Update Available',
+      message: 'Your January water and sewer service statement is now available.',
       action_url: '/dashboard',
       is_read: false
     },
