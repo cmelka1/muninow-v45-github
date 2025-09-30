@@ -87,15 +87,6 @@ export const useUserPaymentHistory = (params: UseUserPaymentHistoryParams) => {
           serviceName = tax?.tax_type?.includes('_') 
             ? tax.tax_type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
             : tax?.tax_type || 'Tax Submission';
-        } else if (transaction.bill_id) {
-          // For bills, get merchant info for service type
-          const { data: merchant } = await supabase
-            .from('merchants')
-            .select('subcategory')
-            .eq('id', transaction.merchant_id)
-            .single();
-          serviceType = 'Bill';
-          serviceName = merchant?.subcategory || 'Bill Payment';
         }
 
         return { serviceType, serviceName };

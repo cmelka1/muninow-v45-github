@@ -12,7 +12,7 @@ export const useServiceTypeOptions = () => {
 
       const { data: transactions, error } = await supabase
         .from('payment_transactions')
-        .select('permit_id, business_license_id, service_application_id, tax_submission_id, bill_id')
+        .select('permit_id, business_license_id, service_application_id, tax_submission_id')
         .eq('user_id', user.id);
 
       if (error) {
@@ -34,8 +34,6 @@ export const useServiceTypeOptions = () => {
           serviceTypes.add('Service');
         } else if (transaction.tax_submission_id) {
           serviceTypes.add('Tax');
-        } else if (transaction.bill_id) {
-          serviceTypes.add('Bill');
         }
       });
 
@@ -55,7 +53,7 @@ export const useCategoryOptions = () => {
 
       const { data: transactions, error } = await supabase
         .from('payment_transactions')
-        .select('permit_id, business_license_id, service_application_id, tax_submission_id, bill_id, merchant_id')
+        .select('permit_id, business_license_id, service_application_id, tax_submission_id')
         .eq('user_id', user.id);
 
       if (error) {
@@ -110,13 +108,6 @@ export const useCategoryOptions = () => {
               : tax.tax_type;
             categories.add(formattedTaxType);
           }
-        } else if (transaction.bill_id && transaction.merchant_id) {
-          const { data: merchant } = await supabase
-            .from('merchants')
-            .select('subcategory')
-            .eq('id', transaction.merchant_id)
-            .single();
-          if (merchant?.subcategory) categories.add(merchant.subcategory);
         }
       }
 
