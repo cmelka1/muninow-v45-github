@@ -9,20 +9,48 @@ interface ApplicationsBreakdown {
   serviceApplications: number;
 }
 
-export const useMunicipalApplications = (customerId: string | undefined) => {
+export type Period = "this_month" | "last_30_days" | "last_3_months" | "last_6_months" | "this_year";
+
+const getPeriodDates = (period: Period) => {
+  const now = new Date();
+  let startDate: Date;
+  let endDate: Date = new Date();
+
+  switch (period) {
+    case "this_month":
+      startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0));
+      endDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999));
+      break;
+    case "last_30_days":
+      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      break;
+    case "last_3_months":
+      startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      break;
+    case "last_6_months":
+      startDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+      break;
+    case "this_year":
+      startDate = new Date(Date.UTC(now.getFullYear(), 0, 1, 0, 0, 0, 0));
+      endDate = new Date(Date.UTC(now.getFullYear(), 11, 31, 23, 59, 59, 999));
+      break;
+    default:
+      startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0));
+      endDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999));
+  }
+
+  return { startDate: startDate.toISOString(), endDate: endDate.toISOString() };
+};
+
+export const useMunicipalApplications = (customerId: string | undefined, period: Period = "this_month") => {
   return useQuery({
-    queryKey: ["municipal-applications", customerId],
+    queryKey: ["municipal-applications", customerId, period],
     queryFn: async (): Promise<ApplicationsBreakdown> => {
       if (!customerId) {
         throw new Error("Customer ID is required");
       }
 
-      // Get current month boundaries in UTC for date filtering
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth();
-      const monthStart = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0)).toISOString();
-      const monthEnd = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999)).toISOString();
+      const { startDate: monthStart, endDate: monthEnd } = getPeriodDates(period);
 
       // Get all building permits submitted this month (exclude draft)
       const { count: permitsCount, error: permitsError } = await supabase
