@@ -14,7 +14,7 @@ export type Period = "this_month" | "last_30_days" | "last_3_months" | "last_6_m
 const getPeriodDates = (period: Period) => {
   const now = new Date();
   let startDate: Date;
-  let endDate: Date = new Date();
+  let endDate: Date = new Date(); // Current moment
 
   switch (period) {
     case "this_month":
@@ -22,13 +22,24 @@ const getPeriodDates = (period: Period) => {
       endDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999));
       break;
     case "last_30_days":
-      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      // Calculate 30 days ago from start of today
+      const thirtyDaysAgo = new Date(now);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      startDate = new Date(Date.UTC(thirtyDaysAgo.getFullYear(), thirtyDaysAgo.getMonth(), thirtyDaysAgo.getDate(), 0, 0, 0, 0));
+      // End date is now (current moment)
+      endDate = now;
       break;
     case "last_3_months":
-      startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      const threeMonthsAgo = new Date(now);
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      startDate = new Date(Date.UTC(threeMonthsAgo.getFullYear(), threeMonthsAgo.getMonth(), threeMonthsAgo.getDate(), 0, 0, 0, 0));
+      endDate = now;
       break;
     case "last_6_months":
-      startDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+      const sixMonthsAgo = new Date(now);
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      startDate = new Date(Date.UTC(sixMonthsAgo.getFullYear(), sixMonthsAgo.getMonth(), sixMonthsAgo.getDate(), 0, 0, 0, 0));
+      endDate = now;
       break;
     case "this_year":
       startDate = new Date(Date.UTC(now.getFullYear(), 0, 1, 0, 0, 0, 0));
@@ -39,7 +50,9 @@ const getPeriodDates = (period: Period) => {
       endDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999));
   }
 
-  return { startDate: startDate.toISOString(), endDate: endDate.toISOString() };
+  const dates = { startDate: startDate.toISOString(), endDate: endDate.toISOString() };
+  console.log('[useMunicipalRevenue] Period:', period, 'Dates:', dates);
+  return dates;
 };
 
 export const useMunicipalRevenue = (customerId: string | undefined, period: Period = "this_month") => {
@@ -62,7 +75,11 @@ export const useMunicipalRevenue = (customerId: string | undefined, period: Peri
         .lte("created_at", monthEnd);
 
       if (error) throw error;
+      
+      console.log('[useMunicipalRevenue] Found transactions:', transactions?.length || 0);
+      
       if (!transactions || transactions.length === 0) {
+        console.log('[useMunicipalRevenue] No transactions found for period');
         return {
           monthlyBaseAmount: 0,
           monthlyServiceFees: 0,
@@ -130,6 +147,8 @@ export const useMunicipalRevenue = (customerId: string | undefined, period: Peri
         return true;
       });
 
+      console.log('[useMunicipalRevenue] Valid transactions after filtering drafts:', validTransactions.length);
+
       // Calculate totals
       const monthlyBaseAmount = validTransactions.reduce(
         (sum, tx) => sum + (tx.base_amount_cents || 0),
@@ -157,6 +176,13 @@ export const useMunicipalRevenue = (customerId: string | undefined, period: Peri
       const dailyRevenue = Array.from(dailyRevenueMap.entries())
         .map(([date, amount]) => ({ date, amount }))
         .sort((a, b) => a.date.localeCompare(b.date));
+
+      console.log('[useMunicipalRevenue] Final calculations:', {
+        monthlyBaseAmount,
+        monthlyServiceFees,
+        monthlyTotal,
+        transactionCount: validTransactions.length
+      });
 
       return {
         monthlyBaseAmount,
