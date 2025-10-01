@@ -65,14 +65,14 @@ export const useMunicipalRevenue = (customerId: string | undefined, period: Peri
 
       const { startDate: monthStart, endDate: monthEnd } = getPeriodDates(period);
 
-      // Get all paid transactions for this customer in current month
+      // Get all paid/completed transactions for this customer in the period
       const { data: transactions, error } = await supabase
         .from("payment_transactions")
-        .select("id, base_amount_cents, service_fee_cents, total_amount_cents, created_at, permit_id, business_license_id, service_application_id, tax_submission_id")
+        .select("id, base_amount_cents, service_fee_cents, total_amount_cents, updated_at, permit_id, business_license_id, service_application_id, tax_submission_id")
         .eq("customer_id", customerId)
-        .eq("payment_status", "paid")
-        .gte("created_at", monthStart)
-        .lte("created_at", monthEnd);
+        .in("payment_status", ["paid", "completed"])
+        .gte("updated_at", monthStart)
+        .lte("updated_at", monthEnd);
 
       if (error) throw error;
       
@@ -165,10 +165,10 @@ export const useMunicipalRevenue = (customerId: string | undefined, period: Peri
         0
       ) / 100;
 
-      // Group by day for daily revenue chart
+      // Group by day for daily revenue chart using updated_at
       const dailyRevenueMap = new Map<string, number>();
       validTransactions.forEach(tx => {
-        const date = new Date(tx.created_at).toISOString().split("T")[0];
+        const date = new Date(tx.updated_at).toISOString().split("T")[0];
         const current = dailyRevenueMap.get(date) || 0;
         dailyRevenueMap.set(date, current + (tx.base_amount_cents || 0) / 100);
       });
