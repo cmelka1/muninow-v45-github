@@ -16,7 +16,7 @@ import { Navigate } from "react-router-dom";
 
 const MunicipalDashboard = () => {
   const [showReportBuilder, setShowReportBuilder] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>("this_month");
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>("last_7_days");
   const { profile } = useAuth();
 
   // Check if user has municipal access
@@ -36,12 +36,12 @@ const MunicipalDashboard = () => {
 
   const getPeriodLabel = (period: Period) => {
     switch (period) {
-      case "this_month": return "This Month";
+      case "last_7_days": return "Last 7 Days";
       case "last_30_days": return "Last 30 Days";
       case "last_3_months": return "Last 3 Months";
       case "last_6_months": return "Last 6 Months";
       case "this_year": return "This Year";
-      default: return "This Month";
+      default: return "Last 7 Days";
     }
   };
 
@@ -111,7 +111,7 @@ const MunicipalDashboard = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="this_month">This Month</SelectItem>
+              <SelectItem value="last_7_days">Last 7 Days</SelectItem>
               <SelectItem value="last_30_days">Last 30 Days</SelectItem>
               <SelectItem value="last_3_months">Last 3 Months</SelectItem>
               <SelectItem value="last_6_months">Last 6 Months</SelectItem>

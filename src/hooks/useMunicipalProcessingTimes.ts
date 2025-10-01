@@ -8,7 +8,7 @@ interface ProcessingTimes {
   serviceApplications: number;
 }
 
-export type Period = "this_month" | "last_30_days" | "last_3_months" | "last_6_months" | "this_year";
+export type Period = "last_7_days" | "last_30_days" | "last_3_months" | "last_6_months" | "this_year";
 
 const getPeriodDates = (period: Period) => {
   const now = new Date();
@@ -16,9 +16,8 @@ const getPeriodDates = (period: Period) => {
   let endDate: Date = new Date();
 
   switch (period) {
-    case "this_month":
-      startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0));
-      endDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999));
+    case "last_7_days":
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       break;
     case "last_30_days":
       startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -34,14 +33,13 @@ const getPeriodDates = (period: Period) => {
       endDate = new Date(Date.UTC(now.getFullYear(), 11, 31, 23, 59, 59, 999));
       break;
     default:
-      startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0));
-      endDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999));
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   }
 
   return { startDate: startDate.toISOString(), endDate: endDate.toISOString() };
 };
 
-export const useMunicipalProcessingTimes = (customerId: string | undefined, period: Period = "this_month") => {
+export const useMunicipalProcessingTimes = (customerId: string | undefined, period: Period = "last_7_days") => {
   return useQuery({
     queryKey: ["municipal-processing-times", customerId, period],
     queryFn: async (): Promise<ProcessingTimes> => {

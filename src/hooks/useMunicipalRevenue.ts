@@ -9,7 +9,7 @@ interface RevenueData {
   dailyRevenue: { date: string; amount: number }[];
 }
 
-export type Period = "this_month" | "last_30_days" | "last_3_months" | "last_6_months" | "this_year";
+export type Period = "last_7_days" | "last_30_days" | "last_3_months" | "last_6_months" | "this_year";
 
 const getPeriodDates = (period: Period) => {
   const now = new Date();
@@ -17,9 +17,8 @@ const getPeriodDates = (period: Period) => {
   let endDate: Date = new Date(); // Current moment
 
   switch (period) {
-    case "this_month":
-      startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0));
-      endDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999));
+    case "last_7_days":
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       break;
     case "last_30_days":
       // Calculate 30 days ago from start of today
@@ -46,8 +45,7 @@ const getPeriodDates = (period: Period) => {
       endDate = new Date(Date.UTC(now.getFullYear(), 11, 31, 23, 59, 59, 999));
       break;
     default:
-      startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0));
-      endDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999));
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   }
 
   const dates = { startDate: startDate.toISOString(), endDate: endDate.toISOString() };
@@ -55,7 +53,7 @@ const getPeriodDates = (period: Period) => {
   return dates;
 };
 
-export const useMunicipalRevenue = (customerId: string | undefined, period: Period = "this_month") => {
+export const useMunicipalRevenue = (customerId: string | undefined, period: Period = "last_7_days") => {
   return useQuery({
     queryKey: ["municipal-revenue", customerId, period],
     queryFn: async (): Promise<RevenueData> => {
