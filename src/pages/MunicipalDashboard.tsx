@@ -1,481 +1,312 @@
-import React, { useState } from 'react';
-import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useUserProfile } from '@/hooks/useUserProfile';
-import { useMunicipalStatusBreakdown } from '@/hooks/useMunicipalStatusBreakdown';
-import { useMunicipalTrendData } from '@/hooks/useMunicipalTrendData';
-import { useMunicipalStaffMetrics } from '@/hooks/useMunicipalStaffMetrics';
-import { useMunicipalCitizenEngagement } from '@/hooks/useMunicipalCitizenEngagement';
-import { useMunicipalRevenue } from '@/hooks/useMunicipalRevenue';
-import { 
-  BarChart, 
-  Bar, 
-  LineChart, 
-  Line, 
-  AreaChart, 
-  Area,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts';
-import { 
-  TrendingUp, 
-  Users, 
-  Clock, 
-  DollarSign, 
-  FileText,
-  AlertTriangle,
-  CheckCircle,
-  UserCheck,
-  Activity
-} from 'lucide-react';
-
-const COLORS = {
-  primary: 'hsl(var(--primary))',
-  secondary: 'hsl(var(--secondary))',
-  success: 'hsl(142, 76%, 36%)',
-  warning: 'hsl(38, 92%, 50%)',
-  danger: 'hsl(0, 84%, 60%)',
-  info: 'hsl(221, 83%, 53%)',
-  muted: 'hsl(var(--muted-foreground))',
-};
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { FileText, TrendingUp, Activity, DollarSign, FileCheck, Clock, FileBarChart } from "lucide-react";
+import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import ReportBuilder from "@/components/ReportBuilder";
+import { useState } from "react";
+import { useAuth } from "@/contexts/SimpleAuthContext";
+import { useMunicipalApplications } from "@/hooks/useMunicipalApplications";
+import { useMunicipalProcessingTimes } from "@/hooks/useMunicipalProcessingTimes";
+import { useMunicipalRevenue } from "@/hooks/useMunicipalRevenue";
+import { Navigate } from "react-router-dom";
 
 const MunicipalDashboard = () => {
-  const { data: userProfile } = useUserProfile();
-  const customerId = userProfile?.customer_id;
+  const [showReportBuilder, setShowReportBuilder] = useState(false);
+  const { profile } = useAuth();
 
-  const { data: statusBreakdown, isLoading: statusLoading } = useMunicipalStatusBreakdown(customerId);
-  const { data: trendData, isLoading: trendLoading } = useMunicipalTrendData(customerId, 12);
-  const { data: staffMetrics, isLoading: staffLoading } = useMunicipalStaffMetrics(customerId);
-  const { data: citizenEngagement, isLoading: citizenLoading } = useMunicipalCitizenEngagement(customerId);
-  const { data: revenueData, isLoading: revenueLoading } = useMunicipalRevenue(customerId);
+  // Check if user has municipal access
+  if (!profile?.account_type || !["municipal", "municipaladmin", "municipaluser"].includes(profile.account_type)) {
+    return <Navigate to="/signin" replace />;
+  }
 
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | '12m'>('30d');
+  const customerId = profile.customer_id;
 
-  const isLoading = statusLoading || trendLoading || staffLoading || citizenLoading || revenueLoading;
+  // Fetch real-time municipal data
+  const { data: applications, isLoading: applicationsLoading } = useMunicipalApplications(customerId);
+  const { data: processingTimes, isLoading: processingLoading } = useMunicipalProcessingTimes(customerId);
+  const { data: revenue, isLoading: revenueLoading } = useMunicipalRevenue(customerId);
+
+  const isLoading = applicationsLoading || processingLoading || revenueLoading;
+
+  // Prepare chart data
+  const applicationsBreakdownData = applications ? [
+    { name: "Building Permits", value: applications.buildingPermits, color: "hsl(var(--chart-1))" },
+    { name: "Business Licenses", value: applications.businessLicenses, color: "hsl(var(--chart-2))" },
+    { name: "Business Taxes", value: applications.businessTaxes, color: "hsl(var(--chart-3))" },
+    { name: "Other Services", value: applications.serviceApplications, color: "hsl(var(--chart-4))" },
+  ].filter(item => item.value > 0) : [];
+
+  const processingTimeData = processingTimes ? [
+    { service: "Building Permits", days: processingTimes.buildingPermits },
+    { service: "Business Licenses", days: processingTimes.businessLicenses },
+    { service: "Service Apps", days: processingTimes.serviceApplications },
+  ].filter(item => item.days > 0) : [];
+
+  const chartConfig = {
+    buildingPermits: {
+      label: "Building Permits",
+      color: "hsl(var(--chart-1))",
+    },
+    businessLicenses: {
+      label: "Business Licenses",
+      color: "hsl(var(--chart-2))",
+    },
+    businessTaxes: {
+      label: "Business Taxes",
+      color: "hsl(var(--chart-3))",
+    },
+    serviceApplications: {
+      label: "Other Services",
+      color: "hsl(var(--chart-4))",
+    },
+    days: {
+      label: "Days",
+      color: "hsl(var(--chart-5))",
+    },
+    amount: {
+      label: "Revenue",
+      color: "hsl(var(--primary))",
+    },
+  };
 
   if (isLoading) {
     return (
-      <MunicipalLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading dashboard...</p>
-          </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Activity className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading dashboard data...</p>
         </div>
-      </MunicipalLayout>
+      </div>
     );
   }
 
-  // Calculate KPIs
-  const totalApplicationsYTD = 
-    (statusBreakdown?.permits.submitted || 0) +
-    (statusBreakdown?.permits.under_review || 0) +
-    (statusBreakdown?.permits.approved || 0) +
-    (statusBreakdown?.permits.issued || 0) +
-    (statusBreakdown?.licenses.submitted || 0) +
-    (statusBreakdown?.licenses.under_review || 0) +
-    (statusBreakdown?.licenses.approved || 0) +
-    (statusBreakdown?.licenses.issued || 0) +
-    (statusBreakdown?.taxes.submitted || 0) +
-    (statusBreakdown?.taxes.under_review || 0) +
-    (statusBreakdown?.taxes.approved || 0) +
-    (statusBreakdown?.services.submitted || 0) +
-    (statusBreakdown?.services.under_review || 0) +
-    (statusBreakdown?.services.approved || 0);
-
-  const monthlyRevenue = revenueData?.monthlyTotal || 0;
-  const avgProcessingTime = 5.2;
-  const activeCitizens = citizenEngagement?.totalActiveUsers || 0;
-
-  // Status pipeline data
-  const statusPipelineData = [
-    { name: 'Submitted', value: (statusBreakdown?.permits.submitted || 0) + (statusBreakdown?.licenses.submitted || 0) + (statusBreakdown?.services.submitted || 0), fill: COLORS.info },
-    { name: 'Under Review', value: (statusBreakdown?.permits.under_review || 0) + (statusBreakdown?.licenses.under_review || 0) + (statusBreakdown?.services.under_review || 0), fill: COLORS.warning },
-    { name: 'Info Requested', value: (statusBreakdown?.permits.information_requested || 0) + (statusBreakdown?.licenses.information_requested || 0) + (statusBreakdown?.services.information_requested || 0), fill: COLORS.muted },
-    { name: 'Approved', value: (statusBreakdown?.permits.approved || 0) + (statusBreakdown?.licenses.approved || 0) + (statusBreakdown?.services.approved || 0), fill: COLORS.success },
-    { name: 'Issued', value: (statusBreakdown?.permits.issued || 0) + (statusBreakdown?.licenses.issued || 0), fill: COLORS.primary },
-  ];
-
-  // Service type breakdown
-  const serviceBreakdownData = [
-    { name: 'Permits', value: Object.values(statusBreakdown?.permits || {}).reduce((a, b) => a + b, 0), fill: COLORS.primary },
-    { name: 'Licenses', value: Object.values(statusBreakdown?.licenses || {}).reduce((a, b) => a + b, 0), fill: COLORS.secondary },
-    { name: 'Taxes', value: Object.values(statusBreakdown?.taxes || {}).reduce((a, b) => a + b, 0), fill: COLORS.success },
-    { name: 'Services', value: Object.values(statusBreakdown?.services || {}).reduce((a, b) => a + b, 0), fill: COLORS.info },
-  ];
-
   return (
-    <MunicipalLayout>
-      <div className="p-6 space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Municipal Dashboard</h1>
-            <p className="text-muted-foreground mt-1">
-              Real-time insights and operational metrics
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Municipal Dashboard</h1>
+          <p className="text-muted-foreground">Real-time insights for your municipality</p>
+        </div>
+        <ReportBuilder>
+          <Button variant="outline" className="flex items-center gap-2">
+            <FileBarChart className="h-4 w-4" />
+            Create Report
+          </Button>
+        </ReportBuilder>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Applications This Month</CardTitle>
+            <FileCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{applications?.total || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Submitted across all services
             </p>
-          </div>
-          <div className="flex gap-2">
-            <select 
-              value={timeRange} 
-              onChange={(e) => setTimeRange(e.target.value as any)}
-              className="px-4 py-2 border rounded-md bg-background"
-            >
-              <option value="7d">Last 7 days</option>
-              <option value="30d">Last 30 days</option>
-              <option value="90d">Last 90 days</option>
-              <option value="12m">Last 12 months</option>
-            </select>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Executive KPIs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalApplicationsYTD.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground mt-1">Year to date</p>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Average Processing Time</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{processingTimes?.overall || 0} days</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Across all application types
+            </p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${(monthlyRevenue / 100).toLocaleString()}</div>
-              <p className="text-xs text-success mt-1">+{revenueData?.transactionCount || 0} transactions</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Processing Time</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{avgProcessingTime.toFixed(1)} days</div>
-              <p className="text-xs text-muted-foreground mt-1">Target: 7 days</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Citizens</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{activeCitizens.toLocaleString()}</div>
-              <p className="text-xs text-success mt-1">+{citizenEngagement?.newUsersThisMonth || 0} this month</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Review Queue</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-warning" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{staffMetrics?.reviewQueue.total || 0}</div>
-              <p className="text-xs text-muted-foreground mt-1">{staffMetrics?.totalStaff || 0} staff members</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="applications">Applications</TabsTrigger>
-            <TabsTrigger value="revenue">Revenue</TabsTrigger>
-            <TabsTrigger value="staff">Staff & Workload</TabsTrigger>
-            <TabsTrigger value="citizens">Citizen Engagement</TabsTrigger>
-          </TabsList>
-
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Status Pipeline */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5" />
-                    Application Pipeline
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={statusPipelineData} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis dataKey="name" type="category" width={120} />
-                      <Tooltip />
-                      <Bar dataKey="value" fill={COLORS.primary} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              {/* Service Type Distribution */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Service Type Distribution</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={serviceBreakdownData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {serviceBreakdownData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ${revenue?.monthlyBaseAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0.00"}
             </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {revenue?.transactionCount || 0} transactions this month
+            </p>
+          </CardContent>
+        </Card>
 
-            {/* Monthly Trends */}
-            <Card>
-              <CardHeader>
-                <CardTitle>12-Month Application Trend</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={trendData?.monthlyApplications || []}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Area type="monotone" dataKey="permits" stackId="1" stroke={COLORS.primary} fill={COLORS.primary} fillOpacity={0.6} />
-                    <Area type="monotone" dataKey="licenses" stackId="1" stroke={COLORS.secondary} fill={COLORS.secondary} fillOpacity={0.6} />
-                    <Area type="monotone" dataKey="taxes" stackId="1" stroke={COLORS.success} fill={COLORS.success} fillOpacity={0.6} />
-                    <Area type="monotone" dataKey="services" stackId="1" stroke={COLORS.info} fill={COLORS.info} fillOpacity={0.6} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Applications Tab */}
-          <TabsContent value="applications" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Building Permits</CardTitle>
-                  <FileText className="h-4 w-4 text-primary" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {Object.values(statusBreakdown?.permits || {}).reduce((a, b) => a + b, 0)}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-2 space-y-1">
-                    <div className="flex justify-between">
-                      <span>Pending:</span>
-                      <span className="font-medium">{(statusBreakdown?.permits.submitted || 0) + (statusBreakdown?.permits.under_review || 0)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Approved:</span>
-                      <span className="font-medium text-success">{statusBreakdown?.permits.approved || 0}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Business Licenses</CardTitle>
-                  <FileText className="h-4 w-4 text-secondary" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {Object.values(statusBreakdown?.licenses || {}).reduce((a, b) => a + b, 0)}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-2 space-y-1">
-                    <div className="flex justify-between">
-                      <span>Pending:</span>
-                      <span className="font-medium">{(statusBreakdown?.licenses.submitted || 0) + (statusBreakdown?.licenses.under_review || 0)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Approved:</span>
-                      <span className="font-medium text-success">{statusBreakdown?.licenses.approved || 0}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Tax Submissions</CardTitle>
-                  <FileText className="h-4 w-4 text-success" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {Object.values(statusBreakdown?.taxes || {}).reduce((a, b) => a + b, 0)}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-2 space-y-1">
-                    <div className="flex justify-between">
-                      <span>Pending:</span>
-                      <span className="font-medium">{(statusBreakdown?.taxes.submitted || 0) + (statusBreakdown?.taxes.under_review || 0)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Approved:</span>
-                      <span className="font-medium text-success">{statusBreakdown?.taxes.approved || 0}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Other Services</CardTitle>
-                  <FileText className="h-4 w-4 text-info" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {Object.values(statusBreakdown?.services || {}).reduce((a, b) => a + b, 0)}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-2 space-y-1">
-                    <div className="flex justify-between">
-                      <span>Pending:</span>
-                      <span className="font-medium">{(statusBreakdown?.services.submitted || 0) + (statusBreakdown?.services.under_review || 0)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Approved:</span>
-                      <span className="font-medium text-success">{statusBreakdown?.services.approved || 0}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Service Fee Revenue</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ${revenue?.monthlyServiceFees.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0.00"}
             </div>
-          </TabsContent>
+            <p className="text-xs text-muted-foreground mt-1">
+              Platform fees collected
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
-          {/* Revenue Tab */}
-          <TabsContent value="revenue" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Monthly Revenue Trend</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <LineChart data={trendData?.monthlyRevenue || []}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
-                    <Legend />
-                    <Line type="monotone" dataKey="revenue" stroke={COLORS.success} strokeWidth={2} name="Revenue ($)" />
-                  </LineChart>
+      {/* Charts Section */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Applications by Service Type</CardTitle>
+            <CardDescription>Submitted applications this month</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {applicationsBreakdownData.length > 0 ? (
+              <ChartContainer config={chartConfig} className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={applicationsBreakdownData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, value }) => `${name}: ${value}`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {applicationsBreakdownData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                  </PieChart>
                 </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </ChartContainer>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                No applications this month
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Staff Tab */}
-          <TabsContent value="staff" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Staff Workload Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={staffMetrics?.staffWorkload || []}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Processing Efficiency</CardTitle>
+            <CardDescription>Average days by service type</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {processingTimeData.length > 0 ? (
+              <ChartContainer config={chartConfig} className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={processingTimeData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="staffName" />
+                    <XAxis dataKey="service" />
                     <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="assignedCount" fill={COLORS.warning} name="Assigned" />
-                    <Bar dataKey="completedThisMonth" fill={COLORS.success} name="Completed This Month" />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="days" fill="hsl(var(--chart-5))" name="Days" />
                   </BarChart>
                 </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Citizens Tab */}
-          <TabsContent value="citizens" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">New Users This Month</CardTitle>
-                  <UserCheck className="h-4 w-4 text-success" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{citizenEngagement?.newUsersThisMonth || 0}</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-                  <CheckCircle className="h-4 w-4 text-success" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{citizenEngagement?.applicationCompletionRate || 0}%</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Communication Activity</CardTitle>
-                  <Activity className="h-4 w-4 text-info" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{citizenEngagement?.communicationActivity.comments || 0}</div>
-                  <p className="text-xs text-muted-foreground mt-1">Comments this month</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Top Users by Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {citizenEngagement?.topUsers.map((user, index) => (
-                    <div key={user.userId} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
-                          {index + 1}
-                        </div>
-                        <span className="font-medium">{user.userName}</span>
-                      </div>
-                      <span className="text-sm text-muted-foreground">{user.applicationCount} applications</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              </ChartContainer>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                No processing data available
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
-    </MunicipalLayout>
+
+      {/* Daily Revenue Trend */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Daily Revenue Trend</CardTitle>
+          <CardDescription>Revenue for current month</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {revenue && revenue.dailyRevenue.length > 0 ? (
+            <ChartContainer config={chartConfig} className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenue.dailyRevenue}>
+                  <defs>
+                    <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="date" 
+                    tickFormatter={(date) => new Date(date).getDate().toString()}
+                  />
+                  <YAxis />
+                  <ChartTooltip 
+                    content={<ChartTooltipContent />}
+                    labelFormatter={(date) => new Date(date).toLocaleDateString()}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="amount"
+                    stroke="hsl(var(--primary))"
+                    fillOpacity={1}
+                    fill="url(#colorAmount)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              No revenue data for this month
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Summary Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Summary</CardTitle>
+          <CardDescription>Key metrics overview</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Total Applications</span>
+            <span className="font-medium">{applications?.total || 0}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Building Permits</span>
+            <span className="font-medium">{applications?.buildingPermits || 0}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Business Licenses</span>
+            <span className="font-medium">{applications?.businessLicenses || 0}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Business Taxes</span>
+            <span className="font-medium">{applications?.businessTaxes || 0}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Other Services</span>
+            <span className="font-medium">{applications?.serviceApplications || 0}</span>
+          </div>
+          <div className="flex items-center justify-between pt-4 border-t">
+            <span className="text-sm text-muted-foreground">Average Processing</span>
+            <span className="font-medium">{processingTimes?.overall || 0} days</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Monthly Revenue</span>
+            <span className="font-medium">
+              ${revenue?.monthlyBaseAmount.toLocaleString("en-US", { minimumFractionDigits: 2 }) || "0.00"}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
