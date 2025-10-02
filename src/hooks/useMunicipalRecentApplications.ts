@@ -7,7 +7,6 @@ export interface RecentPermit {
   permit_number: string;
   submitted_at: string | null;
   applicant_full_name: string;
-  applicant_email: string | null;
   permit_type: string;
   merchant_name: string | null;
   base_fee_cents: number;
@@ -22,8 +21,6 @@ export interface RecentBusinessLicense {
   business_legal_name: string;
   owner_first_name: string;
   owner_last_name: string;
-  business_email: string | null;
-  owner_email: string | null;
   business_type: string;
   merchant_name: string | null;
   base_fee_cents: number;
@@ -37,7 +34,6 @@ export interface RecentTaxSubmission {
   payer_business_name: string | null;
   first_name: string | null;
   last_name: string | null;
-  email: string | null;
   user_id: string;
   tax_type: string;
   merchant_name: string | null;
@@ -51,7 +47,6 @@ export interface RecentServiceApplication {
   application_number: string | null;
   submitted_at: string | null;
   applicant_name: string | null;
-  applicant_email: string | null;
   business_legal_name: string | null;
   user_id: string;
   service_name: string | null;
@@ -76,7 +71,6 @@ export const useMunicipalRecentApplications = () => {
           permit_number,
           submitted_at,
           applicant_full_name,
-          applicant_email,
           permit_type,
           merchant_name,
           payment_amount_cents,
@@ -94,7 +88,6 @@ export const useMunicipalRecentApplications = () => {
         permit_number: item.permit_number || '',
         submitted_at: item.submitted_at,
         applicant_full_name: item.applicant_full_name || '',
-        applicant_email: item.applicant_email,
         permit_type: item.permit_type || '',
         merchant_name: item.merchant_name,
         base_fee_cents: item.payment_amount_cents || 0,
@@ -119,8 +112,6 @@ export const useMunicipalRecentApplications = () => {
           business_legal_name,
           owner_first_name,
           owner_last_name,
-          business_email,
-          owner_email,
           business_type,
           merchant_name,
           base_fee_cents,
@@ -151,7 +142,6 @@ export const useMunicipalRecentApplications = () => {
           payer_business_name,
           first_name,
           last_name,
-          email,
           user_id,
           tax_type,
           merchant_name,
@@ -182,7 +172,6 @@ export const useMunicipalRecentApplications = () => {
           application_number,
           submitted_at,
           applicant_name,
-          applicant_email,
           business_legal_name,
           user_id,
           service_name,

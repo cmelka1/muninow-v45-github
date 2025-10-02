@@ -10,17 +10,20 @@ export const TaxSubmissionStatusBadge = ({ status, className }: TaxSubmissionSta
     switch (status) {
       case 'draft':
         return {
-          className: 'bg-muted text-muted-foreground hover:bg-muted',
+          variant: 'secondary' as const,
+          className: 'bg-gray-100 text-gray-800 hover:bg-gray-100',
           label: 'Draft'
         };
       case 'submitted':
         return {
-          className: 'bg-blue-100 text-blue-700 hover:bg-blue-100',
+          variant: 'default' as const,
+          className: 'bg-blue-100 text-blue-800 hover:bg-blue-100',
           label: 'Submitted'
         };
       default:
         return {
-          className: 'bg-muted text-muted-foreground hover:bg-muted',
+          variant: 'outline' as const,
+          className: 'bg-gray-50 text-gray-600 hover:bg-gray-50',
           label: status
         };
     }
@@ -30,6 +33,7 @@ export const TaxSubmissionStatusBadge = ({ status, className }: TaxSubmissionSta
 
   return (
     <Badge 
+      variant={config.variant} 
       className={`${config.className} ${className || ''}`}
     >
       {config.label}

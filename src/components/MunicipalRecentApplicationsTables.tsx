@@ -13,16 +13,16 @@ import { Badge } from '@/components/ui/badge';
 
 const PaymentStatusBadge = ({ status }: { status: string | null }) => {
   if (!status) {
-    return <Badge className="bg-muted text-muted-foreground hover:bg-muted">N/A</Badge>;
+    return <Badge variant="secondary" className="bg-gray-100 text-gray-800">N/A</Badge>;
   }
   
   const config = status === 'paid' 
-    ? { className: 'bg-green-500 text-white hover:bg-green-500', label: 'Paid' }
+    ? { className: 'bg-green-100 text-green-800', label: 'Paid' }
     : status === 'pending'
-    ? { className: 'bg-yellow-500 text-white hover:bg-yellow-500', label: 'Pending' }
-    : { className: 'bg-red-500 text-white hover:bg-red-500', label: 'Unpaid' };
+    ? { className: 'bg-yellow-100 text-yellow-800', label: 'Pending' }
+    : { className: 'bg-red-100 text-red-800', label: 'Unpaid' };
     
-  return <Badge className={config.className}>{config.label}</Badge>;
+  return <Badge variant="outline" className={config.className}>{config.label}</Badge>;
 };
 
 export const MunicipalRecentApplicationsTables = () => {
@@ -59,37 +59,30 @@ export const MunicipalRecentApplicationsTables = () => {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/30 hover:bg-muted/30">
-                  <TableHead className="text-xs font-normal text-muted-foreground">Date</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">User/Business</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">Service Type</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">Category</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">Status</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">Payment</TableHead>
+                <TableRow>
+                  <TableHead>Date Submitted</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead className="text-center">Payment Amount</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Payment Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {permits.map((permit) => (
                   <TableRow 
                     key={permit.id}
-                    className="cursor-pointer hover:bg-muted/30 border-b border-border/40"
+                    className="cursor-pointer hover:bg-muted/50"
                     onClick={() => navigate(`/municipal/permits/${permit.id}`)}
                   >
-                    <TableCell className="text-sm">{formatDate(permit.submitted_at)}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-medium">{permit.applicant_full_name}</span>
-                        {permit.applicant_email && (
-                          <span className="text-xs text-muted-foreground">{permit.applicant_email}</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm">Permit</TableCell>
-                    <TableCell className="text-sm">{permit.permit_type}</TableCell>
-                    <TableCell>
+                    <TableCell>{formatDate(permit.submitted_at)}</TableCell>
+                    <TableCell className="font-medium">{permit.applicant_full_name}</TableCell>
+                    <TableCell>{permit.permit_type}</TableCell>
+                    <TableCell className="text-center">{formatCurrency(permit.base_fee_cents)}</TableCell>
+                    <TableCell className="text-center">
                       <PermitStatusBadge status={permit.application_status as any} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       <PaymentStatusBadge status={permit.payment_status} />
                     </TableCell>
                   </TableRow>
@@ -111,41 +104,32 @@ export const MunicipalRecentApplicationsTables = () => {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/30 hover:bg-muted/30">
-                  <TableHead className="text-xs font-normal text-muted-foreground">Date</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">User/Business</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">Service Type</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">Category</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">Status</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">Payment</TableHead>
+                <TableRow>
+                  <TableHead>Date Submitted</TableHead>
+                  <TableHead>Name/Company</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead className="text-center">Payment Amount</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Payment Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {licenses.map((license) => (
                   <TableRow 
                     key={license.id}
-                    className="cursor-pointer hover:bg-muted/30 border-b border-border/40"
+                    className="cursor-pointer hover:bg-muted/50"
                     onClick={() => navigate(`/municipal/business-licenses/${license.id}`)}
                   >
-                    <TableCell className="text-sm">{formatDate(license.submitted_at)}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-medium">
-                          {license.business_legal_name || `${license.owner_first_name} ${license.owner_last_name}`}
-                        </span>
-                        {(license.business_email || license.owner_email) && (
-                          <span className="text-xs text-muted-foreground">
-                            {license.business_email || license.owner_email}
-                          </span>
-                        )}
-                      </div>
+                    <TableCell>{formatDate(license.submitted_at)}</TableCell>
+                    <TableCell className="font-medium">
+                      {license.business_legal_name || `${license.owner_first_name} ${license.owner_last_name}`}
                     </TableCell>
-                    <TableCell className="text-sm">License</TableCell>
-                    <TableCell className="text-sm">{license.business_type}</TableCell>
-                    <TableCell>
+                    <TableCell>{license.business_type}</TableCell>
+                    <TableCell className="text-center">{formatCurrency(license.base_fee_cents)}</TableCell>
+                    <TableCell className="text-center">
                       <BusinessLicenseStatusBadge status={license.application_status} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       <PaymentStatusBadge status={license.payment_status} />
                     </TableCell>
                   </TableRow>
@@ -167,39 +151,32 @@ export const MunicipalRecentApplicationsTables = () => {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/30 hover:bg-muted/30">
-                  <TableHead className="text-xs font-normal text-muted-foreground">Date</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">User/Business</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">Service Type</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">Category</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">Status</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">Payment</TableHead>
+                <TableRow>
+                  <TableHead>Date Submitted</TableHead>
+                  <TableHead>Name/Company</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead className="text-center">Payment Amount</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Payment Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {taxes.map((tax) => (
                   <TableRow 
                     key={tax.id}
-                    className="cursor-pointer hover:bg-muted/30 border-b border-border/40"
+                    className="cursor-pointer hover:bg-muted/50"
                     onClick={() => navigate(`/municipal/taxes/${tax.id}`)}
                   >
-                    <TableCell className="text-sm">{formatDate(tax.submission_date)}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-medium">
-                          {tax.payer_business_name || `${tax.first_name || ''} ${tax.last_name || ''}`.trim() || 'N/A'}
-                        </span>
-                        {tax.email && (
-                          <span className="text-xs text-muted-foreground">{tax.email}</span>
-                        )}
-                      </div>
+                    <TableCell>{formatDate(tax.submission_date)}</TableCell>
+                    <TableCell className="font-medium">
+                      {tax.payer_business_name || `${tax.first_name || ''} ${tax.last_name || ''}`.trim() || 'N/A'}
                     </TableCell>
-                    <TableCell className="text-sm">Tax</TableCell>
-                    <TableCell className="text-sm">{tax.tax_type}</TableCell>
-                    <TableCell>
+                    <TableCell>{tax.tax_type}</TableCell>
+                    <TableCell className="text-center">{formatCurrency(tax.amount_cents)}</TableCell>
+                    <TableCell className="text-center">
                       <TaxSubmissionStatusBadge status={tax.submission_status} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       <PaymentStatusBadge status={tax.payment_status} />
                     </TableCell>
                   </TableRow>
@@ -221,39 +198,32 @@ export const MunicipalRecentApplicationsTables = () => {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/30 hover:bg-muted/30">
-                  <TableHead className="text-xs font-normal text-muted-foreground">Date</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">User/Business</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">Service Type</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">Category</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">Status</TableHead>
-                  <TableHead className="text-xs font-normal text-muted-foreground">Payment</TableHead>
+                <TableRow>
+                  <TableHead>Date Submitted</TableHead>
+                  <TableHead>Name/Company</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead className="text-center">Payment Amount</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Payment Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {services.map((service) => (
                   <TableRow 
                     key={service.id}
-                    className="cursor-pointer hover:bg-muted/30 border-b border-border/40"
+                    className="cursor-pointer hover:bg-muted/50"
                     onClick={() => navigate(`/municipal/other-services/${service.id}`)}
                   >
-                    <TableCell className="text-sm">{formatDate(service.submitted_at)}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-medium">
-                          {service.business_legal_name || service.applicant_name || 'N/A'}
-                        </span>
-                        {service.applicant_email && (
-                          <span className="text-xs text-muted-foreground">{service.applicant_email}</span>
-                        )}
-                      </div>
+                    <TableCell>{formatDate(service.submitted_at)}</TableCell>
+                    <TableCell className="font-medium">
+                      {service.business_legal_name || service.applicant_name || 'N/A'}
                     </TableCell>
-                    <TableCell className="text-sm">Service</TableCell>
-                    <TableCell className="text-sm">{service.service_name || 'Service Application'}</TableCell>
-                    <TableCell>
+                    <TableCell>{service.service_name || 'Service Application'}</TableCell>
+                    <TableCell className="text-center">{formatCurrency(service.amount_cents)}</TableCell>
+                    <TableCell className="text-center">
                       <ServiceApplicationStatusBadge status={service.status} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       <PaymentStatusBadge status={service.payment_status} />
                     </TableCell>
                   </TableRow>
