@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMunicipalRecentApplications } from '@/hooks/useMunicipalRecentApplications';
-import { formatCurrency, formatDate } from '@/lib/formatters';
+import { formatCurrency, formatDate, formatTaxType } from '@/lib/formatters';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 import { BusinessLicenseStatusBadge } from '@/components/BusinessLicenseStatusBadge';
 import { TaxSubmissionStatusBadge } from '@/components/TaxSubmissionStatusBadge';
@@ -131,7 +131,7 @@ export const MunicipalRecentApplicationsTables = () => {
                       <TableCell className="py-2 font-medium">
                         {license.business_legal_name || `${license.owner_first_name} ${license.owner_last_name}`}
                       </TableCell>
-                      <TableCell className="py-2">{license.business_type}</TableCell>
+                      <TableCell className="py-2">{formatTaxType(license.business_type)}</TableCell>
                       <TableCell className="py-2 text-center">{formatCurrency(license.base_fee_cents)}</TableCell>
                       <TableCell className="py-2 text-center">
                         <BusinessLicenseStatusBadge status={license.application_status} />
@@ -182,7 +182,7 @@ export const MunicipalRecentApplicationsTables = () => {
                       <TableCell className="py-2 font-medium">
                         {tax.payer_business_name || `${tax.first_name || ''} ${tax.last_name || ''}`.trim() || 'N/A'}
                       </TableCell>
-                      <TableCell className="py-2">{tax.tax_type}</TableCell>
+                      <TableCell className="py-2">{formatTaxType(tax.tax_type)}</TableCell>
                       <TableCell className="py-2 text-center">{formatCurrency(tax.amount_cents)}</TableCell>
                       <TableCell className="py-2 text-center">
                         <TaxSubmissionStatusBadge status={tax.submission_status} />
