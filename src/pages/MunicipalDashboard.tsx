@@ -54,10 +54,21 @@ const MunicipalDashboard = () => {
   ].filter(item => item.value > 0) : [];
 
   const processingTimeData = processingTimes ? [
-    { service: "Building Permits", days: processingTimes.buildingPermits },
-    { service: "Business Licenses", days: processingTimes.businessLicenses },
-    { service: "Service Apps", days: processingTimes.serviceApplications },
+    { service: "Building Permits", days: processingTimes.period.buildingPermits },
+    { service: "Business Licenses", days: processingTimes.period.businessLicenses },
+    { service: "Service Apps", days: processingTimes.period.serviceApplications },
   ].filter(item => item.days > 0) : [];
+
+  // Calculate comparison for processing time
+  const getProcessingComparison = () => {
+    if (!processingTimes?.period.overall || !processingTimes?.allTime.overall) return null;
+    const diff = processingTimes.period.overall - processingTimes.allTime.overall;
+    if (Math.abs(diff) < 0.5) return { label: "Same", color: "secondary", trend: "→" };
+    if (diff < 0) return { label: "Better", color: "default", trend: "↓" };
+    return { label: "Slower", color: "destructive", trend: "↑" };
+  };
+
+  const processingComparison = getProcessingComparison();
 
   const chartConfig = {
     buildingPermits: {
@@ -163,10 +174,22 @@ const MunicipalDashboard = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{processingTimes?.overall.toFixed(1) || 0} days</div>
+            <div className="flex items-center gap-2">
+              <div className="text-2xl font-bold">{processingTimes?.period.overall.toFixed(1) || 0} days</div>
+              {processingComparison && (
+                <Badge variant={processingComparison.color as any} className="text-xs">
+                  {processingComparison.trend} {processingComparison.label}
+                </Badge>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               {getPeriodLabel(selectedPeriod)}
             </p>
+            {processingTimes?.allTime.overall > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                All-time average: {processingTimes.allTime.overall.toFixed(1)} days
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -225,7 +248,7 @@ const MunicipalDashboard = () => {
         <Card>
           <CardHeader>
             <CardTitle>Processing Efficiency</CardTitle>
-            <CardDescription>Average days by service type</CardDescription>
+            <CardDescription>{getPeriodLabel(selectedPeriod)} - Average days by service type</CardDescription>
           </CardHeader>
           <CardContent>
             {processingTimeData.length > 0 ? (
@@ -322,8 +345,12 @@ const MunicipalDashboard = () => {
             <span className="font-medium">{applications?.serviceApplications || 0}</span>
           </div>
           <div className="flex items-center justify-between pt-4 border-t">
-            <span className="text-sm text-muted-foreground">Average Processing</span>
-            <span className="font-medium">{processingTimes?.overall || 0} days</span>
+            <span className="text-sm text-muted-foreground">Period Avg. Processing</span>
+            <span className="font-medium">{processingTimes?.period.overall.toFixed(1) || 0} days</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">All-Time Avg. Processing</span>
+            <span className="font-medium">{processingTimes?.allTime.overall.toFixed(1) || 0} days</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Monthly Revenue</span>
