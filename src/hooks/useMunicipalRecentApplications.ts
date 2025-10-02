@@ -182,6 +182,7 @@ export const useMunicipalRecentApplications = () => {
         `)
         .eq('customer_id', profile.customer_id)
         .neq('status', 'draft')
+        .not('submitted_at', 'is', null)
         .order('submitted_at', { ascending: false, nullsFirst: false })
         .limit(5);
 
