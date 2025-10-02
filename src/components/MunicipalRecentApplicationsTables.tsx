@@ -228,7 +228,7 @@ export const MunicipalRecentApplicationsTables = () => {
                       onClick={() => navigate(`/municipal/other-services/${service.id}`)}
                     >
                       <TableCell className="py-2">
-                        <span className="text-sm text-muted-foreground">{formatDate(service.submitted_at)}</span>
+                        <span className="text-sm text-muted-foreground">{formatDate(service.created_at)}</span>
                       </TableCell>
                       <TableCell className="py-2 font-medium">
                         {service.business_legal_name || service.applicant_name || 'N/A'}
