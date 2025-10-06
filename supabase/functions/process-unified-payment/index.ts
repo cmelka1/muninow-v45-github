@@ -370,6 +370,8 @@ Deno.serve(async (req) => {
         p_payment_type: payment_type,
         p_fraud_session_id: fraud_session_id || null,
         p_idempotency_id: idempotency_id,
+        p_idempotency_uuid: idempotencyUuid,
+        p_idempotency_metadata: metadata,
         p_is_card: isCard,
         p_card_brand: card_brand || null,
         p_card_last_four: card_last_four || null,
