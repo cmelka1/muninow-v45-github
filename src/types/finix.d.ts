@@ -29,7 +29,25 @@ interface FinixFormConfig {
   requiredFields?: string[];
   hideErrorMessages?: boolean;
   errorMessages?: Record<string, string>;
-  defaultValues?: Record<string, string>;
+  
+  // Default values for form fields (can include address for AVS validation)
+  // Address fields supported by Finix:
+  // - address_line1: Street address
+  // - address_line2: Apt/Suite (optional)
+  // - address_city: City
+  // - address_region: State/Province
+  // - address_postal_code: Zip/Postal code
+  // - address_country: Country code (e.g., 'USA')
+  defaultValues?: {
+    address_line1?: string;
+    address_line2?: string;
+    address_city?: string;
+    address_region?: string;
+    address_postal_code?: string;
+    address_country?: string;
+    [key: string]: string | undefined;
+  };
+  
   fonts?: Array<{ family: string; src: string }>;
 }
 

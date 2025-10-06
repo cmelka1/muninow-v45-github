@@ -96,6 +96,13 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
 
   const useProfileAddress = form.watch('useProfileAddress');
 
+  // Watch address fields for dynamic updates to pass to Finix
+  const watchedStreetAddress = form.watch('streetAddress');
+  const watchedCity = form.watch('city');
+  const watchedState = form.watch('state');
+  const watchedZipCode = form.watch('zipCode');
+  const watchedCountry = form.watch('country') || 'USA';
+
   // Wait for Finix library to load with retry mechanism
   useEffect(() => {
     if (!open) return;
@@ -244,14 +251,23 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
       
       const containerId = `finix-${paymentType}-form-container`;
       
-      // Create appropriate form type with only styles config
+      // Prepare form configuration with address defaultValues for Finix validation
+      const formConfig = {
+        styles: formStyles,
+        showAddress: false, // Keep address in parent form, not in iframe
+        defaultValues: {
+          address_line1: watchedStreetAddress || '',
+          address_city: watchedCity || '',
+          address_region: watchedState || '',
+          address_postal_code: watchedZipCode || '',
+          address_country: watchedCountry || 'USA'
+        }
+      };
+
+      // Create appropriate form type with address support for AVS validation
       form = paymentType === 'card'
-        ? window.Finix.CardTokenForm(containerId, {
-            styles: formStyles
-          })
-        : window.Finix.BankTokenForm(containerId, {
-            styles: formStyles
-          });
+        ? window.Finix.CardTokenForm(containerId, formConfig)
+        : window.Finix.BankTokenForm(containerId, formConfig);
 
       console.log('✅ Finix form instance created');
       
@@ -354,7 +370,17 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
         console.log('Error destroying form on cleanup:', e);
       }
     };
-  }, [finixConfig, finixLibraryLoaded, paymentType, open]);
+  }, [
+    finixConfig, 
+    finixLibraryLoaded, 
+    paymentType, 
+    open,
+    watchedStreetAddress,
+    watchedCity,
+    watchedState,
+    watchedZipCode,
+    watchedCountry
+  ]);
 
   // Reset form when dialog opens
   useEffect(() => {
