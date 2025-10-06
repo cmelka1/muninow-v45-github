@@ -6,6 +6,7 @@ import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
 import { PaymentResponse, PaymentError } from '@/types/payment';
 import { classifyPaymentError, generateIdempotencyId } from '@/utils/paymentUtils';
 import type { PaymentDataRequest } from '@/types/googlepay';
+import { useFinixAuth } from '@/hooks/useFinixAuth';
 
 export type EntityType = 'permit' | 'business_license' | 'tax_submission' | 'service_application';
 
@@ -42,6 +43,9 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
   const [lastPaymentAttempt, setLastPaymentAttempt] = useState<number | null>(null);
   const [paymentSessionId, setPaymentSessionId] = useState<string | null>(null);
   const [ongoingPaymentPromise, setOngoingPaymentPromise] = useState<Promise<PaymentResponse> | null>(null);
+
+  // Initialize Finix Auth for fraud detection
+  const { finixSessionKey, isFinixReady } = useFinixAuth(params.merchantId);
 
   // Load Google Pay merchant ID
   useEffect(() => {
@@ -226,18 +230,25 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           ? selectedPaymentMethod 
           : paymentInstrument?.id || selectedPaymentMethod,
         payment_type: paymentType,
-        fraud_session_id: `${sessionId}_${now}`, // Use session-based fraud ID
         card_brand: paymentInstrument?.card_brand,
         card_last_four: paymentInstrument?.card_last_four,
         bank_last_four: paymentInstrument?.bank_last_four,
         first_name: user.user_metadata?.first_name,
         last_name: user.user_metadata?.last_name,
         user_email: user.email,
+        fraud_session_id: finixSessionKey || `fallback_${sessionId}_${now}`, // Use Finix session key
         session_uuid: sessionId, // Send session UUID to backend
         idempotency_metadata: idempotencyMetadata // Send metadata for backend tracking
       };
 
-      console.log('📤 Sending payment request:', { 
+      console.log('🔐 Unified payment fraud session details:', {
+        has_finix_key: !!finixSessionKey,
+        is_finix_ready: isFinixReady,
+        fraud_session_id: finixSessionKey || `fallback_${sessionId}_${now}`,
+        format: (finixSessionKey || `fallback_${sessionId}_${now}`).startsWith('FS') ? 'Finix (correct)' : 'UUID fallback'
+      });
+
+      console.log('📤 Sending payment request:', {
         ...requestBody, 
         sessionId,
         attempt_time: new Date(now).toISOString(),
@@ -487,12 +498,19 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           merchant_id: params.merchantId,
           base_amount_cents: params.baseAmountCents,
           google_pay_token: paymentToken,
-          fraud_session_id: `${sessionId}_${Date.now()}`,
+          fraud_session_id: finixSessionKey || `fallback_${sessionId}_${Date.now()}`, // Use Finix session key
           first_name: user?.user_metadata?.first_name,
           last_name: user?.user_metadata?.last_name,
           user_email: user?.email,
           idempotency_id: clientIdempotencyId
         }
+      });
+
+      console.log('🔐 Google Pay fraud session details:', {
+        has_finix_key: !!finixSessionKey,
+        is_finix_ready: isFinixReady,
+        fraud_session_id: finixSessionKey || `fallback_${sessionId}_${Date.now()}`,
+        format: (finixSessionKey || `fallback_${sessionId}_${Date.now()}`).startsWith('FS') ? 'Finix (correct)' : 'UUID fallback'
       });
 
       const responseTime = Date.now() - Date.now();

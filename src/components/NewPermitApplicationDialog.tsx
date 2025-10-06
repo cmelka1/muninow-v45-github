@@ -22,6 +22,7 @@ import { ContractorForm, ContractorInfo } from '@/components/ContractorForm';
 import { Plus, Upload, X, FileText, Image, FileCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useFinixAuth } from '@/hooks/useFinixAuth';
 
 interface NewPermitApplicationDialogProps {
   open: boolean;
@@ -128,6 +129,9 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
   const dialogContentRef = useRef<HTMLDivElement>(null);
+
+  // Initialize Finix Auth for fraud detection (use merchant_id from selected municipality)
+  const { finixSessionKey } = useFinixAuth(selectedMunicipality?.id);
   
   // Only load permit types after municipality is selected
   const { data: permitTypes, isLoading: isLoadingPermitTypes } = useMunicipalPermitTypes(
@@ -349,7 +353,14 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
       
       // Generate payment identifiers
       const idempotencyId = crypto.randomUUID();
-      const fraudSessionId = crypto.randomUUID();
+      // Use Finix session key for fraud detection, fallback to UUID if not available
+      const fraudSessionId = finixSessionKey || `fallback_${crypto.randomUUID()}`;
+      
+      console.log('🔐 Permit fraud session:', {
+        has_finix_key: !!finixSessionKey,
+        fraud_session_id: fraudSessionId,
+        format: fraudSessionId.startsWith('FS') ? 'Finix (correct)' : 'UUID fallback'
+      });
       
       // Calculate payment amount from permit type
       const paymentAmountCents = selectedPermitType!.base_fee_cents;

@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMunicipalBusinessLicenseTypes } from '@/hooks/useMunicipalBusinessLicenseTypes';
 import { useBusinessLicenseApplication } from '@/hooks/useBusinessLicenseApplication';
 import { useBusinessLicenseDocuments } from '@/hooks/useBusinessLicenseDocuments';
+import { useFinixAuth } from '@/hooks/useFinixAuth';
 import { supabase } from '@/integrations/supabase/client';
 
 interface NewBusinessLicenseDialogProps {
@@ -102,6 +103,9 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
   );
   const { createApplication, submitApplication } = useBusinessLicenseApplication();
   const { uploadDocument } = useBusinessLicenseDocuments();
+
+  // Initialize Finix Auth for fraud detection (use merchant_id from selected municipality)
+  const { finixSessionKey } = useFinixAuth(selectedMunicipality?.id);
 
   const totalSteps = 3;
   const progress = (currentStep / totalSteps) * 100;
@@ -469,7 +473,14 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
 
       // Generate payment identifiers
       const idempotencyId = crypto.randomUUID();
-      const fraudSessionId = crypto.randomUUID();
+      // Use Finix session key for fraud detection, fallback to UUID if not available
+      const fraudSessionId = finixSessionKey || `fallback_${crypto.randomUUID()}`;
+      
+      console.log('🔐 Business License fraud session:', {
+        has_finix_key: !!finixSessionKey,
+        fraud_session_id: fraudSessionId,
+        format: fraudSessionId.startsWith('FS') ? 'Finix (correct)' : 'UUID fallback'
+      });
 
       // Create the application
       const applicationData = {
