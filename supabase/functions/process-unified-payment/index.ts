@@ -67,7 +67,7 @@ async function reconcileEntityIfNeeded(supabase: any, transaction: any, entity_t
           .from('tax_submissions')
           .update({
             payment_status: 'paid',
-            submission_status: 'filed',
+            submission_status: 'approved',
             transfer_state: 'SUCCEEDED',
             payment_processed_at: new Date().toISOString(),
             finix_transfer_id: transaction.finix_transfer_id,
@@ -100,7 +100,7 @@ async function reconcileEntityIfNeeded(supabase: any, transaction: any, entity_t
             user_id: user_id,
             customer_id: customer_id,
             tax_submission_id: entity_id,
-            amount_cents: transaction.total_amount_cents - transaction.service_fee_cents,
+            base_amount_cents: transaction.total_amount_cents - transaction.service_fee_cents,
             service_fee_cents: transaction.service_fee_cents,
             total_amount_cents: transaction.total_amount_cents,
             payment_type: 'card', // Default assumption for reconciliation
