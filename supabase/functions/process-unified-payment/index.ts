@@ -113,8 +113,7 @@ async function reconcileEntityIfNeeded(supabase: any, transaction: any, entity_t
             subcategory: merchant.subcategory,
             statement_descriptor: merchant.merchant_name,
             transfer_state: 'SUCCEEDED',
-            finix_transfer_id: transaction.finix_transfer_id,
-            payment_processed_at: new Date().toISOString()
+            finix_transfer_id: transaction.finix_transfer_id
           });
         
         if (historyCreateError) {
