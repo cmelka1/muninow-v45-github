@@ -646,40 +646,6 @@ Deno.serve(async (req) => {
             } else {
               console.log('Tax submission updated and filed successfully');
               
-              // Create payment transaction record
-              const { error: paymentHistoryError } = await supabase
-                .from('payment_transactions')
-                .insert({
-                  user_id: user.id,
-                  customer_id: customer_id,
-                  tax_submission_id: entity_id,
-                  amount_cents: base_amount_cents,
-                  service_fee_cents: serviceFeeFromDB,
-                  total_amount_cents: totalAmountFromDB,
-                  payment_type: payment_type,
-                  payment_status: 'completed',
-                  payment_method_type: payment_type,
-                  payment_instrument_id: finixPaymentInstrumentId,
-                  idempotency_id: idempotency_id,
-                  fraud_session_id: fraud_session_id,
-                  card_brand: card_brand,
-                  card_last_four: card_last_four,
-                  bank_last_four: bank_last_four,
-                  merchant_id: merchant_id,
-                  finix_merchant_id: merchant.finix_merchant_id,
-                  merchant_name: merchant.merchant_name,
-                  category: merchant.category,
-                  subcategory: merchant.subcategory,
-                  statement_descriptor: merchant.merchant_name,
-                  transfer_state: finixData.state || 'PENDING',
-                  finix_transfer_id: finixData.id
-                });
-              
-              if (paymentHistoryError) {
-                console.log('Warning: Failed to create payment transaction:', paymentHistoryError);
-                // Don't fail the payment for transaction record issues
-              }
-              
               // Confirm any staged documents for this tax submission
               const { error: docConfirmError } = await supabase.rpc(
                 'confirm_staged_tax_documents',
