@@ -1900,9 +1900,9 @@ export type Database = {
           finix_transfer_id: string | null
           fraud_session_id: string | null
           id: string
-          idempotency_id: string
+          idempotency_id: string | null
           idempotency_metadata: Json | null
-          idempotency_uuid: string | null
+          idempotency_uuid: string
           merchant_id: string
           merchant_name: string | null
           payment_instrument_id: string
@@ -1936,9 +1936,9 @@ export type Database = {
           finix_transfer_id?: string | null
           fraud_session_id?: string | null
           id?: string
-          idempotency_id: string
+          idempotency_id?: string | null
           idempotency_metadata?: Json | null
-          idempotency_uuid?: string | null
+          idempotency_uuid: string
           merchant_id: string
           merchant_name?: string | null
           payment_instrument_id: string
@@ -1972,9 +1972,9 @@ export type Database = {
           finix_transfer_id?: string | null
           fraud_session_id?: string | null
           id?: string
-          idempotency_id?: string
+          idempotency_id?: string | null
           idempotency_metadata?: Json | null
-          idempotency_uuid?: string | null
+          idempotency_uuid?: string
           merchant_id?: string
           merchant_name?: string | null
           payment_instrument_id?: string
