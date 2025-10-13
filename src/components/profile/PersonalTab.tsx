@@ -38,6 +38,24 @@ const ADDRESS_2_TYPES = [
   'Penthouse'
 ];
 
+// Industries for business accounts
+const INDUSTRIES = [
+  'Technology',
+  'Healthcare',
+  'Finance',
+  'Education',
+  'Manufacturing',
+  'Retail',
+  'Construction',
+  'Real Estate',
+  'Transportation',
+  'Food & Beverage',
+  'Professional Services',
+  'Non-Profit',
+  'Government',
+  'Other'
+];
+
 // Form validation schema
 const profileSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -323,9 +341,24 @@ export const PersonalTab = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-slate-700 font-medium">Industry</FormLabel>
-                       <FormControl>
-                         <Input {...field} disabled={!isEditing} placeholder="e.g., Restaurant, Retail, Healthcare" />
-                       </FormControl>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value || undefined}
+                        disabled={!isEditing}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your industry" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {INDUSTRIES.map((industry) => (
+                            <SelectItem key={industry} value={industry}>
+                              {industry}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
