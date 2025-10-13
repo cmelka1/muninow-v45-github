@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
     // Get merchant information and fee profile
     const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
-      .select('finix_merchant_id, finix_identity_id, merchant_name, category, subcategory')
+      .select('finix_merchant_id, finix_identity_id, merchant_name, category, subcategory, statement_descriptor')
       .eq('id', merchant_id)
       .single();
 
@@ -696,41 +696,63 @@ Deno.serve(async (req) => {
           console.log('Successfully updated permit status to issued after Google Pay payment');
           
         } else if (entity_type === 'tax_submission') {
-          // CRITICAL: Always update the requested entity_id, not any other submission
+          // Update tax submission with complete payment data
           const taxUpdate = {
             payment_status: 'paid',
-            submission_status: 'submitted',
-            transfer_state: 'SUCCEEDED',
+            submission_status: 'issued',
+            transfer_state: finixData.state || 'SUCCEEDED',
             finix_transfer_id: finixData.id,
-            payment_processed_at: new Date().toISOString()
+            service_fee_cents: serviceFeeFromDB,
+            total_amount_due_cents: totalAmountFromDB,
+            payment_processed_at: new Date().toISOString(),
+            filed_at: new Date().toISOString(),
+            payment_type: 'google-pay',
+            payment_instrument_id: piData.id,
+            // Add missing Finix and merchant data
+            finix_merchant_id: merchant.finix_merchant_id,
+            finix_identity_id: merchant.finix_identity_id,
+            merchant_name: merchant.merchant_name,
+            fraud_session_id: fraud_session_id,
+            idempotency_id: idempotency_id,
+            raw_finix_response: JSON.stringify(finixData),
+            subcategory: merchant.subcategory,
+            statement_descriptor: merchant.statement_descriptor || merchant.merchant_name,
+            // Add fee structure fields if available
+            ...(feeProfile && {
+              basis_points: feeProfile.basis_points,
+              fixed_fee: feeProfile.fixed_fee,
+              ach_basis_points: feeProfile.ach_basis_points,
+              ach_fixed_fee: feeProfile.ach_fixed_fee,
+              ach_basis_points_fee_limit: feeProfile.ach_basis_points_fee_limit
+            })
           };
           
-          console.log('Updating tax submission:', {
-            id: entity_id,
-            update: taxUpdate
-          });
+          console.log('Updating tax submission with complete payment data');
           
-          const { data: updatedTax, error: taxUpdateError } = await supabase
+          const { error: taxUpdateError } = await supabase
             .from('tax_submissions')
             .update(taxUpdate)
-            .eq('id', entity_id)
-            .select('id, payment_status, total_amount_due_cents')
-            .single();
+            .eq('id', entity_id);
             
           if (taxUpdateError) {
             console.error('Failed to update tax submission status:', taxUpdateError);
             throw taxUpdateError;
-          }
-          
-          console.log('Successfully updated tax submission:', updatedTax);
-          
-          // Verify the amounts match
-          if (updatedTax.total_amount_due_cents && 
-              updatedTax.total_amount_due_cents !== totalAmountFromDB) {
-            console.warn('⚠️  Amount mismatch detected:', {
-              db_total: totalAmountFromDB,
-              submission_total: updatedTax.total_amount_due_cents
-            });
+          } else {
+            console.log('Tax submission updated and filed successfully');
+            
+            // Confirm any staged documents for this tax submission
+            const { error: docConfirmError } = await supabase.rpc(
+              'confirm_staged_tax_documents',
+              {
+                p_staging_id: idempotency_id,
+                p_tax_submission_id: entity_id
+              }
+            );
+            
+            if (docConfirmError) {
+              console.log('Warning: Failed to confirm staged documents:', docConfirmError);
+              // Don't fail the payment for document confirmation issues
+            }
           }
           
         } else if (entity_type === 'business_license') {
