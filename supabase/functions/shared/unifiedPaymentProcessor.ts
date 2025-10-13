@@ -1,0 +1,519 @@
+import { FinixAPI } from './finixAPI.ts';
+import { generateDeterministicUUID, generateIdempotencyMetadata } from './paymentUtils.ts';
+
+// Type definitions
+export interface UnifiedPaymentParams {
+  entityType: 'permit' | 'business_license' | 'service_application' | 'tax_submission';
+  entityId: string;
+  customerId: string;
+  merchantId: string;
+  baseAmountCents: number;
+  paymentInstrumentId: string;
+  fraudSessionId?: string;
+  clientSessionId?: string;
+  userId: string;
+  userEmail: string;
+  paymentType: 'PAYMENT_CARD' | 'BANK_ACCOUNT' | 'card' | 'ach' | 'google-pay' | 'apple-pay';
+  cardBrand?: string;
+  cardLastFour?: string;
+  bankLastFour?: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+export interface UnifiedPaymentResponse {
+  success: boolean;
+  transaction_id?: string;
+  payment_id?: string;
+  finix_transfer_id?: string;
+  finix_payment_instrument_id?: string;
+  service_fee_cents?: number;
+  total_amount_cents?: number;
+  status?: string;
+  error?: string;
+  retryable?: boolean;
+  duplicate_prevented?: boolean;
+}
+
+// Main payment processor
+export async function processUnifiedPayment(
+  params: UnifiedPaymentParams,
+  supabase: any
+): Promise<UnifiedPaymentResponse> {
+  
+  console.log('[UnifiedPaymentProcessor] Starting payment processing:', {
+    entityType: params.entityType,
+    entityId: params.entityId,
+    baseAmountCents: params.baseAmountCents
+  });
+
+  try {
+    // STEP 1: VALIDATION
+    const validationResult = validatePaymentParams(params);
+    if (!validationResult.valid) {
+      return {
+        success: false,
+        error: validationResult.error,
+        retryable: false
+      };
+    }
+
+    // STEP 2: GENERATE IDEMPOTENCY UUID
+    const idempotencyUuid = generateDeterministicUUID({
+      entityType: params.entityType,
+      entityId: params.entityId,
+      userId: params.userId,
+      sessionId: params.clientSessionId || 'no-session',
+      baseAmountCents: params.baseAmountCents,
+      paymentInstrumentId: params.paymentInstrumentId
+    });
+
+    const idempotencyMetadata = generateIdempotencyMetadata({
+      sessionId: params.clientSessionId,
+      entityType: params.entityType,
+      entityId: params.entityId,
+      userId: params.userId,
+      paymentMethod: params.paymentType,
+      paymentInstrumentId: params.paymentInstrumentId
+    });
+
+    console.log('[UnifiedPaymentProcessor] Generated idempotency UUID:', idempotencyUuid);
+
+    // STEP 3: CHECK FOR DUPLICATE TRANSACTION
+    const duplicateCheck = await checkForDuplicateTransaction(
+      supabase,
+      idempotencyUuid
+    );
+
+    if (duplicateCheck.isDuplicate) {
+      console.log('[UnifiedPaymentProcessor] Duplicate transaction found');
+      return duplicateCheck.response!;
+    }
+
+    // STEP 4: FETCH MERCHANT DATA
+    const merchantData = await fetchMerchantData(supabase, params.merchantId);
+    if (!merchantData.success) {
+      return {
+        success: false,
+        error: merchantData.error,
+        retryable: false
+      };
+    }
+
+    // STEP 5: GET FINIX PAYMENT INSTRUMENT ID (if UUID provided)
+    let finixPaymentInstrumentId = params.paymentInstrumentId;
+    
+    if (['card', 'PAYMENT_CARD'].includes(params.paymentType) && params.paymentInstrumentId.length === 36) {
+      const { data: paymentInstrument } = await supabase
+        .from('user_payment_instruments')
+        .select('finix_payment_instrument_id')
+        .eq('id', params.paymentInstrumentId)
+        .eq('user_id', params.userId)
+        .eq('enabled', true)
+        .single();
+
+      if (paymentInstrument) {
+        finixPaymentInstrumentId = paymentInstrument.finix_payment_instrument_id;
+      }
+    }
+
+    // STEP 6: CREATE PAYMENT TRANSACTION (calculates fees)
+    const transactionResult = await createPaymentTransaction(
+      supabase,
+      params,
+      idempotencyUuid,
+      idempotencyMetadata,
+      finixPaymentInstrumentId
+    );
+
+    if (!transactionResult.success) {
+      return {
+        success: false,
+        error: transactionResult.error,
+        retryable: false
+      };
+    }
+
+    const transactionId = transactionResult.transaction_id!;
+    const totalAmountCents = transactionResult.total_amount_cents!;
+    const serviceFeeCents = transactionResult.service_fee_cents!;
+
+    console.log('[UnifiedPaymentProcessor] Transaction created:', {
+      transactionId,
+      totalAmountCents,
+      serviceFee: serviceFeeCents
+    });
+
+    // STEP 7: EXECUTE FINIX TRANSFER
+    const finixAPI = new FinixAPI();
+    const transferResult = await finixAPI.createTransfer({
+      amount: totalAmountCents,
+      currency: 'USD',
+      merchant: merchantData.finixMerchantId!,
+      source: finixPaymentInstrumentId,
+      idempotency_id: idempotencyUuid,
+      fraud_session_id: params.fraudSessionId,
+      tags: {
+        entity_type: params.entityType,
+        entity_id: params.entityId,
+        user_id: params.userId,
+        transaction_id: transactionId
+      }
+    });
+
+    if (!transferResult.success) {
+      console.error('[UnifiedPaymentProcessor] Finix transfer failed:', transferResult.error);
+      
+      // ROLLBACK: Delete transaction
+      await rollbackTransaction(supabase, transactionId);
+      
+      return {
+        success: false,
+        error: transferResult.error || 'Payment processing failed',
+        retryable: true
+      };
+    }
+
+    console.log('[UnifiedPaymentProcessor] Finix transfer succeeded:', transferResult.transfer_id);
+
+    // STEP 8: UPDATE TRANSACTION STATUS
+    await updateTransactionStatus(
+      supabase,
+      transactionId,
+      transferResult.transfer_id!,
+      finixPaymentInstrumentId,
+      'completed',
+      'SUCCEEDED'
+    );
+
+    // STEP 9: UPDATE ENTITY STATUS
+    await updateEntityStatus(
+      supabase,
+      params.entityType,
+      params.entityId,
+      idempotencyUuid,
+      serviceFeeCents,
+      totalAmountCents,
+      finixPaymentInstrumentId,
+      transferResult.transfer_id!,
+      merchantData
+    );
+
+    // STEP 10: AUTO-ISSUE ENTITY (if applicable)
+    await autoIssueEntity(supabase, params.entityType, params.entityId);
+
+    return {
+      success: true,
+      transaction_id: transactionId,
+      payment_id: transferResult.transfer_id,
+      finix_transfer_id: transferResult.transfer_id,
+      finix_payment_instrument_id: finixPaymentInstrumentId,
+      service_fee_cents: serviceFeeCents,
+      total_amount_cents: totalAmountCents,
+      status: 'completed'
+    };
+
+  } catch (error) {
+    console.error('[UnifiedPaymentProcessor] Unexpected error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred',
+      retryable: true
+    };
+  }
+}
+
+// Helper: Validate payment parameters
+function validatePaymentParams(params: UnifiedPaymentParams): { valid: boolean; error?: string } {
+  if (!params.entityType || !params.entityId) {
+    return { valid: false, error: 'Entity type and ID are required' };
+  }
+
+  if (!params.customerId || !params.merchantId) {
+    return { valid: false, error: 'Customer ID and Merchant ID are required' };
+  }
+
+  if (!params.baseAmountCents || params.baseAmountCents <= 0) {
+    return { valid: false, error: 'Base amount must be greater than zero' };
+  }
+
+  if (!params.paymentInstrumentId) {
+    return { valid: false, error: 'Payment instrument ID is required' };
+  }
+
+  const validEntityTypes = ['permit', 'business_license', 'service_application', 'tax_submission'];
+  if (!validEntityTypes.includes(params.entityType)) {
+    return { valid: false, error: 'Invalid entity type' };
+  }
+
+  return { valid: true };
+}
+
+// Helper: Check for duplicate transaction
+async function checkForDuplicateTransaction(
+  supabase: any,
+  idempotencyUuid: string
+): Promise<{ isDuplicate: boolean; response?: UnifiedPaymentResponse }> {
+  
+  const { data: existingTransaction, error } = await supabase
+    .from('payment_transactions')
+    .select('*')
+    .eq('idempotency_uuid', idempotencyUuid)
+    .maybeSingle();
+
+  if (error || !existingTransaction) {
+    return { isDuplicate: false };
+  }
+
+  // Found duplicate
+  if (existingTransaction.payment_status === 'completed' || existingTransaction.payment_status === 'paid') {
+    return {
+      isDuplicate: true,
+      response: {
+        success: true,
+        transaction_id: existingTransaction.id,
+        payment_id: existingTransaction.finix_transfer_id,
+        finix_transfer_id: existingTransaction.finix_transfer_id,
+        finix_payment_instrument_id: existingTransaction.finix_payment_instrument_id || existingTransaction.payment_instrument_id,
+        service_fee_cents: existingTransaction.service_fee_cents,
+        total_amount_cents: existingTransaction.total_amount_cents,
+        status: existingTransaction.payment_status,
+        duplicate_prevented: true
+      }
+    };
+  }
+
+  if (existingTransaction.payment_status === 'pending') {
+    return {
+      isDuplicate: true,
+      response: {
+        success: false,
+        error: 'Payment is already being processed',
+        retryable: false
+      }
+    };
+  }
+
+  return { isDuplicate: false };
+}
+
+// Helper: Fetch merchant data
+async function fetchMerchantData(
+  supabase: any,
+  merchantId: string
+): Promise<{ success: boolean; finixMerchantId?: string; finixIdentityId?: string; merchantName?: string; category?: string; subcategory?: string; statementDescriptor?: string; error?: string }> {
+  
+  const { data: merchant, error } = await supabase
+    .from('merchants')
+    .select('finix_merchant_id, finix_identity_id, merchant_name, category, subcategory, statement_descriptor')
+    .eq('id', merchantId)
+    .single();
+
+  if (error || !merchant) {
+    return {
+      success: false,
+      error: 'Merchant not found'
+    };
+  }
+
+  if (!merchant.finix_merchant_id || !merchant.finix_identity_id) {
+    return {
+      success: false,
+      error: 'Merchant is not configured for payments'
+    };
+  }
+
+  return {
+    success: true,
+    finixMerchantId: merchant.finix_merchant_id,
+    finixIdentityId: merchant.finix_identity_id,
+    merchantName: merchant.merchant_name,
+    category: merchant.category,
+    subcategory: merchant.subcategory,
+    statementDescriptor: merchant.statement_descriptor
+  };
+}
+
+// Helper: Create payment transaction (calls RPC)
+async function createPaymentTransaction(
+  supabase: any,
+  params: UnifiedPaymentParams,
+  idempotencyUuid: string,
+  idempotencyMetadata: any,
+  finixPaymentInstrumentId: string
+): Promise<{ success: boolean; transaction_id?: string; service_fee_cents?: number; total_amount_cents?: number; error?: string }> {
+  
+  const isCard = ['card', 'PAYMENT_CARD', 'google-pay', 'apple-pay'].includes(params.paymentType);
+
+  const { data, error } = await supabase.rpc('create_unified_payment_transaction', {
+    p_user_id: params.userId,
+    p_customer_id: params.customerId,
+    p_merchant_id: params.merchantId,
+    p_entity_type: params.entityType,
+    p_entity_id: params.entityId,
+    p_base_amount_cents: params.baseAmountCents,
+    p_payment_instrument_id: finixPaymentInstrumentId,
+    p_payment_type: params.paymentType,
+    p_fraud_session_id: params.fraudSessionId || null,
+    p_idempotency_uuid: idempotencyUuid,
+    p_idempotency_metadata: idempotencyMetadata,
+    p_is_card: isCard,
+    p_card_brand: params.cardBrand || null,
+    p_card_last_four: params.cardLastFour || null,
+    p_bank_last_four: params.bankLastFour || null,
+    p_first_name: params.firstName || null,
+    p_last_name: params.lastName || null,
+    p_user_email: params.userEmail
+  });
+
+  if (error || !data || !data.success) {
+    console.error('[createPaymentTransaction] Error:', error, data);
+    return {
+      success: false,
+      error: error?.message || data?.error || 'Failed to create transaction'
+    };
+  }
+
+  return {
+    success: true,
+    transaction_id: data.transaction_id,
+    service_fee_cents: data.service_fee_cents,
+    total_amount_cents: data.total_amount_cents
+  };
+}
+
+// Helper: Rollback transaction
+async function rollbackTransaction(
+  supabase: any,
+  transactionId: string
+): Promise<void> {
+  console.log('[rollbackTransaction] Rolling back transaction:', transactionId);
+  
+  await supabase
+    .from('payment_transactions')
+    .delete()
+    .eq('id', transactionId);
+}
+
+// Helper: Update transaction status
+async function updateTransactionStatus(
+  supabase: any,
+  transactionId: string,
+  finixTransferId: string,
+  finixPaymentInstrumentId: string,
+  paymentStatus: string,
+  transferState: string
+): Promise<{ success: boolean }> {
+  
+  const { error } = await supabase
+    .from('payment_transactions')
+    .update({
+      finix_transfer_id: finixTransferId,
+      finix_payment_instrument_id: finixPaymentInstrumentId,
+      payment_status: paymentStatus,
+      transfer_state: transferState,
+      payment_processed_at: new Date().toISOString()
+    })
+    .eq('id', transactionId);
+
+  return { success: !error };
+}
+
+// Helper: Update entity status
+async function updateEntityStatus(
+  supabase: any,
+  entityType: string,
+  entityId: string,
+  idempotencyUuid: string,
+  serviceFee: number,
+  totalAmount: number,
+  finixPaymentInstrumentId: string,
+  finixTransferId: string,
+  merchantData: any
+): Promise<{ success: boolean }> {
+  
+  const tableMap: Record<string, string> = {
+    'permit': 'permit_applications',
+    'business_license': 'business_license_applications',
+    'service_application': 'municipal_service_applications',
+    'tax_submission': 'tax_submissions'
+  };
+
+  const tableName = tableMap[entityType];
+  if (!tableName) {
+    return { success: false };
+  }
+
+  const updateData: any = {
+    payment_status: 'paid',
+    idempotency_uuid: idempotencyUuid,
+    service_fee_cents: serviceFee,
+    total_amount_cents: totalAmount,
+    transfer_state: 'SUCCEEDED',
+    payment_processed_at: new Date().toISOString(),
+    payment_instrument_id: finixPaymentInstrumentId,
+    finix_transfer_id: finixTransferId,
+    finix_merchant_id: merchantData.finixMerchantId,
+    merchant_name: merchantData.merchantName
+  };
+
+  // Tax submissions have a specific status
+  if (entityType === 'tax_submission') {
+    updateData.submission_status = 'issued';
+  }
+
+  const { error } = await supabase
+    .from(tableName)
+    .update(updateData)
+    .eq('id', entityId);
+
+  if (error) {
+    console.error('[updateEntityStatus] Error:', error);
+  }
+
+  return { success: !error };
+}
+
+// Helper: Auto-issue entity
+async function autoIssueEntity(
+  supabase: any,
+  entityType: string,
+  entityId: string
+): Promise<void> {
+  
+  // Auto-issue permits when payment completes
+  if (entityType === 'permit') {
+    const { data: permit } = await supabase
+      .from('permit_applications')
+      .select('application_status')
+      .eq('id', entityId)
+      .single();
+
+    if (permit && permit.application_status === 'approved') {
+      await supabase
+        .from('permit_applications')
+        .update({ application_status: 'issued' })
+        .eq('id', entityId);
+      
+      console.log('[autoIssueEntity] Permit auto-issued');
+    }
+  }
+
+  // Auto-issue licenses when payment completes
+  if (entityType === 'business_license') {
+    const { data: license } = await supabase
+      .from('business_license_applications')
+      .select('application_status')
+      .eq('id', entityId)
+      .single();
+
+    if (license && license.application_status === 'approved') {
+      await supabase
+        .from('business_license_applications')
+        .update({ application_status: 'issued' })
+        .eq('id', entityId);
+      
+      console.log('[autoIssueEntity] License auto-issued');
+    }
+  }
+}
