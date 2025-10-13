@@ -38,7 +38,6 @@ export interface PermitDetail {
   finix_merchant_id: string | null;
   customer_id: string;
   user_id: string;
-  base_fee_cents: number | null;
 }
 
 export const usePermit = (permitId: string) => {
@@ -49,7 +48,6 @@ export const usePermit = (permitId: string) => {
     queryFn: async () => {
       if (!profile) throw new Error('User profile not available');
 
-      // First get the permit application
       const { data: permitData, error: permitError } = await supabase
         .from('permit_applications')
         .select('*')
@@ -60,26 +58,8 @@ export const usePermit = (permitId: string) => {
         console.error('Error fetching permit:', permitError);
         throw permitError;
       }
-
-      // Then get the permit type base fee
-      const { data: permitTypeData, error: permitTypeError } = await supabase
-        .from('permit_types')
-        .select('base_fee_cents')
-        .eq('name', permitData.permit_type)
-        .single();
-
-      if (permitTypeError) {
-        console.error('Error fetching permit type:', permitTypeError);
-        // Don't throw error, just use null for base_fee_cents
-      }
-
-      // Combine the data
-      const combinedData = {
-        ...permitData,
-        base_fee_cents: permitTypeData?.base_fee_cents || null
-      };
       
-      return combinedData as PermitDetail;
+      return permitData as PermitDetail;
     },
     enabled: !!profile && !!permitId
   });

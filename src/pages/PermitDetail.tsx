@@ -264,7 +264,7 @@ const PermitDetail = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Permit Fee</Label>
-                  <p className="text-base">{formatCurrency(permit.base_fee_cents || permit.total_amount_cents || 0)}</p>
+                  <p className="text-base">{formatCurrency(permit.payment_amount_cents || 0)}</p>
                 </div>
               </div>
             </CardContent>
@@ -454,7 +454,7 @@ const PermitDetail = () => {
                   entityName={`${permit.permit_type} - ${permit.permit_number}`}
                   customerId={permit.customer_id}
                   merchantId={permit.merchant_id}
-                  baseAmountCents={permit.base_fee_cents || permit.total_amount_cents || 0}
+                  baseAmountCents={permit.payment_amount_cents || 0}
                   initialExpanded={true}
                   onPaymentSuccess={handlePaymentSuccess}
                   onPaymentError={handlePaymentError}
