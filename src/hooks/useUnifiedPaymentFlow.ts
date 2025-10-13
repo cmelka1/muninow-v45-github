@@ -503,12 +503,13 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       const paymentData = await paymentsClient.loadPaymentData(paymentRequest);
       console.log('✅ Google Pay data loaded successfully');
 
-      // Generate idempotency ID for Google Pay
-      const sessionId = paymentSessionId || generateIdempotencyId('payment_session');
+      // Generate unique session ID that includes entity context to prevent UUID collision
+      const uniqueSessionId = paymentSessionId || `gpay_${params.entityId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       if (!paymentSessionId) {
-        setPaymentSessionId(sessionId);
+        setPaymentSessionId(uniqueSessionId);
       }
-      const clientIdempotencyId = `${sessionId}_${params.entityId}_google-pay`;
+      const clientIdempotencyId = `${uniqueSessionId}_${params.entityId}_google-pay`;
+      console.log('🔑 Generated unique Google Pay session ID:', uniqueSessionId);
 
       // Extract the payment token
       const paymentToken = paymentData.paymentMethodData.tokenizationData.token;
@@ -524,7 +525,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           merchant_id: params.merchantId,
           base_amount_cents: params.baseAmountCents,
           google_pay_token: paymentToken,
-          fraud_session_id: finixSessionKey || `fallback_${sessionId}_${Date.now()}`, // Use Finix session key
+          fraud_session_id: finixSessionKey || `fallback_${uniqueSessionId}_${Date.now()}`, // Use Finix session key
           first_name: user?.user_metadata?.first_name,
           last_name: user?.user_metadata?.last_name,
           user_email: user?.email,
@@ -535,8 +536,8 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       console.log('🔐 Google Pay fraud session details:', {
         has_finix_key: !!finixSessionKey,
         is_finix_ready: isFinixReady,
-        fraud_session_id: finixSessionKey || `fallback_${sessionId}_${Date.now()}`,
-        format: (finixSessionKey || `fallback_${sessionId}_${Date.now()}`).startsWith('FS') ? 'Finix (correct)' : 'UUID fallback'
+        fraud_session_id: finixSessionKey || `fallback_${uniqueSessionId}_${Date.now()}`,
+        format: (finixSessionKey || `fallback_${uniqueSessionId}_${Date.now()}`).startsWith('FS') ? 'Finix (correct)' : 'UUID fallback'
       });
 
       const responseTime = Date.now() - Date.now();

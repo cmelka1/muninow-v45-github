@@ -335,21 +335,47 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Extract unique session ID from client idempotency ID to prevent UUID collision
+    // Format: sessionId_entityId_google-pay
+    let sessionIdForUuid = 'google-pay-session'; // default fallback
+    const idempotency_id = clientIdempotencyId || generateIdempotencyId('unified_google_pay', entity_id);
+    
+    if (clientIdempotencyId && clientIdempotencyId.includes('_')) {
+      const parts = clientIdempotencyId.split('_');
+      if (parts.length >= 1 && parts[0]) {
+        sessionIdForUuid = parts[0]; // Extract unique session from client
+        console.log('✅ Extracted unique session ID from client:', sessionIdForUuid);
+      }
+    }
+    
+    // If no valid session extracted, create timestamp-based one
+    if (sessionIdForUuid === 'google-pay-session') {
+      sessionIdForUuid = `gpay_${entity_id}_${Date.now()}`;
+      console.log('⚠️  No client session found, using timestamp-based session:', sessionIdForUuid);
+    }
+
     // Generate deterministic UUID for idempotency
     // This ensures same inputs = same UUID for proper deduplication
     const idempotencyUuid = generateDeterministicUUID({
       entityType: entity_type,
       entityId: entity_id,
       userId: user.id,
-      sessionId: 'google-pay-session',
+      sessionId: sessionIdForUuid, // ✅ Now unique per payment attempt
       paymentInstrumentId: google_pay_token.substring(0, 20) // Use token prefix for uniqueness
     });
     
+    console.log('🔑 UUID generation inputs:', {
+      entityType: entity_type,
+      entityId: entity_id,
+      userId: user.id,
+      sessionId: sessionIdForUuid,
+      tokenPrefix: google_pay_token.substring(0, 20)
+    });
     console.log('Generated idempotency UUID:', idempotencyUuid);
     
     // Generate comprehensive metadata for debugging
     const metadata = generateIdempotencyMetadata({
-      sessionId: 'google-pay-session',
+      sessionId: sessionIdForUuid,
       entityType: entity_type,
       entityId: entity_id,
       userId: user.id,
@@ -360,9 +386,6 @@ Deno.serve(async (req) => {
     });
     
     console.log('Idempotency metadata:', metadata);
-    
-    // Keep legacy idempotency_id for backward compatibility
-    const idempotency_id = clientIdempotencyId || generateIdempotencyId('unified_google_pay', entity_id);
     console.log('Legacy idempotency ID:', idempotency_id, clientIdempotencyId ? '(client-provided)' : '(generated)');
 
     // Check for existing payment transaction with this UUID
