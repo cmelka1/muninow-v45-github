@@ -24,7 +24,7 @@ export type Database = {
             | null
           approved_at: string | null
           assigned_reviewer_id: string | null
-          base_fee_cents: number | null
+          base_amount_cents: number | null
           basis_points: number | null
           business_apt_number: string | null
           business_city: string
@@ -101,7 +101,7 @@ export type Database = {
             | null
           approved_at?: string | null
           assigned_reviewer_id?: string | null
-          base_fee_cents?: number | null
+          base_amount_cents?: number | null
           basis_points?: number | null
           business_apt_number?: string | null
           business_city: string
@@ -178,7 +178,7 @@ export type Database = {
             | null
           approved_at?: string | null
           assigned_reviewer_id?: string | null
-          base_fee_cents?: number | null
+          base_amount_cents?: number | null
           basis_points?: number | null
           business_apt_number?: string | null
           business_city?: string
@@ -1420,7 +1420,6 @@ export type Database = {
           ach_basis_points: number | null
           ach_fixed_fee: number | null
           additional_information: string | null
-          amount_cents: number | null
           applicant_email: string | null
           applicant_name: string | null
           applicant_phone: string | null
@@ -1428,6 +1427,7 @@ export type Database = {
           approved_at: string | null
           apt_number: string | null
           assigned_reviewer_id: string | null
+          base_amount_cents: number | null
           basis_points: number | null
           business_legal_name: string | null
           city: string | null
@@ -1484,7 +1484,6 @@ export type Database = {
           ach_basis_points?: number | null
           ach_fixed_fee?: number | null
           additional_information?: string | null
-          amount_cents?: number | null
           applicant_email?: string | null
           applicant_name?: string | null
           applicant_phone?: string | null
@@ -1492,6 +1491,7 @@ export type Database = {
           approved_at?: string | null
           apt_number?: string | null
           assigned_reviewer_id?: string | null
+          base_amount_cents?: number | null
           basis_points?: number | null
           business_legal_name?: string | null
           city?: string | null
@@ -1548,7 +1548,6 @@ export type Database = {
           ach_basis_points?: number | null
           ach_fixed_fee?: number | null
           additional_information?: string | null
-          amount_cents?: number | null
           applicant_email?: string | null
           applicant_name?: string | null
           applicant_phone?: string | null
@@ -1556,6 +1555,7 @@ export type Database = {
           approved_at?: string | null
           apt_number?: string | null
           assigned_reviewer_id?: string | null
+          base_amount_cents?: number | null
           basis_points?: number | null
           business_legal_name?: string | null
           city?: string | null
@@ -1999,6 +1999,7 @@ export type Database = {
           application_status: Database["public"]["Enums"]["permit_status_enum"]
           approved_at: string | null
           assigned_reviewer_id: string | null
+          base_amount_cents: number | null
           basis_points: number | null
           created_at: string
           customer_id: string
@@ -2071,6 +2072,7 @@ export type Database = {
           application_status?: Database["public"]["Enums"]["permit_status_enum"]
           approved_at?: string | null
           assigned_reviewer_id?: string | null
+          base_amount_cents?: number | null
           basis_points?: number | null
           created_at?: string
           customer_id: string
@@ -2143,6 +2145,7 @@ export type Database = {
           application_status?: Database["public"]["Enums"]["permit_status_enum"]
           approved_at?: string | null
           assigned_reviewer_id?: string | null
+          base_amount_cents?: number | null
           basis_points?: number | null
           created_at?: string
           customer_id?: string
@@ -2889,7 +2892,7 @@ export type Database = {
         Row: {
           ach_basis_points: number | null
           ach_fixed_fee: number | null
-          amount_cents: number
+          base_amount_cents: number
           basis_points: number | null
           calculation_notes: string
           category: string | null
@@ -2943,7 +2946,7 @@ export type Database = {
         Insert: {
           ach_basis_points?: number | null
           ach_fixed_fee?: number | null
-          amount_cents: number
+          base_amount_cents: number
           basis_points?: number | null
           calculation_notes: string
           category?: string | null
@@ -2997,7 +3000,7 @@ export type Database = {
         Update: {
           ach_basis_points?: number | null
           ach_fixed_fee?: number | null
-          amount_cents?: number
+          base_amount_cents?: number
           basis_points?: number | null
           calculation_notes?: string
           category?: string | null
