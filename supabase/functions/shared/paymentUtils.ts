@@ -117,15 +117,18 @@ export const generateDeterministicUUID = (params: {
   entityId: string;
   userId: string;
   sessionId: string;
+  baseAmountCents: number;
   paymentInstrumentId?: string;
 }): string => {
   try {
     // Create a deterministic input string from all parameters
+    // Including baseAmountCents ensures different amounts generate different UUIDs
     const input = [
       params.entityType,
       params.entityId,
       params.userId,
       params.sessionId,
+      params.baseAmountCents.toString(),
       params.paymentInstrumentId || 'none'
     ].join(':');
 

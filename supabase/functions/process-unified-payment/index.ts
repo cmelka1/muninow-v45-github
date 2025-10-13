@@ -290,6 +290,7 @@ Deno.serve(async (req) => {
       entityId: entity_id,
       userId: user.id,
       sessionId: session_uuid || 'no-session',
+      baseAmountCents: base_amount_cents,
       paymentInstrumentId: payment_instrument_id
     });
     

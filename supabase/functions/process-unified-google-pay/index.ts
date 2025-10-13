@@ -368,6 +368,7 @@ Deno.serve(async (req) => {
       entityId: entity_id,
       userId: user.id,
       sessionId: sessionIdForUuid,
+      baseAmountCents: base_amount_cents,
       paymentInstrumentId: `gpay-${entity_id}-${google_pay_token.substring(0, 10)}` // ✅ Entity-specific
     });
     
