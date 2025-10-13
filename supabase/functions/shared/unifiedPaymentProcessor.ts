@@ -596,18 +596,31 @@ async function autoIssueEntity(
 
   // Auto-issue service applications based on requires_review flag
   if (entityType === 'service_application') {
-    const { data: application } = await supabase
+    // First, get the application
+    const { data: application, error: appError } = await supabase
       .from('municipal_service_applications')
-      .select('status, tile_id, municipal_service_tiles(requires_review)')
+      .select('status, tile_id')
       .eq('id', entityId)
       .single();
 
-    if (!application) {
-      console.log('[autoIssueEntity] Service application not found');
+    if (appError || !application) {
+      console.log('[autoIssueEntity] Service application not found:', appError);
       return;
     }
 
-    const requiresReview = application.municipal_service_tiles?.requires_review;
+    // Then, get the service tile to check requires_review
+    const { data: tile, error: tileError } = await supabase
+      .from('municipal_service_tiles')
+      .select('requires_review')
+      .eq('id', application.tile_id)
+      .single();
+
+    if (tileError || !tile) {
+      console.log('[autoIssueEntity] Service tile not found:', tileError);
+      return;
+    }
+
+    const requiresReview = tile.requires_review;
     let shouldIssue = false;
 
     if (requiresReview === false) {
@@ -621,7 +634,7 @@ async function autoIssueEntity(
     }
 
     if (shouldIssue) {
-      await supabase
+      const { error: updateError } = await supabase
         .from('municipal_service_applications')
         .update({ 
           status: 'issued',
@@ -629,7 +642,11 @@ async function autoIssueEntity(
         })
         .eq('id', entityId);
       
-      console.log('[autoIssueEntity] Service application auto-issued');
+      if (updateError) {
+        console.log('[autoIssueEntity] Failed to update application:', updateError);
+      } else {
+        console.log('[autoIssueEntity] Service application auto-issued successfully');
+      }
     }
   }
 }
