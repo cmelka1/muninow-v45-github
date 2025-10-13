@@ -183,7 +183,8 @@ export async function processUnifiedPayment(
       transferResult.transfer_id!,
       finixPaymentInstrumentId,
       'completed',
-      'SUCCEEDED'
+      'SUCCEEDED',
+      transferResult.raw_response
     );
 
     // STEP 9: UPDATE ENTITY STATUS
@@ -374,6 +375,22 @@ async function createPaymentTransaction(
     };
   }
 
+  // FIX 2: Populate entity foreign key
+  const entityKeyMap: Record<string, string> = {
+    'permit': 'permit_id',
+    'business_license': 'business_license_id',
+    'service_application': 'service_application_id',
+    'tax_submission': 'tax_submission_id'
+  };
+
+  const entityKey = entityKeyMap[params.entityType];
+  if (entityKey && data.transaction_id) {
+    await supabase
+      .from('payment_transactions')
+      .update({ [entityKey]: params.entityId })
+      .eq('id', data.transaction_id);
+  }
+
   return {
     success: true,
     transaction_id: data.transaction_id,
@@ -402,19 +419,30 @@ async function updateTransactionStatus(
   finixTransferId: string,
   finixPaymentInstrumentId: string,
   paymentStatus: string,
-  transferState: string
+  transferState: string,
+  rawFinixResponse?: any
 ): Promise<{ success: boolean }> {
   
+  const updateData: any = {
+    finix_transfer_id: finixTransferId,
+    finix_payment_instrument_id: finixPaymentInstrumentId,
+    payment_status: paymentStatus,
+    transfer_state: transferState
+  };
+
+  // FIX 3: Store raw Finix response for debugging
+  if (rawFinixResponse) {
+    updateData.raw_finix_response = rawFinixResponse;
+  }
+
   const { error } = await supabase
     .from('payment_transactions')
-    .update({
-      finix_transfer_id: finixTransferId,
-      finix_payment_instrument_id: finixPaymentInstrumentId,
-      payment_status: paymentStatus,
-      transfer_state: transferState,
-      payment_processed_at: new Date().toISOString()
-    })
+    .update(updateData)
     .eq('id', transactionId);
+
+  if (error) {
+    console.error('[updateTransactionStatus] Error:', error);
+  }
 
   return { success: !error };
 }
