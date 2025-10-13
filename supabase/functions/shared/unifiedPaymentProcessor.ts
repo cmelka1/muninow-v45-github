@@ -485,7 +485,7 @@ async function updateEntityStatus(
     payment_status: 'paid',
     idempotency_uuid: idempotencyUuid,
     service_fee_cents: serviceFee,
-    total_amount_cents: totalAmount,
+    total_amount_due_cents: totalAmount,
     transfer_state: 'SUCCEEDED',
     payment_processed_at: new Date().toISOString(),
     payment_instrument_id: finixPaymentInstrumentId,
