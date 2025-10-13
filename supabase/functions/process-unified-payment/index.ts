@@ -42,7 +42,22 @@ interface UnifiedPaymentResponse {
   retryable?: boolean;
 }
 
-async function reconcileEntityIfNeeded(supabase: any, transaction: any, entity_type: string, entity_id: string, user_id: string, customer_id: string, merchant_id: string, idempotency_id: string, merchant: any) {
+async function reconcileEntityIfNeeded(
+  supabase: any, 
+  transaction: any, 
+  entity_type: string, 
+  entity_id: string, 
+  user_id: string, 
+  customer_id: string, 
+  merchant_id: string, 
+  idempotency_id: string, 
+  merchant: any,
+  payment_instrument_id: string,
+  finix_payment_instrument_id: string | null,
+  card_brand?: string,
+  card_last_four?: string,
+  bank_last_four?: string
+) {
   console.log('=== RECONCILING ENTITY IF NEEDED ===');
   
   try {
@@ -50,7 +65,7 @@ async function reconcileEntityIfNeeded(supabase: any, transaction: any, entity_t
       // Check if tax submission needs updating
       const { data: taxSubmission, error: fetchError } = await supabase
         .from('tax_submissions')
-        .select('payment_status, payment_processed_at, finix_transfer_id')
+        .select('payment_status, payment_processed_at, finix_transfer_id, payment_instrument_id')
         .eq('id', entity_id)
         .single();
       
@@ -72,7 +87,10 @@ async function reconcileEntityIfNeeded(supabase: any, transaction: any, entity_t
             payment_processed_at: new Date().toISOString(),
             finix_transfer_id: transaction.finix_transfer_id,
             service_fee_cents: transaction.service_fee_cents,
-            idempotency_id: idempotency_id
+            idempotency_id: idempotency_id,
+            payment_instrument_id: finix_payment_instrument_id || payment_instrument_id,
+            finix_merchant_id: merchant.finix_merchant_id,
+            merchant_name: merchant.merchant_name
           })
           .eq('id', entity_id);
         
@@ -83,16 +101,22 @@ async function reconcileEntityIfNeeded(supabase: any, transaction: any, entity_t
         }
       }
       
-      // Check if payment transaction record exists
+      // Check if payment transaction record exists using maybeSingle to avoid errors
       const { data: existingHistory, error: historyFetchError } = await supabase
         .from('payment_transactions')
         .select('id')
         .eq('idempotency_id', idempotency_id)
-        .single();
+        .maybeSingle();
       
-      if (historyFetchError && historyFetchError.code === 'PGRST116') {
-        // No payment transaction record exists, create one
+      // Only insert if no record exists and no error occurred
+      if (!existingHistory && !historyFetchError) {
         console.log('Creating missing payment transaction record during reconciliation');
+        
+        // Only proceed if we have a valid payment_instrument_id
+        if (!payment_instrument_id && !finix_payment_instrument_id) {
+          console.warn('Skipping reconciliation insert: missing payment_instrument_id');
+          return { reconciliation_warning: 'Transaction record backfill skipped - missing payment instrument' };
+        }
         
         const { error: historyCreateError } = await supabase
           .from('payment_transactions')
@@ -103,7 +127,12 @@ async function reconcileEntityIfNeeded(supabase: any, transaction: any, entity_t
             base_amount_cents: transaction.total_amount_cents - transaction.service_fee_cents,
             service_fee_cents: transaction.service_fee_cents,
             total_amount_cents: transaction.total_amount_cents,
-            payment_type: 'card', // Default assumption for reconciliation
+            payment_type: card_brand ? 'card' : 'ach',
+            payment_instrument_id: payment_instrument_id,
+            finix_payment_instrument_id: finix_payment_instrument_id,
+            card_brand: card_brand,
+            card_last_four: card_last_four,
+            bank_last_four: bank_last_four,
             payment_status: 'completed',
             idempotency_id: idempotency_id,
             merchant_id: merchant_id,
@@ -118,9 +147,12 @@ async function reconcileEntityIfNeeded(supabase: any, transaction: any, entity_t
         
         if (historyCreateError) {
           console.error('Failed to create payment transaction during reconciliation:', historyCreateError);
+          return { reconciliation_warning: 'Transaction record backfill failed' };
         } else {
           console.log('Payment transaction record created during reconciliation');
         }
+      } else if (existingHistory) {
+        console.log('Payment transaction record already exists, skipping insert');
       }
     }
   } catch (error) {
@@ -285,7 +317,7 @@ Deno.serve(async (req) => {
     console.log('Checking for duplicate payment with UUID:', idempotencyUuid);
     const { data: existingTransaction, error: existingError } = await supabase
       .from('payment_transactions')
-      .select('id, payment_status, finix_transfer_id, service_fee_cents, total_amount_cents')
+      .select('id, payment_status, finix_transfer_id, service_fee_cents, total_amount_cents, payment_instrument_id, card_brand, card_last_four, bank_last_four')
       .eq('idempotency_uuid', idempotencyUuid)
       .maybeSingle();
 
@@ -297,7 +329,22 @@ Deno.serve(async (req) => {
         console.log('Returning existing successful payment result');
         
         // Reconcile entity if it wasn't updated properly
-        await reconcileEntityIfNeeded(supabase, existingTransaction, entity_type, entity_id, user.id, customer_id, merchant_id, idempotency_id, merchant);
+        await reconcileEntityIfNeeded(
+          supabase, 
+          existingTransaction, 
+          entity_type, 
+          entity_id, 
+          user.id, 
+          customer_id, 
+          merchant_id, 
+          idempotency_id, 
+          merchant,
+          existingTransaction.payment_instrument_id || payment_instrument_id,
+          finixPaymentInstrumentId,
+          existingTransaction.card_brand || card_brand,
+          existingTransaction.card_last_four || card_last_four,
+          existingTransaction.bank_last_four || bank_last_four
+        );
         
         return new Response(
           JSON.stringify({
