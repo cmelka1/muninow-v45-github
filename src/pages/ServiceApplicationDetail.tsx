@@ -483,38 +483,81 @@ const ServiceApplicationDetail: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
+              {/* Created - always shown */}
               <div className="flex justify-between items-center py-1">
                 <span className="text-sm font-medium">Created</span>
                 <span className="text-xs text-muted-foreground">{formatDate(application.created_at)}</span>
               </div>
-              {application.status === 'submitted' || application.status === 'under_review' || application.status === 'approved' || application.status === 'denied' ? (
+              
+              {/* Submitted - show if submitted_at exists */}
+              {application.submitted_at && (
                 <div className="flex justify-between items-center py-1">
                   <span className="text-sm font-medium">Submitted</span>
-                  <span className="text-xs text-muted-foreground">{formatDate(application.created_at)}</span>
+                  <span className="text-xs text-muted-foreground">{formatDate(application.submitted_at)}</span>
                 </div>
-              ) : null}
-              {(application.status === 'under_review' || application.status === 'approved' || application.status === 'denied') && (
+              )}
+              
+              {/* Under Review - show if under_review_at exists */}
+              {application.under_review_at && (
                 <div className="flex justify-between items-center py-1">
                   <span className="text-sm font-medium">Under Review</span>
-                  <span className="text-xs text-muted-foreground">{formatDate(application.updated_at)}</span>
+                  <span className="text-xs text-muted-foreground">{formatDate(application.under_review_at)}</span>
                 </div>
               )}
-              {application.status === 'approved' && (
+              
+              {/* Information Requested - show if information_requested_at exists */}
+              {application.information_requested_at && (
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-sm font-medium">Information Requested</span>
+                  <span className="text-xs text-muted-foreground">{formatDate(application.information_requested_at)}</span>
+                </div>
+              )}
+              
+              {/* Resubmitted - show if resubmitted_at exists */}
+              {application.resubmitted_at && (
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-sm font-medium">Resubmitted</span>
+                  <span className="text-xs text-muted-foreground">{formatDate(application.resubmitted_at)}</span>
+                </div>
+              )}
+              
+              {/* Approved - show if approved_at exists (even if status has progressed to issued) */}
+              {application.approved_at && (
                 <div className="flex justify-between items-center py-1 text-green-700">
                   <span className="text-sm font-medium">Approved</span>
-                  <span className="text-xs">{formatDate(application.updated_at)}</span>
+                  <span className="text-xs">{formatDate(application.approved_at)}</span>
                 </div>
               )}
-              {application.status === 'denied' && (
+              
+              {/* Denied - show if denied_at exists */}
+              {application.denied_at && (
                 <div className="flex justify-between items-center py-1 text-red-700">
                   <span className="text-sm font-medium">Denied</span>
-                  <span className="text-xs">{formatDate(application.updated_at)}</span>
+                  <span className="text-xs">{formatDate(application.denied_at)}</span>
                 </div>
               )}
-              {application.status === 'issued' && (
+              
+              {/* Withdrawn - show if withdrawn_at exists */}
+              {application.withdrawn_at && (
+                <div className="flex justify-between items-center py-1 text-amber-700">
+                  <span className="text-sm font-medium">Withdrawn</span>
+                  <span className="text-xs">{formatDate(application.withdrawn_at)}</span>
+                </div>
+              )}
+              
+              {/* Expired - show if expired_at exists */}
+              {application.expired_at && (
+                <div className="flex justify-between items-center py-1 text-gray-700">
+                  <span className="text-sm font-medium">Expired</span>
+                  <span className="text-xs">{formatDate(application.expired_at)}</span>
+                </div>
+              )}
+              
+              {/* Issued - show if issued_at exists */}
+              {application.issued_at && (
                 <div className="flex justify-between items-center py-1 text-emerald-700">
                   <span className="text-sm font-medium">Issued</span>
-                  <span className="text-xs">{formatDate(application.updated_at)}</span>
+                  <span className="text-xs">{formatDate(application.issued_at)}</span>
                 </div>
               )}
             </CardContent>
