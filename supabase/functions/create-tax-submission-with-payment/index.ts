@@ -14,7 +14,7 @@ interface CreateTaxSubmissionRequest {
   tax_period_start?: string;
   tax_period_end?: string;
   tax_year?: number;
-  amount_cents: number;
+  base_amount_cents: number;
   calculation_notes?: string;
   total_amount_due_cents: number;
   service_fee_cents: number;
@@ -63,7 +63,7 @@ serve(async (req) => {
 
     // Validate required fields
     if (!requestBody.user_id || !requestBody.customer_id || !requestBody.merchant_id || 
-        !requestBody.tax_type || !requestBody.amount_cents) {
+        !requestBody.tax_type || !requestBody.base_amount_cents) {
       throw new Error('Missing required fields');
     }
 
@@ -78,7 +78,7 @@ serve(async (req) => {
         tax_period_start: requestBody.tax_period_start,
         tax_period_end: requestBody.tax_period_end,
         tax_year: requestBody.tax_year,
-        amount_cents: requestBody.amount_cents,
+        base_amount_cents: requestBody.base_amount_cents,
         calculation_notes: requestBody.calculation_notes,
         total_amount_due_cents: requestBody.total_amount_due_cents,
         service_fee_cents: requestBody.service_fee_cents,

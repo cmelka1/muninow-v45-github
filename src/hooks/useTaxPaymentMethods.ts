@@ -121,7 +121,7 @@ export const useTaxPaymentMethods = (taxData: {
           tax_period_start: taxData.taxPeriodStart,
           tax_period_end: taxData.taxPeriodEnd,
           tax_year: taxData.taxYear,
-          amount_cents: taxData.amount,
+          base_amount_cents: taxData.amount,
           calculation_notes: taxData.calculationData?.calculationNotes || '',
           total_amount_due_cents: totalWithFee,
           service_fee_cents: serviceFee?.serviceFeeToDisplay || 0,
