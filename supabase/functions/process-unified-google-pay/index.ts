@@ -362,13 +362,13 @@ Deno.serve(async (req) => {
     }
 
     // Generate deterministic UUID for idempotency
-    // This ensures same inputs = same UUID for proper deduplication
-    let idempotencyUuid = generateDeterministicUUID({
+    // Entity-specific payment instrument ID ensures unique UUIDs per entity
+    const idempotencyUuid = generateDeterministicUUID({
       entityType: entity_type,
       entityId: entity_id,
       userId: user.id,
-      sessionId: sessionIdForUuid, // ✅ Now unique per payment attempt
-      paymentInstrumentId: google_pay_token.substring(0, 20) // Use token prefix for uniqueness
+      sessionId: sessionIdForUuid,
+      paymentInstrumentId: `gpay-${entity_id}-${google_pay_token.substring(0, 10)}` // ✅ Entity-specific
     });
     
     console.log('🔑 UUID generation inputs:', {
@@ -376,21 +376,21 @@ Deno.serve(async (req) => {
       entityId: entity_id,
       userId: user.id,
       sessionId: sessionIdForUuid,
-      tokenPrefix: google_pay_token.substring(0, 20)
+      paymentInstrumentId: `gpay-${entity_id}-${google_pay_token.substring(0, 10)}`
     });
     console.log('Generated idempotency UUID:', idempotencyUuid);
     
-  // Generate comprehensive metadata for debugging
-  let metadata = generateIdempotencyMetadata({
-    sessionId: sessionIdForUuid,
-    entityType: entity_type,
-    entityId: entity_id,
-    userId: user.id,
-    paymentMethod: 'google-pay',
-    paymentInstrumentId: 'google-pay-token',
-    clientUserAgent: req.headers.get('user-agent') || 'unknown',
-    clientIp: req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown'
-  });
+    // Generate comprehensive metadata for debugging
+    const metadata = generateIdempotencyMetadata({
+      sessionId: sessionIdForUuid,
+      entityType: entity_type,
+      entityId: entity_id,
+      userId: user.id,
+      paymentMethod: 'google-pay',
+      paymentInstrumentId: 'google-pay-token',
+      clientUserAgent: req.headers.get('user-agent') || 'unknown',
+      clientIp: req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown'
+    });
     
     console.log('Idempotency metadata:', metadata);
     console.log('Legacy idempotency ID:', idempotency_id, clientIdempotencyId ? '(client-provided)' : '(generated)');
@@ -406,84 +406,34 @@ Deno.serve(async (req) => {
     if (existingTransaction && !existingError) {
       console.log('Found existing transaction with idempotency ID:', existingTransaction);
       
-      // CRITICAL: Verify this is truly the same payment (not a UUID collision)
-      // Check if the entity_id in metadata matches the current request
-      const existingEntityId = existingTransaction.idempotency_metadata?.entity_id;
-      const isEntityMatch = existingEntityId === entity_id;
+      // If payment is already completed, return the existing result
+      if (['paid', 'completed'].includes(existingTransaction.payment_status)) {
+        console.log('Returning existing successful Google Pay payment result');
+        return new Response(
+          JSON.stringify({
+            success: true,
+            transaction_id: existingTransaction.id,
+            finix_transfer_id: existingTransaction.finix_transfer_id,
+            finix_payment_instrument_id: existingTransaction.finix_payment_instrument_id,
+            service_fee_cents: existingTransaction.service_fee_cents,
+            total_amount_cents: existingTransaction.total_amount_cents,
+            duplicate_prevented: true
+          }),
+          { status: 200, headers: corsHeaders }
+        );
+      }
       
-      console.log('🔍 Duplicate verification:', {
-        existing_entity_id: existingEntityId,
-        requested_entity_id: entity_id,
-        is_match: isEntityMatch
-      });
-      
-      if (!isEntityMatch) {
-        console.warn('⚠️  UUID COLLISION DETECTED! Same UUID but different entity_id');
-        console.warn('   This should not happen with proper session extraction');
-        console.warn('   Forcing new UUID by regenerating with timestamp');
-        
-        // Force a new UUID to avoid collision
-        const collisionAvoidanceSession = `${sessionIdForUuid}_collision_${Date.now()}`;
-        const newIdempotencyUuid = generateDeterministicUUID({
-          entityType: entity_type,
-          entityId: entity_id,
-          userId: user.id,
-          sessionId: collisionAvoidanceSession,
-          paymentInstrumentId: google_pay_token.substring(0, 20)
-        });
-        
-        console.log('🔄 Generated collision-free UUID:', newIdempotencyUuid);
-        
-        // ✅ CRITICAL FIX: Reassign to use the collision-free UUID
-        idempotencyUuid = newIdempotencyUuid;
-        console.log('✅ Now using collision-free UUID for this payment');
-        
-        // Regenerate metadata with collision-avoidance session
-        metadata = generateIdempotencyMetadata({
-          sessionId: collisionAvoidanceSession,
-          entityType: entity_type,
-          entityId: entity_id,
-          userId: user.id,
-          paymentMethod: 'google-pay',
-          paymentInstrumentId: 'google-pay-token',
-          clientUserAgent: req.headers.get('user-agent') || 'unknown',
-          clientIp: req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown'
-        });
-        console.log('✅ Updated metadata for collision-avoidance:', metadata);
-        
-        // Continue processing with the new UUID (no existing transaction to check)
-      } else {
-        // Same entity - this is a legitimate duplicate/retry
-        
-        // If payment is already completed, return the existing result
-        if (['paid', 'completed'].includes(existingTransaction.payment_status)) {
-          console.log('Returning existing successful Google Pay payment result');
-          return new Response(
-            JSON.stringify({
-              success: true,
-              transaction_id: existingTransaction.id,
-              finix_transfer_id: existingTransaction.finix_transfer_id,
-              finix_payment_instrument_id: existingTransaction.finix_payment_instrument_id,
-              service_fee_cents: existingTransaction.service_fee_cents,
-              total_amount_cents: existingTransaction.total_amount_cents,
-              duplicate_prevented: true
-            }),
-            { status: 200, headers: corsHeaders }
-          );
-        }
-        
-        // If payment is still pending, return error to prevent duplicate attempts
-        if (existingTransaction.payment_status === 'pending') {
-          console.log('Found pending Google Pay payment with same idempotency ID');
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: 'Google Pay payment with this identifier is already being processed',
-              retryable: false
-            }),
-            { status: 409, headers: corsHeaders }
-          );
-        }
+      // If payment is still pending, return error to prevent duplicate attempts
+      if (existingTransaction.payment_status === 'pending') {
+        console.log('Found pending Google Pay payment with same idempotency ID');
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Google Pay payment with this identifier is already being processed',
+            retryable: false
+          }),
+          { status: 409, headers: corsHeaders }
+        );
       }
     }
 
