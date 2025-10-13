@@ -451,7 +451,6 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
           ach_fixed_fee: feeProfile?.ach_fixed_fee,
           // Payment data
           payment_amount_cents: paymentAmountCents,
-          idempotency_id: idempotencyId,
           fraud_session_id: fraudSessionId
         })
         .select()

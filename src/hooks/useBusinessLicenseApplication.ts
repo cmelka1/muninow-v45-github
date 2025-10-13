@@ -43,7 +43,6 @@ export interface CreateBusinessLicenseApplicationData {
   merchant_fee_profile_id?: string;
   finix_transfer_id?: string;
   // Payment tracking fields
-  idempotency_id?: string;
   fraud_session_id?: string;
 }
 

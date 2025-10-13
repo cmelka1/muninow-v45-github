@@ -50,7 +50,7 @@ async function reconcileEntityIfNeeded(
   user_id: string, 
   customer_id: string, 
   merchant_id: string, 
-  idempotency_id: string, 
+  idempotency_uuid: string, 
   merchant: any,
   payment_instrument_id: string,
   finix_payment_instrument_id: string | null,
@@ -87,7 +87,7 @@ async function reconcileEntityIfNeeded(
             payment_processed_at: new Date().toISOString(),
             finix_transfer_id: transaction.finix_transfer_id,
             service_fee_cents: transaction.service_fee_cents,
-            idempotency_id: idempotency_id,
+            idempotency_uuid: idempotency_uuid,
             payment_instrument_id: finix_payment_instrument_id || payment_instrument_id,
             finix_merchant_id: merchant.finix_merchant_id,
             merchant_name: merchant.merchant_name
@@ -105,7 +105,7 @@ async function reconcileEntityIfNeeded(
       const { data: existingHistory, error: historyFetchError } = await supabase
         .from('payment_transactions')
         .select('id')
-        .eq('idempotency_id', idempotency_id)
+        .eq('idempotency_uuid', idempotency_uuid)
         .maybeSingle();
       
       // Only insert if no record exists and no error occurred
@@ -134,7 +134,7 @@ async function reconcileEntityIfNeeded(
             card_last_four: card_last_four,
             bank_last_four: bank_last_four,
             payment_status: 'completed',
-            idempotency_id: idempotency_id,
+            idempotency_uuid: idempotency_uuid,
             merchant_id: merchant_id,
             finix_merchant_id: merchant.finix_merchant_id,
             merchant_name: merchant.merchant_name,

@@ -51,7 +51,6 @@ export interface ServiceApplication {
   // Finix Integration
   finix_transfer_id?: string;
   fraud_session_id?: string;
-  idempotency_id?: string;
   transfer_state?: string;
   
   // Merchant & Fee Fields

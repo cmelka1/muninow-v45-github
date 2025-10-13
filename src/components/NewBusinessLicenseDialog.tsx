@@ -556,7 +556,6 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
         ach_basis_points: feeProfile.ach_basis_points,
         ach_fixed_fee: feeProfile.ach_fixed_fee,
         // Payment tracking
-        idempotency_id: idempotencyId,
         fraud_session_id: fraudSessionId
       };
 

@@ -528,8 +528,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           fraud_session_id: finixSessionKey || `fallback_${uniqueSessionId}_${Date.now()}`, // Use Finix session key
           first_name: user?.user_metadata?.first_name,
           last_name: user?.user_metadata?.last_name,
-          user_email: user?.email,
-          idempotency_id: clientIdempotencyId
+          user_email: user?.email
         }
       });
 
