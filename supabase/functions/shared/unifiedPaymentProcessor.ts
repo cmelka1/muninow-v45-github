@@ -485,7 +485,6 @@ async function updateEntityStatus(
     payment_status: 'paid',
     idempotency_uuid: idempotencyUuid,
     service_fee_cents: serviceFee,
-    total_amount_due_cents: totalAmount,
     transfer_state: 'SUCCEEDED',
     payment_processed_at: new Date().toISOString(),
     payment_instrument_id: finixPaymentInstrumentId,
@@ -494,9 +493,12 @@ async function updateEntityStatus(
     merchant_name: merchantData.merchantName
   };
 
-  // Tax submissions have a specific status
+  // Use correct column name based on entity type
   if (entityType === 'tax_submission') {
+    updateData.total_amount_due_cents = totalAmount;  // Tax submissions use this
     updateData.submission_status = 'issued';
+  } else {
+    updateData.total_amount_cents = totalAmount;  // All other entities use this
   }
 
   const { error } = await supabase
