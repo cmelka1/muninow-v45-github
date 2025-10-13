@@ -335,31 +335,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Extract unique session ID from client idempotency ID to prevent UUID collision
-    // Format: uniqueSessionId_entityId_google-pay
-    // We need to remove the last 2 parts (entityId and "google-pay") to get the unique session
-    let sessionIdForUuid = 'google-pay-session'; // default fallback
-    const idempotency_id = clientIdempotencyId || generateIdempotencyId('unified_google_pay', entity_id);
-    
-    console.log('📋 Parsing client idempotency ID:', clientIdempotencyId);
-    
-    if (clientIdempotencyId && clientIdempotencyId.includes('_')) {
-      const parts = clientIdempotencyId.split('_');
-      // Remove last 2 parts: _{entityId}_google-pay to get the unique session
-      if (parts.length >= 3) {
-        sessionIdForUuid = parts.slice(0, parts.length - 2).join('_');
-        console.log('✅ Extracted unique session ID from client:', sessionIdForUuid);
-        console.log('   Full parts:', parts.length, 'Session parts:', parts.length - 2);
-      } else {
-        console.warn('⚠️  Client idempotency ID has too few parts:', parts.length);
-      }
-    }
-    
-    // If no valid session extracted, create timestamp-based one
-    if (sessionIdForUuid === 'google-pay-session') {
-      sessionIdForUuid = `gpay_${entity_id}_${Date.now()}`;
-      console.log('⚠️  No client session found, using timestamp-based session:', sessionIdForUuid);
-    }
+    // Extract unique session ID from fraud_session_id
+    const sessionIdForUuid = fraud_session_id || `gpay_${entity_id}_${Date.now()}`;
 
     // Generate deterministic UUID for idempotency
     // Entity-specific payment instrument ID ensures unique UUIDs per entity
@@ -394,7 +371,6 @@ Deno.serve(async (req) => {
     });
     
     console.log('Idempotency metadata:', metadata);
-    console.log('Legacy idempotency ID:', idempotency_id, clientIdempotencyId ? '(client-provided)' : '(generated)');
 
     // Check for existing payment transaction with this UUID
     console.log('Checking for duplicate payment with UUID:', idempotencyUuid);
@@ -453,7 +429,6 @@ Deno.serve(async (req) => {
         p_payment_instrument_id: '', // Will be set after creating Finix payment instrument
         p_payment_type: 'google-pay',
         p_fraud_session_id: fraud_session_id || null,
-        p_idempotency_id: idempotency_id,
         p_idempotency_uuid: idempotencyUuid,
         p_idempotency_metadata: metadata,
         p_is_card: true, // Google Pay is treated as card payment (uses card fee rates & no ACH fee limit)
@@ -714,7 +689,7 @@ Deno.serve(async (req) => {
             finix_identity_id: merchant.finix_identity_id,
             merchant_name: merchant.merchant_name,
             fraud_session_id: fraud_session_id,
-            idempotency_id: idempotency_id,
+            idempotency_uuid: idempotencyUuid,
             raw_finix_response: JSON.stringify(finixData),
             subcategory: merchant.subcategory,
             statement_descriptor: merchant.statement_descriptor || merchant.merchant_name,
@@ -745,7 +720,7 @@ Deno.serve(async (req) => {
             const { error: docConfirmError } = await supabase.rpc(
               'confirm_staged_tax_documents',
               {
-                p_staging_id: idempotency_id,
+                p_staging_id: idempotencyUuid,
                 p_tax_submission_id: entity_id
               }
             );

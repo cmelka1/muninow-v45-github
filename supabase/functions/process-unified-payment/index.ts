@@ -309,10 +309,6 @@ Deno.serve(async (req) => {
     });
     
     console.log('Idempotency metadata:', metadata);
-    
-    // Keep legacy idempotency_id for backward compatibility
-    const idempotency_id = clientIdempotencyId || generateIdempotencyId('unified_payment', entity_id);
-    console.log('Legacy idempotency ID:', idempotency_id, clientIdempotencyId ? '(client-provided)' : '(generated)');
 
     // Check for existing payment transaction with this UUID
     console.log('Checking for duplicate payment with UUID:', idempotencyUuid);
@@ -338,7 +334,7 @@ Deno.serve(async (req) => {
           user.id, 
           customer_id, 
           merchant_id, 
-          idempotency_id, 
+          idempotencyUuid, 
           merchant,
           existingTransaction.payment_instrument_id || payment_instrument_id,
           finixPaymentInstrumentId,
@@ -415,7 +411,6 @@ Deno.serve(async (req) => {
         p_payment_instrument_id: finixPaymentInstrumentId,
         p_payment_type: payment_type,
         p_fraud_session_id: fraud_session_id || null,
-        p_idempotency_id: idempotency_id,
         p_idempotency_uuid: idempotencyUuid,
         p_idempotency_metadata: metadata,
         p_is_card: isCard,
@@ -667,7 +662,7 @@ Deno.serve(async (req) => {
               finix_identity_id: merchant.finix_identity_id,
               merchant_name: merchant.merchant_name,
               fraud_session_id: fraud_session_id,
-              idempotency_id: idempotency_id,
+              idempotency_uuid: idempotencyUuid,
               raw_finix_response: JSON.stringify(finixData),
               subcategory: merchant.subcategory,
               statement_descriptor: merchant.statement_descriptor || merchant.merchant_name,
@@ -698,7 +693,7 @@ Deno.serve(async (req) => {
               const { error: docConfirmError } = await supabase.rpc(
                 'confirm_staged_tax_documents',
                 {
-                  p_staging_id: idempotency_id,
+                  p_staging_id: idempotencyUuid,
                   p_tax_submission_id: entity_id
                 }
               );
