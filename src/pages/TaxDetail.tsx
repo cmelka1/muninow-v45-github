@@ -253,7 +253,7 @@ const TaxDetail = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-sm font-medium text-muted-foreground">Tax Amount</span>
-                    <span className="font-semibold">{formatCurrency(submission.amount_cents || 0)}</span>
+                    <span className="font-semibold">{formatCurrency(submission.base_amount_cents || 0)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm font-medium text-muted-foreground">Service Fee</span>

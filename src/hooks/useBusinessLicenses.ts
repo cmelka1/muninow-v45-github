@@ -119,7 +119,7 @@ export const useBusinessLicenses = ({ filters = {}, page = 1, pageSize = 10 }: U
         owner_first_name: license.owner_first_name,
         owner_last_name: license.owner_last_name,
         application_status: license.application_status,
-        base_fee_cents: license.base_fee_cents || 0,
+        base_fee_cents: license.base_amount_cents || 0,
         total_fee_cents: license.total_fee_cents || 0,
         submitted_at: license.submitted_at,
         approved_at: license.approved_at,

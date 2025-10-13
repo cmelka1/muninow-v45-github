@@ -11,7 +11,7 @@ export interface MunicipalBusinessLicense {
   owner_last_name: string;
   application_status: string;
   total_amount_cents: number;
-  base_fee_cents: number;
+  base_amount_cents: number;
   service_fee_cents: number;
   created_at: string;
   submitted_at: string | null;
@@ -67,7 +67,7 @@ export const useMunicipalBusinessLicenses = ({ filters = {}, page = 1, pageSize 
           owner_last_name,
           application_status,
           total_amount_cents,
-          base_fee_cents,
+          base_amount_cents,
           service_fee_cents,
           created_at,
           submitted_at,

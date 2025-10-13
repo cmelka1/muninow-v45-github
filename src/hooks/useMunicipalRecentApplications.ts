@@ -23,7 +23,7 @@ export interface RecentBusinessLicense {
   owner_last_name: string;
   business_type: string;
   merchant_name: string | null;
-  base_fee_cents: number;
+  base_amount_cents: number;
   application_status: string;
   payment_status: string | null;
 }
@@ -37,7 +37,7 @@ export interface RecentTaxSubmission {
   user_id: string;
   tax_type: string;
   merchant_name: string | null;
-  amount_cents: number;
+  base_amount_cents: number;
   submission_status: string;
   payment_status: string | null;
 }
@@ -51,7 +51,7 @@ export interface RecentServiceApplication {
   user_id: string;
   service_name: string | null;
   merchant_name: string | null;
-  amount_cents: number;
+  base_amount_cents: number;
   status: string;
   payment_status: string | null;
 }
@@ -114,7 +114,7 @@ export const useMunicipalRecentApplications = () => {
           owner_last_name,
           business_type,
           merchant_name,
-          base_fee_cents,
+          base_amount_cents,
           application_status,
           payment_status
         `)
@@ -145,7 +145,7 @@ export const useMunicipalRecentApplications = () => {
           user_id,
           tax_type,
           merchant_name,
-          amount_cents,
+          base_amount_cents,
           submission_status,
           payment_status
         `)
@@ -176,7 +176,7 @@ export const useMunicipalRecentApplications = () => {
           user_id,
           service_name,
           merchant_name,
-          amount_cents,
+          base_amount_cents,
           status,
           payment_status
         `)

@@ -35,7 +35,7 @@ export interface BusinessLicenseDetail {
   owner_zip_code: string;
   owner_country: string;
   additional_info?: { additionalDetails?: string };
-  base_fee_cents: number;
+  base_amount_cents: number;
   total_fee_cents: number;
   service_fee_cents?: number;
   total_amount_cents?: number;

@@ -206,7 +206,7 @@ export function TaxSubmissionDetailModal({ submissionId, onClose }: TaxSubmissio
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Tax Amount:</span>
-                  <span className="font-medium">{formatCurrencyLocal(submission.amount_cents)}</span>
+                  <span className="font-medium">{formatCurrencyLocal(submission.base_amount_cents)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Service Fee:</span>

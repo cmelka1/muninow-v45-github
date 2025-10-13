@@ -132,7 +132,7 @@ export const MunicipalRecentApplicationsTables = () => {
                         {license.business_legal_name || `${license.owner_first_name} ${license.owner_last_name}`}
                       </TableCell>
                       <TableCell className="py-2">{formatTaxType(license.business_type)}</TableCell>
-                      <TableCell className="py-2 text-center">{formatCurrency(license.base_fee_cents)}</TableCell>
+                      <TableCell className="py-2 text-center">{formatCurrency(license.base_amount_cents)}</TableCell>
                       <TableCell className="py-2 text-center">
                         <BusinessLicenseStatusBadge status={license.application_status} />
                       </TableCell>
@@ -183,7 +183,7 @@ export const MunicipalRecentApplicationsTables = () => {
                         {tax.payer_business_name || `${tax.first_name || ''} ${tax.last_name || ''}`.trim() || 'N/A'}
                       </TableCell>
                       <TableCell className="py-2">{formatTaxType(tax.tax_type)}</TableCell>
-                      <TableCell className="py-2 text-center">{formatCurrency(tax.amount_cents)}</TableCell>
+                      <TableCell className="py-2 text-center">{formatCurrency(tax.base_amount_cents)}</TableCell>
                       <TableCell className="py-2 text-center">
                         <TaxSubmissionStatusBadge status={tax.submission_status} />
                       </TableCell>
@@ -234,7 +234,7 @@ export const MunicipalRecentApplicationsTables = () => {
                         {service.business_legal_name || service.applicant_name || 'N/A'}
                       </TableCell>
                       <TableCell className="py-2">{service.service_name || 'Service Application'}</TableCell>
-                      <TableCell className="py-2 text-center">{formatCurrency(service.amount_cents)}</TableCell>
+                      <TableCell className="py-2 text-center">{formatCurrency(service.base_amount_cents)}</TableCell>
                       <TableCell className="py-2 text-center">
                         <ServiceApplicationStatusBadge status={service.status} />
                       </TableCell>
