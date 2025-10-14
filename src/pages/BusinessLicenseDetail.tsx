@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Download, Loader2, CreditCard } from 'lucide-react';
+import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Download, Loader2, CreditCard, RotateCcw } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
@@ -20,6 +20,7 @@ import { BusinessLicenseStatusBadge } from '@/components/BusinessLicenseStatusBa
 import { BusinessLicenseCommunication } from '@/components/BusinessLicenseCommunication';
 import { BusinessLicenseStatusChangeDialog } from '@/components/BusinessLicenseStatusChangeDialog';
 import { AddBusinessLicenseDocumentDialog } from '@/components/AddBusinessLicenseDocumentDialog';
+import { supabase } from '@/integrations/supabase/client';
 
 import { InlinePaymentFlow } from '@/components/payment/InlinePaymentFlow';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
@@ -31,6 +32,8 @@ import { BusinessLicenseStatus, useBusinessLicenseWorkflow } from '@/hooks/useBu
 import { useToast } from '@/hooks/use-toast';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { RefundDialog } from '@/components/RefundDialog';
+import { useQuery } from '@tanstack/react-query';
 
 export const BusinessLicenseDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,8 +48,58 @@ export const BusinessLicenseDetail = () => {
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
   const [withdrawReason, setWithdrawReason] = useState('');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
+  const [paymentForRefund, setPaymentForRefund] = useState<any>(null);
   
   const { data: license, isLoading, error, refetch } = useBusinessLicense(id!);
+
+  // Check for existing refund
+  const { data: existingRefund } = useQuery<{ id: string; refund_status: string } | null>({
+    queryKey: ['refund-check-license', id],
+    queryFn: async (): Promise<{ id: string; refund_status: string } | null> => {
+      if (!id) return null;
+      
+      // First get payment transaction
+      // @ts-ignore - Supabase type inference issue
+      const { data: payment } = await supabase
+        .from('payment_transactions')
+        .select('id')
+        .eq('entity_type', 'business_license')
+        .eq('entity_id', id)
+        .maybeSingle();
+      
+      if (!payment) return null;
+      
+      // Check for existing refund
+      // @ts-ignore - Supabase type inference issue
+      const { data: refund } = await supabase
+        .from('refunds')
+        .select('id, refund_status')
+        .eq('payment_transaction_id', payment.id)
+        .in('refund_status', ['pending', 'completed'])
+        .maybeSingle();
+      
+      return refund;
+    },
+    enabled: !!id && license?.payment_status === 'paid'
+  });
+
+  // Fetch payment transaction for refund
+  const { data: paymentTransaction } = useQuery<any>({
+    queryKey: ['payment-transaction-license', id],
+    queryFn: async (): Promise<any> => {
+      if (!id) return null;
+      
+      const { data } = await supabase
+        .from('payment_transactions')
+        .select('*')
+        .eq('entity_type', 'business_license')
+        .eq('entity_id', id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!id && license?.payment_status === 'paid' && license?.application_status === 'issued'
+  });
   const { data: documents, isLoading: documentsLoading, refetch: refetchDocuments } = useBusinessLicenseDocumentsList(id!);
   const { getDocumentUrl } = useBusinessLicenseDocuments();
   const { updateLicenseStatus, isUpdating, getValidStatusTransitions } = useBusinessLicenseWorkflow();
@@ -442,15 +495,32 @@ export const BusinessLicenseDetail = () => {
           <div className="flex items-center gap-3">
             <BusinessLicenseStatusBadge status={license.application_status} />
             {isMunicipalUser && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowStatusDialog(true)}
-                className="flex items-center gap-2"
-              >
-                <Edit className="h-4 w-4" />
-                Change Status
-              </Button>
+              <>
+                {(license.payment_status === 'paid' && license.application_status === 'issued' && !existingRefund && paymentTransaction) ? (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      setPaymentForRefund(paymentTransaction);
+                      setRefundDialogOpen(true);
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Refund
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowStatusDialog(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Change Status
+                  </Button>
+                )}
+              </>
             )}
             {license.application_status === 'issued' && license.payment_status === 'paid' && (
               <Button
@@ -927,6 +997,18 @@ export const BusinessLicenseDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {paymentForRefund && (
+        <RefundDialog
+          open={refundDialogOpen}
+          onOpenChange={setRefundDialogOpen}
+          paymentDetails={paymentForRefund}
+          onRefundCreated={() => {
+            setRefundDialogOpen(false);
+            refetch();
+          }}
+        />
+      )}
     </div>
   );
 

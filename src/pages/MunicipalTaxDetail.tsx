@@ -8,7 +8,8 @@ import {
   DollarSign,
   Clock, 
   CreditCard,
-  Download
+  Download,
+  RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,16 +24,70 @@ import { TaxSubmissionStatusBadge } from '@/components/TaxSubmissionStatusBadge'
 import { formatCurrency, formatTaxType } from '@/lib/formatters';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { RefundDialog } from '@/components/RefundDialog';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
 
 const MunicipalTaxDetail = () => {
   const { submissionId } = useParams<{ submissionId: string }>();
   const navigate = useNavigate();
+  const { profile } = useAuth();
   
-  const { data: submission, isLoading, error } = useTaxSubmissionDetail(submissionId || null);
+  const { data: submission, isLoading, error, refetch } = useTaxSubmissionDetail(submissionId || null);
   const { getDocuments } = useTaxSubmissionDocuments();
   const [documents, setDocuments] = useState<any[]>([]);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
   const [documentsError, setDocumentsError] = useState<string | null>(null);
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
+  const [paymentForRefund, setPaymentForRefund] = useState<any>(null);
+
+  // Check for existing refund
+  const { data: existingRefund } = useQuery<{ id: string; refund_status: string } | null>({
+    queryKey: ['refund-check-tax', submissionId],
+    queryFn: async (): Promise<{ id: string; refund_status: string } | null> => {
+      if (!submissionId) return null;
+      
+      // First get payment transaction
+      // @ts-ignore - Supabase type inference issue
+      const { data: payment } = await supabase
+        .from('payment_transactions')
+        .select('id')
+        .eq('entity_type', 'tax_submission')
+        .eq('entity_id', submissionId)
+        .maybeSingle();
+      
+      if (!payment) return null;
+      
+      // Check for existing refund
+      // @ts-ignore - Supabase type inference issue
+      const { data: refund } = await supabase
+        .from('refunds')
+        .select('id, refund_status')
+        .eq('payment_transaction_id', payment.id)
+        .in('refund_status', ['pending', 'completed'])
+        .maybeSingle();
+      
+      return refund;
+    },
+    enabled: !!submissionId && submission?.payment_status === 'paid'
+  });
+
+  // Fetch payment transaction for refund
+  const { data: paymentTransaction } = useQuery<any>({
+    queryKey: ['payment-transaction-tax', submissionId],
+    queryFn: async (): Promise<any> => {
+      if (!submissionId) return null;
+      
+      const { data } = await supabase
+        .from('payment_transactions')
+        .select('*')
+        .eq('entity_type', 'tax_submission')
+        .eq('entity_id', submissionId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!submissionId && submission?.payment_status === 'paid'
+  });
 
   // Load documents when submission is available
   React.useEffect(() => {
@@ -309,6 +364,34 @@ const MunicipalTaxDetail = () => {
 
           {/* Right Column - Payment Information & Timeline */}
           <div className="space-y-6">
+            {/* Payment Actions */}
+            {profile?.account_type?.startsWith('municipal') && 
+             submission.payment_status === 'paid' && 
+             !existingRefund &&
+             paymentTransaction && (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    <CardTitle>Payment Actions</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Button 
+                    variant="destructive"
+                    className="w-full"
+                    onClick={() => {
+                      setPaymentForRefund(paymentTransaction);
+                      setRefundDialogOpen(true);
+                    }}
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Refund Payment
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Payment Information */}
             <Card>
               <CardHeader>
@@ -389,6 +472,18 @@ const MunicipalTaxDetail = () => {
             <TaxSubmissionCommunication submissionId={submission.id} />
           </div>
         </div>
+
+        {paymentForRefund && (
+          <RefundDialog
+            open={refundDialogOpen}
+            onOpenChange={setRefundDialogOpen}
+            paymentDetails={paymentForRefund}
+            onRefundCreated={() => {
+              setRefundDialogOpen(false);
+              refetch();
+            }}
+          />
+        )}
       </div>
     </div>
   );
