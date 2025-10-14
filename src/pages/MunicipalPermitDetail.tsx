@@ -11,8 +11,7 @@ import {
   Users,
   Building,
   Download,
-  CalendarIcon,
-  RotateCcw
+  CalendarIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,13 +30,11 @@ import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { ScheduleInspectionDialog } from '@/components/ScheduleInspectionDialog';
 import { PermitCommunication } from '@/components/PermitCommunication';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
-import { RefundDialog } from '@/components/RefundDialog';
+
 
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { toast } from '@/hooks/use-toast';
-import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
 
 const MunicipalPermitDetail = () => {
   const { permitId } = useParams<{ permitId: string }>();
@@ -48,64 +45,13 @@ const MunicipalPermitDetail = () => {
   
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
-  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
-  const [paymentForRefund, setPaymentForRefund] = useState<any>(null);
   
-  const { profile } = useAuth();
-  const { data: permit, isLoading, error, refetch } = usePermit(permitId!);
+  const { data: permit, isLoading, error } = usePermit(permitId!);
   const { data: questions } = useMunicipalPermitQuestions(
     permit?.customer_id,
     permit?.merchant_id
   );
   const { data: documents } = usePermitDocuments(permitId!);
-
-  // Check for existing refund
-  const { data: existingRefund } = useQuery<{ id: string; refund_status: string } | null>({
-    queryKey: ['refund-check-permit', permitId],
-    queryFn: async (): Promise<{ id: string; refund_status: string } | null> => {
-      if (!permitId) return null;
-      
-      // First get payment transaction
-      // @ts-ignore - Supabase type inference issue
-      const { data: payment } = await supabase
-        .from('payment_transactions')
-        .select('id')
-        .eq('entity_type', 'permit')
-        .eq('entity_id', permitId)
-        .maybeSingle();
-      
-      if (!payment) return null;
-      
-      // Check for existing refund
-      // @ts-ignore - Supabase type inference issue
-      const { data: refund } = await supabase
-        .from('refunds')
-        .select('id, refund_status')
-        .eq('payment_transaction_id', payment.id)
-        .in('refund_status', ['pending', 'completed'])
-        .maybeSingle();
-      
-      return refund;
-    },
-    enabled: !!permitId && permit?.payment_status === 'paid'
-  });
-
-  // Fetch payment transaction for refund
-  const { data: paymentTransaction } = useQuery<any>({
-    queryKey: ['payment-transaction-permit', permitId],
-    queryFn: async (): Promise<any> => {
-      if (!permitId) return null;
-      
-      const { data } = await supabase
-        .from('payment_transactions')
-        .select('*')
-        .eq('entity_type', 'permit')
-        .eq('entity_id', permitId)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!permitId && permit?.payment_status === 'paid' && permit?.application_status === 'issued'
-  });
 
   const handleSaveNotes = async () => {
     if (!permitId || !reviewNotes.trim()) {
@@ -462,26 +408,12 @@ const MunicipalPermitDetail = () => {
               <Separator />
               
               <div className="space-y-2">
-                {(permit.payment_status === 'paid' && permit.application_status === 'issued' && !existingRefund && paymentTransaction) ? (
-                  <Button 
-                    variant="destructive"
-                    className="w-full"
-                    onClick={() => {
-                      setPaymentForRefund(paymentTransaction);
-                      setRefundDialogOpen(true);
-                    }}
-                  >
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Refund Payment
-                  </Button>
-                ) : (
-                  <Button 
-                    className="w-full" 
-                    onClick={handleStatusChange}
-                  >
-                    Update Status
-                  </Button>
-                )}
+                <Button 
+                  className="w-full" 
+                  onClick={handleStatusChange}
+                >
+                  Update Status
+                </Button>
                 <Button 
                   variant="outline" 
                   className="w-full"
@@ -568,18 +500,6 @@ const MunicipalPermitDetail = () => {
           window.location.reload();
         }}
       />
-
-      {paymentForRefund && (
-        <RefundDialog
-          open={refundDialogOpen}
-          onOpenChange={setRefundDialogOpen}
-          paymentDetails={paymentForRefund}
-          onRefundCreated={() => {
-            setRefundDialogOpen(false);
-            refetch();
-          }}
-        />
-      )}
 
     </div>
   );

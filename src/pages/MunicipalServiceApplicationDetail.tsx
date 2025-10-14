@@ -17,8 +17,7 @@ import {
   Plus,
   CreditCard,
   Loader2,
-  Edit,
-  RotateCcw
+  Edit
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,8 +41,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, formatDate, smartAbbreviateFilename } from '@/lib/formatters';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { RefundDialog } from '@/components/RefundDialog';
-import { useQuery } from '@tanstack/react-query';
 
 const MunicipalServiceApplicationDetail = () => {
   const { applicationId } = useParams<{ applicationId: string }>();
@@ -57,60 +54,12 @@ const MunicipalServiceApplicationDetail = () => {
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
-  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
-  const [paymentForRefund, setPaymentForRefund] = useState<any>(null);
   
-  const { data: application, isLoading, error, refetch } = useServiceApplication(applicationId!);
+  const { data: application, isLoading, error } = useServiceApplication(applicationId!);
   const { data: documentsQuery } = useServiceApplicationDocuments(applicationId!);
   const [documents, setDocuments] = useState<any[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [documentsError, setDocumentsError] = useState<string | null>(null);
-
-  // Check for existing refund
-  const { data: existingRefund } = useQuery<any>({
-    queryKey: ['refund-check', applicationId],
-    queryFn: async () => {
-      if (!applicationId) return null;
-      
-      // First get payment transaction
-      const { data: payment } = await supabase
-        .from('payment_transactions')
-        .select('id')
-        .eq('entity_type', 'service_application')
-        .eq('entity_id', applicationId)
-        .single();
-      
-      if (!payment) return null;
-      
-      // Check for existing refund
-      const { data: refund } = await supabase
-        .from('refunds')
-        .select('id, refund_status')
-        .eq('payment_transaction_id', payment.id)
-        .in('refund_status', ['pending', 'completed'])
-        .maybeSingle();
-      
-      return refund;
-    },
-    enabled: !!applicationId && application?.payment_status === 'paid'
-  });
-
-  // Fetch payment transaction for refund
-  const { data: paymentTransaction } = useQuery<any>({
-    queryKey: ['payment-transaction', applicationId],
-    queryFn: async () => {
-      if (!applicationId) return null;
-      
-      const { data } = await supabase
-        .from('payment_transactions')
-        .select('*')
-        .eq('entity_type', 'service_application')
-        .eq('entity_id', applicationId)
-        .single();
-      return data;
-    },
-    enabled: !!applicationId && application?.payment_status === 'paid' && application?.status === 'issued'
-  });
 
   // Set documents from query
   React.useEffect(() => {
@@ -341,32 +290,15 @@ const MunicipalServiceApplicationDetail = () => {
           <div className="flex items-center gap-3">
             <ServiceApplicationStatusBadge status={application.status} />
             {profile?.account_type?.startsWith('municipal') && (
-              <>
-                {(application.payment_status === 'paid' && application.status === 'issued' && !existingRefund && paymentTransaction) ? (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => {
-                      setPaymentForRefund(paymentTransaction);
-                      setRefundDialogOpen(true);
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                    Refund
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsStatusDialogOpen(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Change Status
-                  </Button>
-                )}
-              </>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsStatusDialogOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Change Status
+              </Button>
             )}
           </div>
         </div>
@@ -680,18 +612,6 @@ const MunicipalServiceApplicationDetail = () => {
           }}
           document={selectedDocument}
           bucketName="service-application-documents"
-        />
-      )}
-
-      {paymentForRefund && (
-        <RefundDialog
-          open={refundDialogOpen}
-          onOpenChange={setRefundDialogOpen}
-          paymentDetails={paymentForRefund}
-          onRefundCreated={() => {
-            setRefundDialogOpen(false);
-            refetch();
-          }}
         />
       )}
     </div>
