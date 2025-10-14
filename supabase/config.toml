@@ -1,1 +1,7 @@
 project_id = "qcuiuubbaozcmejzvxje"
+
+[functions.get-finix-config]
+verify_jwt = false
+
+[functions.create-finix-merchant-payment-instrument-tokenized]
+verify_jwt = false

@@ -6,44 +6,48 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Getting Finix client configuration...');
-
-    const finixApplicationId = Deno.env.get('FINIX_USER_APPLICATION_ID');
+    const finixAppId = Deno.env.get('FINIX_APPLICATION_ID');
     const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
 
-    if (!finixApplicationId) {
-      console.error('FINIX_USER_APPLICATION_ID not configured');
-      throw new Error('Finix User Application ID not configured');
+    if (!finixAppId) {
+      console.error('❌ Missing FINIX_APPLICATION_ID');
+      throw new Error('Finix configuration not available');
     }
 
-    console.log('Finix configuration retrieved successfully');
+    console.log('✅ Returning Finix config:', {
+      applicationId: finixAppId,
+      environment: finixEnvironment
+    });
 
     return new Response(
       JSON.stringify({
         success: true,
-        applicationId: finixApplicationId,
+        applicationId: finixAppId,
         environment: finixEnvironment,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       }
     );
+
   } catch (error) {
-    console.error('Error getting Finix config:', error);
+    console.error('❌ Error getting Finix config:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get Finix configuration',
+        error: errorMessage
       }),
       {
-        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
       }
     );
   }
