@@ -37,6 +37,13 @@ Deno.serve(async (req) => {
     // Parse request body
     const { payment_transaction_id, reason, refund_amount_cents }: RefundRequest = await req.json();
 
+    console.log('Processing refund request:', {
+      payment_transaction_id,
+      reason,
+      refund_amount_cents,
+      timestamp: new Date().toISOString()
+    });
+
     if (!payment_transaction_id || !reason) {
       return new Response(
         JSON.stringify({ success: false, error: 'Missing payment_transaction_id or reason' }),
@@ -70,6 +77,13 @@ Deno.serve(async (req) => {
       );
     }
 
+    console.log('Payment transaction details:', {
+      id: paymentTransaction.id,
+      total_amount_cents: paymentTransaction.total_amount_cents,
+      finix_transfer_id: paymentTransaction.finix_transfer_id,
+      payment_status: paymentTransaction.payment_status
+    });
+
     if (!paymentTransaction.finix_transfer_id) {
       return new Response(
         JSON.stringify({ success: false, error: 'Payment not eligible for refund (no Finix transfer ID)' }),
@@ -99,22 +113,42 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check for duplicate refunds
-    const { data: existingRefund } = await supabase
+    // Check for duplicate refunds (full refund only)
+    const { data: existingRefunds } = await supabase
       .from('refunds')
-      .select('id')
+      .select('id, refund_status, refund_amount_cents')
       .eq('payment_transaction_id', payment_transaction_id)
-      .single();
+      .in('refund_status', ['pending', 'completed']);
 
-    if (existingRefund) {
+    if (existingRefunds && existingRefunds.length > 0) {
+      const refundStatus = existingRefunds[0].refund_status;
       return new Response(
-        JSON.stringify({ success: false, error: 'Refund already exists for this payment' }),
+        JSON.stringify({ 
+          success: false, 
+          error: `A ${refundStatus} refund already exists for this payment. Only one full refund is allowed per transaction.` 
+        }),
         { status: 400, headers: corsHeaders }
       );
     }
 
     // Determine refund amount
     const refundAmount = refund_amount_cents || paymentTransaction.total_amount_cents;
+
+    // Validate refund amount doesn't exceed original payment
+    if (refundAmount > paymentTransaction.total_amount_cents) {
+      console.error('Refund amount exceeds payment amount:', {
+        refundAmount,
+        totalAmount: paymentTransaction.total_amount_cents
+      });
+      
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Refund amount ($${(refundAmount/100).toFixed(2)}) cannot exceed original payment amount ($${(paymentTransaction.total_amount_cents/100).toFixed(2)})`
+        }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
 
     // Call Finix API for refund
     const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
@@ -134,6 +168,11 @@ Deno.serve(async (req) => {
 
     const finixCredentials = btoa(`${finixApplicationId}:${finixApiSecret}`);
 
+    console.log('Calling Finix API to create reversal:', {
+      transfer_id: paymentTransaction.finix_transfer_id,
+      refund_amount: refundAmount
+    });
+
     const finixResponse = await fetch(
       `${finixApiUrl}/transfers/${paymentTransaction.finix_transfer_id}/reversals`,
       {
@@ -144,7 +183,7 @@ Deno.serve(async (req) => {
           'Finix-Version': '2022-02-01',
         },
         body: JSON.stringify({
-          refund_amount: refundAmount,
+          amount: refundAmount,
           tags: {
             payment_transaction_id: payment_transaction_id,
             municipal_user_id: user.id,
@@ -155,6 +194,13 @@ Deno.serve(async (req) => {
     );
 
     const finixData = await finixResponse.json();
+
+    console.log('Finix API response:', {
+      success: finixResponse.ok,
+      status: finixResponse.status,
+      reversal_id: finixData.id,
+      state: finixData.state
+    });
 
     if (!finixResponse.ok) {
       console.error('Finix API error:', finixData);
@@ -191,7 +237,7 @@ Deno.serve(async (req) => {
         finix_reversal_id: finixData.id,
         reason: reason,
         refund_amount_cents: refundAmount,
-        original_amount_cents: paymentTransaction.amount_cents,
+        original_amount_cents: paymentTransaction.total_amount_cents,
         refund_status: refundStatus,
         
         // Payment method details
@@ -228,6 +274,13 @@ Deno.serve(async (req) => {
         { status: 500, headers: corsHeaders }
       );
     }
+
+    console.log('Refund created successfully:', {
+      refund_id: refundRecord.id,
+      refund_status: refundRecord.refund_status,
+      refund_amount_cents: refundRecord.refund_amount_cents,
+      finix_reversal_id: refundRecord.finix_reversal_id
+    });
 
     const response: RefundResponse = {
       success: true,

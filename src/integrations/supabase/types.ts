@@ -2648,7 +2648,7 @@ export type Database = {
           original_amount_cents: number
           original_due_date: string | null
           original_issue_date: string | null
-          payment_transaction_id: string | null
+          payment_transaction_id: string
           payment_type: string | null
           processed_at: string | null
           reason: string
@@ -2677,7 +2677,7 @@ export type Database = {
           original_amount_cents: number
           original_due_date?: string | null
           original_issue_date?: string | null
-          payment_transaction_id?: string | null
+          payment_transaction_id: string
           payment_type?: string | null
           processed_at?: string | null
           reason: string
@@ -2706,7 +2706,7 @@ export type Database = {
           original_amount_cents?: number
           original_due_date?: string | null
           original_issue_date?: string | null
-          payment_transaction_id?: string | null
+          payment_transaction_id?: string
           payment_type?: string | null
           processed_at?: string | null
           reason?: string
