@@ -143,7 +143,7 @@ serve(async (req) => {
 
     const bankLastFour = finixData.masked_account_number?.slice(-4) || '0000';
     const maskedAccountNumber = finixData.masked_account_number || '****0000';
-    const accountType = finixData.account_type || 'CHECKING';
+    const accountType = (finixData.account_type || 'CHECKING').toLowerCase();
     const accountHolderName = finixData.name || '';
     const bankCode = finixData.bank_code || '';
     const validationCheck = finixData.bank_account_validation_check || 'PENDING';
