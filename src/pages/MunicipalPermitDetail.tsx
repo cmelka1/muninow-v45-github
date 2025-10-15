@@ -176,15 +176,6 @@ const MunicipalPermitDetail = () => {
               <Edit className="h-4 w-4" />
               Update Status
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setIsInspectionDialogOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <CalendarIcon className="h-4 w-4" />
-              Schedule Inspection
-            </Button>
           </div>
         </div>
       </div>
@@ -414,7 +405,7 @@ const MunicipalPermitDetail = () => {
                 Review Management
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="assignee">Assigned Reviewer</Label>
                 <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
@@ -431,6 +422,15 @@ const MunicipalPermitDetail = () => {
                   Assign a team member to review this permit application
                 </p>
               </div>
+              
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => setIsInspectionDialogOpen(true)}
+              >
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                Schedule Inspection
+              </Button>
             </CardContent>
           </Card>
 
