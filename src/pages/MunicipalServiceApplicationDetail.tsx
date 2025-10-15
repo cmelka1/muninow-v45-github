@@ -578,6 +578,80 @@ const MunicipalServiceApplicationDetail = () => {
             </CardContent>
           </Card>
 
+          {/* Status Timeline */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Status Timeline
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-2">
+                {application.created_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Created</span>
+                    <span className="text-gray-600">{formatDate(application.created_at)}</span>
+                  </div>
+                )}
+                {application.submitted_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Submitted</span>
+                    <span className="text-gray-600">{formatDate(application.submitted_at)}</span>
+                  </div>
+                )}
+                {application.under_review_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Under Review</span>
+                    <span className="text-gray-600">{formatDate(application.under_review_at)}</span>
+                  </div>
+                )}
+                {application.information_requested_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Information Requested</span>
+                    <span className="text-gray-600">{formatDate(application.information_requested_at)}</span>
+                  </div>
+                )}
+                {application.resubmitted_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Resubmitted</span>
+                    <span className="text-gray-600">{formatDate(application.resubmitted_at)}</span>
+                  </div>
+                )}
+                {application.approved_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Approved</span>
+                    <span className="text-gray-600">{formatDate(application.approved_at)}</span>
+                  </div>
+                )}
+                {application.denied_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Denied</span>
+                    <span className="text-gray-600">{formatDate(application.denied_at)}</span>
+                  </div>
+                )}
+                {application.withdrawn_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Withdrawn</span>
+                    <span className="text-gray-600">{formatDate(application.withdrawn_at)}</span>
+                  </div>
+                )}
+                {application.expired_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Expired</span>
+                    <span className="text-gray-600">{formatDate(application.expired_at)}</span>
+                  </div>
+                )}
+                {application.issued_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Issued</span>
+                    <span className="text-gray-600">{formatDate(application.issued_at)}</span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Review Management and Communication */}
           {profile?.account_type === 'municipal' ? (
             <>
