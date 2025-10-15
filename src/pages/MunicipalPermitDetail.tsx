@@ -11,7 +11,8 @@ import {
   Users,
   Building,
   Download,
-  CalendarIcon
+  CalendarIcon,
+  Edit
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -152,15 +153,38 @@ const MunicipalPermitDetail = () => {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="mb-6">
+        <div className="flex items-center gap-4 mb-4">
           <Button variant="ghost" size="sm" onClick={() => navigate('/municipal/permits')} className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
+        </div>
+        
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Permit Review</h1>
             <p className="text-muted-foreground">{permit.permit_number}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <PermitStatusBadge status={permit.application_status as PermitStatus} />
+            <Button 
+              className="flex items-center gap-2"
+              size="sm"
+              onClick={handleStatusChange}
+            >
+              <Edit className="h-4 w-4" />
+              Update Status
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setIsInspectionDialogOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <CalendarIcon className="h-4 w-4" />
+              Schedule Inspection
+            </Button>
           </div>
         </div>
       </div>
@@ -390,7 +414,7 @@ const MunicipalPermitDetail = () => {
                 Review Management
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent>
               <div>
                 <Label htmlFor="assignee">Assigned Reviewer</Label>
                 <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
@@ -403,25 +427,9 @@ const MunicipalPermitDetail = () => {
                     <SelectItem value="unassigned">Unassigned</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-2">
-                <Button 
-                  className="w-full" 
-                  onClick={handleStatusChange}
-                >
-                  Update Status
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => setIsInspectionDialogOpen(true)}
-                >
-                  <CalendarIcon className="h-4 w-4 mr-2" />
-                  Schedule Inspection
-                </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Assign a team member to review this permit application
+                </p>
               </div>
             </CardContent>
           </Card>
