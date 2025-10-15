@@ -8,7 +8,8 @@ import {
   DollarSign,
   Clock, 
   CreditCard,
-  Download
+  Download,
+  Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -351,34 +352,28 @@ const MunicipalTaxDetail = () => {
             {/* Timeline */}
             <Card>
               <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  <CardTitle>Timeline</CardTitle>
-                </div>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Status Timeline
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="space-y-3">
+                <div className="space-y-2">
                   {submission.submission_date && (
-                    <div className="flex items-start gap-3">
-                      <div className="w-2 h-2 bg-primary rounded-full mt-2" />
-                      <div>
-                        <p className="font-medium text-sm">Tax Submission Created</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(submission.submission_date), 'MMM d, yyyy h:mm a')}
-                        </p>
-                      </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Created</span>
+                      <span className="text-gray-600">
+                        {format(new Date(submission.submission_date), 'MMM d, yyyy h:mm a')}
+                      </span>
                     </div>
                   )}
                   
                   {submission.payment_processed_at && (
-                    <div className="flex items-start gap-3">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2" />
-                      <div>
-                        <p className="font-medium text-sm">Payment Processed</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(submission.payment_processed_at), 'MMM d, yyyy h:mm a')}
-                        </p>
-                      </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Paid</span>
+                      <span className="text-gray-600">
+                        {format(new Date(submission.payment_processed_at), 'MMM d, yyyy h:mm a')}
+                      </span>
                     </div>
                   )}
                 </div>

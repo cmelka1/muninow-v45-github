@@ -12,7 +12,8 @@ import {
   Building,
   Download,
   CalendarIcon,
-  Edit
+  Edit,
+  Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -438,49 +439,55 @@ const MunicipalPermitDetail = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Timeline
+                <Calendar className="h-5 w-5" />
+                Status Timeline
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {permit.submitted_at && (
-                <div className="flex justify-between items-center p-2 bg-muted/30 rounded">
-                  <span className="text-sm font-medium">Submitted</span>
-                  <span className="text-xs text-muted-foreground">{formatDate(permit.submitted_at)}</span>
-                </div>
-              )}
-              {permit.under_review_at && (
-                <div className="flex justify-between items-center p-2 bg-muted/30 rounded">
-                  <span className="text-sm font-medium">Under Review</span>
-                  <span className="text-xs text-muted-foreground">{formatDate(permit.under_review_at)}</span>
-                </div>
-              )}
-              {permit.information_requested_at && (
-                <div className="p-2 bg-orange-50 border border-orange-200 rounded space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-orange-700">Info Requested</span>
-                    <span className="text-xs text-orange-600">{formatDate(permit.information_requested_at)}</span>
+              <div className="space-y-2">
+                {permit.created_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Created</span>
+                    <span className="text-gray-600">{formatDate(permit.created_at)}</span>
                   </div>
-                </div>
-              )}
-              {permit.approved_at && (
-                <div className="flex justify-between items-center p-2 bg-green-50 border border-green-200 rounded">
-                  <span className="text-sm font-medium text-green-700">Approved</span>
-                  <span className="text-xs text-green-600">{formatDate(permit.approved_at)}</span>
-                </div>
-              )}
-              {permit.denied_at && (
-                <div className="flex justify-between items-center p-2 bg-red-50 border border-red-200 rounded">
-                  <span className="text-sm font-medium text-red-700">Denied</span>
-                  <span className="text-xs text-red-600">{formatDate(permit.denied_at)}</span>
-                </div>
-              )}
-              {permit.issued_at && (
-                <div className="flex justify-between items-center p-2 bg-emerald-50 border border-emerald-200 rounded">
-                  <span className="text-sm font-medium text-emerald-700">Issued</span>
-                  <span className="text-xs text-emerald-600">{formatDate(permit.issued_at)}</span>
-                </div>
-              )}
+                )}
+                {permit.submitted_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Submitted</span>
+                    <span className="text-gray-600">{formatDate(permit.submitted_at)}</span>
+                  </div>
+                )}
+                {permit.under_review_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Under Review</span>
+                    <span className="text-gray-600">{formatDate(permit.under_review_at)}</span>
+                  </div>
+                )}
+                {permit.information_requested_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Info Requested</span>
+                    <span className="text-gray-600">{formatDate(permit.information_requested_at)}</span>
+                  </div>
+                )}
+                {permit.approved_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Approved</span>
+                    <span className="text-gray-600">{formatDate(permit.approved_at)}</span>
+                  </div>
+                )}
+                {permit.denied_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Denied</span>
+                    <span className="text-gray-600">{formatDate(permit.denied_at)}</span>
+                  </div>
+                )}
+                {permit.issued_at && (
+                  <div className="flex justify-between text-sm">
+                    <span>Issued</span>
+                    <span className="text-gray-600">{formatDate(permit.issued_at)}</span>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 
