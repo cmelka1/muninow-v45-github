@@ -508,7 +508,11 @@ async function updateEntityStatus(
 
   // Use correct column name based on entity type
   if (entityType === 'tax_submission') {
-    updateData.total_amount_due_cents = totalAmount;  // Tax submissions use this
+    // CRITICAL FIX: Ensure we're storing the TOTAL (base + fee), not just base
+    const calculatedBase = totalAmount - serviceFee;
+    console.log(`[updateEntityStatus] Tax submission ${entityId} - Total: ${totalAmount}, Base: ${calculatedBase}, Fee: ${serviceFee}`);
+    updateData.total_amount_due_cents = totalAmount;  // This is base + service fee
+    updateData.base_amount_cents = calculatedBase;  // Ensure base is also correct
     updateData.submission_status = 'issued';
   } else {
     updateData.total_amount_cents = totalAmount;  // All other entities use this
