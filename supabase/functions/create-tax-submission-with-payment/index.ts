@@ -42,9 +42,6 @@ Deno.serve(async (req) => {
       tax_year,
       base_amount_cents,
       calculation_notes,
-      total_amount_due_cents,
-      service_fee_cents,
-      total_amount_cents,
       payer_first_name,
       payer_last_name,
       payer_email,
@@ -75,7 +72,7 @@ Deno.serve(async (req) => {
       base_amount_cents
     });
 
-    // Create tax submission in draft status
+    // Create tax submission in draft status (amounts will be populated after payment calculation)
     const { data: taxSubmission, error: insertError } = await supabase
       .from('tax_submissions')
       .insert({
@@ -87,8 +84,8 @@ Deno.serve(async (req) => {
         tax_period_end,
         tax_year,
         base_amount_cents,
-        service_fee_cents,
-        total_amount_due_cents: total_amount_cents,
+        service_fee_cents: null, // Will be populated after payment calculation
+        total_amount_due_cents: null, // Will be populated after payment calculation
         submission_status: 'draft',
         payment_status: 'unpaid',
         first_name: payer_first_name,

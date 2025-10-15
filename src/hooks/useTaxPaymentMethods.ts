@@ -112,6 +112,7 @@ export const useTaxPaymentMethods = (taxData: {
 
     try {
       // First create a tax submission record to get the entity ID
+      // Note: total_amount_due_cents and service_fee_cents will be calculated during payment
       const { data: taxSubmission, error: taxError } = await supabase.functions.invoke('create-tax-submission-with-payment', {
         body: {
           user_id: user.id,
@@ -123,9 +124,6 @@ export const useTaxPaymentMethods = (taxData: {
           tax_year: taxData.taxYear,
           base_amount_cents: taxData.amount,
           calculation_notes: taxData.calculationData?.calculationNotes || '',
-          total_amount_due_cents: totalWithFee,
-          service_fee_cents: serviceFee?.serviceFeeToDisplay || 0,
-          total_amount_cents: totalWithFee,
           payer_first_name: taxData.payer?.firstName || '',
           payer_last_name: taxData.payer?.lastName || '',
           payer_email: taxData.payer?.email || '',

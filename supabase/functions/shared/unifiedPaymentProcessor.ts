@@ -187,7 +187,31 @@ export async function processUnifiedPayment(
       transferResult.raw_response
     );
 
-    // STEP 9: UPDATE ENTITY STATUS
+    // STEP 9: UPDATE TAX SUBMISSION WITH FINAL AMOUNTS (if applicable)
+    if (params.entityType === 'tax_submission') {
+      const { error: taxUpdateError } = await supabase
+        .from('tax_submissions')
+        .update({
+          total_amount_due_cents: totalAmountCents,
+          service_fee_cents: serviceFeeCents,
+          payment_status: 'pending', // Payment initiated
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', params.entityId);
+        
+      if (taxUpdateError) {
+        console.error('[UnifiedPaymentProcessor] Failed to update tax submission with payment amounts:', taxUpdateError);
+        // Continue anyway - payment was created, this is just metadata
+      } else {
+        console.log('[UnifiedPaymentProcessor] Updated tax submission with final amounts:', {
+          entityId: params.entityId,
+          totalAmountCents,
+          serviceFeeCents
+        });
+      }
+    }
+
+    // STEP 10: UPDATE ENTITY STATUS
     await updateEntityStatus(
       supabase,
       params.entityType,
@@ -200,7 +224,7 @@ export async function processUnifiedPayment(
       merchantData
     );
 
-    // STEP 10: AUTO-ISSUE ENTITY (if applicable)
+    // STEP 11: AUTO-ISSUE ENTITY (if applicable)
     await autoIssueEntity(supabase, params.entityType, params.entityId);
 
     return {
