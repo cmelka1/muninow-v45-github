@@ -178,7 +178,7 @@ export const UnifiedPaymentDialog: React.FC<UnifiedPaymentDialogProps> = ({
               Cancel
             </Button>
             <Button
-              onClick={handlePayment}
+              onClick={() => handlePayment()}
               disabled={!selectedPaymentMethod || isProcessingPayment || !serviceFee}
               className="flex-1"
             >

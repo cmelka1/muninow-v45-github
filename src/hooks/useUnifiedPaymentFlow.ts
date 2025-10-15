@@ -146,12 +146,17 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
     }
   }, [paymentInstruments, selectedPaymentMethod]);
 
-  const handlePayment = async (): Promise<PaymentResponse> => {
+  const handlePayment = async (overrideEntityId?: string): Promise<PaymentResponse> => {
     console.group('💳 UNIFIED_PAYMENT_FLOW_START');
+    
+    // Use override if provided, otherwise fall back to hook's entityId
+    const effectiveEntityId = overrideEntityId || params.entityId;
+    
     console.log('Payment initiation timestamp:', new Date().toISOString());
     console.log('Payment parameters:', {
       entityType: params.entityType,
-      entityId: params.entityId,
+      entityId: effectiveEntityId,
+      entityIdSource: overrideEntityId ? 'override parameter' : 'hook configuration',
       selectedPaymentMethod,
       serviceFee,
       hasUser: !!user,
@@ -238,7 +243,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       const idempotencyMetadata = {
         session_id: sessionId,
         entity_type: params.entityType,
-        entity_id: params.entityId,
+        entity_id: effectiveEntityId,
         user_id: user.id,
         payment_method: paymentType,
         payment_instrument_id: paymentInstrument?.id || selectedPaymentMethod,
@@ -248,7 +253,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
 
       const requestBody = {
         entity_type: params.entityType,
-        entity_id: params.entityId,
+        entity_id: effectiveEntityId,
         customer_id: params.customerId,
         merchant_id: params.merchantId,
         base_amount_cents: params.baseAmountCents,

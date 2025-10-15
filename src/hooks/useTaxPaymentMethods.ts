@@ -143,11 +143,11 @@ export const useTaxPaymentMethods = (taxData: {
         throw new Error(taxError?.message || 'Failed to create tax submission');
       }
 
-      // Update tax submission ID for subsequent unified payment call
+      // Update tax submission ID for state (for UI/tracking purposes)
       setTaxSubmissionId(taxSubmission.tax_submission_id);
 
-      // Process payment using unified flow
-      const response = await unifiedPayment.handlePayment();
+      // Process payment using unified flow - pass entity ID directly to avoid state timing issues
+      const response = await unifiedPayment.handlePayment(taxSubmission.tax_submission_id);
       return { taxSubmissionId: taxSubmission.tax_submission_id };
     } catch (error: any) {
       console.error('Tax payment error:', error);
