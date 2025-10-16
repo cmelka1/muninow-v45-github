@@ -480,99 +480,62 @@ const MunicipalServiceApplicationDetail = () => {
 
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
-          {/* Payment Management */}
+          {/* Payment Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
-                Payment Management
-              </CardTitle>
+                <CardTitle>Payment Information</CardTitle>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">Payment Status</span>
-                   <Badge 
-                     variant={application.payment_status === 'paid' ? 'default' : 'outline'}
-                     className={
-                       application.payment_status === 'paid' 
-                         ? 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200' 
-                         : 'bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200'
-                     }
-                   >
-                     {application.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
-                   </Badge>
-                 </div>
-                 
-                 {/* Payment Confirmation Details for Paid Applications */}
-                 {application.payment_status === 'paid' && (
-                   <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg space-y-2">
-                     <div className="flex items-center gap-2 text-green-700 mb-2">
-                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                       <span className="text-sm font-medium">Payment Confirmed</span>
-                     </div>
-                     
-                      <div className="space-y-1 text-sm">
-                        {application.payment_processed_at && (
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Payment Date:</span>
-                            <span className="font-medium">{formatDate(application.payment_processed_at)}</span>
-                          </div>
-                        )}
-                       {application.payment_method_type && (
-                         <div className="flex justify-between">
-                           <span className="text-muted-foreground">Payment Method:</span>
-                           <span className="font-medium">
-                             {application.payment_method_type === 'BANK_ACCOUNT' ? 'Bank Transfer' : 'Credit/Debit Card'}
-                           </span>
-                         </div>
-                       )}
-                       {application.finix_transfer_id && (
-                         <div className="flex justify-between">
-                           <span className="text-muted-foreground">Transaction ID:</span>
-                           <span className="font-mono text-xs bg-white px-2 py-1 rounded border">
-                             {application.finix_transfer_id.slice(-8)}
-                           </span>
-                         </div>
-                       )}
-                     </div>
-                   </div>
-                 )}
-                 
-                 {/* Payment Amount Display */}
-                 {application.payment_status === 'paid' ? (
-                  // Detailed breakdown for paid applications
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Service Amount</span>
-                      <span className="text-sm font-medium">
-                        {formatCurrency((application.base_amount_cents || application.tile?.amount_cents || 0) / 100)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Service Fee</span>
-                      <span className="text-sm font-medium">
-                        {formatCurrency(((application.total_amount_cents || 0) - (application.base_amount_cents || application.tile?.amount_cents || 0)) / 100)}
-                      </span>
+                {/* Status Badge */}
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Status</span>
+                  <Badge 
+                    variant={application.payment_status === 'paid' ? 'default' : 'outline'}
+                    className={
+                      application.payment_status === 'paid' 
+                        ? 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200' 
+                        : 'bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200'
+                    }
+                  >
+                    {application.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
+                  </Badge>
+                </div>
+                
+                {/* Paid On - Only show if paid */}
+                {application.payment_processed_at && (
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Paid On</span>
+                    <span className="font-semibold">
+                      {format(new Date(application.payment_processed_at), 'MMM d, yyyy')}
+                    </span>
+                  </div>
+                )}
+                
+                <Separator />
+                
+                {/* Base Amount - Always show */}
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Base Amount</span>
+                  <span className="font-semibold">{formatCurrency(application.base_amount_cents || 0)}</span>
+                </div>
+                
+                {/* Service Fee and Total - Only show for paid transactions */}
+                {application.payment_status === 'paid' && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium text-muted-foreground">Service Fee</span>
+                      <span className="font-semibold">{formatCurrency(application.service_fee_cents || 0)}</span>
                     </div>
                     <Separator />
-                    <div className="flex items-center justify-between">
-                      <span className="text-base font-medium">Total Paid</span>
-                      <span className="text-base font-bold">
-                        {formatCurrency((application.total_amount_cents || 0) / 100)}
-                      </span>
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>Total Paid</span>
+                      <span>{formatCurrency(application.total_amount_cents || 0)}</span>
                     </div>
-                  </div>
-                ) : (
-                  // Simple display for unpaid applications
-                  (application.base_amount_cents || application.tile?.amount_cents) && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">Service Amount</span>
-                      <span className="text-sm font-medium">
-                        {formatCurrency((application.base_amount_cents || application.tile?.amount_cents || 0) / 100)}
-                      </span>
-                    </div>
-                  )
+                  </>
                 )}
               </div>
             </CardContent>
