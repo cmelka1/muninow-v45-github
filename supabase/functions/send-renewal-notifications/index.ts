@@ -69,12 +69,20 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        // Update notification tracking
+        // Update notification tracking - read current count first
+        const { data: currentRow } = await supabase
+          .from('business_license_applications')
+          .select('renewal_reminder_count')
+          .eq('id', license.license_id)
+          .maybeSingle();
+
+        const newCount = (currentRow?.renewal_reminder_count ?? 0) + 1;
+
         await supabase
           .from('business_license_applications')
           .update({
             renewal_notified_at: new Date().toISOString(),
-            renewal_reminder_count: supabase.rpc('increment', { x: 1 })
+            renewal_reminder_count: newCount,
           })
           .eq('id', license.license_id);
 
