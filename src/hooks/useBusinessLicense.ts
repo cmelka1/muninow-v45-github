@@ -40,6 +40,7 @@ export interface BusinessLicenseDetail {
   service_fee_cents?: number;
   total_amount_cents?: number;
   payment_status: string;
+  payment_processed_at?: string;
   submitted_at?: string;
   under_review_at?: string;
   information_requested_at?: string;

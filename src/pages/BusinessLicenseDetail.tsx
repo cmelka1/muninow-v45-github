@@ -782,6 +782,64 @@ export const BusinessLicenseDetail = () => {
             </Card>
           )}
 
+          {/* Payment Information - Only show for municipal users */}
+          {isMunicipalUser && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  <CardTitle>Payment Information</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  {/* Status */}
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Status</span>
+                    <Badge 
+                      variant={license.payment_status === 'paid' ? 'default' : 'outline'}
+                      className={
+                        license.payment_status === 'paid' 
+                          ? 'bg-green-100 text-green-800 hover:bg-green-100 border-green-200' 
+                          : 'bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200'
+                      }
+                    >
+                      {license.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
+                    </Badge>
+                  </div>
+                  
+                  {/* Paid On */}
+                  {license.payment_processed_at && (
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium text-muted-foreground">Paid On</span>
+                      <span className="font-semibold">
+                        {format(new Date(license.payment_processed_at), 'MMM d, yyyy')}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Separator before payment breakdown */}
+                  <Separator />
+                  
+                  {/* Payment Details Breakdown */}
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Base Amount</span>
+                    <span className="font-semibold">{formatCurrency(license.base_amount_cents || 0)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Service Fee</span>
+                    <span className="font-semibold">{formatCurrency(license.service_fee_cents || 0)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between text-lg font-bold">
+                    <span>Total Paid</span>
+                    <span>{formatCurrency(license.total_amount_cents || 0)}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Status Timeline */}
           <Card>
             <CardHeader>
