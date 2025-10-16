@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { BusinessLicenseFilters } from './BusinessLicenseFilter';
 import { BusinessLicenseStatusBadge } from './BusinessLicenseStatusBadge';
+import { BusinessLicenseRenewalStatusBadge } from './BusinessLicenseRenewalStatusBadge';
 import { NewBusinessLicenseDialog } from '@/components/NewBusinessLicenseDialog';
 import { useBusinessLicenses } from '@/hooks/useBusinessLicenses';
 
@@ -169,6 +170,7 @@ const BusinessLicenseTable: React.FC<BusinessLicenseTableProps> = ({ filters = {
                 <TableHead className="hidden lg:table-cell">Address</TableHead>
                 <TableHead className="hidden xl:table-cell text-center">Type</TableHead>
                 <TableHead className="hidden 2xl:table-cell text-center">Fee</TableHead>
+                <TableHead className="hidden 2xl:table-cell text-center">Expires</TableHead>
                 <TableHead className="text-center">Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -185,7 +187,14 @@ const BusinessLicenseTable: React.FC<BusinessLicenseTableProps> = ({ filters = {
                     </span>
                   </TableCell>
                   <TableCell className="hidden md:table-cell py-2">
-                    <span className="truncate font-mono text-sm">{license.license_number || 'Pending'}</span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="truncate font-mono text-sm">{license.license_number || 'Pending'}</span>
+                      {license.is_renewal && (
+                        <span className="text-xs text-orange-600 font-semibold">
+                          Renewal #{license.renewal_generation || 1}
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="py-2">
                     <span className="truncate block max-w-[150px] font-medium" title={license.business_legal_name}>
@@ -206,6 +215,21 @@ const BusinessLicenseTable: React.FC<BusinessLicenseTableProps> = ({ filters = {
                     <span className="text-sm font-medium">
                       {formatAmount(license.base_amount_cents / 100)}
                     </span>
+                  </TableCell>
+                  <TableCell className="hidden 2xl:table-cell py-2 text-center">
+                    {license.expires_at && license.application_status === 'issued' ? (
+                      <div className="flex flex-col gap-1 items-center">
+                        <span className="text-xs text-muted-foreground">{formatDate(license.expires_at)}</span>
+                        {license.renewal_status && (
+                          <BusinessLicenseRenewalStatusBadge 
+                            renewalStatus={license.renewal_status}
+                            expiresAt={license.expires_at}
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">N/A</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-center py-2">
                     <BusinessLicenseStatusBadge status={license.application_status} />

@@ -12,6 +12,8 @@ export interface BusinessLicenseFilters {
   dateRange?: string;
   feeRange?: string;
   category?: string;
+  renewalStatus?: string;
+  showRenewalsOnly?: boolean;
 }
 
 interface BusinessLicenseFilterProps {
@@ -78,6 +80,13 @@ const BusinessLicenseFilter: React.FC<BusinessLicenseFilterProps> = ({
       [key]: value === 'all' ? undefined : value,
     });
   };
+
+  const renewalStatusOptions = [
+    { value: 'active', label: 'Active (60+ days)' },
+    { value: 'expiring_soon', label: 'Expiring Soon (31-60 days)' },
+    { value: 'requires_renewal', label: 'Renewal Required (1-30 days)' },
+    { value: 'expired', label: 'Expired' },
+  ];
 
   const clearAllFilters = () => {
     onFiltersChange({});
@@ -198,6 +207,38 @@ const BusinessLicenseFilter: React.FC<BusinessLicenseFilterProps> = ({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Renewal Status */}
+          <div className="hidden lg:block space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">Renewal Status</label>
+            <Select value={filters.renewalStatus || 'all'} onValueChange={(value) => updateFilter('renewalStatus', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Renewal" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                {renewalStatusOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Show Renewals Only Checkbox */}
+        <div className="mt-4 flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="showRenewalsOnly"
+            checked={filters.showRenewalsOnly || false}
+            onChange={(e) => onFiltersChange({ ...filters, showRenewalsOnly: e.target.checked || undefined })}
+            className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
+          />
+          <label htmlFor="showRenewalsOnly" className="text-sm font-medium text-muted-foreground cursor-pointer">
+            Show Renewals Only
+          </label>
         </div>
       </CardContent>
     </Card>

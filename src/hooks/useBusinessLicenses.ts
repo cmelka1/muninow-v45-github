@@ -19,6 +19,12 @@ export interface BusinessLicense {
   issued_at?: string;
   created_at: string;
   updated_at: string;
+  expires_at?: string;
+  original_issue_date?: string;
+  parent_license_id?: string;
+  is_renewal?: boolean;
+  renewal_generation?: number;
+  renewal_status?: string;
 }
 
 interface UseBusinessLicensesParams {
@@ -93,6 +99,14 @@ export const useBusinessLicenses = ({ filters = {}, page = 1, pageSize = 10 }: U
         }
       }
 
+      if (filters.renewalStatus) {
+        query = query.eq('renewal_status', filters.renewalStatus);
+      }
+
+      if (filters.showRenewalsOnly) {
+        query = query.eq('is_renewal', true);
+      }
+
       // Get total count for pagination
       const { count } = await supabase
         .from('business_license_applications')
@@ -126,6 +140,12 @@ export const useBusinessLicenses = ({ filters = {}, page = 1, pageSize = 10 }: U
         issued_at: license.issued_at,
         created_at: license.created_at,
         updated_at: license.updated_at,
+        expires_at: license.expires_at,
+        original_issue_date: license.original_issue_date,
+        parent_license_id: license.parent_license_id,
+        is_renewal: license.is_renewal,
+        renewal_generation: license.renewal_generation,
+        renewal_status: license.renewal_status,
       }));
 
       return {

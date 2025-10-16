@@ -50,6 +50,12 @@ export interface BusinessLicenseDetail {
   withdrawn_at?: string;
   expired_at?: string;
   issued_at?: string;
+  expires_at?: string;
+  original_issue_date?: string;
+  parent_license_id?: string;
+  is_renewal?: boolean;
+  renewal_generation?: number;
+  renewal_status?: string;
   created_at: string;
   updated_at: string;
   review_notes?: string;

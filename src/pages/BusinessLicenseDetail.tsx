@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Download, Loader2, CreditCard } from 'lucide-react';
+import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Download, Loader2, CreditCard, RefreshCw } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
@@ -17,9 +17,11 @@ import { useBusinessLicenseDocumentsList } from '@/hooks/useBusinessLicenseDocum
 import { useBusinessLicenseDocuments } from '@/hooks/useBusinessLicenseDocuments';
 import { useCustomerById } from '@/hooks/useCustomerById';
 import { BusinessLicenseStatusBadge } from '@/components/BusinessLicenseStatusBadge';
+import { BusinessLicenseRenewalStatusBadge } from '@/components/BusinessLicenseRenewalStatusBadge';
 import { BusinessLicenseCommunication } from '@/components/BusinessLicenseCommunication';
 import { BusinessLicenseStatusChangeDialog } from '@/components/BusinessLicenseStatusChangeDialog';
 import { AddBusinessLicenseDocumentDialog } from '@/components/AddBusinessLicenseDocumentDialog';
+import { RenewBusinessLicenseDialog } from '@/components/RenewBusinessLicenseDialog';
 
 import { InlinePaymentFlow } from '@/components/payment/InlinePaymentFlow';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
@@ -45,6 +47,7 @@ export const BusinessLicenseDetail = () => {
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
   const [withdrawReason, setWithdrawReason] = useState('');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [showRenewDialog, setShowRenewDialog] = useState(false);
   
   const { data: license, isLoading, error, refetch } = useBusinessLicense(id!);
   const { data: documents, isLoading: documentsLoading, refetch: refetchDocuments } = useBusinessLicenseDocumentsList(id!);
@@ -57,6 +60,11 @@ export const BusinessLicenseDetail = () => {
   const isOwner = license?.user_id === user?.id;
   const canWithdraw = !isMunicipalUser && isOwner && 
     getValidStatusTransitions(license?.application_status as BusinessLicenseStatus).includes('withdrawn');
+  
+  const canRenew = !isMunicipalUser && isOwner && 
+    license?.application_status === 'issued' && 
+    license?.renewal_status && 
+    ['expiring_soon', 'requires_renewal', 'expired'].includes(license.renewal_status);
 
   const handleBack = () => {
     if (isMunicipalUser) {
@@ -462,6 +470,22 @@ export const BusinessLicenseDetail = () => {
               >
                 <Download className="h-4 w-4" />
                 {isGeneratingPDF ? 'Generating...' : 'Download License'}
+              </Button>
+            )}
+            {canRenew && (
+              <Button
+                size="sm"
+                onClick={() => setShowRenewDialog(true)}
+                className={`flex items-center gap-2 ${
+                  license.renewal_status === 'expired' 
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : license.renewal_status === 'requires_renewal'
+                      ? 'bg-orange-600 hover:bg-orange-700'
+                      : 'bg-yellow-600 hover:bg-yellow-700'
+                }`}
+              >
+                <RefreshCw className="h-4 w-4" />
+                Renew License
               </Button>
             )}
             {canWithdraw && (
