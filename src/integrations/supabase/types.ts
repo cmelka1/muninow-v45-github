@@ -3597,6 +3597,18 @@ export type Database = {
         Args: { email_input: string }
         Returns: boolean
       }
+      check_expiring_licenses: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          days_until_expiration: number
+          expires_at: string
+          license_id: string
+          license_number: string
+          new_status: string
+          old_status: string
+          user_id: string
+        }[]
+      }
       cleanup_abandoned_tax_drafts: {
         Args: { p_hours_threshold?: number }
         Returns: number
@@ -3620,6 +3632,10 @@ export type Database = {
       confirm_staged_tax_documents_for_transaction: {
         Args: { p_transaction_id: string }
         Returns: Json
+      }
+      create_license_renewal: {
+        Args: { p_original_license_id: string }
+        Returns: string
       }
       create_municipal_business_license_type: {
         Args:
