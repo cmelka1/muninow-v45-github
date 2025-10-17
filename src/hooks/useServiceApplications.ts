@@ -9,6 +9,16 @@ export interface ServiceApplication {
   user_id: string;
   customer_id: string;
   
+  // Renewal fields
+  is_renewal?: boolean;
+  renewal_generation?: number;
+  parent_application_id?: string;
+  original_issue_date?: string;
+  renewal_status?: string;
+  expires_at?: string;
+  renewal_notified_at?: string;
+  renewal_reminder_count?: number;
+  
   // Applicant Information
   applicant_name?: string;
   applicant_email?: string;

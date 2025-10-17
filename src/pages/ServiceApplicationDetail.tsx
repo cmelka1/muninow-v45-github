@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, User, Clock, Receipt, Calendar, Building, Download, Loader2, MessageSquare, CreditCard, Plus } from 'lucide-react';
+import { ArrowLeft, FileText, User, Clock, Receipt, Calendar, Building, Download, Loader2, MessageSquare, CreditCard, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { AddServiceApplicationDocumentDialog } from '@/components/AddServiceApplicationDocumentDialog';
 import { ServiceApplicationCommunication } from '@/components/ServiceApplicationCommunication';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
+import { RenewServiceApplicationDialog } from '@/components/RenewServiceApplicationDialog';
 
 const ServiceApplicationDetail: React.FC = () => {
   const { applicationId } = useParams<{ applicationId: string }>();
@@ -29,6 +30,7 @@ const ServiceApplicationDetail: React.FC = () => {
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
   const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
+  const [isRenewalDialogOpen, setIsRenewalDialogOpen] = useState(false);
   
   const { data: application, isLoading, error, refetch } = useServiceApplication(applicationId || '');
   const { data: documentsQuery, refetch: refetchDocuments } = useServiceApplicationDocuments(applicationId || '');
@@ -209,7 +211,22 @@ const ServiceApplicationDetail: React.FC = () => {
             <h1 className="text-2xl font-bold">{application.tile?.title || 'Service Application'}</h1>
             <p className="text-muted-foreground">Application #{application.application_number || application.id}</p>
           </div>
-          <ServiceApplicationStatusBadge status={application.status} />
+          <div className="flex items-center gap-3">
+            {/* Renewal Button - Only show for issued, renewable services with expiration dates */}
+            {application.status === 'issued' && 
+             application.expires_at && 
+             application.tile?.is_renewable && (
+              <Button
+                onClick={() => setIsRenewalDialogOpen(true)}
+                variant="default"
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Renew Application
+              </Button>
+            )}
+            <ServiceApplicationStatusBadge status={application.status} />
+          </div>
         </div>
       </div>
 
@@ -584,6 +601,21 @@ const ServiceApplicationDetail: React.FC = () => {
         open={isAddPaymentDialogOpen}
         onOpenChange={setIsAddPaymentDialogOpen}
         onSuccess={handleAddPaymentMethodSuccess}
+      />
+
+      {/* Renewal Dialog */}
+      <RenewServiceApplicationDialog
+        open={isRenewalDialogOpen}
+        onOpenChange={setIsRenewalDialogOpen}
+        application={{
+          id: application.id,
+          application_number: application.application_number,
+          service_name: application.tile?.title || 'Service Application',
+          applicant_name: application.applicant_name,
+          business_legal_name: application.business_legal_name,
+          expires_at: application.expires_at,
+          base_amount_cents: application.base_amount_cents || 0,
+        }}
       />
     </div>
   );

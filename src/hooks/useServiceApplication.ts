@@ -9,6 +9,16 @@ export interface ServiceApplicationWithTile {
   tile_id: string;
   customer_id: string;
   
+  // Renewal fields
+  is_renewal?: boolean;
+  renewal_generation?: number;
+  parent_application_id?: string;
+  original_issue_date?: string;
+  renewal_status?: string;
+  expires_at?: string;
+  renewal_notified_at?: string;
+  renewal_reminder_count?: number;
+  
   // Applicant Information
   applicant_name?: string;
   applicant_email?: string;
@@ -80,6 +90,8 @@ export interface ServiceApplicationWithTile {
     requires_review: boolean;
     customer_id: string;
     is_active: boolean;
+    is_renewable?: boolean;
+    renewal_frequency?: string;
   };
   customer: {
     legal_entity_name: string;
@@ -114,7 +126,7 @@ export const useServiceApplication = (applicationId: string) => {
       if (applicationData.tile_id) {
         const { data: tileData, error: tileError } = await supabase
           .from('municipal_service_tiles')
-          .select('id, title, description, amount_cents, form_fields, requires_review, customer_id, is_active')
+          .select('id, title, description, amount_cents, form_fields, requires_review, customer_id, is_active, is_renewable, renewal_frequency')
           .eq('id', applicationData.tile_id)
           .single();
         

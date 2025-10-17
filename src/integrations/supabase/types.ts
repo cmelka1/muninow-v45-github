@@ -1513,6 +1513,7 @@ export type Database = {
           denial_reason: string | null
           denied_at: string | null
           expired_at: string | null
+          expires_at: string | null
           finix_identity_id: string | null
           finix_merchant_id: string | null
           finix_payment_instrument_id: string | null
@@ -1524,17 +1525,24 @@ export type Database = {
           idempotency_uuid: string | null
           information_request_reason: string | null
           information_requested_at: string | null
+          is_renewal: boolean | null
           issued_at: string | null
           merchant_fee_profile_id: string | null
           merchant_finix_identity_id: string | null
           merchant_id: string | null
           merchant_name: string | null
+          original_issue_date: string | null
+          parent_application_id: string | null
           payment_instrument_id: string | null
           payment_method_type: string | null
           payment_processed_at: string | null
           payment_status: string | null
           payment_type: Database["public"]["Enums"]["payment_type_enum"] | null
           raw_finix_response: Json | null
+          renewal_generation: number | null
+          renewal_notified_at: string | null
+          renewal_reminder_count: number | null
+          renewal_status: string | null
           resubmitted_at: string | null
           review_notes: string | null
           service_fee_cents: number | null
@@ -1577,6 +1585,7 @@ export type Database = {
           denial_reason?: string | null
           denied_at?: string | null
           expired_at?: string | null
+          expires_at?: string | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
           finix_payment_instrument_id?: string | null
@@ -1588,17 +1597,24 @@ export type Database = {
           idempotency_uuid?: string | null
           information_request_reason?: string | null
           information_requested_at?: string | null
+          is_renewal?: boolean | null
           issued_at?: string | null
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
+          original_issue_date?: string | null
+          parent_application_id?: string | null
           payment_instrument_id?: string | null
           payment_method_type?: string | null
           payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: Database["public"]["Enums"]["payment_type_enum"] | null
           raw_finix_response?: Json | null
+          renewal_generation?: number | null
+          renewal_notified_at?: string | null
+          renewal_reminder_count?: number | null
+          renewal_status?: string | null
           resubmitted_at?: string | null
           review_notes?: string | null
           service_fee_cents?: number | null
@@ -1641,6 +1657,7 @@ export type Database = {
           denial_reason?: string | null
           denied_at?: string | null
           expired_at?: string | null
+          expires_at?: string | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
           finix_payment_instrument_id?: string | null
@@ -1652,17 +1669,24 @@ export type Database = {
           idempotency_uuid?: string | null
           information_request_reason?: string | null
           information_requested_at?: string | null
+          is_renewal?: boolean | null
           issued_at?: string | null
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
           merchant_id?: string | null
           merchant_name?: string | null
+          original_issue_date?: string | null
+          parent_application_id?: string | null
           payment_instrument_id?: string | null
           payment_method_type?: string | null
           payment_processed_at?: string | null
           payment_status?: string | null
           payment_type?: Database["public"]["Enums"]["payment_type_enum"] | null
           raw_finix_response?: Json | null
+          renewal_generation?: number | null
+          renewal_notified_at?: string | null
+          renewal_reminder_count?: number | null
+          renewal_status?: string | null
           resubmitted_at?: string | null
           review_notes?: string | null
           service_fee_cents?: number | null
@@ -1684,7 +1708,15 @@ export type Database = {
           withdrawn_at?: string | null
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "municipal_service_applications_parent_application_id_fkey"
+            columns: ["parent_application_id"]
+            isOneToOne: false
+            referencedRelation: "municipal_service_applications"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       municipal_service_tiles: {
         Row: {
@@ -2871,6 +2903,51 @@ export type Database = {
         }
         Relationships: []
       }
+      service_application_renewal_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          original_application_id: string
+          renewal_generation: number
+          renewed_application_id: string
+          renewed_at: string | null
+          renewed_by: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          original_application_id: string
+          renewal_generation: number
+          renewed_application_id: string
+          renewed_at?: string | null
+          renewed_by: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          original_application_id?: string
+          renewal_generation?: number
+          renewed_application_id?: string
+          renewed_at?: string | null
+          renewed_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_application_renewal_histor_original_application_id_fkey"
+            columns: ["original_application_id"]
+            isOneToOne: false
+            referencedRelation: "municipal_service_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_application_renewal_history_renewed_application_id_fkey"
+            columns: ["renewed_application_id"]
+            isOneToOne: false
+            referencedRelation: "municipal_service_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tax_submission_comments: {
         Row: {
           comment_text: string
@@ -3675,6 +3752,10 @@ export type Database = {
           p_organization_type: string
           p_role: string
         }
+        Returns: string
+      }
+      create_service_application_renewal: {
+        Args: { p_original_application_id: string }
         Returns: string
       }
       create_service_application_with_payment: {
