@@ -17,8 +17,7 @@ import {
   Plus,
   CreditCard,
   Loader2,
-  Edit,
-  RefreshCw
+  Edit
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,11 +41,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, formatDate, smartAbbreviateFilename } from '@/lib/formatters';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { InlinePaymentFlow } from '@/components/payment/InlinePaymentFlow';
-import { AddServiceApplicationDocumentDialog } from '@/components/AddServiceApplicationDocumentDialog';
-import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
-import { RenewServiceApplicationDialog } from '@/components/RenewServiceApplicationDialog';
-import { ServiceApplicationRenewalStatusBadge } from '@/components/ServiceApplicationRenewalStatusBadge';
 
 const MunicipalServiceApplicationDetail = () => {
   const { applicationId } = useParams<{ applicationId: string }>();
@@ -60,12 +54,9 @@ const MunicipalServiceApplicationDetail = () => {
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
-  const [addDocumentOpen, setAddDocumentOpen] = useState(false);
-  const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
-  const [isRenewalDialogOpen, setIsRenewalDialogOpen] = useState(false);
   
-  const { data: application, isLoading, error, refetch } = useServiceApplication(applicationId!);
-  const { data: documentsQuery, refetch: refetchDocuments } = useServiceApplicationDocuments(applicationId!);
+  const { data: application, isLoading, error } = useServiceApplication(applicationId!);
+  const { data: documentsQuery } = useServiceApplicationDocuments(applicationId!);
   const [documents, setDocuments] = useState<any[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [documentsError, setDocumentsError] = useState<string | null>(null);
@@ -78,25 +69,6 @@ const MunicipalServiceApplicationDetail = () => {
       setDocumentsError(null);
     }
   }, [documentsQuery]);
-
-  const handleAddPaymentMethodSuccess = () => {
-    setIsAddPaymentDialogOpen(false);
-  };
-
-  const isWithinRenewalWindow = (expiresAt: string, reminderDays: number = 30): boolean => {
-    const now = new Date();
-    const expiration = new Date(expiresAt);
-    const diffTime = expiration.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays <= reminderDays;
-  };
-
-  const getRenewalAvailableDate = (expiresAt: string, reminderDays: number = 30): Date => {
-    const expiration = new Date(expiresAt);
-    const renewalDate = new Date(expiration);
-    renewalDate.setDate(renewalDate.getDate() - reminderDays);
-    return renewalDate;
-  };
 
   const handleSaveNotes = async () => {
     if (!applicationId || !reviewNotes.trim()) {
@@ -317,49 +289,6 @@ const MunicipalServiceApplicationDetail = () => {
           </div>
           <div className="flex items-center gap-3">
             <ServiceApplicationStatusBadge status={application.status} />
-            
-            {/* Renewal Button - Show when within renewal window */}
-            {application.status === 'issued' && 
-             application.expires_at && 
-             application.tile?.is_renewable && 
-             isWithinRenewalWindow(
-               application.expires_at, 
-               application.tile?.renewal_reminder_days || 30
-             ) && (
-              <Button
-                onClick={() => setIsRenewalDialogOpen(true)}
-                variant="default"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Renew Application
-              </Button>
-            )}
-
-            {/* Show disabled button with tooltip when NOT in renewal window */}
-            {application.status === 'issued' && 
-             application.expires_at && 
-             application.tile?.is_renewable && 
-             !isWithinRenewalWindow(
-               application.expires_at, 
-               application.tile?.renewal_reminder_days || 30
-             ) && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" disabled size="sm" className="flex items-center gap-2">
-                      <RefreshCw className="h-4 w-4" />
-                      Renew Application
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Renewal available starting {format(getRenewalAvailableDate(application.expires_at, application.tile?.renewal_reminder_days || 30), 'MMMM d, yyyy')}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-            
             {profile?.account_type?.startsWith('municipal') && (
               <Button
                 variant="outline"
@@ -415,23 +344,6 @@ const MunicipalServiceApplicationDetail = () => {
                   <Label className="text-sm font-medium text-muted-foreground">Last Updated</Label>
                   <p className="text-base">{formatDate(application.updated_at)}</p>
                 </div>
-                {application.expires_at && application.status === 'issued' && application.tile?.is_renewable && (
-                  <>
-                    <div>
-                      <Label className="text-sm font-medium text-muted-foreground">Expiration Date</Label>
-                      <p className="text-base">{formatDate(application.expires_at)}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-muted-foreground">Renewal Status</Label>
-                      <div className="mt-1">
-                        <ServiceApplicationRenewalStatusBadge 
-                          renewalStatus={application.renewal_status || 'active'} 
-                          expiresAt={application.expires_at}
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
               </div>
             </CardContent>
           </Card>
@@ -490,21 +402,10 @@ const MunicipalServiceApplicationDetail = () => {
           {/* Documents Section */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Supporting Documents ({documents?.length || 0})
-                </CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setAddDocumentOpen(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Document
-                </Button>
-              </div>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Supporting Documents ({documents?.length || 0})
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {documentsLoading ? (
@@ -579,18 +480,19 @@ const MunicipalServiceApplicationDetail = () => {
 
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
-          {/* Payment Management */}
+          {/* Payment Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
-                Payment Management
-              </CardTitle>
+                <CardTitle>Payment Information</CardTitle>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium text-muted-foreground">Payment Status</Label>
+                {/* Status Badge */}
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Status</span>
                   <Badge 
                     variant={application.payment_status === 'paid' ? 'default' : 'outline'}
                     className={
@@ -602,54 +504,40 @@ const MunicipalServiceApplicationDetail = () => {
                     {application.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
                   </Badge>
                 </div>
+                
+                {/* Paid On - Only show if paid */}
+                {application.payment_processed_at && (
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Paid On</span>
+                    <span className="font-semibold">
+                      {format(new Date(application.payment_processed_at), 'MMM d, yyyy')}
+                    </span>
+                  </div>
+                )}
+                
+                <Separator />
+                
+                {/* Base Amount - Always show */}
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Base Amount</span>
+                  <span className="font-semibold">{formatCurrency(application.base_amount_cents || 0)}</span>
+                </div>
+                
+                {/* Service Fee and Total - Only show for paid transactions */}
+                {application.payment_status === 'paid' && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium text-muted-foreground">Service Fee</span>
+                      <span className="font-semibold">{formatCurrency(application.service_fee_cents || 0)}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>Total Paid</span>
+                      <span>{formatCurrency(application.total_amount_cents || 0)}</span>
+                    </div>
+                  </>
+                )}
               </div>
-              
-              {/* Inline Payment Flow */}
-              {application.status === 'approved' && application.payment_status !== 'paid' && (
-                <InlinePaymentFlow
-                  entityType="service_application"
-                  entityId={application.id}
-                  customerId={application.customer_id}
-                  merchantId={application.merchant_id || ''}
-                  baseAmountCents={application.base_amount_cents || application.tile?.amount_cents || 0}
-                  entityName={application.tile?.title || 'Service Application'}
-                  initialExpanded={true}
-                  onPaymentSuccess={() => {
-                    toast({
-                      title: "Payment Successful",
-                      description: "Your service application payment has been processed successfully.",
-                    });
-                    refetch();
-                  }}
-                  onPaymentError={(error) => {
-                    console.error('Payment error:', error);
-                  }}
-                  onAddPaymentMethod={() => setIsAddPaymentDialogOpen(true)}
-                />
-              )}
-              
-              {application.payment_status === 'paid' && (
-                <div className="pt-2 space-y-2">
-                  <Button className="w-full" disabled variant="outline">
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Payment Complete
-                  </Button>
-                  <p className="text-xs text-green-600 mt-2">
-                    Your service application fee has been paid
-                  </p>
-                </div>
-              )}
-              
-              {application.status !== 'approved' && application.payment_status !== 'paid' && (
-                <div className="pt-2">
-                  <Button className="w-full" disabled variant="outline">
-                    Payment Unavailable
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Payment processing will be available once your application is approved
-                  </p>
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -696,31 +584,31 @@ const MunicipalServiceApplicationDetail = () => {
                 {application.approved_at && (
                   <div className="flex justify-between text-sm">
                     <span>Approved</span>
-                    <span className="text-green-700 font-medium">{formatDate(application.approved_at)}</span>
+                    <span className="text-gray-600">{formatDate(application.approved_at)}</span>
                   </div>
                 )}
                 {application.denied_at && (
                   <div className="flex justify-between text-sm">
                     <span>Denied</span>
-                    <span className="text-red-700 font-medium">{formatDate(application.denied_at)}</span>
+                    <span className="text-gray-600">{formatDate(application.denied_at)}</span>
                   </div>
                 )}
                 {application.withdrawn_at && (
                   <div className="flex justify-between text-sm">
                     <span>Withdrawn</span>
-                    <span className="text-amber-700 font-medium">{formatDate(application.withdrawn_at)}</span>
+                    <span className="text-gray-600">{formatDate(application.withdrawn_at)}</span>
                   </div>
                 )}
                 {application.expired_at && (
                   <div className="flex justify-between text-sm">
                     <span>Expired</span>
-                    <span className="text-gray-700 font-medium">{formatDate(application.expired_at)}</span>
+                    <span className="text-gray-600">{formatDate(application.expired_at)}</span>
                   </div>
                 )}
                 {application.issued_at && (
                   <div className="flex justify-between text-sm">
                     <span>Issued</span>
-                    <span className="text-emerald-700 font-medium">{formatDate(application.issued_at)}</span>
+                    <span className="text-gray-600">{formatDate(application.issued_at)}</span>
                   </div>
                 )}
               </div>
@@ -763,41 +651,6 @@ const MunicipalServiceApplicationDetail = () => {
           bucketName="service-application-documents"
         />
       )}
-
-      {/* Add Document Dialog */}
-      <AddServiceApplicationDocumentDialog
-        applicationId={applicationId!}
-        customerId={application?.customer_id || ''}
-        open={addDocumentOpen}
-        onOpenChange={setAddDocumentOpen}
-        onSuccess={() => {
-          refetchDocuments();
-          setAddDocumentOpen(false);
-        }}
-      />
-
-      {/* Add Payment Method Dialog */}
-      <AddPaymentMethodDialog
-        open={isAddPaymentDialogOpen}
-        onOpenChange={setIsAddPaymentDialogOpen}
-        onSuccess={handleAddPaymentMethodSuccess}
-      />
-
-      {/* Renewal Dialog */}
-      <RenewServiceApplicationDialog
-        open={isRenewalDialogOpen}
-        onOpenChange={setIsRenewalDialogOpen}
-        application={{
-          id: application.id,
-          application_number: application.application_number,
-          service_name: application.tile?.title || 'Service Application',
-          applicant_name: application.applicant_name,
-          business_legal_name: application.business_legal_name,
-          expires_at: application.expires_at,
-          base_amount_cents: application.base_amount_cents || 0,
-          renewal_reminder_days: application.tile?.renewal_reminder_days,
-        }}
-      />
     </div>
   );
 };
