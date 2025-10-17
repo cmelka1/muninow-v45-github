@@ -50,6 +50,7 @@ export interface RecentServiceApplication {
   business_legal_name: string | null;
   user_id: string;
   service_name: string | null;
+  tile_name: string;
   merchant_name: string | null;
   base_amount_cents: number;
   status: string;
@@ -185,7 +186,7 @@ export const useMunicipalRecentApplications = () => {
           expires_at,
           renewal_status,
           tile_id,
-          municipal_service_tiles!inner(is_renewable)
+          municipal_service_tiles!inner(is_renewable, name)
         `)
         .eq('customer_id', profile.customer_id)
         .neq('status', 'draft')
@@ -195,7 +196,8 @@ export const useMunicipalRecentApplications = () => {
       if (error) throw error;
       return (data || []).map(item => ({
         ...item,
-        is_renewable: (item as any).municipal_service_tiles?.is_renewable || false
+        is_renewable: (item as any).municipal_service_tiles?.is_renewable || false,
+        tile_name: (item as any).municipal_service_tiles?.name || ''
       })) as RecentServiceApplication[];
     },
     enabled: !!profile?.customer_id && !!profile?.account_type?.startsWith('municipal')

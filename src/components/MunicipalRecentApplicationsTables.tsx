@@ -235,7 +235,7 @@ export const MunicipalRecentApplicationsTables = () => {
                       <TableCell className="py-2 font-medium">
                         {service.business_legal_name || service.applicant_name || 'N/A'}
                       </TableCell>
-                      <TableCell className="py-2">{service.service_name || 'Service Application'}</TableCell>
+                      <TableCell className="py-2">{service.tile_name || service.service_name || 'Service Application'}</TableCell>
                       <TableCell className="py-2 text-center">{formatCurrency(service.base_amount_cents)}</TableCell>
                       <TableCell className="py-2 text-center">
                         <ServiceApplicationStatusBadge status={service.status} />
