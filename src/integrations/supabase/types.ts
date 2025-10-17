@@ -1710,6 +1710,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_municipal_service_applications_tile_id"
+            columns: ["tile_id"]
+            isOneToOne: false
+            referencedRelation: "municipal_service_tiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "municipal_service_applications_parent_application_id_fkey"
             columns: ["parent_application_id"]
             isOneToOne: false
