@@ -68,6 +68,9 @@ export const MERCHANT_CATEGORIES = {
     "Inspections",
     "Consulting"
   ],
+  "Tax": [
+    "Tax"
+  ],
   "Other": [
     "Other"
   ]
