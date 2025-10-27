@@ -4,7 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit2, Save, X, Plus } from 'lucide-react';
+import { Edit2, Save, X, Plus, Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBusinessLicensesMerchant } from '@/hooks/useBusinessLicensesMerchant';
 import { 
@@ -236,6 +247,14 @@ export const BusinessLicensesSettingsTab = () => {
     }
   };
 
+  const handleDelete = async (id: string, name: string) => {
+    try {
+      await deleteMutation.mutateAsync(id);
+    } catch (error) {
+      console.error('Error deleting business license type:', error);
+    }
+  };
+
   if (!profile?.customer_id) {
     return (
       <div className="space-y-6">
@@ -324,6 +343,7 @@ export const BusinessLicensesSettingsTab = () => {
                   <TableRow>
                     <TableHead>Business License Type</TableHead>
                     <TableHead>Fee</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -355,6 +375,44 @@ export const BusinessLicensesSettingsTab = () => {
                           isEditMode={isEditMode}
                           className="text-right"
                         />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {type.is_custom && !isEditMode && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={deleteMutation.isPending}
+                                className="hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Custom License Type</AlertDialogTitle>
+                                <AlertDialogDescription className="space-y-3">
+                                  <p>
+                                    Are you sure you want to delete <strong>{type.municipal_label}</strong>?
+                                  </p>
+                                  <p className="text-destructive text-sm">
+                                    This action cannot be undone. Applications using this license type may be affected.
+                                  </p>
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(type.id, type.municipal_label)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

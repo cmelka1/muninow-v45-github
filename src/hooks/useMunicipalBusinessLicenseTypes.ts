@@ -50,7 +50,20 @@ export const useMunicipalBusinessLicenseTypes = (customerId?: string) => {
         throw error;
       }
 
-      return (data as MunicipalBusinessLicenseType[]) || [];
+      // Sort business types alphabetically, with "Other" always last
+      const sortedData = (data as MunicipalBusinessLicenseType[])?.sort((a, b) => {
+        const labelA = a.municipal_label.toLowerCase();
+        const labelB = b.municipal_label.toLowerCase();
+        
+        // Always put "Other" last
+        if (labelA === 'other') return 1;
+        if (labelB === 'other') return -1;
+        
+        // Alphabetical sort for all other types
+        return a.municipal_label.localeCompare(b.municipal_label);
+      });
+
+      return sortedData || [];
     },
     enabled: !!customerId,
   });
