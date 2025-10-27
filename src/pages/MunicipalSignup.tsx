@@ -144,7 +144,7 @@ const MunicipalSignup = () => {
             first_name: firstName,
             last_name: lastName,
             phone: phone,
-            account_type: 'municipal',
+            account_type: 'municipaladmin',
             role: 'admin',
             customer_id: selectedCustomerId
           }
