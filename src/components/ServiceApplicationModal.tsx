@@ -28,6 +28,7 @@ import ServiceApplicationReviewStep from './ServiceApplicationReviewStep';
 import { useServiceApplicationPaymentMethods } from '@/hooks/useServiceApplicationPaymentMethods';
 import { InlinePaymentFlow } from './payment/InlinePaymentFlow';
 import { useNavigate } from 'react-router-dom';
+import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
 
 interface ServiceApplicationModalProps {
   tile: MunicipalServiceTile | null;
@@ -56,6 +57,18 @@ const DOCUMENT_TYPES = [
   'survey',
   'other'
 ];
+
+// Address field detection helper
+const ADDRESS_FIELD_IDS = [
+  'address', 'full_address', 'street_address', 'street',
+  'property_address', 'business_address', 'location'
+];
+
+const isAddressField = (fieldId: string): boolean => {
+  return ADDRESS_FIELD_IDS.some(id => 
+    fieldId.toLowerCase().includes(id.toLowerCase())
+  );
+};
 
 const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   tile,
@@ -205,6 +218,55 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     }));
     // Clear field error when user starts typing
     clearFieldError(fieldId);
+  };
+
+  const handleAddressAutocompleteSelect = (
+    fieldId: string,
+    addressComponents: {
+      streetAddress: string;
+      city: string;
+      state: string;
+      zipCode: string;
+    }
+  ) => {
+    // Update the main address field
+    setFormData(prev => ({
+      ...prev,
+      [fieldId]: addressComponents.streetAddress
+    }));
+
+    // Auto-populate related address fields if they exist
+    const fields = tile?.form_fields || [];
+    const updates: Record<string, string> = {};
+
+    fields.forEach(field => {
+      const fieldId = field.id.toLowerCase();
+      
+      if (fieldId.includes('city')) {
+        updates[field.id] = addressComponents.city;
+      } else if (fieldId.includes('state')) {
+        updates[field.id] = addressComponents.state;
+      } else if (fieldId.includes('zip') || fieldId.includes('postal')) {
+        updates[field.id] = addressComponents.zipCode;
+      }
+    });
+
+    if (Object.keys(updates).length > 0) {
+      setFormData(prev => ({ ...prev, ...updates }));
+    }
+
+    // Clear validation errors for all updated fields
+    setValidationErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[fieldId];
+      Object.keys(updates).forEach(key => delete newErrors[key]);
+      return newErrors;
+    });
+
+    toast({
+      title: "Address Selected",
+      description: "Address fields have been automatically populated",
+    });
   };
 
   const validateStep1Fields = () => {
@@ -416,6 +478,22 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
 
   const renderFormField = (field: any) => {
     const { id, label, type, options, required, placeholder } = field;
+    
+    // Use Google Places Autocomplete for address fields
+    if (isAddressField(id)) {
+      return (
+        <RestPlacesAutocomplete
+          key={id}
+          placeholder={placeholder || `Enter ${label.toLowerCase()}...`}
+          onAddressSelect={(addressComponents) => 
+            handleAddressAutocompleteSelect(id, addressComponents)
+          }
+          value={formData[id] || ''}
+          onChange={(value) => handleInputChange(id, value)}
+          className={validationErrors[id] ? 'ring-2 ring-destructive border-destructive' : ''}
+        />
+      );
+    }
     
     switch (type) {
       case 'textarea':
@@ -834,7 +912,15 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                             {field.label}
                             {field.required && <span className="text-destructive">*</span>}
                           </Label>
+                          {isAddressField(field.id) && (
+                            <p className="text-xs text-muted-foreground">
+                              Start typing to see address suggestions
+                            </p>
+                          )}
                           {renderFormField(field)}
+                          {validationErrors[field.id] && (
+                            <p className="text-sm text-destructive">{validationErrors[field.id]}</p>
+                          )}
                         </div>
                       ))}
                     </div>
