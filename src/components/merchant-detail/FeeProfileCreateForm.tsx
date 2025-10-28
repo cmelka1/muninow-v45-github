@@ -36,6 +36,7 @@ const FeeProfileCreateForm: React.FC<FeeProfileCreateFormProps> = ({
     defaultValues: initialValues || {
       ach_basis_points: 150,
       ach_fixed_fee: 50,
+      ach_basis_points_fee_limit: 2500,
       basis_points: 300,
       fixed_fee: 50,
       ach_credit_return_fixed_fee: 500,
