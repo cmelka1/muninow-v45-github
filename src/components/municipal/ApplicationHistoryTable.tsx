@@ -41,7 +41,6 @@ export function ApplicationHistoryTable({
 
   const statusOptions = [
     { value: 'all', label: 'All Statuses' },
-    { value: 'draft', label: 'Draft' },
     { value: 'submitted', label: 'Submitted' },
     { value: 'under_review', label: 'Under Review' },
     { value: 'information_requested', label: 'Information Requested' },

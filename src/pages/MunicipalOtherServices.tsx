@@ -19,8 +19,10 @@ const MunicipalOtherServices = () => {
   const { data: serviceTiles, isLoading: tilesLoading } = useMunicipalServiceTiles(profile?.customer_id);
   const { data: applications, isLoading: applicationsLoading } = useServiceApplications();
   
-  // Filter applications for this municipality
-  const municipalApplications = applications?.filter(app => app.customer_id === profile?.customer_id) || [];
+  // Filter applications for this municipality and exclude drafts
+  const municipalApplications = applications?.filter(app => 
+    app.customer_id === profile?.customer_id && app.status !== 'draft'
+  ) || [];
   
   // Calculate stats
   const activeServices = serviceTiles?.filter(tile => tile.is_active)?.length || 0;
