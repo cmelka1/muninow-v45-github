@@ -41,6 +41,8 @@ export interface PermitDetail {
   finix_merchant_id: string | null;
   customer_id: string;
   user_id: string;
+  municipal_permit_type_id: string | null;
+  municipal_label: string | null;
 }
 
 export const usePermit = (permitId: string) => {
@@ -53,7 +55,10 @@ export const usePermit = (permitId: string) => {
 
       const { data: permitData, error: permitError } = await supabase
         .from('permit_applications')
-        .select('*')
+        .select(`
+          *,
+          municipal_permit_types(municipal_label)
+        `)
         .eq('permit_id', permitId)
         .single();
 
@@ -62,7 +67,13 @@ export const usePermit = (permitId: string) => {
         throw permitError;
       }
       
-      return permitData as PermitDetail;
+      // Transform to flatten the join
+      const transformedPermit = {
+        ...permitData,
+        municipal_label: (permitData.municipal_permit_types as any)?.municipal_label || null
+      };
+      
+      return transformedPermit as PermitDetail;
     },
     enabled: !!profile && !!permitId
   });

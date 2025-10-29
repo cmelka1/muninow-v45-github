@@ -19,6 +19,7 @@ import { NewPermitApplicationDialog } from '@/components/NewPermitApplicationDia
 import { useMunicipalPermits } from '@/hooks/useMunicipalPermits';
 import { useQueryPerformance } from '@/hooks/useQueryPerformance';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
+import { PermitTypeBadge } from '@/components/PermitTypeBadge';
 
 interface MunicipalPermitsTableProps {
   filters?: PermitFilters;
@@ -241,9 +242,14 @@ const MunicipalPermitsTable: React.FC<MunicipalPermitsTableProps> = ({ filters =
                     </span>
                   </TableCell>
                   <TableCell className="hidden xl:table-cell py-2 text-center">
-                    <span className="truncate block max-w-[100px] mx-auto" title={getPermitTypeLabel(permit.permit_type)}>
-                      {getPermitTypeLabel(permit.permit_type)}
-                    </span>
+                    <div className="flex justify-center">
+                      <PermitTypeBadge 
+                        standardType={permit.permit_type}
+                        municipalLabel={permit.municipal_label}
+                        variant="compact"
+                        showTooltip={true}
+                      />
+                    </div>
                   </TableCell>
                   <TableCell className="hidden 2xl:table-cell py-2 text-center">
                     <span className="text-sm font-medium">

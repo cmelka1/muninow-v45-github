@@ -36,6 +36,7 @@ import { ScheduleInspectionDialog } from '@/components/ScheduleInspectionDialog'
 import { PermitCommunication } from '@/components/PermitCommunication';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { AddPermitDocumentDialog } from '@/components/AddPermitDocumentDialog';
+import { PermitTypeBadge } from '@/components/PermitTypeBadge';
 
 
 import { supabase } from '@/integrations/supabase/client';
@@ -207,7 +208,14 @@ const MunicipalPermitDetail = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Type</Label>
-                  <p className="text-base">{permit.permit_type}</p>
+                  <div className="mt-1">
+                    <PermitTypeBadge 
+                      standardType={permit.permit_type}
+                      municipalLabel={permit.municipal_label}
+                      variant="detailed"
+                      showTooltip={true}
+                    />
+                  </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Status</Label>

@@ -18,6 +18,7 @@ import { AddPermitDocumentDialog } from '@/components/AddPermitDocumentDialog';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 import { PermitCommunication } from '@/components/PermitCommunication';
+import { PermitTypeBadge } from '@/components/PermitTypeBadge';
 
 import { getStatusDescription, PermitStatus } from '@/hooks/usePermitWorkflow';
 import { formatCurrency, formatDate } from '@/lib/formatters';
@@ -246,7 +247,14 @@ const PermitDetail = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Type</Label>
-                  <p className="text-base">{permit.permit_type}</p>
+                  <div className="mt-1">
+                    <PermitTypeBadge 
+                      standardType={permit.permit_type}
+                      municipalLabel={permit.municipal_label}
+                      variant="detailed"
+                      showTooltip={true}
+                    />
+                  </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Status</Label>

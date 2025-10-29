@@ -18,6 +18,8 @@ export interface MunicipalPermit {
   customer_id: string;
   merchant_name: string | null;
   user_id: string;
+  municipal_permit_type_id: string | null;
+  municipal_label: string | null;
 }
 
 interface UseMunicipalPermitsParams {
@@ -70,7 +72,9 @@ export const useMunicipalPermits = ({ filters = {}, page = 1, pageSize = 10 }: U
           submitted_at,
           customer_id,
           merchant_name,
-          user_id
+          user_id,
+          municipal_permit_type_id,
+          municipal_permit_types(municipal_label)
         `, { count: 'exact' });
 
       // Only show permits for this municipal customer
@@ -152,8 +156,14 @@ export const useMunicipalPermits = ({ filters = {}, page = 1, pageSize = 10 }: U
         throw error;
       }
 
+      // Transform data to flatten municipal_permit_types join
+      const transformedData = data?.map((permit: any) => ({
+        ...permit,
+        municipal_label: permit.municipal_permit_types?.municipal_label || null
+      }));
+
       const result = {
-        permits: data as MunicipalPermit[],
+        permits: transformedData as MunicipalPermit[],
         totalCount: count || 0,
         totalPages: Math.ceil((count || 0) / pageSize),
         currentPage: page,

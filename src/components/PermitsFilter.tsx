@@ -33,7 +33,11 @@ const PermitsFilter: React.FC<PermitsFilterProps> = ({ filters, onFiltersChange 
       
       const { data, error } = await supabase
         .from('permit_applications')
-        .select('permit_type')
+        .select(`
+          permit_type,
+          municipal_permit_type_id,
+          municipal_permit_types(municipal_label)
+        `)
         .eq('user_id', profile.id);
         
       if (error) {
@@ -41,18 +45,29 @@ const PermitsFilter: React.FC<PermitsFilterProps> = ({ filters, onFiltersChange 
         return [];
       }
       
-      // Get unique permit types, filter out empty/null values
-      const uniqueTypes = [...new Set(
-        data
-          .map(p => p.permit_type)
-          .filter(type => type && type.trim() !== '')
-      )];
+      // Create a map to track unique permit types with their municipal labels
+      const typeMap = new Map<string, { value: string; label: string; municipalLabel?: string }>();
       
-      console.log('[PermitsFilter] Found unique permit types:', uniqueTypes);
+      data.forEach(item => {
+        if (item.permit_type && item.permit_type.trim() !== '') {
+          const municipalLabel = (item.municipal_permit_types as any)?.municipal_label;
+          const key = item.permit_type;
+          
+          // Only add if not already in map, or if we have a municipal label and the existing entry doesn't
+          if (!typeMap.has(key) || (municipalLabel && !typeMap.get(key)?.municipalLabel)) {
+            typeMap.set(key, {
+              value: item.permit_type,
+              label: municipalLabel || item.permit_type,
+              municipalLabel: municipalLabel
+            });
+          }
+        }
+      });
       
-      // Map to select options format and sort alphabetically
-      return uniqueTypes
-        .map(type => ({ value: type, label: type }))
+      console.log('[PermitsFilter] Found unique permit types:', Array.from(typeMap.values()));
+      
+      // Sort alphabetically by display label
+      return Array.from(typeMap.values())
         .sort((a, b) => a.label.localeCompare(b.label));
     },
     enabled: !!profile?.id,
@@ -184,7 +199,14 @@ const PermitsFilter: React.FC<PermitsFilterProps> = ({ filters, onFiltersChange 
                 ) : (
                   permitTypeOptions.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
-                      {type.label}
+                      <div className="flex flex-col items-start">
+                        <span>{type.label}</span>
+                        {type.municipalLabel && type.municipalLabel !== type.value && (
+                          <span className="text-xs text-muted-foreground">
+                            Standard: {type.value}
+                          </span>
+                        )}
+                      </div>
                     </SelectItem>
                   ))
                 )}
