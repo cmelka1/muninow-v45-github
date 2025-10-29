@@ -387,36 +387,6 @@ export type Database = {
           },
         ]
       }
-      business_license_number_sequences: {
-        Row: {
-          created_at: string | null
-          customer_id: string
-          id: string
-          municipality_code: string
-          next_sequence: number
-          updated_at: string | null
-          year_code: string
-        }
-        Insert: {
-          created_at?: string | null
-          customer_id: string
-          id?: string
-          municipality_code: string
-          next_sequence?: number
-          updated_at?: string | null
-          year_code: string
-        }
-        Update: {
-          created_at?: string | null
-          customer_id?: string
-          id?: string
-          municipality_code?: string
-          next_sequence?: number
-          updated_at?: string | null
-          year_code?: string
-        }
-        Relationships: []
-      }
       business_license_renewal_history: {
         Row: {
           created_at: string | null
@@ -461,45 +431,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      business_license_types_deprecated: {
-        Row: {
-          base_fee_cents: number
-          created_at: string
-          customer_id: string
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          processing_days: number | null
-          requires_inspection: boolean | null
-          updated_at: string
-        }
-        Insert: {
-          base_fee_cents?: number
-          created_at?: string
-          customer_id: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          processing_days?: number | null
-          requires_inspection?: boolean | null
-          updated_at?: string
-        }
-        Update: {
-          base_fee_cents?: number
-          created_at?: string
-          customer_id?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          processing_days?: number | null
-          requires_inspection?: boolean | null
-          updated_at?: string
-        }
-        Relationships: []
       }
       business_license_types_v2: {
         Row: {
@@ -1287,51 +1218,6 @@ export type Database = {
           },
         ]
       }
-      municipal_business_license_types_deprecated: {
-        Row: {
-          base_fee_cents: number
-          business_license_type_id: string | null
-          created_at: string
-          customer_id: string
-          display_order: number
-          id: string
-          is_active: boolean
-          is_custom: boolean
-          merchant_id: string | null
-          merchant_name: string | null
-          municipal_label: string
-          updated_at: string
-        }
-        Insert: {
-          base_fee_cents?: number
-          business_license_type_id?: string | null
-          created_at?: string
-          customer_id: string
-          display_order?: number
-          id?: string
-          is_active?: boolean
-          is_custom?: boolean
-          merchant_id?: string | null
-          merchant_name?: string | null
-          municipal_label: string
-          updated_at?: string
-        }
-        Update: {
-          base_fee_cents?: number
-          business_license_type_id?: string | null
-          created_at?: string
-          customer_id?: string
-          display_order?: number
-          id?: string
-          is_active?: boolean
-          is_custom?: boolean
-          merchant_id?: string | null
-          merchant_name?: string | null
-          municipal_label?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       municipal_permit_merchants: {
         Row: {
           active: boolean
@@ -1436,82 +1322,6 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      municipal_permit_types_deprecated: {
-        Row: {
-          base_fee_cents: number
-          created_at: string
-          customer_id: string
-          description: string | null
-          display_order: number | null
-          id: string
-          is_active: boolean | null
-          is_custom: boolean | null
-          merchant_id: string | null
-          merchant_name: string | null
-          municipal_label: string
-          permit_type_id: string | null
-          processing_days: number | null
-          requires_inspection: boolean | null
-          updated_at: string
-        }
-        Insert: {
-          base_fee_cents?: number
-          created_at?: string
-          customer_id: string
-          description?: string | null
-          display_order?: number | null
-          id?: string
-          is_active?: boolean | null
-          is_custom?: boolean | null
-          merchant_id?: string | null
-          merchant_name?: string | null
-          municipal_label: string
-          permit_type_id?: string | null
-          processing_days?: number | null
-          requires_inspection?: boolean | null
-          updated_at?: string
-        }
-        Update: {
-          base_fee_cents?: number
-          created_at?: string
-          customer_id?: string
-          description?: string | null
-          display_order?: number | null
-          id?: string
-          is_active?: boolean | null
-          is_custom?: boolean | null
-          merchant_id?: string | null
-          merchant_name?: string | null
-          municipal_label?: string
-          permit_type_id?: string | null
-          processing_days?: number | null
-          requires_inspection?: boolean | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "municipal_permit_types_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["customer_id"]
-          },
-          {
-            foreignKeyName: "municipal_permit_types_merchant_id_fkey"
-            columns: ["merchant_id"]
-            isOneToOne: false
-            referencedRelation: "merchants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "municipal_permit_types_permit_type_id_fkey"
-            columns: ["permit_type_id"]
-            isOneToOne: false
-            referencedRelation: "permit_types_deprecated"
             referencedColumns: ["id"]
           },
         ]
@@ -2705,42 +2515,6 @@ export type Database = {
             referencedColumns: ["permit_id"]
           },
         ]
-      }
-      permit_types_deprecated: {
-        Row: {
-          base_fee_cents: number
-          created_at: string
-          description: string | null
-          id: string
-          is_active: boolean
-          name: string
-          processing_days: number
-          requires_inspection: boolean
-          updated_at: string
-        }
-        Insert: {
-          base_fee_cents?: number
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean
-          name: string
-          processing_days?: number
-          requires_inspection?: boolean
-          updated_at?: string
-        }
-        Update: {
-          base_fee_cents?: number
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean
-          name?: string
-          processing_days?: number
-          requires_inspection?: boolean
-          updated_at?: string
-        }
-        Relationships: []
       }
       permit_types_v2: {
         Row: {
