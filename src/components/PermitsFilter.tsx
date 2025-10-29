@@ -25,39 +25,30 @@ const PermitsFilter: React.FC<PermitsFilterProps> = ({ filters, onFiltersChange 
 
   // Dynamic permit type options from municipality's available permit types
   const { data: permitTypeOptions = [], isLoading: isLoadingPermitTypes } = useQuery({
-    queryKey: ['municipality-permit-types', profile?.id],
+    queryKey: ['municipality-permit-types', profile?.customer_id],
     queryFn: async () => {
-      if (!profile?.id) return [];
-      
-      console.log('[PermitsFilter] Fetching municipality permit types for user:', profile.id);
-      
-      // Step 1: Get user's customer_id from their first permit application
-      const { data: userPermit, error: permitError } = await supabase
-        .from('permit_applications')
-        .select('customer_id')
-        .eq('user_id', profile.id)
-        .limit(1)
-        .single();
-        
-      if (permitError || !userPermit?.customer_id) {
-        console.log('[PermitsFilter] No customer_id found for user, cannot fetch permit types');
+      // Use customer_id from profile context (already loaded)
+      if (!profile?.customer_id) {
+        console.log('[PermitsFilter] No customer_id in profile, cannot fetch permit types');
         return [];
       }
       
-      console.log('[PermitsFilter] Found customer_id:', userPermit.customer_id);
+      console.log('[PermitsFilter] Fetching permit types for customer_id:', profile.customer_id);
       
-      // Step 2: Fetch all active permit types for this municipality
+      // Single query - no round trip to permit_applications
       const { data, error } = await supabase
         .from('municipal_permit_types')
         .select(`
           id,
           municipal_label,
           permit_type_id,
+          display_order,
           permit_types(name)
         `)
-        .eq('customer_id', userPermit.customer_id)
+        .eq('customer_id', profile.customer_id)
         .eq('is_active', true)
-        .order('municipal_label');
+        .order('display_order', { ascending: true })
+        .order('municipal_label', { ascending: true });
         
       if (error) {
         console.error('[PermitsFilter] Error fetching municipal permit types:', error);
@@ -68,19 +59,18 @@ const PermitsFilter: React.FC<PermitsFilterProps> = ({ filters, onFiltersChange 
       const permitTypes = data.map(item => {
         const standardName = (item.permit_types as any)?.name || item.municipal_label;
         return {
-          value: standardName, // Use standard name for filtering
-          label: item.municipal_label, // Display municipal label
+          value: standardName,
+          label: item.municipal_label,
           municipalLabel: item.municipal_label,
           municipalPermitTypeId: item.id
         };
       });
       
       console.log('[PermitsFilter] Found municipal permit types:', permitTypes);
-      
       return permitTypes;
     },
-    enabled: !!profile?.id,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    enabled: !!profile?.customer_id,
+    staleTime: 5 * 60 * 1000,
   });
 
   const statusOptions = [
