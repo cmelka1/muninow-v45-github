@@ -5,10 +5,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { useMunicipalTaxSubmissions } from '@/hooks/useMunicipalTaxSubmissions';
 import { TaxSubmissionFilters } from '@/components/TaxSubmissionsFilter';
 import { formatTaxType as formatTaxTypeUtil, formatCurrency, formatDate } from '@/lib/formatters';
+import { PayTaxDialog } from './PayTaxDialog';
 
 interface MunicipalTaxSubmissionsTableProps {
   filters?: TaxSubmissionFilters;
@@ -24,6 +25,7 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [isPayTaxOpen, setIsPayTaxOpen] = useState(false);
 
   const { data, isLoading, error } = useMunicipalTaxSubmissions({
     page: currentPage,
@@ -84,12 +86,21 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
   }
 
   return (
+    <>
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-xl font-semibold">
-          {title} ({data?.count || 0})
-        </CardTitle>
-        {headerAction}
+        <div className="flex justify-between items-center w-full">
+          <CardTitle className="text-xl font-semibold">
+            {title} ({data?.count || 0})
+          </CardTitle>
+          <Button 
+            onClick={() => setIsPayTaxOpen(true)}
+            className="flex items-center space-x-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Pay Tax</span>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         {isLoading ? (
@@ -197,6 +208,11 @@ const MunicipalTaxSubmissionsTable: React.FC<MunicipalTaxSubmissionsTableProps> 
         )}
       </CardContent>
     </Card>
+    <PayTaxDialog 
+      open={isPayTaxOpen} 
+      onOpenChange={setIsPayTaxOpen} 
+    />
+    </>
   );
 };
 
