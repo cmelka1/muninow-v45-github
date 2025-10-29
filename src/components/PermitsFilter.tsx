@@ -23,52 +23,61 @@ interface PermitsFilterProps {
 const PermitsFilter: React.FC<PermitsFilterProps> = ({ filters, onFiltersChange }) => {
   const { profile } = useAuth();
 
-  // Dynamic permit type options based on user's actual permit applications
+  // Dynamic permit type options from municipality's available permit types
   const { data: permitTypeOptions = [], isLoading: isLoadingPermitTypes } = useQuery({
-    queryKey: ['user-permit-types', profile?.id],
+    queryKey: ['municipality-permit-types', profile?.id],
     queryFn: async () => {
       if (!profile?.id) return [];
       
-      console.log('[PermitsFilter] Fetching permit types for user:', profile.id);
+      console.log('[PermitsFilter] Fetching municipality permit types for user:', profile.id);
       
-      const { data, error } = await supabase
+      // Step 1: Get user's customer_id from their first permit application
+      const { data: userPermit, error: permitError } = await supabase
         .from('permit_applications')
-        .select(`
-          permit_type,
-          municipal_permit_type_id,
-          municipal_permit_types(municipal_label)
-        `)
-        .eq('user_id', profile.id);
+        .select('customer_id')
+        .eq('user_id', profile.id)
+        .limit(1)
+        .single();
         
-      if (error) {
-        console.error('[PermitsFilter] Error fetching permit types:', error);
+      if (permitError || !userPermit?.customer_id) {
+        console.log('[PermitsFilter] No customer_id found for user, cannot fetch permit types');
         return [];
       }
       
-      // Create a map to track unique permit types with their municipal labels
-      const typeMap = new Map<string, { value: string; label: string; municipalLabel?: string }>();
+      console.log('[PermitsFilter] Found customer_id:', userPermit.customer_id);
       
-      data.forEach(item => {
-        if (item.permit_type && item.permit_type.trim() !== '') {
-          const municipalLabel = (item.municipal_permit_types as any)?.municipal_label;
-          const key = item.permit_type;
-          
-          // Only add if not already in map, or if we have a municipal label and the existing entry doesn't
-          if (!typeMap.has(key) || (municipalLabel && !typeMap.get(key)?.municipalLabel)) {
-            typeMap.set(key, {
-              value: item.permit_type,
-              label: municipalLabel || item.permit_type,
-              municipalLabel: municipalLabel
-            });
-          }
-        }
+      // Step 2: Fetch all active permit types for this municipality
+      const { data, error } = await supabase
+        .from('municipal_permit_types')
+        .select(`
+          id,
+          municipal_label,
+          permit_type_id,
+          permit_types(name)
+        `)
+        .eq('customer_id', userPermit.customer_id)
+        .eq('is_active', true)
+        .order('municipal_label');
+        
+      if (error) {
+        console.error('[PermitsFilter] Error fetching municipal permit types:', error);
+        return [];
+      }
+      
+      // Transform to match expected format
+      const permitTypes = data.map(item => {
+        const standardName = (item.permit_types as any)?.name || item.municipal_label;
+        return {
+          value: standardName, // Use standard name for filtering
+          label: item.municipal_label, // Display municipal label
+          municipalLabel: item.municipal_label,
+          municipalPermitTypeId: item.id
+        };
       });
       
-      console.log('[PermitsFilter] Found unique permit types:', Array.from(typeMap.values()));
+      console.log('[PermitsFilter] Found municipal permit types:', permitTypes);
       
-      // Sort alphabetically by display label
-      return Array.from(typeMap.values())
-        .sort((a, b) => a.label.localeCompare(b.label));
+      return permitTypes;
     },
     enabled: !!profile?.id,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
