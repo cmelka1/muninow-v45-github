@@ -7,7 +7,8 @@ import type { PermitStatus } from './usePermitWorkflow';
 export interface MunicipalPermit {
   permit_id: string;
   permit_number: string;
-  permit_type: string;
+  permit_type_id: string;
+  permit_type_name: string | null;
   application_status: string;
   applicant_full_name: string;
   property_address: string;
@@ -18,8 +19,6 @@ export interface MunicipalPermit {
   customer_id: string;
   merchant_name: string | null;
   user_id: string;
-  municipal_permit_type_id: string | null;
-  municipal_label: string | null;
 }
 
 interface UseMunicipalPermitsParams {
@@ -62,7 +61,7 @@ export const useMunicipalPermits = ({ filters = {}, page = 1, pageSize = 10 }: U
         .select(`
           permit_id,
           permit_number,
-          permit_type,
+          permit_type_id,
           application_status,
           applicant_full_name,
           property_address,
@@ -73,8 +72,7 @@ export const useMunicipalPermits = ({ filters = {}, page = 1, pageSize = 10 }: U
           customer_id,
           merchant_name,
           user_id,
-          municipal_permit_type_id,
-          municipal_permit_types(municipal_label)
+          permit_types_v2(name)
         `, { count: 'exact' });
 
       // Only show permits for this municipal customer
@@ -82,7 +80,7 @@ export const useMunicipalPermits = ({ filters = {}, page = 1, pageSize = 10 }: U
 
       // Apply filters
       if (filters.permitType) {
-        query = query.eq('permit_type', filters.permitType);
+        query = query.eq('permit_type_id', filters.permitType);
       }
 
       if (filters.status && filters.status !== 'all') {
