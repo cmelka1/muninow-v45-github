@@ -38,7 +38,7 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
         // Permits
         supabase
           .from('permit_applications')
-          .select('permit_id, permit_number, permit_type, application_status, customer_id, submitted_at, created_at, payment_status')
+          .select('permit_id, permit_number, application_status, customer_id, submitted_at, created_at, payment_status, permit_types_v2(name)')
           .eq('user_id', user.id),
         
         // Business Licenses  
@@ -90,10 +90,10 @@ export const useUserApplications = ({ filters = {}, page = 1, pageSize = 10 }: U
       // Transform and combine all applications
       const allApplications: UserApplication[] = [
         // Transform permits
-        ...(permits.data || []).map(permit => ({
+        ...(permits.data || []).map((permit: any) => ({
           id: permit.permit_id,
           serviceType: 'permit' as const,
-          serviceName: permit.permit_type,
+          serviceName: permit.permit_types_v2?.name || 'Unknown',
           dateSubmitted: permit.submitted_at || permit.created_at,
           municipality: customerMap.get(permit.customer_id) || 'Unknown',
           status: permit.application_status,

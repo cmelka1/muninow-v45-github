@@ -208,14 +208,7 @@ const MunicipalPermitDetail = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Type</Label>
-                  <div className="mt-1">
-                    <PermitTypeBadge 
-                      standardType={permit.permit_type}
-                      municipalLabel={permit.municipal_label}
-                      variant="detailed"
-                      showTooltip={true}
-                    />
-                  </div>
+                  <p className="text-base mt-1">{permit.permit_type_name || 'Unknown'}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Status</Label>

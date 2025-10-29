@@ -81,7 +81,7 @@ export const MunicipalRecentApplicationsTables = () => {
                         <span className="text-sm text-muted-foreground">{formatDate(permit.submitted_at)}</span>
                       </TableCell>
                       <TableCell className="py-2 font-medium">{permit.applicant_full_name}</TableCell>
-                      <TableCell className="py-2">{permit.permit_type}</TableCell>
+                      <TableCell className="py-2">{permit.permit_type_name || 'Unknown'}</TableCell>
                       <TableCell className="py-2 text-center">{formatCurrency(permit.base_fee_cents)}</TableCell>
                       <TableCell className="py-2 text-center">
                         <PermitStatusBadge status={permit.application_status as any} />

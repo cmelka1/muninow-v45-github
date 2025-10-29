@@ -7,7 +7,7 @@ export interface RecentPermit {
   permit_number: string;
   submitted_at: string | null;
   applicant_full_name: string;
-  permit_type: string;
+  permit_type_name: string | null;
   merchant_name: string | null;
   base_fee_cents: number;
   application_status: string;
@@ -75,11 +75,11 @@ export const useMunicipalRecentApplications = () => {
           permit_number,
           submitted_at,
           applicant_full_name,
-          permit_type,
           merchant_name,
           payment_amount_cents,
           application_status,
-          payment_status
+          payment_status,
+          permit_types_v2(name)
         `)
         .eq('customer_id', profile.customer_id)
         .neq('application_status', 'draft')
@@ -87,12 +87,12 @@ export const useMunicipalRecentApplications = () => {
         .limit(5);
 
       if (error) throw error;
-      return (data || []).map(item => ({
+      return (data || []).map((item: any) => ({
         id: item.permit_id,
         permit_number: item.permit_number || '',
         submitted_at: item.submitted_at,
         applicant_full_name: item.applicant_full_name || '',
-        permit_type: item.permit_type || '',
+        permit_type_name: item.permit_types_v2?.name || null,
         merchant_name: item.merchant_name,
         base_fee_cents: item.payment_amount_cents || 0,
         application_status: item.application_status || '',

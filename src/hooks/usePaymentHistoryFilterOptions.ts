@@ -70,10 +70,11 @@ export const useCategoryOptions = () => {
         if (transaction.permit_id) {
           const { data: permit } = await supabase
             .from('permit_applications')
-            .select('permit_type')
+            .select('permit_types_v2(name)')
             .eq('permit_id', transaction.permit_id)
             .single();
-          if (permit?.permit_type) categories.add(permit.permit_type);
+          const permitTypeName = (permit as any)?.permit_types_v2?.name;
+          if (permitTypeName) categories.add(permitTypeName);
         } else if (transaction.business_license_id) {
           const { data: license } = await supabase
             .from('business_license_applications')

@@ -28,7 +28,8 @@ import { formatDistanceToNow } from 'date-fns';
 interface PermitApplication {
   permit_id: string;
   permit_number: string;
-  permit_type: string;
+  permit_type_id: string;
+  permit_type_name: string | null;
   application_status: PermitStatus;
   property_address: string;
   applicant_full_name: string;
@@ -66,13 +67,18 @@ export const PermitReviewDashboard: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('permit_applications')
-        .select('*')
+        .select('*, permit_types_v2(name)')
         .order('submitted_at', { ascending: false });
 
       if (error) throw error;
 
-      setPermits(data || []);
-      calculateStats(data || []);
+      const transformedData = (data || []).map((item: any) => ({
+        ...item,
+        permit_type_name: item.permit_types_v2?.name || null
+      }));
+
+      setPermits(transformedData);
+      calculateStats(transformedData);
     } catch (error) {
       console.error('Error fetching permits:', error);
     } finally {
@@ -107,7 +113,7 @@ export const PermitReviewDashboard: React.FC = () => {
         permit.permit_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         permit.applicant_full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         permit.property_address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        permit.permit_type?.toLowerCase().includes(searchTerm.toLowerCase())
+        permit.permit_type_name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -281,7 +287,7 @@ export const PermitReviewDashboard: React.FC = () => {
                   <TableCell className="font-medium">
                     {permit.permit_number || 'Pending'}
                   </TableCell>
-                  <TableCell>{permit.permit_type}</TableCell>
+                  <TableCell>{permit.permit_type_name || 'Unknown'}</TableCell>
                   <TableCell>{permit.applicant_full_name}</TableCell>
                   <TableCell className="max-w-xs truncate">
                     {permit.property_address}

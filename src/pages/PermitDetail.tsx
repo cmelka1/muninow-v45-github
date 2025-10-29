@@ -247,14 +247,7 @@ const PermitDetail = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Type</Label>
-                  <div className="mt-1">
-                    <PermitTypeBadge 
-                      standardType={permit.permit_type}
-                      municipalLabel={permit.municipal_label}
-                      variant="detailed"
-                      showTooltip={true}
-                    />
-                  </div>
+                  <p className="text-base mt-1">{permit.permit_type_name || 'Unknown'}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Status</Label>
@@ -459,7 +452,7 @@ const PermitDetail = () => {
                 <InlinePaymentFlow
                   entityType="permit"
                   entityId={permit.permit_id}
-                  entityName={`${permit.permit_type} - ${permit.permit_number}`}
+                  entityName={`${permit.permit_type_name || 'Permit'} - ${permit.permit_number}`}
                   customerId={permit.customer_id}
                   merchantId={permit.merchant_id}
                   baseAmountCents={permit.payment_amount_cents || 0}

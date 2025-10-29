@@ -87,7 +87,7 @@ const PermitCertificate = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1">PERMIT TYPE</p>
-              <p className="text-xl font-semibold">{permit.permit_type}</p>
+              <p className="text-xl font-semibold">{permit.permit_type_name || 'Unknown'}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1">CONSTRUCTION VALUE</p>

@@ -202,12 +202,7 @@ const PermitsTable: React.FC<PermitsTableProps> = ({ filters = {}, onViewClick }
                   </TableCell>
                   <TableCell className="hidden xl:table-cell py-2 text-center">
                     <div className="flex justify-center">
-                      <PermitTypeBadge 
-                        standardType={permit.permit_type}
-                        municipalLabel={permit.municipal_label}
-                        variant="compact"
-                        showTooltip={true}
-                      />
+                      <span className="text-sm">{permit.permit_type_name || 'Unknown'}</span>
                     </div>
                   </TableCell>
                   <TableCell className="hidden 2xl:table-cell py-2 text-center">

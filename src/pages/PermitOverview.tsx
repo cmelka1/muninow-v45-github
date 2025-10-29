@@ -105,7 +105,7 @@ const PermitOverview = () => {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Permit Type</label>
-                    <p className="text-base">{permit.permit_type}</p>
+                    <p className="text-base">{permit.permit_type_name || 'Unknown'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Status</label>
@@ -294,7 +294,7 @@ const PermitOverview = () => {
                   <h3 className="text-lg font-semibold">Permit Summary</h3>
                   <div className="space-y-2">
                     <p className="text-base font-medium">{permit.permit_number}</p>
-                    <p className="text-sm text-muted-foreground">{permit.permit_type}</p>
+                    <p className="text-sm text-muted-foreground">{permit.permit_type_name || 'Unknown'}</p>
                     <PermitStatusBadge status={permit.application_status as PermitStatus} />
                   </div>
                 </div>

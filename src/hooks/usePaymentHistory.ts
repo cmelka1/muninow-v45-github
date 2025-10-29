@@ -99,11 +99,11 @@ export const usePaymentHistory = (params?: PaginationParams) => {
         if (transaction.permit_id) {
           const { data: permit } = await supabase
             .from('permit_applications')
-            .select('permit_type')
+            .select('permit_types_v2(name)')
             .eq('permit_id', transaction.permit_id)
             .single();
           serviceType = 'Building Permit';
-          serviceName = permit?.permit_type || 'Building Permit';
+          serviceName = (permit as any)?.permit_types_v2?.name || 'Building Permit';
         } else if (transaction.business_license_id) {
           const { data: license } = await supabase
             .from('business_license_applications')
