@@ -40,7 +40,11 @@ import { toast } from 'sonner';
 const formSchema = z.object({
   permit_type_id: z.string().optional(),
   merchant_id: z.string().optional(),
-  municipal_label: z.string().min(1, 'Municipal label is required'),
+  municipal_label: z.string()
+    .min(1, 'Municipal label is required')
+    .refine(val => val.trim() !== '', {
+      message: 'Municipal label cannot be empty or whitespace only'
+    }),
   base_fee_cents: z.number().min(0, 'Fee must be positive'),
   processing_days: z.number().min(1, 'Processing days must be at least 1'),
   requires_inspection: z.boolean(),
