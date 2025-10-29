@@ -78,12 +78,14 @@ const MunicipalDashboard = () => {
               <SelectItem value="this_year">This Year</SelectItem>
             </SelectContent>
           </Select>
-          <ReportBuilder>
-            <Button variant="outline" className="flex items-center gap-2">
-              <FileBarChart className="h-4 w-4" />
-              Create Report
-            </Button>
-          </ReportBuilder>
+          <div className="hidden">
+            <ReportBuilder>
+              <Button variant="outline" className="flex items-center gap-2">
+                <FileBarChart className="h-4 w-4" />
+                Create Report
+              </Button>
+            </ReportBuilder>
+          </div>
         </div>
       </div>
 
