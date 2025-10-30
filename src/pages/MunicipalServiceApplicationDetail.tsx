@@ -55,7 +55,7 @@ const MunicipalServiceApplicationDetail = () => {
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
   
-  const { data: application, isLoading, error } = useServiceApplication(applicationId!);
+  const { data: application, isLoading, error, refetch } = useServiceApplication(applicationId!);
   const { data: documentsQuery } = useServiceApplicationDocuments(applicationId!);
   const [documents, setDocuments] = useState<any[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
@@ -636,7 +636,10 @@ const MunicipalServiceApplicationDetail = () => {
         onClose={() => setIsStatusDialogOpen(false)}
         applicationId={applicationId!}
         currentStatus={application.status as ServiceApplicationStatus}
-        onStatusChange={() => window.location.reload()}
+        onStatusChange={() => {
+          refetch();
+          setIsStatusDialogOpen(false);
+        }}
       />
 
       {/* Document Viewer Modal */}

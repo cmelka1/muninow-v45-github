@@ -54,7 +54,7 @@ const MunicipalPermitDetail = () => {
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
   
-  const { data: permit, isLoading, error } = usePermit(permitId!);
+  const { data: permit, isLoading, error, refetch } = usePermit(permitId!);
   const { data: questions } = useMunicipalPermitQuestions(
     permit?.customer_id,
     permit?.merchant_id
@@ -597,8 +597,8 @@ const MunicipalPermitDetail = () => {
         permitId={permit.permit_id}
         currentStatus={permit.application_status as PermitStatus}
         onStatusChanged={() => {
-          // Refresh permit data
-          window.location.reload();
+          refetch();
+          setIsStatusDialogOpen(false);
         }}
       />
 
