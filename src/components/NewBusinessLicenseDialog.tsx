@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Upload, X, FileText, Image, FileCheck, Edit } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Upload, X, FileText, Image, FileCheck, Edit, AlertCircle } from 'lucide-react';
 import { BusinessLicensesMunicipalityAutocomplete } from '@/components/ui/business-licenses-municipality-autocomplete';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,6 +61,7 @@ interface UploadedDocument {
   uploadStatus: 'pending' | 'uploading' | 'completed' | 'error';
   filePath?: string;
   error?: string;
+  file: File;
 }
 
 export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> = ({
@@ -321,8 +322,9 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
         size: file.size,
         type: file.type,
         documentType: 'general',
-        uploadProgress: 100,
-        uploadStatus: 'completed' // For now, set as completed since we're not actually uploading
+        uploadProgress: 0,
+        uploadStatus: 'pending',
+        file: file
       };
 
       setBusinessInfo(prev => ({
@@ -572,11 +574,77 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
       
 
       // Upload documents if any
-      for (const doc of businessInfo.uploadedDocuments) {
-        if (doc.uploadStatus === 'completed') {
-          // Note: In a real implementation, you'd need to store the actual file
-          // For now, we'll skip the document upload part since we can't access the file
-          
+      if (businessInfo.uploadedDocuments.length > 0) {
+        console.log(`📎 Uploading ${businessInfo.uploadedDocuments.length} documents...`);
+        
+        for (const doc of businessInfo.uploadedDocuments) {
+          try {
+            // Update status to uploading
+            setBusinessInfo(prev => ({
+              ...prev,
+              uploadedDocuments: prev.uploadedDocuments.map(d =>
+                d.id === doc.id 
+                  ? { ...d, uploadStatus: 'uploading', uploadProgress: 50 } 
+                  : d
+              )
+            }));
+
+            // Upload the document using the hook
+            const uploadResult = await uploadDocument.mutateAsync({
+              file: doc.file,
+              data: {
+                license_id: result.id,
+                customer_id: selectedMunicipality!.customer_id,
+                merchant_id: merchantData.id,
+                merchant_name: merchantData.merchant_name,
+                file_name: doc.name,
+                content_type: doc.type,
+                file_size: doc.size,
+                document_type: doc.documentType,
+                description: doc.description
+              }
+            });
+
+            // Update status to completed
+            setBusinessInfo(prev => ({
+              ...prev,
+              uploadedDocuments: prev.uploadedDocuments.map(d =>
+                d.id === doc.id 
+                  ? { ...d, uploadStatus: 'completed', uploadProgress: 100, filePath: uploadResult.storage_path } 
+                  : d
+              )
+            }));
+
+            console.log(`✅ Document uploaded successfully: ${doc.name}`);
+            
+          } catch (uploadError: any) {
+            console.error(`❌ Failed to upload document ${doc.name}:`, uploadError);
+            
+            // Update status to error but continue with other documents
+            setBusinessInfo(prev => ({
+              ...prev,
+              uploadedDocuments: prev.uploadedDocuments.map(d =>
+                d.id === doc.id 
+                  ? { ...d, uploadStatus: 'error', error: uploadError.message || 'Upload failed' } 
+                  : d
+              )
+            }));
+            
+            // Show error toast but don't stop the process
+            toast({
+              title: "Document Upload Warning",
+              description: `Failed to upload ${doc.name}. The application was submitted but this document was not attached.`,
+              variant: "destructive",
+            });
+          }
+        }
+        
+        // Check if any uploads failed
+        const failedUploads = businessInfo.uploadedDocuments.filter(d => d.uploadStatus === 'error');
+        if (failedUploads.length > 0) {
+          console.warn(`⚠️ ${failedUploads.length} document(s) failed to upload`);
+        } else {
+          console.log('✅ All documents uploaded successfully');
         }
       }
 
@@ -1111,16 +1179,31 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
                             <p className="text-sm font-medium text-foreground truncate">
                               {doc.name}
                             </p>
-                            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <span>{formatFileSize(doc.size)}</span>
+                              {doc.uploadStatus === 'pending' && (
+                                <div className="flex items-center gap-1 text-muted-foreground">
+                                  <FileCheck className="h-3 w-3" />
+                                  <span>Ready</span>
+                                </div>
+                              )}
                               {doc.uploadStatus === 'uploading' && (
-                                <span className="text-blue-600">Uploading...</span>
+                                <div className="flex items-center gap-1 text-blue-600">
+                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                                  <span>Uploading...</span>
+                                </div>
                               )}
                               {doc.uploadStatus === 'completed' && (
-                                <span className="text-green-600">✓ Uploaded</span>
+                                <div className="flex items-center gap-1 text-green-600">
+                                  <FileCheck className="h-3 w-3" />
+                                  <span>Uploaded</span>
+                                </div>
                               )}
                               {doc.uploadStatus === 'error' && (
-                                <span className="text-red-600">Error: {doc.error}</span>
+                                <div className="flex items-center gap-1 text-destructive">
+                                  <AlertCircle className="h-3 w-3" />
+                                  <span>Error: {doc.error}</span>
+                                </div>
                               )}
                             </div>
                           </div>
