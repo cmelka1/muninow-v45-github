@@ -46,6 +46,11 @@ export const useBusinessLicenses = ({ filters = {}, page = 1, pageSize = 10 }: U
         .select('*')
         .eq('user_id', user.id);
 
+      // Hide drafts by default unless explicitly requested
+      if (filters.status !== 'draft') {
+        query = query.neq('application_status', 'draft');
+      }
+
       // Apply filters
       if (filters.status) {
         query = query.eq('application_status', filters.status as any);
@@ -108,10 +113,17 @@ export const useBusinessLicenses = ({ filters = {}, page = 1, pageSize = 10 }: U
       }
 
       // Get total count for pagination
-      const { count } = await supabase
+      let countQuery = supabase
         .from('business_license_applications')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
+
+      // Exclude drafts from count unless explicitly filtered
+      if (filters.status !== 'draft') {
+        countQuery = countQuery.neq('application_status', 'draft');
+      }
+
+      const { count } = await countQuery;
 
       // Apply pagination and ordering
       const { data, error } = await query

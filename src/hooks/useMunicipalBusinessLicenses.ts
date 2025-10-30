@@ -81,6 +81,11 @@ export const useMunicipalBusinessLicenses = ({ filters = {}, page = 1, pageSize 
       // Only show licenses for this municipal customer
       query = query.eq('customer_id', profile.customer_id);
 
+      // Hide drafts by default unless explicitly requested
+      if (filters.status !== 'draft') {
+        query = query.neq('application_status', 'draft');
+      }
+
       // Apply filters
       if (filters.licenseType) {
         query = query.eq('license_type_id', filters.licenseType);
