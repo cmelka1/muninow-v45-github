@@ -445,7 +445,7 @@ export const BusinessLicenseDetail = () => {
           </div>
           <div className="flex items-center gap-3">
             <BusinessLicenseStatusBadge status={license.application_status} />
-            {isMunicipalUser && (
+            {isMunicipalUser && license.application_status !== 'issued' && (
               <Button
                 variant="outline"
                 size="sm"
