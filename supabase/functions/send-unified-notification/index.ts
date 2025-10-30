@@ -58,6 +58,36 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Creating unified notification for user:', user_id, 'type:', notification_type);
 
+    // Validate and derive message if missing
+    let finalMessage = message;
+
+    if (!finalMessage || finalMessage.trim() === '') {
+      console.warn('Message is missing, attempting to derive from context');
+      
+      // Try to derive from context
+      if (update_type === 'communication' && communication_details?.comment_text) {
+        finalMessage = communication_details.comment_text;
+      } else if (notification_type === 'payment_confirmation' && payment_details?.amount) {
+        finalMessage = `Payment of $${((payment_details.amount || 0) / 100).toFixed(2)} confirmed`;
+      } else if (title) {
+        finalMessage = title; // Use title as fallback
+      }
+      
+      // If still empty, return error
+      if (!finalMessage || finalMessage.trim() === '') {
+        console.error('Cannot create notification: message is required');
+        return new Response(
+          JSON.stringify({ 
+            error: 'Message is required and could not be derived from context',
+            received: { title, message, update_type }
+          }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      
+      console.log('Derived message from context:', finalMessage);
+    }
+
     // Insert notification into database
     const { data: notification, error: notificationError } = await supabase
       .from('user_notifications')
@@ -65,7 +95,7 @@ const handler = async (req: Request): Promise<Response> => {
         user_id,
         notification_type,
         title,
-        message,
+        message: finalMessage,
         service_type,
         service_number,
         update_type,

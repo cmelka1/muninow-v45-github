@@ -3177,7 +3177,7 @@ export type Database = {
           entity_details?: Json | null
           id?: string
           is_read?: boolean
-          message: string
+          message?: string
           notification_type: string
           payment_details?: Json | null
           read_at?: string | null
