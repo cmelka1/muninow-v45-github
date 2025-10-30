@@ -107,6 +107,15 @@ export const BusinessLicenseDetail = () => {
     return format(new Date(dateString), 'MMM d, yyyy h:mm a');
   };
 
+  const getOrdinalSuffix = (num: number): string => {
+    const j = num % 10;
+    const k = num % 100;
+    if (j === 1 && k !== 11) return 'st';
+    if (j === 2 && k !== 12) return 'nd';
+    if (j === 3 && k !== 13) return 'rd';
+    return 'th';
+  };
+
   const handleWithdraw = async () => {
     const success = await updateLicenseStatus(license.id, 'withdrawn', withdrawReason || undefined);
     if (success) {
@@ -445,6 +454,12 @@ export const BusinessLicenseDetail = () => {
           </div>
           <div className="flex items-center gap-3">
             <BusinessLicenseStatusBadge status={license.application_status} />
+            {isMunicipalUser && license.application_status === 'issued' && license.renewal_status && license.renewal_status !== 'active' && (
+              <BusinessLicenseRenewalStatusBadge 
+                renewalStatus={license.renewal_status}
+                expiresAt={license.expires_at}
+              />
+            )}
             {isMunicipalUser && license.application_status !== 'issued' && (
               <Button
                 variant="outline"
@@ -532,6 +547,51 @@ export const BusinessLicenseDetail = () => {
                   <p className="text-sm">{formatDate(license.submitted_at)}</p>
                 </div>
               </div>
+              
+              {/* Expiration Information - only show for issued licenses */}
+              {license.application_status === 'issued' && license.expires_at && (
+                <>
+                  <Separator />
+                  <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        License Expiration Details
+                      </h4>
+                      {license.renewal_status && (
+                        <BusinessLicenseRenewalStatusBadge 
+                          renewalStatus={license.renewal_status}
+                          expiresAt={license.expires_at}
+                        />
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-medium text-gray-500">Issue Date</label>
+                        <p className="text-sm font-medium">{formatDate(license.issued_at)}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-500">Expiration Date</label>
+                        <p className="text-sm font-medium">{formatDate(license.expires_at)}</p>
+                      </div>
+                      {license.is_renewal && license.original_issue_date && (
+                        <>
+                          <div>
+                            <label className="text-xs font-medium text-gray-500">Original Issue Date</label>
+                            <p className="text-sm">{formatDate(license.original_issue_date)}</p>
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-500">Renewal Generation</label>
+                            <p className="text-sm">
+                              {license.renewal_generation ? `${license.renewal_generation}${getOrdinalSuffix(license.renewal_generation)} Renewal` : 'N/A'}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
               
               {license.business_description && (
                 <div>
