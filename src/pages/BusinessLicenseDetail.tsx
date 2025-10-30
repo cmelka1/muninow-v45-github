@@ -608,8 +608,8 @@ export const BusinessLicenseDetail = () => {
                       )}
                     </div>
                     
-                    {/* Renewal Eligibility Indicator */}
-                    {['active', 'expiring_soon'].includes(license.renewal_status || '') && (
+                    {/* Renewal Eligibility Indicator - Only show for business owners */}
+                    {!isMunicipalUser && ['active', 'expiring_soon'].includes(license.renewal_status || '') && (
                       <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-md">
                         <div className="flex items-center gap-2 text-sm text-blue-800">
                           <CheckCircle className="h-4 w-4" />
