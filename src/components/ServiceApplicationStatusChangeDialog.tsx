@@ -45,7 +45,7 @@ export const ServiceApplicationStatusChangeDialog: React.FC<ServiceApplicationSt
 
   const requiresReason = selectedStatus === 'denied' || selectedStatus === 'rejected' || 
                         selectedStatus === 'information_requested' || selectedStatus === 'withdrawn';
-  const isSubmitDisabled = !selectedStatus || (requiresReason && !reason.trim()) || isUpdating;
+  const isSubmitDisabled = !selectedStatus || isUpdating || (requiresReason && !reason.trim());
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -53,20 +53,12 @@ export const ServiceApplicationStatusChangeDialog: React.FC<ServiceApplicationSt
         <DialogHeader>
           <DialogTitle>Change Application Status</DialogTitle>
           <DialogDescription>
-            Update the status of this service application. The current status is "{getStatusDisplayName(currentStatus)}".
+            Update the status of this service application. Current status: <strong>{getStatusDisplayName(currentStatus)}</strong>
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="current-status">Current Status</Label>
-            <div className="p-3 bg-muted rounded-md">
-              <div className="font-medium">{getStatusDisplayName(currentStatus)}</div>
-              <div className="text-sm text-muted-foreground">{getStatusDescription(currentStatus)}</div>
-            </div>
-          </div>
-
-          <div className="grid gap-2">
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
             <Label htmlFor="new-status">New Status</Label>
             <Select value={selectedStatus} onValueChange={(value) => setSelectedStatus(value as ServiceApplicationStatus)}>
               <SelectTrigger>
@@ -75,21 +67,24 @@ export const ServiceApplicationStatusChangeDialog: React.FC<ServiceApplicationSt
               <SelectContent>
                 {validTransitions.map((status) => (
                   <SelectItem key={status} value={status}>
-                    <div>
-                      <div className="font-medium">{getStatusDisplayName(status)}</div>
-                      <div className="text-xs text-muted-foreground">{getStatusDescription(status)}</div>
-                    </div>
+                    {getStatusDisplayName(status)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
+          {selectedStatus && (
+            <div className="p-3 bg-muted rounded-md">
+              <p className="text-sm text-muted-foreground">{getStatusDescription(selectedStatus)}</p>
+            </div>
+          )}
+
           {requiresReason && (
-            <div className="grid gap-2">
+            <div className="space-y-2">
               <Label htmlFor="reason">
-                Reason {selectedStatus === 'information_requested' ? 'for Information Request' : 
-                       selectedStatus === 'withdrawn' ? 'for Withdrawal' : 'for Decision'} 
+                {selectedStatus === 'information_requested' ? 'Information Request Reason' : 
+                 selectedStatus === 'withdrawn' ? 'Withdrawal Reason' : 'Denial Reason'} 
                 <span className="text-destructive">*</span>
               </Label>
               <Textarea
