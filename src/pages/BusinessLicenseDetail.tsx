@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Download, Loader2, CreditCard, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Building, User, Calendar, DollarSign, FileText, AlertCircle, Edit, Plus, Download, Loader2, CreditCard, RefreshCw, CheckCircle } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
@@ -29,6 +29,7 @@ import { format } from 'date-fns';
 import { formatEINForDisplay } from '@/lib/formatters';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { BusinessLicenseStatus, useBusinessLicenseWorkflow } from '@/hooks/useBusinessLicenseWorkflow';
+import { useBusinessLicenseRenewal } from '@/hooks/useBusinessLicenseRenewal';
 import { useToast } from '@/hooks/use-toast';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -52,6 +53,7 @@ export const BusinessLicenseDetail = () => {
   const { data: documents, isLoading: documentsLoading, refetch: refetchDocuments } = useBusinessLicenseDocumentsList(id!);
   const { downloadDocument } = useBusinessLicenseDocuments();
   const { updateLicenseStatus, isUpdating, getValidStatusTransitions } = useBusinessLicenseWorkflow();
+  const { renewLicense, isRenewing } = useBusinessLicenseRenewal();
   const { customer: municipality, isLoading: municipalityLoading } = useCustomerById(license?.customer_id);
 
   
@@ -114,6 +116,15 @@ export const BusinessLicenseDetail = () => {
     if (j === 2 && k !== 12) return 'nd';
     if (j === 3 && k !== 13) return 'rd';
     return 'th';
+  };
+
+  const handleInitiateRenewal = async () => {
+    try {
+      const newLicenseId = await renewLicense(license.id);
+      navigate(`/municipal/business-license/${newLicenseId}`);
+    } catch (error) {
+      console.error('Failed to initiate renewal:', error);
+    }
   };
 
   const handleWithdraw = async () => {
@@ -460,6 +471,13 @@ export const BusinessLicenseDetail = () => {
                 expiresAt={license.expires_at}
               />
             )}
+            {isMunicipalUser && license.application_status === 'issued' && 
+             license.renewal_status && ['active', 'expiring_soon'].includes(license.renewal_status) && (
+              <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 flex items-center gap-1">
+                <CheckCircle className="h-3 w-3" />
+                Eligible for Renewal
+              </Badge>
+            )}
             {isMunicipalUser && license.application_status !== 'issued' && (
               <Button
                 variant="outline"
@@ -589,6 +607,26 @@ export const BusinessLicenseDetail = () => {
                         </>
                       )}
                     </div>
+                    
+                    {/* Renewal Eligibility Indicator */}
+                    {['active', 'expiring_soon'].includes(license.renewal_status || '') && (
+                      <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-md">
+                        <div className="flex items-center gap-2 text-sm text-blue-800">
+                          <CheckCircle className="h-4 w-4" />
+                          <span className="font-medium">This license is eligible for renewal</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="bg-blue-600 hover:bg-blue-700"
+                          onClick={handleInitiateRenewal}
+                          disabled={isRenewing}
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          {isRenewing ? 'Processing...' : 'Initiate Renewal'}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
