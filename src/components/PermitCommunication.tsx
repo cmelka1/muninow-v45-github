@@ -64,15 +64,15 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'scheduled':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 border-green-200';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'failed':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 border-red-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -149,17 +149,17 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
                         {item.type === 'request' && (
                           <>
                             <span className="font-medium text-sm">Information Request</span>
-                            <Badge className={getStatusColor(item.data.status)}>
-                              {item.data.status}
-                            </Badge>
+                  <Badge variant="outline" className={getStatusColor(item.data.status)}>
+                    {item.data.status}
+                  </Badge>
                           </>
                         )}
                         {item.type === 'inspection' && (
                           <>
                             <span className="font-medium text-sm">{item.data.inspection_type}</span>
-                            <Badge className={getStatusColor(item.data.status)}>
-                              {item.data.status}
-                            </Badge>
+                  <Badge variant="outline" className={getStatusColor(item.data.status)}>
+                    {item.data.status}
+                  </Badge>
                           </>
                         )}
                         {item.type === 'comment' && (

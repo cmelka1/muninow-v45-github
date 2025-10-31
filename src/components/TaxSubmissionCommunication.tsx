@@ -25,7 +25,7 @@ export const TaxSubmissionCommunication: React.FC<TaxSubmissionCommunicationProp
   const { profile } = useAuth();
   const { toast } = useToast();
 
-  const isMunicipalUser = profile?.account_type === 'municipal';
+  const isMunicipalUser = ['municipaladmin', 'municipaluser'].includes(profile?.account_type || '');
 
   const handleSubmitComment = async () => {
     if (!newComment.trim() || isSubmitting) return;
@@ -97,8 +97,11 @@ export const TaxSubmissionCommunication: React.FC<TaxSubmissionCommunicationProp
                     <span className="font-medium text-sm">
                       {comment.reviewer.first_name} {comment.reviewer.last_name}
                     </span>
-                    <Badge variant={comment.reviewer.account_type === 'municipal' ? 'secondary' : 'outline'} className="text-xs">
-                      {comment.reviewer.account_type === 'municipal' ? 'Municipal Staff' : 'Official'}
+                    <Badge 
+                      variant={['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'secondary' : 'outline'} 
+                      className={`text-xs ${['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
+                    >
+                      {['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'Municipal Staff' : 'Applicant'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
                       {format(new Date(comment.created_at), 'MMM d, yyyy h:mm a')}
