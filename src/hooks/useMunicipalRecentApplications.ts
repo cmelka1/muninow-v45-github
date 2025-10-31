@@ -30,7 +30,7 @@ export interface RecentBusinessLicense {
 
 export interface RecentTaxSubmission {
   id: string;
-  submission_date: string | null;
+  submitted_at: string | null;
   payer_business_name: string | null;
   first_name: string | null;
   last_name: string | null;
@@ -142,7 +142,7 @@ export const useMunicipalRecentApplications = () => {
         .from('tax_submissions')
         .select(`
           id,
-          submission_date,
+          submitted_at,
           payer_business_name,
           first_name,
           last_name,
@@ -155,7 +155,7 @@ export const useMunicipalRecentApplications = () => {
         `)
         .eq('customer_id', profile.customer_id)
         .neq('submission_status', 'draft')
-        .order('submission_date', { ascending: false, nullsFirst: false })
+        .order('submitted_at', { ascending: false, nullsFirst: false })
         .limit(5);
 
       if (error) throw error;

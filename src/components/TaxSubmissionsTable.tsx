@@ -138,7 +138,7 @@ const TaxSubmissionsTable: React.FC<TaxSubmissionsTableProps> = ({
                 >
                   <TableCell className="hidden sm:table-cell py-2">
                     <span className="text-sm text-muted-foreground">
-                      {formatDateLocal(submission.submission_date)}
+                      {formatDateLocal(submission.submitted_at)}
                     </span>
                   </TableCell>
                   <TableCell className="hidden md:table-cell py-2 text-left">

@@ -131,7 +131,7 @@ export function TaxSubmissionDetailModal({ submissionId, onClose }: TaxSubmissio
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Submitted:</span>
-                  <span>{format(new Date(submission.submission_date), 'MMM d, yyyy h:mm a')}</span>
+                  <span>{format(new Date(submission.submitted_at), 'MMM d, yyyy h:mm a')}</span>
                 </div>
                 {submission.calculation_notes && (
                   <div className="pt-2 border-t">

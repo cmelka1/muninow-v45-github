@@ -157,7 +157,7 @@ export const useMunicipalSearch = (params?: UseMunicipalSearchParams) => {
         // Tax Submissions
         supabase
           .from('tax_submissions')
-          .select('id, tax_type, submission_status, customer_id, submission_date, created_at, payment_status, user_id')
+          .select('id, tax_type, submission_status, customer_id, submitted_at, created_at, payment_status, user_id')
           .in('user_id', userIds)
           .eq('customer_id', profile.customer_id),
         
@@ -254,7 +254,7 @@ export const useMunicipalSearch = (params?: UseMunicipalSearchParams) => {
             serviceName: tax.tax_type.includes('_') 
               ? tax.tax_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
               : tax.tax_type,
-            dateSubmitted: tax.submission_date || tax.created_at,
+            dateSubmitted: tax.submitted_at || tax.created_at,
             municipality: customerMap.get(tax.customer_id) || 'Unknown',
             status: tax.submission_status,
             paymentStatus: tax.payment_status || 'unpaid',

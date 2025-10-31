@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
         payer_state,
         payer_zip_code,
         calculation_notes,
-        submission_date: new Date().toISOString()
+        submitted_at: new Date().toISOString()
       })
       .select()
       .single();

@@ -178,7 +178,7 @@ export const MunicipalRecentApplicationsTables = () => {
                       onClick={() => navigate(`/municipal/tax/${tax.id}`)}
                     >
                       <TableCell className="py-2 text-center">
-                        <span className="text-sm text-muted-foreground">{formatDate(tax.submission_date)}</span>
+                        <span className="text-sm text-muted-foreground">{formatDate(tax.submitted_at)}</span>
                       </TableCell>
                       <TableCell className="py-2 font-medium">
                         {tax.payer_business_name || `${tax.first_name || ''} ${tax.last_name || ''}`.trim() || 'N/A'}

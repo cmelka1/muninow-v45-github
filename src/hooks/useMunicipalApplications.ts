@@ -85,8 +85,8 @@ export const useMunicipalApplications = (customerId: string | undefined, period:
         .select("*", { count: "exact", head: true })
         .eq("customer_id", customerId)
         .neq("submission_status", "draft")
-        .gte("submission_date", monthStart)
-        .lte("submission_date", monthEnd);
+        .gte("submitted_at", monthStart)
+        .lte("submitted_at", monthEnd);
 
       if (taxesError) throw taxesError;
       console.log('[useMunicipalApplications] Business Taxes count:', taxesCount);
