@@ -63,12 +63,12 @@ export const useMunicipalRevenue = (customerId: string | undefined, period: Peri
 
       const { startDate: monthStart, endDate: monthEnd } = getPeriodDates(period);
 
-      // Get all paid/completed transactions for this customer in the period
+      // Get all paid transactions for this customer in the period
       const { data: transactions, error } = await supabase
         .from("payment_transactions")
         .select("id, base_amount_cents, service_fee_cents, total_amount_cents, updated_at, permit_id, business_license_id, service_application_id, tax_submission_id")
         .eq("customer_id", customerId)
-        .in("payment_status", ["paid", "completed"])
+        .eq("payment_status", "paid")
         .gte("updated_at", monthStart)
         .lte("updated_at", monthEnd);
 

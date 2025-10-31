@@ -345,7 +345,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       const directSuccess = parsedData?.success === true || parsedData?.success === 'true';
       const nestedSuccess = parsedData?.data?.success === true || parsedData?.data?.success === 'true';
       const transactionSuccess = !!(parsedData?.transaction_id || parsedData?.finix_transfer_id);
-      const statusSuccess = parsedData?.status === 200 || parsedData?.status === 'success';
+      const statusSuccess = parsedData?.status === 200 || parsedData?.status === 'success' || parsedData?.status === 'paid';
       
       const isSuccess = directSuccess || nestedSuccess || (transactionSuccess && !parsedData?.error);
       
@@ -373,7 +373,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           success: true,
           transaction_id: parsedData.finix_transfer_id,
           payment_id: parsedData.transaction_id,
-          status: 'completed'
+          status: 'paid'
         };
 
         toast({

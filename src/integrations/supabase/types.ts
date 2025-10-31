@@ -4032,7 +4032,7 @@ export type Database = {
         | "corrected"
       fee_profile_sync_status: "pending" | "synced" | "error"
       payment_method_type: "card" | "ach"
-      payment_status_enum: "paid" | "unpaid" | "partially_paid"
+      payment_status_enum: "paid" | "unpaid"
       payment_type_enum:
         | "PAYMENT_CARD"
         | "BANK_ACCOUNT"
@@ -4237,7 +4237,7 @@ export const Constants = {
       ],
       fee_profile_sync_status: ["pending", "synced", "error"],
       payment_method_type: ["card", "ach"],
-      payment_status_enum: ["paid", "unpaid", "partially_paid"],
+      payment_status_enum: ["paid", "unpaid"],
       payment_type_enum: [
         "PAYMENT_CARD",
         "BANK_ACCOUNT",

@@ -90,8 +90,7 @@ export const verifyPaymentInDatabase = async (
       const paymentStatus = data.payment_status;
       const entityStatus = data.application_status;
       
-      const isPaymentSuccessful = paymentStatus === 'paid' || 
-                                 paymentStatus === 'completed' ||
+      const isPaymentSuccessful = paymentStatus === 'paid' ||
                                  entityStatus === 'issued' || 
                                  entityStatus === 'approved';
 

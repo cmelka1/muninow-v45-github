@@ -182,7 +182,7 @@ export async function processUnifiedPayment(
       transactionId,
       transferResult.transfer_id!,
       finixPaymentInstrumentId,
-      'completed',
+      'paid',
       'SUCCEEDED',
       transferResult.raw_response
     );
@@ -194,7 +194,7 @@ export async function processUnifiedPayment(
         .update({
           total_amount_due_cents: totalAmountCents,
           service_fee_cents: serviceFeeCents,
-          payment_status: 'pending', // Payment initiated
+          payment_status: 'unpaid', // Payment initiated
           updated_at: new Date().toISOString()
         })
         .eq('id', params.entityId);
@@ -235,7 +235,7 @@ export async function processUnifiedPayment(
       finix_payment_instrument_id: finixPaymentInstrumentId,
       service_fee_cents: serviceFeeCents,
       total_amount_cents: totalAmountCents,
-      status: 'completed'
+      status: 'paid'
     };
 
   } catch (error) {
@@ -291,7 +291,7 @@ async function checkForDuplicateTransaction(
   }
 
   // Found duplicate
-  if (existingTransaction.payment_status === 'completed' || existingTransaction.payment_status === 'paid') {
+  if (existingTransaction.payment_status === 'paid') {
     return {
       isDuplicate: true,
       response: {
@@ -308,7 +308,7 @@ async function checkForDuplicateTransaction(
     };
   }
 
-  if (existingTransaction.payment_status === 'pending') {
+  if (existingTransaction.payment_status === 'unpaid') {
     return {
       isDuplicate: true,
       response: {
