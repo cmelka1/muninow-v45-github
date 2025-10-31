@@ -97,8 +97,8 @@ export const useMunicipalApplications = (customerId: string | undefined, period:
         .select("*", { count: "exact", head: true })
         .eq("customer_id", customerId)
         .neq("status", "draft")
-        .gte("created_at", monthStart)
-        .lte("created_at", monthEnd);
+        .gte("submitted_at", monthStart)
+        .lte("submitted_at", monthEnd);
 
       if (servicesError) throw servicesError;
       console.log('[useMunicipalApplications] Service Applications count:', servicesCount);

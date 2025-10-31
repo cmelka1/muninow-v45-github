@@ -45,7 +45,7 @@ export interface RecentTaxSubmission {
 export interface RecentServiceApplication {
   id: string;
   application_number: string | null;
-  created_at: string | null;
+  submitted_at: string | null;
   applicant_name: string | null;
   business_legal_name: string | null;
   user_id: string;
@@ -174,7 +174,7 @@ export const useMunicipalRecentApplications = () => {
         .select(`
           id,
           application_number,
-          created_at,
+          submitted_at,
           applicant_name,
           business_legal_name,
           user_id,
@@ -190,7 +190,7 @@ export const useMunicipalRecentApplications = () => {
         `)
         .eq('customer_id', profile.customer_id)
         .neq('status', 'draft')
-        .order('created_at', { ascending: false, nullsFirst: false })
+        .order('submitted_at', { ascending: false, nullsFirst: false })
         .limit(5);
 
       if (error) throw error;

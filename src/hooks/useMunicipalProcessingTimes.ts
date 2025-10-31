@@ -97,15 +97,15 @@ export const useMunicipalProcessingTimes = (customerId: string | undefined, peri
       // Service applications - filter by completion date (updated_at)
       const { data: periodServices } = await supabase
         .from("municipal_service_applications")
-        .select("created_at, updated_at, status")
+        .select("submitted_at, updated_at, status")
         .eq("customer_id", customerId)
-        .not("created_at", "is", null)
+        .not("submitted_at", "is", null)
         .in("status", ["approved", "issued"])
         .gte("updated_at", startDate)
         .lte("updated_at", endDate);
 
       const periodServiceTimes = periodServices?.map(s => {
-        const start = new Date(s.created_at).getTime();
+        const start = new Date(s.submitted_at).getTime();
         const end = new Date(s.updated_at).getTime();
         return (end - start) / (1000 * 60 * 60 * 24);
       }).filter(time => time > 0) || [];
@@ -157,13 +157,13 @@ export const useMunicipalProcessingTimes = (customerId: string | undefined, peri
       // Service applications - all time
       const { data: allTimeServices } = await supabase
         .from("municipal_service_applications")
-        .select("created_at, updated_at, status")
+        .select("submitted_at, updated_at, status")
         .eq("customer_id", customerId)
-        .not("created_at", "is", null)
+        .not("submitted_at", "is", null)
         .in("status", ["approved", "issued"]);
 
       const allTimeServiceTimes = allTimeServices?.map(s => {
-        const start = new Date(s.created_at).getTime();
+        const start = new Date(s.submitted_at).getTime();
         const end = new Date(s.updated_at).getTime();
         return (end - start) / (1000 * 60 * 60 * 24);
       }).filter(time => time > 0) || [];

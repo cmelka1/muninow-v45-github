@@ -164,7 +164,7 @@ export const useMunicipalSearch = (params?: UseMunicipalSearchParams) => {
         // Municipal Service Applications
         supabase
           .from('municipal_service_applications')
-          .select('id, tile_id, status, payment_status, customer_id, created_at, user_id')
+          .select('id, tile_id, status, payment_status, customer_id, submitted_at, user_id')
           .in('user_id', userIds)
           .eq('customer_id', profile.customer_id),
         
@@ -274,7 +274,7 @@ export const useMunicipalSearch = (params?: UseMunicipalSearchParams) => {
             businessName: userProfile?.business_legal_name || null,
             serviceType: 'service' as const,
             serviceName: serviceTilesMap.get(service.tile_id) || 'Service Application',
-            dateSubmitted: service.created_at,
+            dateSubmitted: service.submitted_at,
             municipality: customerMap.get(service.customer_id) || 'Unknown',
             status: service.status,
             paymentStatus: service.payment_status || 'unpaid',
