@@ -50,6 +50,11 @@ export const useMunicipalApplications = (customerId: string | undefined, period:
 
       const { startDate: monthStart, endDate: monthEnd } = getPeriodDates(period);
 
+      console.log('[useMunicipalApplications] Query initiated');
+      console.log('[useMunicipalApplications] Period:', period);
+      console.log('[useMunicipalApplications] Date Range:', { start: monthStart, end: monthEnd });
+      console.log('[useMunicipalApplications] System Date:', new Date().toISOString());
+
       // Get all building permits submitted this month (exclude draft)
       const { count: permitsCount, error: permitsError } = await supabase
         .from("permit_applications")
@@ -60,6 +65,7 @@ export const useMunicipalApplications = (customerId: string | undefined, period:
         .lte("submitted_at", monthEnd);
 
       if (permitsError) throw permitsError;
+      console.log('[useMunicipalApplications] Building Permits count:', permitsCount);
 
       // Get all business licenses submitted this month (exclude draft)
       const { count: licensesCount, error: licensesError } = await supabase
@@ -71,6 +77,7 @@ export const useMunicipalApplications = (customerId: string | undefined, period:
         .lte("submitted_at", monthEnd);
 
       if (licensesError) throw licensesError;
+      console.log('[useMunicipalApplications] Business Licenses count:', licensesCount);
 
       // Get all tax submissions this month (exclude draft)
       const { count: taxesCount, error: taxesError } = await supabase
@@ -82,6 +89,7 @@ export const useMunicipalApplications = (customerId: string | undefined, period:
         .lte("submission_date", monthEnd);
 
       if (taxesError) throw taxesError;
+      console.log('[useMunicipalApplications] Business Taxes count:', taxesCount);
 
       // Get all service applications submitted this month (exclude draft)
       const { count: servicesCount, error: servicesError } = await supabase
@@ -93,9 +101,19 @@ export const useMunicipalApplications = (customerId: string | undefined, period:
         .lte("created_at", monthEnd);
 
       if (servicesError) throw servicesError;
+      console.log('[useMunicipalApplications] Service Applications count:', servicesCount);
+
+      const total = (permitsCount || 0) + (licensesCount || 0) + (taxesCount || 0) + (servicesCount || 0);
+      console.log('[useMunicipalApplications] Total Applications:', total);
+      console.log('[useMunicipalApplications] Breakdown:', {
+        buildingPermits: permitsCount || 0,
+        businessLicenses: licensesCount || 0,
+        businessTaxes: taxesCount || 0,
+        serviceApplications: servicesCount || 0
+      });
 
       return {
-        total: (permitsCount || 0) + (licensesCount || 0) + (taxesCount || 0) + (servicesCount || 0),
+        total,
         buildingPermits: permitsCount || 0,
         businessLicenses: licensesCount || 0,
         businessTaxes: taxesCount || 0,
