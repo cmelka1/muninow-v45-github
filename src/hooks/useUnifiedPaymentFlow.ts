@@ -717,30 +717,39 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       // Handle merchant validation
       session.onvalidatemerchant = async (event: any) => {
         try {
-          console.log('🍎 Validating Apple Pay merchant session...');
+          const domainName = import.meta.env.VITE_APPLE_PAY_DOMAIN || window.location.hostname;
+          console.log('🍎 Validating Apple Pay merchant session...', { domain: domainName });
           
           const { data, error } = await supabase.functions.invoke('create-apple-pay-session', {
             body: {
               validation_url: event.validationURL,
               merchant_id: params.merchantId,
-              domain_name: window.location.hostname,
+              domain_name: domainName,
               display_name: "Muni Now"
             }
           });
 
           if (error || !data?.session_details) {
-            console.error('❌ Merchant validation failed:', error);
+            const errorDetails = error?.message || data?.error || JSON.stringify(data?.details) || "Unknown error";
+            console.error('❌ Merchant validation failed:', { error, data, errorDetails });
+            
+            // Check if it's a domain registration error
+            const isDomainError = errorDetails.toLowerCase().includes('domain') && 
+                                 errorDetails.toLowerCase().includes('not registered');
+            
             session.abort();
             setIsProcessingPayment(false);
             clearTimeout(timeoutId);
             toast({
-              title: "Validation Failed",
-              description: "Unable to validate Apple Pay merchant session",
+              title: "Apple Pay Validation Failed",
+              description: isDomainError 
+                ? `The domain "${domainName}" is not registered for Apple Pay with the payment processor. Please contact support.`
+                : "Unable to validate Apple Pay merchant session. Please try again or contact support.",
               variant: "destructive",
             });
             resolve({
               success: false,
-              error: 'Merchant validation failed'
+              error: isDomainError ? 'Domain not registered with payment processor' : 'Merchant validation failed'
             });
             return;
           }
