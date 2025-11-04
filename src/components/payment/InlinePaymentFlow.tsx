@@ -5,6 +5,7 @@ import { CreditCard, Plus, Loader2 } from 'lucide-react';
 import { InlinePaymentSummary } from './InlinePaymentSummary';
 import PaymentMethodSelector from '@/components/PaymentMethodSelector';
 import GooglePayButton from '@/components/GooglePayButton';
+import ApplePayButton from '@/components/ApplePayButton';
 import { useUnifiedPaymentFlow, EntityType } from '@/hooks/useUnifiedPaymentFlow';
 import { PaymentResponse } from '@/types/payment';
 import { formatCurrency } from '@/lib/formatters';
@@ -207,21 +208,40 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
         />
 
         {/* Digital Payment Options */}
-        <div className="flex justify-center">
-          <div className="w-full">
-            <GooglePayButton
-              onPayment={async () => {
-                try {
-                  await handleGooglePayment();
-                } catch (error) {
-                  console.error('Google Pay error in button:', error);
-                }
-              }}
-              totalAmount={totalWithFee}
-              merchantId={googlePayMerchantId || ''}
-              isDisabled={!googlePayMerchantId || isProcessingPayment}
-              onAvailabilityChange={setIsGooglePayAvailable}
-            />
+        <div className="space-y-3">
+          <div className="flex justify-center">
+            <div className="w-full">
+              <GooglePayButton
+                onPayment={async () => {
+                  try {
+                    await handleGooglePayment();
+                  } catch (error) {
+                    console.error('Google Pay error in button:', error);
+                  }
+                }}
+                totalAmount={totalWithFee}
+                merchantId={googlePayMerchantId || ''}
+                isDisabled={!googlePayMerchantId || isProcessingPayment}
+                onAvailabilityChange={setIsGooglePayAvailable}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-center">
+            <div className="w-full">
+              <ApplePayButton
+                onPayment={async () => {
+                  try {
+                    await handleApplePayment();
+                  } catch (error) {
+                    console.error('Apple Pay error in button:', error);
+                  }
+                }}
+                totalAmount={totalWithFee}
+                merchantId={googlePayMerchantId || ''}
+                isDisabled={!googlePayMerchantId || isProcessingPayment}
+              />
+            </div>
           </div>
         </div>
       </div>
