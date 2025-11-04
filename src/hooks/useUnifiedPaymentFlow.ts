@@ -76,16 +76,27 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
   // Load Google Pay merchant ID
   useEffect(() => {
     const loadGooglePayMerchantId = async () => {
+      if (!params.merchantId) {
+        console.log('⚠️ No merchant ID provided for Google Pay');
+        return;
+      }
+
       try {
+        console.log('🔑 Loading merchant ID for:', params.merchantId);
         const { data, error } = await supabase.functions.invoke('get-google-pay-merchant-id', {
           body: { merchant_id: params.merchantId }
         });
         
+        console.log('🔑 Merchant ID response:', data, 'error:', error);
+        
         if (!error && data.success) {
+          console.log('🔑 Final merchant ID set:', data.merchant_id);
           setGooglePayMerchantId(data.merchant_id);
+        } else {
+          console.warn('🔑 No merchant_id in response or error occurred');
         }
       } catch (error) {
-        console.error('Error loading Google Pay merchant ID:', error);
+        console.error('🔑 Error loading Google Pay merchant ID:', error);
       }
     };
 

@@ -209,6 +209,13 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
 
         {/* Digital Payment Options */}
         <div className="space-y-3">
+          {!googlePayMerchantId && (
+            <div className="text-sm text-muted-foreground text-center py-2">
+              <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
+              Loading payment methods...
+            </div>
+          )}
+          
           <div className="flex justify-center">
             <div className="w-full">
               <GooglePayButton
@@ -240,6 +247,9 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
                 totalAmount={totalWithFee}
                 merchantId={googlePayMerchantId || ''}
                 isDisabled={!googlePayMerchantId || isProcessingPayment}
+                onAvailabilityChange={(available) => {
+                  console.log('🍎 Apple Pay availability changed:', available);
+                }}
               />
             </div>
           </div>

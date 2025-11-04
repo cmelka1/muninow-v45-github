@@ -19,45 +19,67 @@ interface ApplePayButtonProps {
   totalAmount: number;
   merchantId: string;
   isDisabled?: boolean;
+  onAvailabilityChange?: (isAvailable: boolean) => void;
 }
 
 const ApplePayButton: React.FC<ApplePayButtonProps> = ({
   onPayment,
   totalAmount,
   merchantId,
-  isDisabled = false
+  isDisabled = false,
+  onAvailabilityChange
 }) => {
   const [isAvailable, setIsAvailable] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     // Check if Apple Pay is available
-    const checkAvailability = () => {
+    const checkAvailability = async () => {
+      setIsLoading(true);
+      
       if (typeof window === 'undefined') {
-        return false;
+        setIsLoading(false);
+        setIsAvailable(false);
+        onAvailabilityChange?.(false);
+        return;
       }
 
       // Check if ApplePaySession exists and browser supports it
       if (!window.ApplePaySession) {
         console.log('🍎 Apple Pay not supported - ApplePaySession not available');
-        return false;
+        setIsLoading(false);
+        setIsAvailable(false);
+        onAvailabilityChange?.(false);
+        return;
       }
 
       // Check if the device can make Apple Pay payments
       if (!window.ApplePaySession.canMakePayments()) {
         console.log('🍎 Apple Pay not available - Device cannot make payments');
-        return false;
+        setIsLoading(false);
+        setIsAvailable(false);
+        onAvailabilityChange?.(false);
+        return;
       }
 
       console.log('🍎 Apple Pay is available');
-      return true;
+      setIsLoading(false);
+      setIsAvailable(true);
+      onAvailabilityChange?.(true);
     };
 
-    setIsAvailable(checkAvailability());
-  }, []);
+    checkAvailability();
+  }, [onAvailabilityChange]);
 
   const handleClick = async () => {
-    if (isDisabled || isProcessing) {
+    if (isDisabled) {
+      console.log('🍎 Apple Pay button is disabled. merchantId:', merchantId, 'isProcessing:', isProcessing);
+      return;
+    }
+    
+    if (isProcessing) {
+      console.log('🍎 Apple Pay payment already processing');
       return;
     }
 
@@ -71,6 +93,16 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
       setIsProcessing(false);
     }
   };
+
+  // Show loading state while checking availability
+  if (isLoading) {
+    return (
+      <div className="w-full h-[44px] flex items-center justify-center bg-muted rounded border border-border">
+        <Loader2 className="h-4 w-4 animate-spin mr-2 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">Checking Apple Pay availability...</span>
+      </div>
+    );
+  }
 
   // Don't render if Apple Pay is not available
   if (!isAvailable) {
@@ -97,6 +129,12 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
       {isProcessing && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded">
           <Loader2 className="h-5 w-5 animate-spin text-white" />
+        </div>
+      )}
+      
+      {isDisabled && !isProcessing && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded pointer-events-none">
+          <span className="text-xs text-white">Loading payment information...</span>
         </div>
       )}
 
