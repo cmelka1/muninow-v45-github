@@ -297,10 +297,48 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         requestSize: JSON.stringify(requestBody).length
       });
 
+      // Get authentication token
+      const authToken = authData.session?.access_token;
+      
+      if (!authToken) {
+        console.error('❌ No auth token available for payment');
+        throw new Error('Authentication required. Please sign in again.');
+      }
+      
+      console.info('🔐 process-unified-payment: Auth token present:', !!authToken);
+
       const requestStartTime = Date.now();
-      const { data, error } = await supabase.functions.invoke('process-unified-payment', {
-        body: requestBody
+      let data, error;
+      const invokeResult = await supabase.functions.invoke('process-unified-payment', {
+        body: requestBody,
+        headers: {
+          Authorization: `Bearer ${authToken}`
+        }
       });
+      
+      data = invokeResult.data;
+      error = invokeResult.error;
+      
+      // Handle 401 by refreshing token and retrying once
+      if (error && (error.message?.includes('401') || error.message?.includes('Unauthorized'))) {
+        console.warn('⚠️ 401 error on process-unified-payment, refreshing token and retrying...');
+        
+        const { data: refreshData } = await supabase.auth.refreshSession();
+        const newToken = refreshData.session?.access_token;
+        
+        if (newToken) {
+          console.info('🔄 Retrying process-unified-payment with refreshed token');
+          const retryResult = await supabase.functions.invoke('process-unified-payment', {
+            body: requestBody,
+            headers: {
+              Authorization: `Bearer ${newToken}`
+            }
+          });
+          data = retryResult.data;
+          error = retryResult.error;
+        }
+      }
+      
       const requestEndTime = Date.now();
       
       console.log('📥 Edge function response received:', {
@@ -800,7 +838,34 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           // Process payment in background
           console.log('🍎 Processing payment in background...');
           
-          const { data, error } = await supabase.functions.invoke('process-unified-apple-pay', {
+          // Get authentication token
+          const { data: sessionData } = await supabase.auth.getSession();
+          const authToken = sessionData.session?.access_token;
+
+          if (!authToken) {
+            console.error('❌ No auth token available for Apple Pay');
+            toast({
+              title: "Authentication Required",
+              description: "Please sign in to complete payment",
+              variant: "destructive"
+            });
+            params.onError?.({
+              type: 'validation',
+              message: 'Please sign in to continue',
+              retryable: false
+            });
+            setIsProcessingPayment(false);
+            resolve({
+              success: false,
+              error: 'Authentication required'
+            });
+            return;
+          }
+
+          console.info('🔐 process-unified-apple-pay: Auth token present:', !!authToken);
+          
+          let data, error;
+          const invokeResult = await supabase.functions.invoke('process-unified-apple-pay', {
             body: {
               entity_type: params.entityType,
               entity_id: params.entityId,
@@ -814,8 +879,49 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
               billing_address: billingAddress,
               fraud_session_id: finixSessionKey,
               session_uuid: paymentSessionId || generateIdempotencyId('apple-pay', params.entityId)
+            },
+            headers: {
+              Authorization: `Bearer ${authToken}`
             }
           });
+          
+          data = invokeResult.data;
+          error = invokeResult.error;
+          
+          // Handle 401 by refreshing token and retrying once
+          if (error && (error.message?.includes('401') || error.message?.includes('Unauthorized'))) {
+            console.warn('⚠️ 401 error on process-unified-apple-pay, refreshing token and retrying...');
+            
+            const { data: refreshData } = await supabase.auth.refreshSession();
+            const newToken = refreshData.session?.access_token;
+            
+            if (newToken) {
+              console.info('🔄 Retrying process-unified-apple-pay with refreshed token');
+              const retryResult = await supabase.functions.invoke('process-unified-apple-pay', {
+                body: {
+                  entity_type: params.entityType,
+                  entity_id: params.entityId,
+                  customer_id: params.customerId,
+                  merchant_id: params.merchantId,
+                  base_amount_cents: params.baseAmountCents,
+                  apple_pay_token: {
+                    token: applePayToken,
+                    billingContact: billingContact
+                  },
+                  billing_address: billingAddress,
+                  fraud_session_id: finixSessionKey,
+                  session_uuid: paymentSessionId || generateIdempotencyId('apple-pay', params.entityId)
+                },
+                headers: {
+                  Authorization: `Bearer ${newToken}`
+                }
+              });
+              data = retryResult.data;
+              error = retryResult.error;
+            }
+          }
+          
+          console.info('✅ process-unified-apple-pay response:', { success: !!data?.success, hasError: !!error });
 
           if (data?.success && data?.finix_transfer_id) {
             console.log('✅ Apple Pay payment processed successfully:', data.finix_transfer_id);
