@@ -107,18 +107,18 @@ Deno.serve(async (req) => {
     }
 
     // Fetch user Finix identity
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
+    const { data: userIdentity, error: identityError } = await supabase
+      .from('finix_identities')
       .select('finix_identity_id')
       .eq('user_id', user.id)
       .single();
 
-    if (profileError || !profileData?.finix_identity_id) {
-      console.error('[process-unified-apple-pay] User profile not found:', profileError);
+    if (identityError || !userIdentity?.finix_identity_id) {
+      console.error('[process-unified-apple-pay] User Finix identity not found:', identityError);
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'User profile not found',
+          error: 'User Finix identity not found',
           retryable: false
         }),
         { status: 404, headers: corsHeaders }
@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
     }
 
     const finixMerchantIdentity = merchantData.finix_identity_id;
-    const finixUserIdentity = profileData.finix_identity_id;
+    const finixUserIdentity = userIdentity.finix_identity_id;
 
     console.log('[process-unified-apple-pay] Finix identities:', {
       merchant: finixMerchantIdentity,
@@ -188,7 +188,7 @@ Deno.serve(async (req) => {
       entityType: entity_type,
       entityId: entity_id,
       customerId: customer_id || user.id,
-      merchantId: finixMerchantIdentity,
+      merchantId: merchant_id,
       baseAmountCents: base_amount_cents,
       paymentInstrumentId: instrumentResult.id,
       fraudSessionId: fraud_session_id,
