@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 
 // Declare apple-pay-button custom element
@@ -32,6 +32,44 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
   const [isAvailable, setIsAvailable] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const btnRef = useRef<HTMLElement | null>(null);
+
+  const safeHandleClick = useCallback(async () => {
+    if (isDisabled) {
+      console.log('🍎 Apple Pay button is disabled. merchantId:', merchantId, 'isProcessing:', isProcessing);
+      return;
+    }
+    if (isProcessing) {
+      console.log('🍎 Apple Pay payment already processing');
+      return;
+    }
+    try {
+      setIsProcessing(true);
+      console.log('🍎 Apple Pay button clicked');
+      await onPayment();
+    } catch (error) {
+      console.error('🍎 Apple Pay error:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [isDisabled, isProcessing, merchantId, onPayment]);
+
+  useEffect(() => {
+    const el = btnRef.current;
+    if (!el) return;
+    
+    const clickHandler = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      void safeHandleClick();
+    };
+    
+    el.addEventListener('click', clickHandler);
+    
+    return () => {
+      el.removeEventListener('click', clickHandler);
+    };
+  }, [safeHandleClick]);
 
   useEffect(() => {
     // Check if Apple Pay is available
@@ -72,28 +110,6 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
     checkAvailability();
   }, [onAvailabilityChange]);
 
-  const handleClick = async () => {
-    if (isDisabled) {
-      console.log('🍎 Apple Pay button is disabled. merchantId:', merchantId, 'isProcessing:', isProcessing);
-      return;
-    }
-    
-    if (isProcessing) {
-      console.log('🍎 Apple Pay payment already processing');
-      return;
-    }
-
-    try {
-      setIsProcessing(true);
-      console.log('🍎 Apple Pay button clicked');
-      await onPayment();
-    } catch (error) {
-      console.error('🍎 Apple Pay error:', error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   // Show loading state while checking availability
   if (isLoading) {
     return (
@@ -110,19 +126,32 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
   }
 
   return (
-    <div className="relative w-full">
+    <div
+      className="relative w-full"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && !isDisabled && !isProcessing) {
+          e.preventDefault();
+          void safeHandleClick();
+        }
+      }}
+      aria-disabled={isDisabled || isProcessing}
+      aria-label="Pay with Apple Pay"
+    >
       <apple-pay-button
+        ref={btnRef as any}
         buttonstyle="black"
         type="plain"
         locale="en"
-        onClick={handleClick}
         style={{
           width: '100%',
           height: '44px',
           borderRadius: '4px',
           cursor: isDisabled ? 'not-allowed' : 'pointer',
           opacity: isDisabled ? 0.5 : 1,
-          pointerEvents: isDisabled ? 'none' : 'auto'
+          pointerEvents: isDisabled ? 'none' : 'auto',
+          display: 'inline-block'
         }}
       />
       
