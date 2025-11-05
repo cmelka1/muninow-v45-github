@@ -871,26 +871,11 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           const authToken = sessionData.session?.access_token;
 
           if (!authToken) {
-            console.error('❌ No auth token available for Apple Pay');
-            toast({
-              title: "Authentication Required",
-              description: "Please sign in to complete payment",
-              variant: "destructive"
-            });
-            params.onError?.({
-              type: 'validation',
-              message: 'Please sign in to continue',
-              retryable: false
-            });
-            setIsProcessingPayment(false);
-            resolve({
-              success: false,
-              error: 'Authentication required'
-            });
-            return;
+            console.log('⚠️ No auth token - proceeding as GUEST for Apple Pay checkout');
+            console.log('📧 Guest email from Apple Pay:', billingContact?.emailAddress || 'not provided');
+          } else {
+            console.info('🔐 Authenticated user - using existing account');
           }
-
-          console.info('🔐 process-unified-apple-pay: Auth token present:', !!authToken);
           
           let data, error;
           const invokeResult = await supabase.functions.invoke('process-unified-apple-pay', {
@@ -906,11 +891,12 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
               },
               billing_address: billingAddress,
               fraud_session_id: finixSessionKey,
-              session_uuid: paymentSessionId || generateIdempotencyId('apple-pay', params.entityId)
+              session_uuid: paymentSessionId || generateIdempotencyId('apple-pay', params.entityId),
+              guest_email: billingContact?.emailAddress
             },
-            headers: {
+            headers: authToken ? {
               Authorization: `Bearer ${authToken}`
-            }
+            } : {}
           });
           
           data = invokeResult.data;
