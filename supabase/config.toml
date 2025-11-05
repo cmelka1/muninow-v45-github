@@ -2,3 +2,9 @@ project_id = "qcuiuubbaozcmejzvxje"
 
 [functions.create-apple-pay-session]
 verify_jwt = false
+
+[functions.process-unified-apple-pay]
+verify_jwt = false
+
+[functions.create-finix-buyer-identity]
+verify_jwt = false

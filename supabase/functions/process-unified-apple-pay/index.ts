@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.5';
 import { FinixAPI } from '../shared/finixAPI.ts';
 import { processUnifiedPayment } from '../shared/unifiedPaymentProcessor.ts';
 import { corsHeaders } from '../shared/cors.ts';
+import { getOrCreateGuestUser } from '../shared/guestUserUtils.ts';
 
 interface BillingAddress {
   name?: string;
@@ -27,18 +28,24 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get user from auth token
+    // Get user from auth token (optional for guest checkout)
     const authHeader = req.headers.get('authorization')?.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader);
-    
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized', retryable: false }),
-        { status: 401, headers: corsHeaders }
-      );
-    }
+    let userId: string | undefined;
+    let userEmail: string | undefined;
 
-    console.log('[process-unified-apple-pay] Authenticated user:', user.id);
+    if (authHeader) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader);
+      
+      if (!userError && user) {
+        userId = user.id;
+        userEmail = user.email;
+        console.log('[process-unified-apple-pay] Authenticated user:', userId);
+      } else {
+        console.log('[process-unified-apple-pay] Invalid token, proceeding as guest');
+      }
+    } else {
+      console.log('[process-unified-apple-pay] Guest checkout - no auth provided');
+    }
 
     // Parse request body
     const body = await req.json();
@@ -84,8 +91,57 @@ Deno.serve(async (req) => {
       entity_type,
       entity_id,
       merchant_id,
-      base_amount_cents
+      base_amount_cents,
+      is_guest: !userId
     });
+
+    // Handle guest users - create temporary account if needed
+    let finalUserId: string;
+    let finalUserEmail: string;
+
+    if (!userId) {
+      console.log('[process-unified-apple-pay] Creating guest user for Apple Pay checkout');
+      
+      const billingContact = apple_pay_token.billingContact;
+      const guestResult = await getOrCreateGuestUser(
+        {
+          firstName: billingContact?.givenName,
+          lastName: billingContact?.familyName,
+          email: body.guest_email, // Frontend can optionally provide this
+          phone: billingContact?.phoneNumber,
+          billingAddress: {
+            address1: billing_address?.address1,
+            city: billing_address?.locality,
+            state: billing_address?.administrative_area,
+            postal_code: billing_address?.postal_code
+          }
+        },
+        supabase
+      );
+
+      if (guestResult.error || !guestResult.userId) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Guest user creation failed: ${guestResult.error}`,
+            retryable: false
+          }),
+          { status: 500, headers: corsHeaders }
+        );
+      }
+
+      finalUserId = guestResult.userId;
+      finalUserEmail = `guest-${finalUserId}@muninow.guest`;
+      
+      console.log('[process-unified-apple-pay] Guest user created:', {
+        userId: finalUserId,
+        isNew: guestResult.isNew,
+        finixIdentityId: guestResult.finixIdentityId
+      });
+    } else {
+      finalUserId = userId;
+      finalUserEmail = userEmail || '';
+    }
 
     // Fetch merchant Finix identity
     const { data: merchantData, error: merchantError } = await supabase
@@ -106,22 +162,23 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch user Finix identity
+    // Fetch user Finix identity (should exist from guest creation or existing user)
     const { data: userIdentity, error: identityError } = await supabase
       .from('finix_identities')
       .select('finix_identity_id')
-      .eq('user_id', user.id)
+      .eq('user_id', finalUserId)
+      .eq('identity_type', 'BUYER')
       .single();
 
     if (identityError || !userIdentity?.finix_identity_id) {
-      console.error('[process-unified-apple-pay] User Finix identity not found:', identityError);
+      console.error('[process-unified-apple-pay] User Finix BUYER identity not found:', identityError);
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'User Finix identity not found',
-          retryable: false
+          error: 'Failed to establish payment identity. Please try again.',
+          retryable: true
         }),
-        { status: 404, headers: corsHeaders }
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -187,14 +244,14 @@ Deno.serve(async (req) => {
     const result = await processUnifiedPayment({
       entityType: entity_type,
       entityId: entity_id,
-      customerId: customer_id || user.id,
+      customerId: customer_id || finalUserId,
       merchantId: merchant_id,
       baseAmountCents: base_amount_cents,
       paymentInstrumentId: instrumentResult.id,
       fraudSessionId: fraud_session_id,
       clientSessionId: session_uuid,
-      userId: user.id,
-      userEmail: user.email!,
+      userId: finalUserId,
+      userEmail: finalUserEmail,
       paymentType: 'apple-pay',
       cardBrand: cardBrand,
       cardLastFour: cardLastFour,

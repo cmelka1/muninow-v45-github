@@ -2589,6 +2589,7 @@ export type Database = {
           first_name: string
           id: string
           industry: string | null
+          is_guest: boolean | null
           last_name: string
           original_address: Json | null
           phone: string | null
@@ -2610,6 +2611,7 @@ export type Database = {
           first_name: string
           id: string
           industry?: string | null
+          is_guest?: boolean | null
           last_name: string
           original_address?: Json | null
           phone?: string | null
@@ -2631,6 +2633,7 @@ export type Database = {
           first_name?: string
           id?: string
           industry?: string | null
+          is_guest?: boolean | null
           last_name?: string
           original_address?: Json | null
           phone?: string | null
