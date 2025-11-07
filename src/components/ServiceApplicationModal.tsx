@@ -419,7 +419,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           throw rpcError;
         }
 
-        applicationData = { id: rpcData };
+        applicationData = { id: (rpcData as { application_id: string }).application_id };
       }
       // For non-reviewable services with existing draft, update it
       else if (!tile.requires_review && draftApplicationId) {
