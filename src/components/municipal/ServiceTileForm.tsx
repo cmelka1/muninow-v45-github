@@ -167,6 +167,29 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
       return;
     }
 
+    // Validate time slot configuration if enabled
+    if (hasTimeSlots) {
+      // Check end time is after start time
+      if (endTime <= startTime) {
+        toast({
+          title: 'Error',
+          description: 'End time must be after start time',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Check minimum slot duration (only for time_period mode)
+      if (bookingMode === 'time_period' && slotDuration < 15) {
+        toast({
+          title: 'Error',
+          description: 'Slot duration must be at least 15 minutes',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     const amountCents = Math.round(parseFloat(amountDollars || '0') * 100);
     
     let finalPdfUrl = tile?.pdf_form_url; // Keep existing URL if no new file uploaded

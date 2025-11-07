@@ -5,16 +5,16 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CalendarIcon, Clock, Info } from 'lucide-react';
+import { CalendarIcon, Clock, Info, CheckCircle } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { useBookedTimeSlots } from '@/hooks/useBookedTimeSlots';
 import { format, addDays, parse, isWeekend, isSameDay } from 'date-fns';
 
 interface TimeSlotBookingProps {
   tile: MunicipalServiceTile;
-  selectedDate: Date | null;
+  selectedDate: Date | undefined;
   selectedTime: string | null;
-  onDateSelect: (date: Date | null) => void;
+  onDateSelect: (date: Date | undefined) => void;
   onTimeSelect: (time: string) => void;
 }
 
@@ -119,7 +119,7 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
             </Label>
             <Calendar
               mode="single"
-              selected={selectedDate || undefined}
+              selected={selectedDate}
               onSelect={onDateSelect}
               disabled={disabledDates}
               className="rounded-md border"
@@ -192,22 +192,3 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
   );
 };
 
-function CheckCircle(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-      <polyline points="22 4 12 14.01 9 11.01" />
-    </svg>
-  );
-}
