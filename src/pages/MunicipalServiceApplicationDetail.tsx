@@ -17,7 +17,8 @@ import {
   Plus,
   CreditCard,
   Loader2,
-  Edit
+  Edit,
+  XCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,6 +55,7 @@ const MunicipalServiceApplicationDetail = () => {
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
+  const [isCancellingBooking, setIsCancellingBooking] = useState(false);
   
   const { data: application, isLoading, error, refetch } = useServiceApplication(applicationId!);
   const { data: documentsQuery } = useServiceApplicationDocuments(applicationId!);
@@ -110,6 +112,41 @@ const MunicipalServiceApplicationDetail = () => {
 
   const handleStatusChange = () => {
     setIsStatusDialogOpen(true);
+  };
+
+  const handleCancelBooking = async () => {
+    if (!applicationId || !profile?.id) return;
+
+    setIsCancellingBooking(true);
+    try {
+      const { error } = await supabase
+        .from('municipal_service_applications')
+        .update({
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+          cancelled_by: profile.id,
+          cancellation_reason: 'Cancelled by municipal staff'
+        })
+        .eq('id', applicationId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Booking Cancelled",
+        description: "The booking has been successfully cancelled."
+      });
+
+      refetch();
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel booking. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCancellingBooking(false);
+    }
   };
 
   const renderFormField = (field: any, value: any) => {
@@ -347,6 +384,80 @@ const MunicipalServiceApplicationDetail = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Booking Details */}
+          {application.booking_date && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Booking Details
+                  </CardTitle>
+                  {application.status === 'reserved' && profile?.account_type?.startsWith('municipal') && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleCancelBooking}
+                      disabled={isCancellingBooking}
+                      className="flex items-center gap-2"
+                    >
+                      {isCancellingBooking ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Cancelling...
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-4 w-4" />
+                          Cancel Booking
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Booking Date</Label>
+                    <p className="text-base font-semibold">
+                      {format(new Date(application.booking_date), 'EEEE, MMMM d, yyyy')}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Time Slot</Label>
+                    <p className="text-base font-semibold">
+                      {application.booking_start_time}
+                      {application.booking_end_time && ` - ${application.booking_end_time}`}
+                    </p>
+                  </div>
+                  {application.booking_timezone && (
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">Timezone</Label>
+                      <p className="text-base">{application.booking_timezone}</p>
+                    </div>
+                  )}
+                  {application.cancelled_at && (
+                    <>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">Cancelled At</Label>
+                        <p className="text-base text-destructive">
+                          {formatDate(application.cancelled_at)}
+                        </p>
+                      </div>
+                      {application.cancellation_reason && (
+                        <div className="md:col-span-2">
+                          <Label className="text-sm font-medium text-muted-foreground">Cancellation Reason</Label>
+                          <p className="text-base">{application.cancellation_reason}</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Applicant Information */}
           <Card>

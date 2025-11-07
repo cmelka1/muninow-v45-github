@@ -34,7 +34,7 @@ export interface ServiceApplicationWithTile {
   country?: string;
   
   // Application Status & Workflow
-  status: 'draft' | 'submitted' | 'under_review' | 'information_requested' | 'resubmitted' | 'approved' | 'denied' | 'withdrawn' | 'expired' | 'issued';
+  status: 'draft' | 'submitted' | 'under_review' | 'information_requested' | 'resubmitted' | 'approved' | 'denied' | 'withdrawn' | 'expired' | 'issued' | 'reserved' | 'cancelled';
   assigned_reviewer_id?: string;
   review_notes?: string;
   
@@ -78,6 +78,15 @@ export interface ServiceApplicationWithTile {
   // Additional Information
   additional_information?: string;
   service_specific_data?: Record<string, any>;
+  
+  // Booking Information
+  booking_date?: string;
+  booking_start_time?: string;
+  booking_end_time?: string;
+  booking_timezone?: string;
+  cancelled_at?: string;
+  cancelled_by?: string;
+  cancellation_reason?: string;
   
   created_at: string;
   updated_at: string;
