@@ -618,7 +618,7 @@ async function autoIssueEntity(
     }
   }
 
-  // Auto-issue service applications based on requires_review flag
+  // Auto-issue service applications based on requires_review flag and has_time_slots
   if (entityType === 'service_application') {
     // First, get the application
     const { data: application, error: appError } = await supabase
@@ -632,10 +632,10 @@ async function autoIssueEntity(
       return;
     }
 
-    // Then, get the service tile to check requires_review
+    // Then, get the service tile to check requires_review and has_time_slots
     const { data: tile, error: tileError } = await supabase
       .from('municipal_service_tiles')
-      .select('requires_review')
+      .select('requires_review, has_time_slots')
       .eq('id', application.tile_id)
       .single();
 
@@ -645,31 +645,38 @@ async function autoIssueEntity(
     }
 
     const requiresReview = tile.requires_review;
-    let shouldIssue = false;
+    const hasTimeSlots = tile.has_time_slots;
+    let shouldProcess = false;
 
     if (requiresReview === false) {
-      // No review required: auto-issue from any status
-      shouldIssue = true;
-      console.log('[autoIssueEntity] Service application requires_review=false, auto-issuing from status:', application.status);
+      // No review required: auto-process from any status
+      shouldProcess = true;
+      console.log('[autoIssueEntity] Service application requires_review=false, auto-processing from status:', application.status);
     } else {
-      // Review required: only auto-issue if already approved
-      shouldIssue = application.status === 'approved';
-      console.log('[autoIssueEntity] Service application requires_review=true, status:', application.status, 'shouldIssue:', shouldIssue);
+      // Review required: only auto-process if already approved
+      shouldProcess = application.status === 'approved';
+      console.log('[autoIssueEntity] Service application requires_review=true, status:', application.status, 'shouldProcess:', shouldProcess);
     }
 
-    if (shouldIssue) {
+    if (shouldProcess) {
+      // Determine final status based on whether service has time slots
+      const finalStatus = hasTimeSlots ? 'reserved' : 'issued';
+      const updateData: any = { status: finalStatus };
+      
+      // Only set issued_at for non-bookable services
+      if (!hasTimeSlots) {
+        updateData.issued_at = new Date().toISOString();
+      }
+
       const { error: updateError } = await supabase
         .from('municipal_service_applications')
-        .update({ 
-          status: 'issued',
-          issued_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', entityId);
       
       if (updateError) {
         console.log('[autoIssueEntity] Failed to update application:', updateError);
       } else {
-        console.log('[autoIssueEntity] Service application auto-issued successfully');
+        console.log(`[autoIssueEntity] Service application auto-processed to status: ${finalStatus}`);
       }
     }
   }
