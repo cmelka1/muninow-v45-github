@@ -29,6 +29,7 @@ import { useServiceApplicationPaymentMethods } from '@/hooks/useServiceApplicati
 import { InlinePaymentFlow } from './payment/InlinePaymentFlow';
 import { useNavigate } from 'react-router-dom';
 import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
+import { TimeSlotBooking } from '@/components/TimeSlotBooking';
 
 interface ServiceApplicationModalProps {
   tile: MunicipalServiceTile | null;
@@ -86,8 +87,10 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedTime, setSelectedTime] = useState<string>('');
   
-  const totalSteps = 2;
+  const totalSteps = tile?.has_time_slots ? 3 : 2;
   const progress = (currentStep / totalSteps) * 100;
   
   const { profile } = useAuth();
@@ -128,6 +131,8 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       setIsSubmitting(false);
       setUploadedDocuments([]);
       setValidationErrors({});
+      setSelectedDate(undefined);
+      setSelectedTime('');
       
       // Initialize form data
       const initialData: Record<string, any> = {};
@@ -325,6 +330,16 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           return;
         }
       }
+    } else if (currentStep === 2 && tile?.has_time_slots) {
+      // Validate booking step
+      if (!selectedDate || !selectedTime) {
+        toast({
+          title: "Selection Required",
+          description: "Please select both a date and time slot.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     if (currentStep < totalSteps) {
@@ -354,8 +369,60 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     try {
       let applicationData;
       
+      // For services with time slots, use RPC function for atomic booking
+      if (tile.has_time_slots && selectedDate && selectedTime) {
+        // Calculate end time based on booking mode
+        let endTime = '';
+        if (tile.booking_mode === 'time_period' && tile.time_slot_config?.slot_duration_minutes) {
+          const [hours, minutes] = selectedTime.split(':').map(Number);
+          const startMinutes = hours * 60 + minutes;
+          const endMinutes = startMinutes + tile.time_slot_config.slot_duration_minutes;
+          const endHours = Math.floor(endMinutes / 60);
+          const endMins = endMinutes % 60;
+          endTime = `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}:00`;
+        }
+
+        const { data: rpcData, error: rpcError } = await supabase.rpc('create_booking_with_conflict_check', {
+          p_tile_id: tile.id,
+          p_user_id: profile?.id || '',
+          p_customer_id: tile.customer_id,
+          p_booking_date: selectedDate.toISOString().split('T')[0],
+          p_booking_start_time: selectedTime,
+          p_booking_end_time: endTime,
+          p_booking_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          p_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
+          p_form_data: {
+            ...formData,
+            applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || null,
+            applicant_email: formData.email || null,
+            applicant_phone: formData.phone || formData.phone_number || null,
+            business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || null,
+            street_address: formData.address || formData.street_address || formData.street || null,
+            apt_number: formData.apt || formData.apt_number || formData.apartment || null,
+            city: formData.city || null,
+            state: formData.state || null,
+            zip_code: formData.zip || formData.zip_code || formData.postal_code || null,
+          },
+        });
+
+        if (rpcError) {
+          if (rpcError.message?.includes('conflict')) {
+            toast({
+              title: 'Time Slot Unavailable',
+              description: 'This time slot was just booked by someone else. Please select a different time.',
+              variant: 'destructive',
+            });
+            setCurrentStep(2); // Go back to booking step
+            setIsSubmitting(false);
+            return;
+          }
+          throw rpcError;
+        }
+
+        applicationData = { id: rpcData };
+      }
       // For non-reviewable services with existing draft, update it
-      if (!tile.requires_review && draftApplicationId) {
+      else if (!tile.requires_review && draftApplicationId) {
         applicationData = await updateApplication.mutateAsync({
           id: draftApplicationId,
           status: 'submitted',
@@ -683,13 +750,16 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent ref={dialogContentRef} className="max-w-4xl max-h-[90vh] overflow-y-auto p-8">
         <KeyboardNavigationForm
-          onNext={currentStep === 1 ? handleNext : undefined}
-          onSubmit={currentStep === 2 && tile.requires_review ? handleSubmitApplication : undefined}
-          onPrevious={currentStep === 2 ? handlePrevious : undefined}
-          isNextDisabled={currentStep === 1 && Object.keys(validateStep1Fields()).length > 0}
+          onNext={currentStep < totalSteps ? handleNext : undefined}
+          onSubmit={currentStep === totalSteps && tile.requires_review ? handleSubmitApplication : undefined}
+          onPrevious={currentStep > 1 ? handlePrevious : undefined}
+          isNextDisabled={
+            (currentStep === 1 && Object.keys(validateStep1Fields()).length > 0) ||
+            (currentStep === 2 && tile.has_time_slots && (!selectedDate || !selectedTime))
+          }
           isSubmitDisabled={isSubmitting}
           currentStep={currentStep}
-          totalSteps={2}
+          totalSteps={totalSteps}
         >
         <DialogHeader className="space-y-4 pb-6">
           <div className="space-y-3">
@@ -703,7 +773,11 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Step {currentStep} of {totalSteps}</span>
                 <span className="text-muted-foreground">
-                  {currentStep === 1 ? 'Application Details' : 'Review & Submit'}
+                  {currentStep === 1 
+                    ? 'Application Details' 
+                    : tile.has_time_slots && currentStep === 2
+                    ? 'Select Time Slot'
+                    : 'Review & Submit'}
                 </span>
               </div>
             </div>
@@ -725,344 +799,38 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         {currentStep === 1 ? (
           <>
             {/* Guidance Text Box */}
-            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-3">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-                <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
-                  <p>
-                    Please review the attached PDF carefully and either (a) provide responses to any applicable questions in the Additional Information text area, or (b) upload a completed copy of the document in the Document Upload section.
-                  </p>
-                  <p>
-                    If your payment amount is variable, please calculate the amount due and enter both the total and the calculation reasoning as the final item in the Additional Information text area.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-8 pt-6">
-              {/* PDF Form Section */}
-              {tile.pdf_form_url && (
-                <div className="border rounded-lg p-6">
-                  <div className="flex items-start gap-3">
-                    <FileText className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-                    <div className="space-y-3 flex-1">
-                      <div>
-                        <h3 className="text-sm font-medium mb-1">Official Form Available</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Download the official PDF form directly to your device.
-                        </p>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-2">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="sm"
-                          onClick={async () => {
-                            try {
-                              if (!tile.pdf_form_url) {
-                                throw new Error('PDF form URL not available');
-                              }
-                              
-                              toast({
-                                title: "Downloading...",
-                                description: "Preparing your PDF download.",
-                              });
-                              
-                              // Fetch the PDF as a blob
-                              const response = await fetch(tile.pdf_form_url);
-                              if (!response.ok) {
-                                throw new Error('Failed to fetch PDF file');
-                              }
-                              
-                              const blob = await response.blob();
-                              
-                              // Create a download URL from the blob
-                              const downloadUrl = URL.createObjectURL(blob);
-                              
-                              // Create and trigger download
-                              const link = document.createElement('a');
-                              link.href = downloadUrl;
-                              link.download = `${tile.title.replace(/[^a-zA-Z0-9]/g, '_')}_form.pdf`;
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
-                              
-                              // Clean up the object URL
-                              URL.revokeObjectURL(downloadUrl);
-                              
-                              toast({
-                                title: "Download Complete",
-                                description: "The PDF form has been downloaded to your device.",
-                              });
-                            } catch (error) {
-                              console.error('Error downloading PDF:', error);
-                              toast({
-                                title: "Download Failed",
-                                description: "Unable to download PDF form. Please try again.",
-                                variant: "destructive",
-                              });
-                            }
-                          }}
-                          className="w-fit"
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Download PDF Form
-                        </Button>
-                        
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => {
-                            navigator.clipboard.writeText(tile.pdf_form_url!).then(() => {
-                              toast({
-                                title: "Link Copied",
-                                description: "PDF form link copied to clipboard.",
-                              });
-                            }).catch(() => {
-                              toast({
-                                title: "Copy Failed",
-                                description: "Unable to copy link. Please manually copy the URL below.",
-                                variant: "destructive",
-                              });
-                            });
-                          }}
-                          className="w-fit"
-                        >
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copy Link
-                        </Button>
-                      </div>
-                      
-                      {/* Fallback options when popup is blocked */}
-                      {pdfAccessBlocked && (
-                        <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                          <div className="flex items-start gap-2">
-                            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-                            <div className="space-y-2">
-                              <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
-                                Having trouble accessing the PDF?
-                              </p>
-                              <p className="text-xs text-amber-700 dark:text-amber-300">
-                                • Try allowing popups for this site in your browser settings
-                              </p>
-                              <p className="text-xs text-amber-700 dark:text-amber-300">
-                                • Or copy this direct link: 
-                                <code className="ml-1 px-1 bg-amber-100 dark:bg-amber-900 rounded text-xs break-all">
-                                  {tile.pdf_form_url}
-                                </code>
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Dynamic Form Fields */}
-              {tile.form_fields && tile.form_fields.length > 0 && (
-                <Card className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                  <CardHeader className="pb-4 flex flex-row items-center justify-between">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <div className="w-2 h-2 bg-primary rounded-full"></div>
-                      Application Information
-                    </CardTitle>
-                    <div className="flex items-center space-x-2">
-                      <Label htmlFor="auto-populate" className="text-sm text-muted-foreground">
-                        Use Profile Information
-                      </Label>
-                      <Switch
-                        id="auto-populate"
-                        checked={useAutoPopulate}
-                        onCheckedChange={(checked) => setUseAutoPopulate(checked)}
-                      />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-5">
-                      {tile.form_fields?.map((field) => (
-                        <div key={field.id} className="space-y-2">
-                          <Label htmlFor={field.id} className="flex items-center gap-1 text-sm">
-                            {field.label}
-                            {field.required && <span className="text-destructive">*</span>}
-                          </Label>
-                          {isAddressField(field.id) && (
-                            <p className="text-xs text-muted-foreground">
-                              Start typing to see address suggestions
-                            </p>
-                          )}
-                          {renderFormField(field)}
-                          {validationErrors[field.id] && (
-                            <p className="text-sm text-destructive">{validationErrors[field.id]}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Document Upload Section */}
-              <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <div className="w-2 h-2 bg-primary rounded-full"></div>
-                    Document Upload
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-sm font-medium text-foreground">
-                        Supporting Documents <span className="text-muted-foreground">(Optional)</span>
-                      </Label>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        Upload any documents that support your application
-                      </p>
-                      
-                      {/* File Upload Zone */}
-                      <div
-                        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                          dragActive 
-                            ? 'border-primary bg-primary/5' 
-                            : 'border-muted-foreground/25 hover:border-muted-foreground/50'
-                        }`}
-                        onDragEnter={handleDragEnter}
-                        onDragLeave={handleDragLeave}
-                        onDragOver={handleDragOver}
-                        onDrop={handleDrop}
-                      >
-                        <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                        <div className="text-sm">
-                          <label htmlFor="file-upload" className="text-primary hover:text-primary/80 cursor-pointer font-medium">
-                            Click to upload
-                          </label>
-                          <span className="text-muted-foreground"> or drag and drop</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          PDF, DOC, DOCX, JPG, PNG, GIF up to 10MB each
-                        </p>
-                        <input
-                          id="file-upload"
-                          type="file"
-                          multiple
-                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
-                          onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
-                          className="hidden"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Uploaded Files List */}
-                    {uploadedDocuments.length > 0 && (
-                      <div className="space-y-3">
-                        <Label className="text-sm font-medium text-foreground">
-                          Uploaded Files ({uploadedDocuments.length})
-                        </Label>
-                        {uploadedDocuments.map((doc) => (
-                          <div key={doc.id} className="flex items-center space-x-3 p-3 border rounded-lg">
-                            <div className="flex-shrink-0">
-                              {getFileIcon(doc.type)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">
-                                {doc.name}
-                              </p>
-                              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                                <span>{formatFileSize(doc.size)}</span>
-                                {doc.uploadStatus === 'uploading' && (
-                                  <span className="text-blue-600">Uploading...</span>
-                                )}
-                                {doc.uploadStatus === 'completed' && (
-                                  <span className="text-green-600">✓ Uploaded</span>
-                                )}
-                                {doc.uploadStatus === 'error' && (
-                                  <span className="text-red-600">Error: {doc.error}</span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemoveDocument(doc.id)}
-                                className="h-8 w-8 p-0"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* User-Defined Amount Section */}
-              {tile.allow_user_defined_amount && (
-                <div className="border rounded-lg p-6 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-medium">Service Fee</h3>
-                    <Badge variant="outline" className="text-sm px-2 py-1">
-                      {formData.amount_cents ? formatCurrency(formData.amount_cents) : 'Not set'}
-                    </Badge>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="amount" className="flex items-center gap-1 text-sm">
-                      Amount
-                      <span className="text-destructive">*</span>
-                    </Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
-                      <Input
-                        id="amount"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={formData.amount_cents ? (formData.amount_cents / 100).toString() : ''}
-                        onChange={(e) => handleInputChange('amount_cents', Math.round(parseFloat(e.target.value || '0') * 100))}
-                        placeholder="0.00"
-                        className="pl-8"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Review Notice */}
-              {tile.requires_review && (
-                <div className="border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20 rounded-lg p-4">
-                  <p className="text-sm text-blue-900 dark:text-blue-100">
-                    <span className="font-medium">Review Required:</span> This application will be reviewed by municipal staff before approval. 
-                    Payment will only be processed after approval.
-                  </p>
-                </div>
-              )}
-
-              {/* Navigation Buttons */}
-              <div className="flex justify-between pt-6">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={onClose}
-                  className="flex items-center gap-2"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="button"
-                  onClick={handleNext}
-                  className="flex items-center gap-2"
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+...
+          </>
+        ) : currentStep === 2 && tile.has_time_slots ? (
+          /* Time Slot Booking Step */
+          <>
+            <TimeSlotBooking
+              tile={tile}
+              selectedDate={selectedDate}
+              selectedTime={selectedTime}
+              onDateSelect={setSelectedDate}
+              onTimeSelect={setSelectedTime}
+            />
+            
+            <div className="flex justify-between pt-6">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handlePrevious}
+                className="flex items-center gap-2"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <Button 
+                type="button"
+                onClick={handleNext}
+                disabled={!selectedDate || !selectedTime}
+                className="flex items-center gap-2"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           </>
         ) : (
