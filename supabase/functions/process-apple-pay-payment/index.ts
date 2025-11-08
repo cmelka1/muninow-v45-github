@@ -50,19 +50,6 @@ Deno.serve(async (req) => {
 
     console.log('🍎 ✅ Authenticated user:', user.id);
 
-    // Validate Application Identity is configured
-    const applicationIdentity = Deno.env.get('FINIX_USER_APPLICATION_ID');
-    if (!applicationIdentity) {
-      console.error('🍎 ❌ FINIX_USER_APPLICATION_ID not configured');
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Apple Pay not configured for this platform'
-        }),
-        { status: 500, headers: corsHeaders }
-      );
-    }
-
     // Parse and validate request body
     const body = await req.json();
     console.log('🍎 📦 Request body:', {
@@ -103,6 +90,23 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Validate merchant identity format
+    if (!merchantData.finixIdentityId.startsWith('ID')) {
+      console.error('🍎 ❌ Invalid finix_identity_id format');
+      console.error('🍎   - Expected: ID... (Identity ID)');
+      console.error('🍎   - Got:', merchantData.finixIdentityId);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Merchant has invalid Finix Identity ID. Must start with "ID".'
+        }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    console.log('🍎 ✅ Merchant identity validation passed');
+    console.log('🍎   - Identity ID:', merchantData.finixIdentityId.substring(0, 6) + '...' + merchantData.finixIdentityId.slice(-6));
+
     // Parse Apple Pay token
     let applePayToken;
     try {
@@ -131,7 +135,7 @@ Deno.serve(async (req) => {
     const instrumentResult = await finixAPI.createPaymentInstrument({
       type: 'APPLE_PAY',
       identity: userFinixIdentity,
-      merchantIdentity: applicationIdentity,
+      merchantIdentity: merchantData.finixIdentityId,
       applePayToken: applePayToken.token?.paymentData || applePayToken.paymentData
     });
 

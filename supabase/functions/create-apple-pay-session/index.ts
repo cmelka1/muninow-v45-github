@@ -106,12 +106,26 @@ Deno.serve(async (req) => {
     console.log('🍎   - Finix Identity ID (ID):', finixMerchantIdentity);
     console.log('🍎   - Domain (normalized):', normalizedDomain);
 
+    // Validate identity format
+    if (!finixMerchantIdentity.startsWith('ID')) {
+      console.error('🍎 ❌ Invalid finix_identity_id format');
+      console.error('🍎   - Expected: ID... (Identity ID)');
+      console.error('🍎   - Got:', finixMerchantIdentity);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Merchant has invalid Finix Identity ID. Must start with "ID".'
+        }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    console.log('🍎 ✅ Identity validation passed');
+
     // Get Finix credentials
     const finixAppId = Deno.env.get('FINIX_APPLICATION_ID');
     const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
     const finixEnv = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
-    
-    const applicationIdentity = Deno.env.get('FINIX_USER_APPLICATION_ID');
     
     if (!finixAppId || !finixApiSecret) {
       console.error('[create-apple-pay-session] Missing Finix credentials');
@@ -124,19 +138,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!applicationIdentity) {
-      console.error('🍎 ❌ FINIX_USER_APPLICATION_ID not configured');
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Apple Pay not configured for this platform'
-        }),
-        { status: 500, headers: corsHeaders }
-      );
-    }
-
     const finixBaseUrl = finixEnv === 'live' 
-      ? 'https://finix.live'
+      ? 'https://finix.payments-api.com'
       : 'https://finix.sandbox-payments-api.com';
 
     console.log('🍎 🌐 Finix Environment:', finixEnv);
@@ -146,13 +149,15 @@ Deno.serve(async (req) => {
     const finixRequestBody = {
       display_name: display_name || 'Muni Now',
       domain: normalizedDomain,
-      merchant_identity: applicationIdentity,
+      merchant_identity: finixMerchantIdentity,
       validation_url: validation_url
     };
     
     console.log('🍎 📤 Calling Finix API...');
     console.log('🍎   - Endpoint:', `${finixBaseUrl}/apple_pay_sessions`);
-    console.log('🍎   - Request Body:', JSON.stringify(finixRequestBody, null, 2));
+    console.log('🍎   - merchant_identity:', finixMerchantIdentity.substring(0, 6) + '...' + finixMerchantIdentity.slice(-6));
+    console.log('🍎   - domain:', normalizedDomain);
+    console.log('🍎   - Full Request Body:', JSON.stringify(finixRequestBody, null, 2));
     
     const finixCallStart = Date.now();
     const finixResponse = await fetch(`${finixBaseUrl}/apple_pay_sessions`, {

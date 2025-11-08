@@ -11,7 +11,6 @@ export function normalizeDomain(domain: string): string {
     .trim()
     .toLowerCase()
     .replace(/^https?:\/\//, '')
-    .replace(/^www\./, '')
     .replace(/\/+$/, '');
 }
 
