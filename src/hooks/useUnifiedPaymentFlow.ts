@@ -895,12 +895,6 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           console.log('🍎 [useUnifiedPaymentFlow]   - Postal Code:', billingContact?.postalCode || 'Not provided');
           console.log('🍎 [useUnifiedPaymentFlow]   - Country:', billingContact?.countryCode || 'Not provided');
           
-          // CRITICAL: Complete payment immediately per Apple requirements (must be within 30 seconds)
-          console.log('🍎 [useUnifiedPaymentFlow] Completing Apple Pay session with STATUS_SUCCESS...');
-          session.completePayment(window.ApplePaySession.STATUS_SUCCESS);
-          console.log('🍎 [useUnifiedPaymentFlow] ✅ Apple Pay session completed');
-          clearTimeout(timeoutId);
-          
           // Build billing address
           const billingAddress = billingContact ? {
             name: `${billingContact.givenName || ''} ${billingContact.familyName || ''}`.trim(),
@@ -1034,6 +1028,12 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
               await params.onSuccess(data.finix_transfer_id);
             }
 
+            // Complete Apple Pay session with success
+            console.log('🍎 [useUnifiedPaymentFlow] Completing Apple Pay session with STATUS_SUCCESS...');
+            session.completePayment(window.ApplePaySession.STATUS_SUCCESS);
+            console.log('🍎 [useUnifiedPaymentFlow] ✅ Apple Pay session completed successfully');
+            clearTimeout(timeoutId);
+
             setIsProcessingPayment(false);
             
             resolve({
@@ -1070,6 +1070,12 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
               params.onError(paymentError);
             }
 
+            // Complete Apple Pay session with failure
+            console.log('🍎 [useUnifiedPaymentFlow] Completing Apple Pay session with STATUS_FAILURE...');
+            session.completePayment(window.ApplePaySession.STATUS_FAILURE);
+            console.log('🍎 [useUnifiedPaymentFlow] ❌ Apple Pay session completed with failure');
+            clearTimeout(timeoutId);
+
             setIsProcessingPayment(false);
             
             resolve({
@@ -1092,6 +1098,12 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
             description: errorMessage,
             variant: "destructive",
           });
+
+          // Complete Apple Pay session with failure
+          console.log('🍎 [useUnifiedPaymentFlow] Completing Apple Pay session with STATUS_FAILURE (exception)...');
+          session.completePayment(window.ApplePaySession.STATUS_FAILURE);
+          console.log('🍎 [useUnifiedPaymentFlow] ❌ Apple Pay session completed with failure (exception)');
+          clearTimeout(timeoutId);
 
           setIsProcessingPayment(false);
           
