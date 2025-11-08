@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.5';
 import { corsHeaders } from '../shared/cors.ts';
+import { normalizeDomain, isValidDomain } from '../shared/domainHelpers.ts';
 
 Deno.serve(async (req) => {
   const requestStartTime = Date.now();
@@ -59,6 +60,23 @@ Deno.serve(async (req) => {
 
     console.log('🍎 ✅ Request validation passed');
 
+    // Normalize domain
+    const normalizedDomain = normalizeDomain(domain_name);
+    console.log('🍎 📍 Domain normalization:');
+    console.log('🍎   - Original:', domain_name);
+    console.log('🍎   - Normalized:', normalizedDomain);
+
+    if (!isValidDomain(normalizedDomain)) {
+      console.error('🍎 ❌ Invalid domain format:', normalizedDomain);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Invalid domain format: ${normalizedDomain}`
+        }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
     // Fetch merchant's Finix identity from database
     console.log('🍎 📊 Querying merchant data from database...');
     const { data: merchantData, error: merchantError } = await supabase
@@ -86,7 +104,7 @@ Deno.serve(async (req) => {
     console.log('🍎   - Merchant Name:', merchantData.merchant_name);
     console.log('🍎   - Finix Merchant ID (MU):', merchantData.finix_merchant_id);
     console.log('🍎   - Finix Identity ID (ID):', finixMerchantIdentity);
-    console.log('🍎   - Domain:', domain_name);
+    console.log('🍎   - Domain (normalized):', normalizedDomain);
 
     // Get Finix credentials
     const finixAppId = Deno.env.get('FINIX_APPLICATION_ID');
@@ -127,7 +145,7 @@ Deno.serve(async (req) => {
     // Call Finix API to create Apple Pay session
     const finixRequestBody = {
       display_name: display_name || 'Muni Now',
-      domain: domain_name,
+      domain: normalizedDomain,
       merchant_identity: applicationIdentity,
       validation_url: validation_url
     };
@@ -141,7 +159,8 @@ Deno.serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Basic ' + btoa(`${finixAppId}:${finixApiSecret}`)
+        'Authorization': 'Basic ' + btoa(`${finixAppId}:${finixApiSecret}`),
+        'Finix-Version': '2022-02-01'
       },
       body: JSON.stringify(finixRequestBody)
     });
@@ -155,17 +174,27 @@ Deno.serve(async (req) => {
     console.log('🍎   - Response Data:', JSON.stringify(finixData, null, 2));
 
     if (!finixResponse.ok) {
+      // Check if error is domain-related
+      const isDomainError = finixData.message?.toLowerCase().includes('domain') || 
+                             finixData.message?.toLowerCase().includes('merchant');
+
+      const errorMessage = isDomainError
+        ? `Domain "${normalizedDomain}" is not registered in Finix. Please verify the domain is added and verified in your Finix Dashboard under Apple Pay settings.`
+        : finixData.message || 'Failed to create Apple Pay session';
+
       console.error('🍎 ❌ FINIX API ERROR');
       console.error('🍎   - Status:', finixResponse.status);
-      console.error('🍎   - Error Message:', finixData.message);
+      console.error('🍎   - Error Message:', errorMessage);
+      console.error('🍎   - Domain Used:', normalizedDomain);
+      console.error('🍎   - Domain Registered?:', 'Check Finix Dashboard');
       console.error('🍎   - Full Response:', JSON.stringify(finixData, null, 2));
-      console.error('🍎   - Domain:', domain_name);
-      console.error('🍎   - Merchant Identity:', finixMerchantIdentity);
-      console.error('🍎   - Validation URL:', validation_url);
+      
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: finixData.message || 'Failed to create Apple Pay session',
+          error: errorMessage,
+          domain: normalizedDomain,
+          hint: isDomainError ? 'Verify this domain is registered and verified in Finix Dashboard' : undefined,
           details: finixData
         }),
         { status: finixResponse.status, headers: corsHeaders }
@@ -178,7 +207,7 @@ Deno.serve(async (req) => {
     console.log('🍎 ✅ ========================================');
     console.log('🍎 ✅ Total Duration:', `${totalDuration}ms`);
     console.log('🍎 ✅ Merchant:', merchantData.merchant_name);
-    console.log('🍎 ✅ Domain:', domain_name);
+    console.log('🍎 ✅ Domain (normalized):', normalizedDomain);
 
     return new Response(
       JSON.stringify({

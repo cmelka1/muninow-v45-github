@@ -127,8 +127,10 @@ export const useApplePayFlow = (params: ApplePayFlowParams) => {
           console.log('🍎 [useApplePayFlow] Validation URL:', event.validationURL);
 
           try {
-            const domainName = import.meta.env.VITE_APPLE_PAY_DOMAIN || window.location.hostname;
-            console.log('🍎 [useApplePayFlow] Domain:', domainName);
+            // Always use actual hostname, ignore env override
+            // The env var VITE_APPLE_PAY_DOMAIN can cause issues if misconfigured
+            const domainName = window.location.hostname;
+            console.log('🍎 [useApplePayFlow] Using domain:', domainName);
             console.log('🍎 [useApplePayFlow] Merchant ID:', params.merchantId);
 
             const { data, error } = await supabase.functions.invoke('create-apple-pay-session', {
