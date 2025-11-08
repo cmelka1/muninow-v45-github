@@ -7,6 +7,8 @@ import { UnifiedPaymentSummary } from './UnifiedPaymentSummary';
 import PaymentMethodSelector from '@/components/PaymentMethodSelector';
 import { useUnifiedPaymentFlow, EntityType } from '@/hooks/useUnifiedPaymentFlow';
 import { PaymentResponse } from '@/types/payment';
+import { useAuth } from '@/contexts/AuthContext';
+import ApplePayButton from '@/components/ApplePayButton';
 
 interface UnifiedPaymentDialogProps {
   open: boolean;
@@ -34,6 +36,7 @@ export const UnifiedPaymentDialog: React.FC<UnifiedPaymentDialogProps> = ({
   onPaymentError,
 }) => {
   const [currentStep, setCurrentStep] = useState<'payment' | 'processing' | 'success'>('payment');
+  const { user } = useAuth();
 
   const {
     selectedPaymentMethod,
@@ -44,6 +47,7 @@ export const UnifiedPaymentDialog: React.FC<UnifiedPaymentDialogProps> = ({
     paymentInstruments,
     paymentMethodsLoading,
     googlePayMerchantId,
+    finixSessionKey,
     handlePayment,
     handleGooglePayment,
   } = useUnifiedPaymentFlow({
@@ -154,14 +158,33 @@ export const UnifiedPaymentDialog: React.FC<UnifiedPaymentDialogProps> = ({
               >
                 Google Pay
               </Button>
-            {/* Apple Pay temporarily disabled - requires authentication */}
-            <Button
-              variant="outline"
-              disabled
-              className="flex-1"
-            >
-              Apple Pay (Login Required)
-            </Button>
+              <div className="flex-1">
+                {user ? (
+                  <ApplePayButton
+                    entityType={entityType}
+                    entityId={entityId}
+                    customerId={customerId}
+                    merchantId={merchantId}
+                    totalAmountCents={totalWithFee}
+                    finixSessionKey={finixSessionKey}
+                    isDisabled={isProcessingPayment}
+                    onSuccess={(response) => {
+                      setCurrentStep('success');
+                      onPaymentSuccess?.(response);
+                      setTimeout(() => {
+                        onOpenChange(false);
+                        setCurrentStep('payment');
+                      }, 2000);
+                    }}
+                    onError={onPaymentError}
+                    onAvailabilityChange={(available) => console.log('Apple Pay available:', available)}
+                  />
+                ) : (
+                  <Button variant="outline" disabled className="w-full">
+                    Login required for Apple Pay
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 

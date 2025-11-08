@@ -9,6 +9,7 @@ import ApplePayButton from '@/components/ApplePayButton';
 import { useUnifiedPaymentFlow, EntityType } from '@/hooks/useUnifiedPaymentFlow';
 import { PaymentResponse } from '@/types/payment';
 import { formatCurrency } from '@/lib/formatters';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface InlinePaymentFlowProps {
   entityType: EntityType;
@@ -54,6 +55,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
   const [showSuccess, setShowSuccess] = useState(false);
   const [isGooglePayAvailable, setIsGooglePayAvailable] = useState(false);
   const [isApplePayAvailable, setIsApplePayAvailable] = useState(false);
+  const { user } = useAuth();
 
   const {
     selectedPaymentMethod,
@@ -64,6 +66,7 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
     paymentInstruments,
     paymentMethodsLoading,
     googlePayMerchantId,
+    finixSessionKey,
     handlePayment,
     handleGooglePayment,
   } = useUnifiedPaymentFlow({
@@ -234,9 +237,31 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
           </div>
 
           <div className="flex justify-center">
-            <div className="w-full h-[44px] flex items-center justify-center bg-muted rounded border border-border">
-              <span className="text-xs text-muted-foreground">Apple Pay requires authentication</span>
-            </div>
+            {user ? (
+              <ApplePayButton
+                entityType={entityType}
+                entityId={entityId}
+                customerId={customerId}
+                merchantId={merchantId}
+                totalAmountCents={totalWithFee}
+                finixSessionKey={finixSessionKey}
+                isDisabled={isProcessingPayment}
+                onSuccess={(response) => {
+                  setShowSuccess(true);
+                  onPaymentSuccess?.(response);
+                  setTimeout(() => {
+                    setShowSuccess(false);
+                    setIsExpanded(false);
+                  }, 3000);
+                }}
+                onError={onPaymentError}
+                onAvailabilityChange={setIsApplePayAvailable}
+              />
+            ) : (
+              <div className="w-full h-[44px] flex items-center justify-center bg-muted rounded border border-border">
+                <span className="text-xs text-muted-foreground">Login required for Apple Pay</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -694,6 +694,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
     paymentInstruments,
     paymentMethodsLoading,
     googlePayMerchantId,
+    finixSessionKey,
     
     // Actions
     handlePayment,
