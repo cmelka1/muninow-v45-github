@@ -960,6 +960,19 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           data = invokeResult.data;
           error = invokeResult.error;
           
+          // Enhanced error logging for diagnostics
+          if (error) {
+            console.error('🍎 [useUnifiedPaymentFlow] ❌ Edge function invocation failed:', {
+              message: error.message,
+              status: (error as any).status,
+              details: error,
+              functionName: 'process-unified-apple-pay',
+              duration: edgeFunctionDuration
+            });
+          } else {
+            console.log('🍎 [useUnifiedPaymentFlow] ✅ Edge function invoked successfully');
+          }
+          
           // Handle 401 by refreshing token and retrying once (ONLY for authenticated users)
           if (error && (error.message?.includes('401') || error.message?.includes('Unauthorized'))) {
             // Only retry with token refresh for authenticated users

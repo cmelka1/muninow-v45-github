@@ -1,1 +1,4 @@
 project_id = "qcuiuubbaozcmejzvxje"
+
+[functions.process-unified-apple-pay]
+verify_jwt = false
