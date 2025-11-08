@@ -148,7 +148,7 @@ export const UnifiedPaymentDialog: React.FC<UnifiedPaymentDialogProps> = ({
               isLoading={paymentMethodsLoading}
             />
 
-            {/* Note: Google Pay and Apple Pay buttons are temporarily disabled */}
+            {/* Express checkout options */}
             <div className="flex gap-3">
               <Button
                 variant="outline"
