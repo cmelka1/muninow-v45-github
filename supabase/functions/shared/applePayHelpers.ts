@@ -6,7 +6,6 @@
 interface ApplePayRequestBody {
   entity_type: string;
   entity_id: string;
-  customer_id: string;
   merchant_id: string;
   base_amount_cents: number;
   apple_pay_token: string;
@@ -17,7 +16,6 @@ export function validateApplePayRequest(body: any): body is ApplePayRequestBody 
   const required = [
     'entity_type',
     'entity_id',
-    'customer_id',
     'merchant_id',
     'base_amount_cents',
     'apple_pay_token'

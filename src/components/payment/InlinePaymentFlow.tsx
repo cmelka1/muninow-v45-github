@@ -72,7 +72,6 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
   } = useUnifiedPaymentFlow({
     entityType,
     entityId,
-    customerId,
     merchantId,
     baseAmountCents,
     onSuccess: (response) => {
@@ -241,7 +240,6 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
               <ApplePayButton
                 entityType={entityType}
                 entityId={entityId}
-                customerId={customerId}
                 merchantId={merchantId}
                 totalAmountCents={totalWithFee}
                 finixSessionKey={finixSessionKey}

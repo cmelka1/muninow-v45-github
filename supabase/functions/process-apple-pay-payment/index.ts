@@ -65,7 +65,8 @@ Deno.serve(async (req) => {
       entity_id: body.entity_id,
       merchant_id: body.merchant_id,
       base_amount_cents: body.base_amount_cents,
-      has_apple_pay_token: !!body.apple_pay_token
+      has_apple_pay_token: !!body.apple_pay_token,
+      authenticated_user_id: user.id
     });
 
     if (!validateApplePayRequest(body)) {
@@ -162,10 +163,11 @@ Deno.serve(async (req) => {
 
     // Process payment using unified processor
     console.log('🍎 💰 Processing payment...');
+    console.log('🍎   - Using authenticated user ID:', user.id);
+    console.log('🍎   - User Finix identity:', userFinixIdentity);
     const paymentResult = await processUnifiedPayment({
       entityType: body.entity_type as 'permit' | 'business_license' | 'service_application' | 'tax_submission',
       entityId: body.entity_id,
-      customerId: body.customer_id,
       merchantId: body.merchant_id,
       baseAmountCents: body.base_amount_cents,
       paymentInstrumentId: instrumentResult.id,

@@ -7,7 +7,6 @@ import type { EntityType } from '@/hooks/useUnifiedPaymentFlow';
 interface PaymentButtonsContainerProps {
   entityType: EntityType;
   entityId: string;
-  customerId: string;
   merchantId: string;
   totalAmountCents: number;
   finixSessionKey?: string;
@@ -20,7 +19,6 @@ interface PaymentButtonsContainerProps {
 const PaymentButtonsContainer: React.FC<PaymentButtonsContainerProps> = ({
   entityType,
   entityId,
-  customerId,
   merchantId,
   totalAmountCents,
   finixSessionKey,
@@ -48,7 +46,6 @@ const PaymentButtonsContainer: React.FC<PaymentButtonsContainerProps> = ({
         <ApplePayButton
           entityType={entityType}
           entityId={entityId}
-          customerId={customerId}
           merchantId={merchantId}
           totalAmountCents={totalAmountCents}
           finixSessionKey={finixSessionKey}

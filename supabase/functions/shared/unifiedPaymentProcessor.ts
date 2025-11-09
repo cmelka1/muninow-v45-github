@@ -5,7 +5,6 @@ import { generateDeterministicUUID, generateIdempotencyMetadata } from './paymen
 export interface UnifiedPaymentParams {
   entityType: 'permit' | 'business_license' | 'service_application' | 'tax_submission';
   entityId: string;
-  customerId: string;
   merchantId: string;
   baseAmountCents: number;
   paymentInstrumentId: string;
@@ -254,8 +253,8 @@ function validatePaymentParams(params: UnifiedPaymentParams): { valid: boolean; 
     return { valid: false, error: 'Entity type and ID are required' };
   }
 
-  if (!params.customerId || !params.merchantId) {
-    return { valid: false, error: 'Customer ID and Merchant ID are required' };
+  if (!params.merchantId) {
+    return { valid: false, error: 'Merchant ID is required' };
   }
 
   if (!params.baseAmountCents || params.baseAmountCents <= 0) {
@@ -372,7 +371,6 @@ async function createPaymentTransaction(
 
   const { data, error } = await supabase.rpc('create_unified_payment_transaction', {
     p_user_id: params.userId,
-    p_customer_id: params.customerId,
     p_merchant_id: params.merchantId,
     p_entity_type: params.entityType,
     p_entity_id: params.entityId,

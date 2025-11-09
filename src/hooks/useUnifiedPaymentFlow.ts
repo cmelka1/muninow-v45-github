@@ -13,7 +13,6 @@ export type EntityType = 'permit' | 'business_license' | 'tax_submission' | 'ser
 interface UnifiedPaymentFlowParams {
   entityType: EntityType;
   entityId: string;
-  customerId: string;
   merchantId: string;
   baseAmountCents: number;
   onSuccess?: (response: PaymentResponse) => void;
@@ -265,7 +264,6 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       const requestBody = {
         entity_type: params.entityType,
         entity_id: effectiveEntityId,
-        customer_id: params.customerId,
         merchant_id: params.merchantId,
         base_amount_cents: params.baseAmountCents,
         payment_instrument_id: ['google-pay', 'apple-pay'].includes(selectedPaymentMethod) 
@@ -575,7 +573,6 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         body: {
           entity_type: params.entityType,
           entity_id: params.entityId,
-          customer_id: params.customerId,
           merchant_id: params.merchantId,
           base_amount_cents: params.baseAmountCents,
           google_pay_token: paymentToken,

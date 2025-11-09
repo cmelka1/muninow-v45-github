@@ -16,7 +16,6 @@ interface UnifiedPaymentDialogProps {
   entityType: EntityType;
   entityId: string;
   entityName: string;
-  customerId: string;
   merchantId: string;
   baseAmountCents: number;
   onPaymentSuccess?: (response: PaymentResponse) => void;
@@ -29,7 +28,6 @@ export const UnifiedPaymentDialog: React.FC<UnifiedPaymentDialogProps> = ({
   entityType,
   entityId,
   entityName,
-  customerId,
   merchantId,
   baseAmountCents,
   onPaymentSuccess,
@@ -53,7 +51,6 @@ export const UnifiedPaymentDialog: React.FC<UnifiedPaymentDialogProps> = ({
   } = useUnifiedPaymentFlow({
     entityType,
     entityId,
-    customerId,
     merchantId,
     baseAmountCents,
     onSuccess: (response) => {
@@ -163,7 +160,6 @@ export const UnifiedPaymentDialog: React.FC<UnifiedPaymentDialogProps> = ({
                   <ApplePayButton
                     entityType={entityType}
                     entityId={entityId}
-                    customerId={customerId}
                     merchantId={merchantId}
                     totalAmountCents={totalWithFee}
                     finixSessionKey={finixSessionKey}

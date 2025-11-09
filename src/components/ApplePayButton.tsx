@@ -21,7 +21,6 @@ declare global {
 interface ApplePayButtonProps {
   entityType: EntityType;
   entityId: string;
-  customerId: string;
   merchantId: string;
   totalAmountCents: number;
   finixSessionKey?: string;
@@ -34,7 +33,6 @@ interface ApplePayButtonProps {
 const ApplePayButton: React.FC<ApplePayButtonProps> = ({
   entityType,
   entityId,
-  customerId,
   merchantId,
   totalAmountCents,
   finixSessionKey,
@@ -79,7 +77,6 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
   const { isAvailable, isCheckingAvailability, isProcessing, handleApplePayPayment } = useApplePayFlow({
     entityType,
     entityId,
-    customerId,
     merchantId,
     totalAmountCents,
     finixSessionKey,

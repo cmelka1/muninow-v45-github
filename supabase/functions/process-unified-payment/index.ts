@@ -36,7 +36,6 @@ Deno.serve(async (req) => {
     const {
       entity_type,
       entity_id,
-      customer_id,
       merchant_id,
       base_amount_cents,
       payment_instrument_id,
@@ -52,7 +51,7 @@ Deno.serve(async (req) => {
     } = body;
 
     // Validate required fields
-    if (!entity_type || !entity_id || !customer_id || !merchant_id || !base_amount_cents || !payment_instrument_id || !payment_type) {
+    if (!entity_type || !entity_id || !merchant_id || !base_amount_cents || !payment_instrument_id || !payment_type) {
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -73,7 +72,6 @@ Deno.serve(async (req) => {
     const result = await processUnifiedPayment({
       entityType: entity_type,
       entityId: entity_id,
-      customerId: customer_id,
       merchantId: merchant_id,
       baseAmountCents: base_amount_cents,
       paymentInstrumentId: payment_instrument_id,

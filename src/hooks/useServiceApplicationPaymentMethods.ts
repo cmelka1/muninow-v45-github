@@ -27,7 +27,6 @@ export const useServiceApplicationPaymentMethods = (
   const unifiedPayment = useUnifiedPaymentFlow({
     entityType: 'service_application',
     entityId: applicationId,
-    customerId: applicationData?.customer_id || '',
     merchantId: applicationData?.merchant_id || '',
     baseAmountCents: applicationData?.base_amount_cents || 0,
     onSuccess: async (response) => {

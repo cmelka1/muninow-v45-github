@@ -8,7 +8,6 @@ import type { EntityType } from './useUnifiedPaymentFlow';
 interface ApplePayFlowParams {
   entityType: EntityType;
   entityId: string;
-  customerId: string;
   merchantId: string;
   totalAmountCents: number;
   finixSessionKey?: string;
@@ -242,7 +241,6 @@ export const useApplePayFlow = (params: ApplePayFlowParams) => {
                 body: {
                   entity_type: params.entityType,
                   entity_id: params.entityId,
-                  customer_id: params.customerId,
                   merchant_id: params.merchantId,
                   base_amount_cents: params.totalAmountCents,
                   apple_pay_token: JSON.stringify(event.payment.token),
@@ -266,7 +264,6 @@ export const useApplePayFlow = (params: ApplePayFlowParams) => {
                     body: {
                       entity_type: params.entityType,
                       entity_id: params.entityId,
-                      customer_id: params.customerId,
                       merchant_id: params.merchantId,
                       base_amount_cents: params.totalAmountCents,
                       apple_pay_token: JSON.stringify(event.payment.token),

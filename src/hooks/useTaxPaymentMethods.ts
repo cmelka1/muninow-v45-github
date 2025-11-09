@@ -30,7 +30,6 @@ export const useTaxPaymentMethods = (taxData: {
   const unifiedPayment = useUnifiedPaymentFlow({
     entityType: 'tax_submission',
     entityId: taxSubmissionId || 'temp-id', // Will be updated when tax submission is created
-    customerId: taxData.municipality?.customer_id || '',
     merchantId: taxData.municipality?.merchant_id || '',
     baseAmountCents: taxData.amount,
     onSuccess: (response) => {
