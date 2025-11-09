@@ -137,6 +137,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
+  // Add session refresh on window focus to prevent expiration during payments
+  useEffect(() => {
+    const handleFocus = async () => {
+      if (!user || !session) return;
+      
+      const expiresAt = session.expires_at || 0;
+      const currentTime = Math.floor(Date.now() / 1000);
+      const timeUntilExpiry = expiresAt - currentTime;
+      
+      // Refresh if session expires in less than 10 minutes
+      if (timeUntilExpiry < 600) {
+        console.log('Session expiring soon, refreshing on focus...');
+        const { data } = await supabase.auth.refreshSession();
+        if (data.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+          console.log('Session refreshed on focus');
+        }
+      }
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user, session]);
+
   const signIn = async (email: string, password: string) => {
     setError(null);
     const { error } = await supabase.auth.signInWithPassword({

@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useEffect } from 'react';
+import React, { useRef, useCallback, useEffect, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useApplePayFlow } from '@/hooks/useApplePayFlow';
 import type { EntityType } from '@/hooks/useUnifiedPaymentFlow';
@@ -42,8 +42,19 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
   onError,
   onAvailabilityChange
 }) => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const btnRef = useRef<HTMLElement | null>(null);
+
+  // Check if session is valid and not expiring soon
+  const isSessionValid = useMemo(() => {
+    if (!session) return false;
+    
+    const expiresAt = session.expires_at || 0;
+    const currentTime = Math.floor(Date.now() / 1000);
+    const timeUntilExpiry = expiresAt - currentTime;
+    
+    return timeUntilExpiry > 60; // At least 1 minute remaining
+  }, [session]);
 
   const { isAvailable, isCheckingAvailability, isProcessing, handleApplePayPayment } = useApplePayFlow({
     entityType,
@@ -59,9 +70,9 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
   // Notify parent of availability changes
   useEffect(() => {
     if (!isCheckingAvailability) {
-      onAvailabilityChange?.(isAvailable && !!user);
+      onAvailabilityChange?.(isAvailable && !!user && isSessionValid);
     }
-  }, [isAvailable, isCheckingAvailability, user, onAvailabilityChange]);
+  }, [isAvailable, isCheckingAvailability, user, isSessionValid, onAvailabilityChange]);
 
   const safeHandleClick = useCallback(async () => {
     console.log('🍎 [ApplePayButton] Button clicked');
@@ -107,8 +118,8 @@ const ApplePayButton: React.FC<ApplePayButtonProps> = ({
     );
   }
 
-  // Don't render if not authenticated or not available
-  if (!user || !isAvailable) {
+  // Don't render if not authenticated, not available, or session invalid
+  if (!user || !isAvailable || !isSessionValid) {
     return null;
   }
 

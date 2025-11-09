@@ -41,10 +41,18 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      console.error('🍎 ❌ Invalid auth token:', authError);
+      console.error('🍎 ❌ User not authenticated');
       return new Response(
-        JSON.stringify({ success: false, error: 'Invalid authentication' }),
-        { status: 401, headers: corsHeaders }
+        JSON.stringify({
+          success: false,
+          error: 'AUTHENTICATION_REQUIRED',
+          message: 'Your session has expired. Please refresh the page and sign in again.',
+          retryable: false
+        }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
       );
     }
 

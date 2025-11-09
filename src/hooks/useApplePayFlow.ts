@@ -63,6 +63,51 @@ export const useApplePayFlow = (params: ApplePayFlowParams) => {
     console.log('🍎 [useApplePayFlow] Entity:', params.entityType, params.entityId);
     console.log('🍎 [useApplePayFlow] Amount:', params.totalAmountCents);
 
+    // PRE-FLIGHT SESSION VALIDATION
+    console.log('🍎 [useApplePayFlow] Performing pre-flight session check...');
+
+    // Get current session
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    let validSession = sessionData.session;
+
+    // If no session, try to refresh
+    if (!validSession || sessionError) {
+      console.log('🍎 [useApplePayFlow] No valid session, attempting refresh...');
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      
+      if (refreshError || !refreshData.session) {
+        const error = 'Your session has expired. Please refresh the page and try again.';
+        console.error('🍎 [useApplePayFlow] ❌ Session refresh failed');
+        toast({
+          title: "Session Expired",
+          description: error,
+          variant: "destructive",
+        });
+        throw new Error(error);
+      }
+      
+      validSession = refreshData.session;
+      console.log('🍎 [useApplePayFlow] ✅ Session refreshed successfully');
+    }
+
+    // Check session expiry (5 minute buffer)
+    const expiresAt = validSession.expires_at || 0;
+    const currentTime = Math.floor(Date.now() / 1000);
+    const timeUntilExpiry = expiresAt - currentTime;
+
+    if (timeUntilExpiry < 300) { // Less than 5 minutes
+      console.log('🍎 [useApplePayFlow] Session expiring soon, refreshing...');
+      const { data: refreshData } = await supabase.auth.refreshSession();
+      if (refreshData.session) {
+        validSession = refreshData.session;
+        console.log('🍎 [useApplePayFlow] ✅ Session proactively refreshed');
+      }
+    }
+
+    // Store validated token for later use
+    const validatedAuthToken = validSession.access_token;
+    console.log('🍎 [useApplePayFlow] ✅ Pre-flight validation complete');
+
     if (!user) {
       const error = 'Please log in to use Apple Pay';
       console.error('🍎 [useApplePayFlow] ❌ Not authenticated');
@@ -176,29 +221,79 @@ export const useApplePayFlow = (params: ApplePayFlowParams) => {
           console.log('🍎 [useApplePayFlow] Token received');
 
           try {
-            // Get auth token
-            const { data: authData } = await supabase.auth.getSession();
-            const authToken = authData.session?.access_token;
+            // Use pre-validated token
+            let authToken = validatedAuthToken;
+
+            // If payment took too long, refresh token with retry logic
+            if (!authToken) {
+              console.log('🍎 [useApplePayFlow] Token missing, attempting refresh...');
+              const { data: refreshData } = await supabase.auth.refreshSession();
+              authToken = refreshData.session?.access_token;
+            }
 
             if (!authToken) {
-              throw new Error('Authentication expired. Please refresh the page.');
+              throw new Error('Authentication expired. Please refresh the page and try again.');
             }
 
             console.log('🍎 [useApplePayFlow] Calling process-apple-pay-payment...');
-            const { data, error } = await supabase.functions.invoke('process-apple-pay-payment', {
-              body: {
-                entity_type: params.entityType,
-                entity_id: params.entityId,
-                customer_id: params.customerId,
-                merchant_id: params.merchantId,
-                base_amount_cents: params.totalAmountCents,
-                apple_pay_token: JSON.stringify(event.payment.token),
-                fraud_session_id: params.finixSessionKey || `applepay_${Date.now()}`
-              },
-              headers: {
-                Authorization: `Bearer ${authToken}`
+
+            let paymentResult;
+            let lastError;
+
+            // First attempt
+            try {
+              const { data, error } = await supabase.functions.invoke('process-apple-pay-payment', {
+                body: {
+                  entity_type: params.entityType,
+                  entity_id: params.entityId,
+                  customer_id: params.customerId,
+                  merchant_id: params.merchantId,
+                  base_amount_cents: params.totalAmountCents,
+                  apple_pay_token: JSON.stringify(event.payment.token),
+                  fraud_session_id: params.finixSessionKey || `applepay_${Date.now()}`
+                },
+                headers: {
+                  Authorization: `Bearer ${authToken}`
+                }
+              });
+
+              if (error && error.message?.includes('401')) {
+                // Auth failed, try refreshing token and retry ONCE
+                console.log('🍎 [useApplePayFlow] 401 error, refreshing token and retrying...');
+                const { data: refreshData } = await supabase.auth.refreshSession();
+                
+                if (refreshData.session?.access_token) {
+                  authToken = refreshData.session.access_token;
+                  
+                  // RETRY with new token
+                  const retryResult = await supabase.functions.invoke('process-apple-pay-payment', {
+                    body: {
+                      entity_type: params.entityType,
+                      entity_id: params.entityId,
+                      customer_id: params.customerId,
+                      merchant_id: params.merchantId,
+                      base_amount_cents: params.totalAmountCents,
+                      apple_pay_token: JSON.stringify(event.payment.token),
+                      fraud_session_id: params.finixSessionKey || `applepay_${Date.now()}_retry`
+                    },
+                    headers: {
+                      Authorization: `Bearer ${authToken}`
+                    }
+                  });
+                  
+                  paymentResult = retryResult;
+                  console.log('🍎 [useApplePayFlow] Retry attempt result:', retryResult);
+                } else {
+                  throw new Error('Unable to refresh authentication. Please try again.');
+                }
+              } else {
+                paymentResult = { data, error };
               }
-            });
+            } catch (err) {
+              lastError = err;
+            }
+
+            const { data, error } = paymentResult || { data: null, error: lastError };
 
             console.log('🍎 [useApplePayFlow] Backend response:', { data, error });
 
@@ -234,13 +329,37 @@ export const useApplePayFlow = (params: ApplePayFlowParams) => {
             clearTimeout(timeoutId);
             setIsProcessing(false);
             
+            // Classify error for better user messaging
+            let errorMessage = 'Payment failed';
+            let retryable = false;
+            
+            if (err instanceof Error) {
+              if (err.message.includes('expired') || err.message.includes('Authentication')) {
+                errorMessage = 'Your session expired. Please refresh the page and try again.';
+                retryable = true;
+              } else if (err.message.includes('network') || err.message.includes('timeout')) {
+                errorMessage = 'Network error. Please check your connection and try again.';
+                retryable = true;
+              } else if (err.message.includes('declined') || err.message.includes('insufficient')) {
+                errorMessage = 'Payment was declined. Please check your payment method.';
+                retryable = true;
+              } else {
+                errorMessage = err.message;
+              }
+            }
+            
             toast({
               title: "Apple Pay Failed",
-              description: err instanceof Error ? err.message : 'Payment failed',
+              description: errorMessage,
               variant: "destructive",
             });
 
-            params.onError?.(err);
+            params.onError?.({ 
+              type: retryable ? 'retryable' : 'fatal',
+              message: errorMessage,
+              originalError: err 
+            });
+            
             reject(err);
           }
         };

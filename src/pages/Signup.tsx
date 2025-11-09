@@ -11,20 +11,19 @@ const Signup = () => {
   const { user } = useAuth();
   const [isSessionCleared, setIsSessionCleared] = useState(false);
 
-  // Force fresh authentication by clearing existing sessions
+  // Redirect authenticated users to dashboard instead of logging them out
   useEffect(() => {
-    const clearExistingSession = async () => {
-      if (!isSessionCleared) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          await supabase.auth.signOut();
-        }
-        setIsSessionCleared(true);
+    const checkAuthentication = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session && user) {
+        // User is already logged in, redirect to dashboard
+        console.log('User already authenticated, redirecting to dashboard');
+        navigate('/dashboard');
       }
     };
     
-    clearExistingSession();
-  }, [isSessionCleared]);
+    checkAuthentication();
+  }, [user, navigate]);
 
   // Redirect authenticated users
   useEffect(() => {
