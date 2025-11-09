@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/SimpleAuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +9,6 @@ import { PreloginFooter } from '@/components/layout/PreloginFooter';
 const Signup = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [isSessionCleared, setIsSessionCleared] = useState(false);
 
   // Redirect authenticated users to dashboard instead of logging them out
   useEffect(() => {
@@ -24,13 +23,6 @@ const Signup = () => {
     
     checkAuthentication();
   }, [user, navigate]);
-
-  // Redirect authenticated users
-  useEffect(() => {
-    if (user && isSessionCleared) {
-      navigate('/dashboard');
-    }
-  }, [user, navigate, isSessionCleared]);
 
   const handleBackToSignIn = () => {
     navigate('/signin');
