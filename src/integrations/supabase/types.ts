@@ -1629,6 +1629,7 @@ export type Database = {
           description: string | null
           finix_merchant_id: string | null
           form_fields: Json | null
+          guidance_text: string | null
           has_time_slots: boolean | null
           id: string
           is_active: boolean
@@ -1638,6 +1639,7 @@ export type Database = {
           pdf_form_url: string | null
           renewal_frequency: string | null
           renewal_reminder_days: number | null
+          requires_document_upload: boolean
           requires_payment: boolean
           requires_review: boolean
           time_slot_config: Json | null
@@ -1656,6 +1658,7 @@ export type Database = {
           description?: string | null
           finix_merchant_id?: string | null
           form_fields?: Json | null
+          guidance_text?: string | null
           has_time_slots?: boolean | null
           id?: string
           is_active?: boolean
@@ -1665,6 +1668,7 @@ export type Database = {
           pdf_form_url?: string | null
           renewal_frequency?: string | null
           renewal_reminder_days?: number | null
+          requires_document_upload?: boolean
           requires_payment?: boolean
           requires_review?: boolean
           time_slot_config?: Json | null
@@ -1683,6 +1687,7 @@ export type Database = {
           description?: string | null
           finix_merchant_id?: string | null
           form_fields?: Json | null
+          guidance_text?: string | null
           has_time_slots?: boolean | null
           id?: string
           is_active?: boolean
@@ -1692,6 +1697,7 @@ export type Database = {
           pdf_form_url?: string | null
           renewal_frequency?: string | null
           renewal_reminder_days?: number | null
+          requires_document_upload?: boolean
           requires_payment?: boolean
           requires_review?: boolean
           time_slot_config?: Json | null

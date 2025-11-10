@@ -89,6 +89,8 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
   const [renewalReminderDays, setRenewalReminderDays] = useState(tile?.renewal_reminder_days || 30);
   const [autoRenewEnabled, setAutoRenewEnabled] = useState(tile?.auto_renew_enabled || false);
   const [requiresPayment, setRequiresPayment] = useState(tile?.requires_payment !== false); // Default true
+  const [guidanceText, setGuidanceText] = useState(tile?.guidance_text || '');
+  const [requiresDocumentUpload, setRequiresDocumentUpload] = useState(tile?.requires_document_upload || false);
   
   // Time slot booking state
   const [hasTimeSlots, setHasTimeSlots] = useState(tile?.has_time_slots || false);
@@ -216,9 +218,11 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
     const serviceData = {
       title: title.trim(),
       description: description.trim() || undefined,
+      guidance_text: guidanceText.trim() || undefined,
       amount_cents: requiresPayment ? amountCents : 0, // Force 0 if no payment
       requires_review: requiresReview,
       requires_payment: requiresPayment,
+      requires_document_upload: requiresDocumentUpload,
       is_active: isActive,
       auto_populate_user_info: false,
       allow_user_defined_amount: requiresPayment && allowUserDefinedAmount, // Only if payment required
@@ -299,6 +303,24 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
               placeholder="Describe what this service is for..."
               rows={3}
             />
+          </div>
+          
+          <div>
+            <Label htmlFor="guidance-text">
+              Applicant Guidance Text
+              <span className="text-xs text-muted-foreground ml-2">(Optional)</span>
+            </Label>
+            <Textarea
+              id="guidance-text"
+              value={guidanceText}
+              onChange={(e) => setGuidanceText(e.target.value)}
+              placeholder="e.g., 'Please have your property deed and ID ready before starting this application'"
+              rows={4}
+              className="resize-none"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              This text will appear at the top of the application form to help guide applicants.
+            </p>
           </div>
           
           <div className="flex items-center justify-between">
@@ -448,6 +470,20 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
               id="requires-review"
               checked={requiresReview}
               onCheckedChange={setRequiresReview}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="requires-document-upload">Require Document Upload</Label>
+              <p className="text-sm text-muted-foreground">
+                Applicants must upload supporting documents to submit this application
+              </p>
+            </div>
+            <Switch
+              id="requires-document-upload"
+              checked={requiresDocumentUpload}
+              onCheckedChange={setRequiresDocumentUpload}
             />
           </div>
           

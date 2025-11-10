@@ -805,10 +805,10 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         {currentStep === 1 ? (
           <>
             {/* Guidance Text Box */}
-            {(tile as any).guidance_text && (
+            {tile.guidance_text && (
               <Alert className="mb-6">
                 <Info className="h-4 w-4" />
-                <AlertDescription>{(tile as any).guidance_text}</AlertDescription>
+                <AlertDescription>{tile.guidance_text}</AlertDescription>
               </Alert>
             )}
 
@@ -859,7 +859,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             </Card>
 
             {/* Document Upload Section */}
-            {(tile as any).requires_document_upload && (
+            {tile.requires_document_upload && (
               <Card className="mb-6">
                 <CardHeader>
                   <CardTitle className="text-lg">Required Documents</CardTitle>
