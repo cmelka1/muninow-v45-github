@@ -940,7 +940,8 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                   </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent>
+                <div className="space-y-4">
                   <div>
                     <Label className="text-sm font-medium text-foreground">
                       Supporting Documents {tile.requires_document_upload && <span className="text-destructive ml-1">*</span>}
@@ -948,80 +949,71 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                     <p className="text-xs text-muted-foreground mb-3">
                       Upload any documents that support your application
                     </p>
-                  </div>
 
-                  {/* Drag and Drop Upload Area */}
-                  <div
-                    onDragEnter={handleDragEnter}
-                    onDragLeave={handleDragLeave}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                    className={`
-                      border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
-                      transition-colors duration-200
-                      ${dragActive 
-                        ? 'border-primary bg-primary/5' 
-                        : 'border-muted-foreground/25 hover:border-primary/50'
-                      }
-                    `}
-                    onClick={() => document.getElementById('file-upload-input')?.click()}
-                  >
-                    <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-sm font-medium mb-2">Click to upload or drag and drop</p>
-                    <p className="text-xs text-muted-foreground">
-                      PDF, DOC, DOCX, JPG, PNG, GIF up to 10MB each
-                    </p>
-                    <input
-                      id="file-upload-input"
-                      type="file"
-                      multiple
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
-                      onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
-                      className="hidden"
-                    />
+                    {/* Drag and Drop Upload Area */}
+                    <div
+                      className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                        dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'
+                      }`}
+                      onDragOver={handleDragOver}
+                      onDragEnter={handleDragEnter}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    >
+                      <input
+                        type="file"
+                        id="document-upload"
+                        className="hidden"
+                        onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        multiple
+                      />
+                      <label
+                        htmlFor="document-upload"
+                        className="cursor-pointer flex flex-col items-center"
+                      >
+                        <Upload className="h-10 w-10 text-muted-foreground mb-3" />
+                        <span className="text-sm font-medium text-foreground mb-1">
+                          Click to upload or drag and drop
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          PDF, DOC, DOCX, JPG, or PNG (max 10MB each)
+                        </span>
+                      </label>
+                    </div>
                   </div>
 
                   {/* Uploaded Documents List */}
                   {uploadedDocuments.length > 0 && (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {uploadedDocuments.map((doc) => (
                         <div
                           key={doc.id}
-                          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                          className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
                         >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="flex items-center gap-3">
                             {getFileIcon(doc.type)}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{doc.name}</p>
+                            <div>
+                              <p className="text-sm font-medium">{doc.name}</p>
                               <p className="text-xs text-muted-foreground">
                                 {formatFileSize(doc.size)}
                               </p>
-                              {doc.uploadStatus === 'uploading' && (
-                                <Progress value={doc.uploadProgress} className="h-1 mt-1" />
-                              )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {doc.uploadStatus === 'completed' && (
-                              <CheckCircle className="h-4 w-4 text-green-600" />
-                            )}
-                            {doc.uploadStatus === 'error' && (
-                              <AlertCircle className="h-4 w-4 text-destructive" />
-                            )}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveDocument(doc.id)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveDocument(doc.id)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
                       ))}
                     </div>
                   )}
-                </CardContent>
+                </div>
+              </CardContent>
             </Card>
 
             {/* Review Required Info Box */}
