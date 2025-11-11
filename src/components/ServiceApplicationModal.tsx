@@ -275,6 +275,11 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     return errors;
   };
 
+  // Memoize validation result to avoid redundant calculations
+  const validationResult = React.useMemo(() => {
+    return validateStep1Fields();
+  }, [tile, formData]);
+
   const clearFieldError = (fieldName: string) => {
     if (validationErrors[fieldName]) {
       setValidationErrors(prev => {
@@ -290,9 +295,8 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       // Subtab navigation within Step 1
       if (currentSubStep === 1) {
         // Validate form fields before moving to document upload subtab
-        const errors = validateStep1Fields();
-        if (Object.keys(errors).length > 0) {
-          setValidationErrors(errors);
+        if (Object.keys(validationResult).length > 0) {
+          setValidationErrors(validationResult);
           toast({
             title: "Please complete required fields",
             description: "Check the highlighted fields and try again.",
@@ -804,7 +808,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           onSubmit={currentStep === totalSteps && tile.requires_review ? handleSubmitApplication : undefined}
           onPrevious={currentStep > 1 ? handlePrevious : undefined}
           isNextDisabled={
-            (currentStep === 1 && currentSubStep === 1 && Object.keys(validateStep1Fields()).length > 0) ||
+            (currentStep === 1 && currentSubStep === 1 && Object.keys(validationResult).length > 0) ||
             (currentStep === 1 && currentSubStep === 2 && tile.requires_document_upload && uploadedDocuments.length === 0) ||
             (currentStep === 2 && tile.has_time_slots && (!selectedDate || !selectedTime))
           }
@@ -907,9 +911,8 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                 
                 // If trying to navigate to Subtab 2 from Subtab 1, validate first
                 if (newSubStep === 2 && currentSubStep === 1) {
-                  const errors = validateStep1Fields();
-                  if (Object.keys(errors).length > 0) {
-                    setValidationErrors(errors);
+                  if (Object.keys(validationResult).length > 0) {
+                    setValidationErrors(validationResult);
                     toast({
                       title: "Please complete required fields",
                       description: "Complete all required fields in the application form before proceeding to document upload.",
@@ -929,7 +932,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             >
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="subtab-1" className="gap-2">
-                  {Object.keys(validateStep1Fields()).length === 0 && currentSubStep === 2 ? (
+                  {Object.keys(validationResult).length === 0 && currentSubStep === 2 ? (
                     <CheckCircle className="h-4 w-4 text-green-600" />
                   ) : (
                     <User className="h-4 w-4" />
@@ -939,7 +942,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                 <TabsTrigger 
                   value="subtab-2" 
                   className="gap-2"
-                  disabled={Object.keys(validateStep1Fields()).length > 0}
+                  disabled={Object.keys(validationResult).length > 0}
                 >
                   <Upload className="h-4 w-4" />
                   Document Upload
