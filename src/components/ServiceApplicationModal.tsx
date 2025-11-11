@@ -383,7 +383,8 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     try {
       let applicationData;
       
-      // For services with time slots, use RPC function for atomic booking
+      // PRIORITY 1: For services with time slots, ALWAYS use RPC function for atomic booking
+      // This must be checked FIRST, even if draftApplicationId exists
       if (tile.has_time_slots && selectedDate && selectedTime) {
         // Calculate end time based on booking mode
         let endTime = '';
@@ -397,6 +398,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         }
 
         const { data: rpcData, error: rpcError } = await supabase.rpc('create_booking_with_conflict_check', {
+          p_application_id: draftApplicationId || null,  // Pass draft ID if exists
           p_tile_id: tile.id,
           p_user_id: profile?.id || '',
           p_customer_id: tile.customer_id,
@@ -405,7 +407,6 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           p_booking_end_time: endTime,
           p_booking_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           p_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
-          p_submitted_at: null,  // Will be set after payment completes
           p_form_data: {
             ...formData,
             applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || null,
@@ -441,7 +442,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
 
         applicationData = { id: response.application_id! };
       }
-      // For non-reviewable services with existing draft, update it
+      // PRIORITY 2: For non-reviewable services with existing draft (non-time-slot only)
       else if (!tile.requires_review && draftApplicationId) {
         applicationData = await updateApplication.mutateAsync({
           id: draftApplicationId,
@@ -459,8 +460,9 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           additional_information: formData.additional_information || formData.notes || formData.comments || undefined,
           service_specific_data: formData,
         });
-      } else {
-        // For reviewable services, create new application
+      }
+      // PRIORITY 3: For reviewable services, create new application
+      else {
         applicationData = await createApplication.mutateAsync({
           tile_id: tile.id,
           user_id: profile?.id || '',
