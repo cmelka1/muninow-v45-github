@@ -33,6 +33,16 @@ import { InlinePaymentFlow } from './payment/InlinePaymentFlow';
 import { useNavigate } from 'react-router-dom';
 import { RestPlacesAutocomplete } from '@/components/ui/rest-places-autocomplete';
 import { TimeSlotBooking } from '@/components/TimeSlotBooking';
+import {
+  isAddressField,
+  extractApplicantData,
+  mapProfileToFormData,
+  initializeFormData,
+  prepareSubmissionPayload,
+  validateApplicationForm,
+  validateFile,
+  type FormFieldConfig,
+} from '@/utils/serviceFormUtils';
 
 interface ServiceApplicationModalProps {
   tile: MunicipalServiceTile | null;
@@ -61,18 +71,6 @@ const DOCUMENT_TYPES = [
   'survey',
   'other'
 ];
-
-// Address field detection helper
-const ADDRESS_FIELD_IDS = [
-  'address', 'full_address', 'street_address', 'street',
-  'property_address', 'business_address', 'location'
-];
-
-const isAddressField = (fieldId: string): boolean => {
-  return ADDRESS_FIELD_IDS.some(id => 
-    fieldId.toLowerCase().includes(id.toLowerCase())
-  );
-};
 
 const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   tile,
@@ -137,76 +135,19 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       setSelectedDate(undefined);
       setSelectedTime('');
       
-      // Initialize form data
-      const initialData: Record<string, any> = {};
+      // Initialize form data using utility functions
+      let initialData = initializeFormData(tile.form_fields || []);
       
-      // Initialize form fields first
-      tile.form_fields?.forEach(field => {
-        initialData[field.id] = field.type === 'number' ? 0 : '';
-      });
-      
-      // Smart auto-population based on actual form field names
+      // Smart auto-population if enabled
       if (useAutoPopulate && profile && tile.form_fields) {
-        // Create a mapping of field IDs to check for common patterns
-        const fieldIds = tile.form_fields.map(field => field.id.toLowerCase());
-        
-        // Map profile data to form fields intelligently
-        tile.form_fields.forEach(field => {
-          const fieldId = field.id.toLowerCase();
-          
-          // Handle name fields
-          if (fieldId === 'name' || fieldId === 'full_name' || fieldId === 'fullname') {
-            if (profile.first_name || profile.last_name) {
-              initialData[field.id] = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
-            }
-          } else if (fieldId === 'first_name' || fieldId === 'firstname') {
-            initialData[field.id] = profile.first_name || '';
-          } else if (fieldId === 'last_name' || fieldId === 'lastname') {
-            initialData[field.id] = profile.last_name || '';
-          }
-          
-          // Handle address fields
-          else if (fieldId === 'address' || fieldId === 'full_address' || fieldId === 'street_address') {
-            if (profile.street_address) {
-              const addressParts = [
-                profile.street_address,
-                (profile as any).apt_number ? `Apt ${(profile as any).apt_number}` : '',
-                profile.city,
-                profile.state,
-                profile.zip_code
-              ].filter(Boolean);
-              initialData[field.id] = addressParts.join(', ');
-            }
-          } else if (fieldId === 'street' || fieldId === 'street_address') {
-            initialData[field.id] = profile.street_address || '';
-          } else if (fieldId === 'apt' || fieldId === 'apt_number' || fieldId === 'apartment') {
-            initialData[field.id] = (profile as any).apt_number || '';
-          } else if (fieldId === 'city') {
-            initialData[field.id] = profile.city || '';
-          } else if (fieldId === 'state') {
-            initialData[field.id] = profile.state || '';
-          } else if (fieldId === 'zip' || fieldId === 'zip_code' || fieldId === 'postal_code') {
-            initialData[field.id] = profile.zip_code || '';
-          }
-          
-          // Handle contact fields
-          else if (fieldId === 'email') {
-            initialData[field.id] = profile.email || '';
-          } else if (fieldId === 'phone' || fieldId === 'phone_number') {
-            initialData[field.id] = profile.phone || '';
-          }
-          
-          // Handle business fields
-          else if (fieldId === 'business_name' || fieldId === 'business_legal_name' || fieldId === 'company_name') {
-            initialData[field.id] = profile.business_legal_name || '';
-          }
-        });
-      }
-      
-      // If not auto-populating, preserve existing form data
-      if (!useAutoPopulate) {
+        const profileData = mapProfileToFormData(profile, tile.form_fields);
+        initialData = { ...initialData, ...profileData };
+      } else if (!useAutoPopulate) {
+        // Preserve existing form data
         tile.form_fields?.forEach(field => {
-          initialData[field.id] = formData[field.id] || (field.type === 'number' ? 0 : '');
+          if (formData[field.id] !== undefined) {
+            initialData[field.id] = formData[field.id];
+          }
         });
       }
       
@@ -257,21 +198,11 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   const validateStep1Fields = () => {
     if (!tile) return {};
     
-    const errors: Record<string, string> = {};
-
-    // Validate required fields
-    tile.form_fields?.forEach(field => {
-      if (field.required && (!formData[field.id] || formData[field.id] === '')) {
-        errors[field.id] = `${field.label} is required`;
-      }
+    return validateApplicationForm(formData, tile.form_fields || [], {
+      requiresDocumentUpload: tile.requires_document_upload,
+      uploadedDocuments,
+      allowUserDefinedAmount: tile.allow_user_defined_amount,
     });
-
-    // Add amount validation for user-defined amounts
-    if (tile.allow_user_defined_amount && (!formData.amount_cents || formData.amount_cents <= 0)) {
-      errors.amount_cents = 'Service Fee Amount is required';
-    }
-
-    return errors;
   };
 
   // Memoize validation result to avoid redundant calculations
@@ -315,6 +246,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       // For non-reviewable services, create draft application after validation
       if (!tile?.requires_review && !draftApplicationId) {
         try {
+          const applicantData = extractApplicantData(formData);
           const draftApplication = await createApplication.mutateAsync({
             tile_id: tile.id,
             user_id: profile?.id || '',
@@ -322,15 +254,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
             status: 'draft',
             payment_status: 'unpaid',
             base_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
-            applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
-            applicant_email: formData.email || undefined,
-            applicant_phone: formData.phone || formData.phone_number || undefined,
-            business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || undefined,
-            street_address: formData.address || formData.street_address || formData.street || undefined,
-            apt_number: formData.apt || formData.apt_number || formData.apartment || undefined,
-            city: formData.city || undefined,
-            state: formData.state || undefined,
-            zip_code: formData.zip || formData.zip_code || formData.postal_code || undefined,
+            ...applicantData,
             service_specific_data: formData,
           });
           setDraftApplicationId(draftApplication.id);
@@ -381,15 +305,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           p_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
           p_form_data: {
             ...formData,
-            applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || null,
-            applicant_email: formData.email || null,
-            applicant_phone: formData.phone || formData.phone_number || null,
-            business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || null,
-            street_address: formData.address || formData.street_address || formData.street || null,
-            apt_number: formData.apt || formData.apt_number || formData.apartment || null,
-            city: formData.city || null,
-            state: formData.state || null,
-            zip_code: formData.zip || formData.zip_code || formData.postal_code || null,
+            ...extractApplicantData(formData),
           },
         });
 
@@ -487,15 +403,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           p_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
           p_form_data: {
             ...formData,
-            applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || null,
-            applicant_email: formData.email || null,
-            applicant_phone: formData.phone || formData.phone_number || null,
-            business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || null,
-            street_address: formData.address || formData.street_address || formData.street || null,
-            apt_number: formData.apt || formData.apt_number || formData.apartment || null,
-            city: formData.city || null,
-            state: formData.state || null,
-            zip_code: formData.zip || formData.zip_code || formData.postal_code || null,
+            ...extractApplicantData(formData),
           },
         });
 
@@ -533,25 +441,19 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       }
       // PRIORITY 2: For non-reviewable services with existing draft (non-time-slot only)
       else if (!tile.requires_review && draftApplicationId) {
+        const applicantData = extractApplicantData(formData);
         applicationData = await updateApplication.mutateAsync({
           id: draftApplicationId,
-          status: 'draft',  // Keep as draft until payment completes
+          status: 'draft',
           payment_status: 'unpaid',
-          applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
-          applicant_email: formData.email || undefined,
-          applicant_phone: formData.phone || formData.phone_number || undefined,
-          business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || undefined,
-          street_address: formData.address || formData.street_address || formData.street || undefined,
-          apt_number: formData.apt || formData.apt_number || formData.apartment || undefined,
-          city: formData.city || undefined,
-          state: formData.state || undefined,
-          zip_code: formData.zip || formData.zip_code || formData.postal_code || undefined,
+          ...applicantData,
           additional_information: formData.additional_information || formData.notes || formData.comments || undefined,
           service_specific_data: formData,
         });
       }
       // PRIORITY 3: For reviewable services, create new application
       else {
+        const applicantData = extractApplicantData(formData);
         applicationData = await createApplication.mutateAsync({
           tile_id: tile.id,
           user_id: profile?.id || '',
@@ -560,15 +462,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           payment_status: tile.requires_review ? 'not_required' : 'unpaid',
           submitted_at: new Date().toISOString(),
           base_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
-          applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || undefined,
-          applicant_email: formData.email || undefined,
-          applicant_phone: formData.phone || formData.phone_number || undefined,
-          business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || undefined,
-          street_address: formData.address || formData.street_address || formData.street || undefined,
-          apt_number: formData.apt || formData.apt_number || formData.apartment || undefined,
-          city: formData.city || undefined,
-          state: formData.state || undefined,
-          zip_code: formData.zip || formData.zip_code || formData.postal_code || undefined,
+          ...applicantData,
           additional_information: formData.additional_information || formData.notes || formData.comments || undefined,
           service_specific_data: formData,
         });
@@ -705,29 +599,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     }
   };
 
-  // File upload handlers
-  const validateFile = (file: File): string | null => {
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    const allowedTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/gif'
-    ];
-
-    if (file.size > maxSize) {
-      return 'File size must be less than 10MB';
-    }
-
-    if (!allowedTypes.includes(file.type)) {
-      return 'File type not supported. Please upload PDF, DOC, DOCX, JPG, PNG, or GIF files.';
-    }
-
-    return null;
-  };
+  // File upload handlers (using utility function)
 
   const uploadFile = async (file: File, documentId: string) => {
     if (!profile?.id) {
