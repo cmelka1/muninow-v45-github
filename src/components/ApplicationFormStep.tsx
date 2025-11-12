@@ -47,7 +47,7 @@ interface ApplicationFormStepProps {
   formData: Record<string, any>;
   onFormDataChange: (data: Record<string, any>) => void;
   uploadedDocuments: UploadedDocument[];
-  onDocumentsChange: (documents: UploadedDocument[]) => void;
+  onDocumentsChange: (documents: UploadedDocument[] | ((prev: UploadedDocument[]) => UploadedDocument[])) => void;
   validationErrors: Record<string, string>;
   onValidationErrorsChange: (errors: Record<string, string>) => void;
   useAutoPopulate: boolean;
@@ -237,13 +237,13 @@ export const ApplicationFormStep: React.FC<ApplicationFormStepProps> = ({
         uploadStatus: 'uploading',
       };
 
-      onDocumentsChange([...uploadedDocuments, newDocument]);
+      onDocumentsChange(prev => [...prev, newDocument]);
 
       try {
         const { path } = await uploadFile(file, documentId);
 
-        onDocumentsChange(
-          uploadedDocuments.map((doc) =>
+        onDocumentsChange(prev =>
+          prev.map((doc) =>
             doc.id === documentId
               ? { ...doc, uploadStatus: 'completed', uploadProgress: 100, filePath: path }
               : doc
@@ -256,8 +256,8 @@ export const ApplicationFormStep: React.FC<ApplicationFormStepProps> = ({
         });
       } catch (error) {
         console.error('Upload failed:', error);
-        onDocumentsChange(
-          uploadedDocuments.map((doc) =>
+        onDocumentsChange(prev =>
+          prev.map((doc) =>
             doc.id === documentId
               ? { ...doc, uploadStatus: 'error', error: 'Upload failed' }
               : doc
