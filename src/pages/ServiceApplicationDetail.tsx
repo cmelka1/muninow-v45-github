@@ -338,6 +338,81 @@ const ServiceApplicationDetail: React.FC = () => {
             </CardContent>
           </Card>
 
+          {/* Reservation Summary - Only for booking applications */}
+          {application.booking_date && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Reservation Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Reservation Date</Label>
+                    <p className="text-base font-medium">{formatDate(application.booking_date)}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Time Slot</Label>
+                    <p className="text-base font-medium">
+                      {application.booking_start_time && application.booking_end_time ? (
+                        <>
+                          {format(new Date(`2000-01-01T${application.booking_start_time}`), 'h:mm a')} - {format(new Date(`2000-01-01T${application.booking_end_time}`), 'h:mm a')}
+                          <span className="text-sm text-muted-foreground ml-2">
+                            ({(() => {
+                              const start = new Date(`2000-01-01T${application.booking_start_time}`);
+                              const end = new Date(`2000-01-01T${application.booking_end_time}`);
+                              const diffMs = end.getTime() - start.getTime();
+                              const diffMins = Math.floor(diffMs / 60000);
+                              const hours = Math.floor(diffMins / 60);
+                              const mins = diffMins % 60;
+                              return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+                            })()})
+                          </span>
+                        </>
+                      ) : 'Time not specified'}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Timezone</Label>
+                    <p className="text-base">{application.booking_timezone || 'America/New_York'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Reservation Status</Label>
+                    <div className="mt-1">
+                      <ServiceApplicationStatusBadge status={application.status} />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Confirmation Number</Label>
+                    <p className="text-base font-mono">{application.application_number || application.id}</p>
+                  </div>
+                </div>
+
+                {/* Cancellation Details */}
+                {application.cancelled_at && (
+                  <>
+                    <Separator />
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-2">
+                      <Label className="text-sm font-medium text-amber-800">Cancellation Details</Label>
+                      <div className="space-y-1">
+                        <p className="text-sm text-amber-700">
+                          <span className="font-medium">Cancelled on:</span> {formatDate(application.cancelled_at)}
+                        </p>
+                        {application.cancellation_reason && (
+                          <p className="text-sm text-amber-700">
+                            <span className="font-medium">Reason:</span> {application.cancellation_reason}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Applicant Information */}
           <Card>
             <CardHeader>
