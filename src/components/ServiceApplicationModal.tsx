@@ -398,22 +398,29 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           throw rpcError;
         }
 
-        // Check for application-level conflicts in the response
-        const response = rpcData as { success: boolean; error?: string; message?: string; application_id?: string };
-        
-        if (!response.success) {
+        // Parse TABLE response - RPC returns array of rows
+        type BookingRow = { application_id: string | null; conflict: boolean; message: string };
+        const rows = (rpcData as BookingRow[]) || [];
+        const row = rows[0];
+
+        if (!row) {
+          throw new Error('No response from booking RPC');
+        }
+
+        // Check for booking conflicts
+        if (row.conflict) {
           toast({
             title: 'Time Slot Unavailable',
-            description: response.message || 'This time slot was just booked by someone else. Please select a different time.',
+            description: row.message || 'This time slot was just booked by someone else. Please select a different time.',
             variant: 'destructive',
           });
           return; // Don't advance to next step
         }
 
         // Store the application ID (either newly created or updated draft)
-        if (response.application_id) {
-          setDraftApplicationId(response.application_id);
-          console.log('✅ Booking data saved to application:', response.application_id);
+        if (row.application_id) {
+          setDraftApplicationId(row.application_id);
+          console.log('✅ Booking data saved to application:', row.application_id);
         }
       } catch (error) {
         console.error('Error saving booking data:', error);
@@ -497,13 +504,20 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           throw rpcError;
         }
 
-        // Check for application-level conflicts in the response
-        const response = rpcData as { success: boolean; error?: string; message?: string; application_id?: string };
-        
-        if (!response.success) {
+        // Parse TABLE response - RPC returns array of rows
+        type BookingRow = { application_id: string | null; conflict: boolean; message: string };
+        const rows = (rpcData as BookingRow[]) || [];
+        const row = rows[0];
+
+        if (!row) {
+          throw new Error('No response from booking RPC');
+        }
+
+        // Check for booking conflicts
+        if (row.conflict) {
           toast({
             title: 'Time Slot Unavailable',
-            description: response.message || 'This time slot was just booked by someone else. Please select a different time.',
+            description: row.message || 'This time slot was just booked by someone else. Please select a different time.',
             variant: 'destructive',
           });
           setCurrentStep(2); // Go back to booking step
@@ -511,7 +525,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           return;
         }
 
-        applicationData = { id: response.application_id! };
+        applicationData = { id: row.application_id! };
       }
       // For non-reviewable services with time slots, booking data already saved in Step 2->3 transition
       else if (tile.has_time_slots && draftApplicationId) {
