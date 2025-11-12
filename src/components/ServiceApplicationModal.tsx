@@ -458,7 +458,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       // For reviewable services, we need to call the RPC here
       if (tile.has_time_slots && selectedDate && selectedTime && tile.requires_review) {
         // Calculate end time based on booking mode
-        let endTime = '';
+        let endTime: string | null = null;
         if (tile.booking_mode === 'time_period' && tile.time_slot_config?.slot_duration_minutes) {
           const [hours, minutes] = selectedTime.split(':').map(Number);
           const startMinutes = hours * 60 + minutes;
