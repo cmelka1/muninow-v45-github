@@ -1,7 +1,1 @@
 project_id = "qcuiuubbaozcmejzvxje"
-
-[functions.create-apple-pay-session]
-verify_jwt = false
-
-[functions.process-apple-pay-payment]
-verify_jwt = true
