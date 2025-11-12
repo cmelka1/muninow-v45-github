@@ -116,7 +116,8 @@ export function enrichFormDataWithParsedAddress(
   return {
     ...formData,
     // Only fill in missing fields, don't overwrite existing ones
-    street_address: formData.street_address || parsed.street_address || formData[addressField],
+    // Use only the parsed street portion, not the full address string
+    street_address: formData.street_address || parsed.street_address,
     city: formData.city || parsed.city,
     state: formData.state || parsed.state,
     zip_code: formData.zip_code || parsed.zip_code,
