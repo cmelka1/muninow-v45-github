@@ -41,6 +41,7 @@ import {
   initializeFormData,
   prepareSubmissionPayload,
   validateApplicationForm,
+  enrichFormDataWithParsedAddress,
   type FormFieldConfig,
 } from '@/utils/serviceFormUtils';
 
@@ -246,7 +247,8 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       // For non-reviewable services, create draft application after validation
       if (!tile?.requires_review && !draftApplicationId) {
         try {
-          const applicantData = extractApplicantData(formData);
+          const enrichedFormData = enrichFormDataWithParsedAddress(formData);
+          const applicantData = extractApplicantData(enrichedFormData);
           const draftApplication = await createApplication.mutateAsync({
             tile_id: tile.id,
             user_id: profile?.id || '',
@@ -305,7 +307,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           p_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
           p_form_data: {
             ...formData,
-            ...extractApplicantData(formData),
+            ...extractApplicantData(enrichFormDataWithParsedAddress(formData)),
           },
         });
 
@@ -403,7 +405,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
           p_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
           p_form_data: {
             ...formData,
-            ...extractApplicantData(formData),
+            ...extractApplicantData(enrichFormDataWithParsedAddress(formData)),
           },
         });
 
@@ -441,7 +443,8 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       }
       // PRIORITY 2: For non-reviewable services with existing draft (non-time-slot only)
       else if (!tile.requires_review && draftApplicationId) {
-        const applicantData = extractApplicantData(formData);
+        const enrichedFormData = enrichFormDataWithParsedAddress(formData);
+        const applicantData = extractApplicantData(enrichedFormData);
         applicationData = await updateApplication.mutateAsync({
           id: draftApplicationId,
           status: 'draft',
@@ -453,7 +456,8 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       }
       // PRIORITY 3: For reviewable services, create new application
       else {
-        const applicantData = extractApplicantData(formData);
+        const enrichedFormData = enrichFormDataWithParsedAddress(formData);
+        const applicantData = extractApplicantData(enrichedFormData);
         applicationData = await createApplication.mutateAsync({
           tile_id: tile.id,
           user_id: profile?.id || '',
