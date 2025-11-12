@@ -355,6 +355,75 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         });
         return;
       }
+
+      // Save booking data to database using RPC function
+      try {
+        // Calculate end time based on booking mode
+        let endTime = '';
+        if (tile.booking_mode === 'time_period' && tile.time_slot_config?.slot_duration_minutes) {
+          const [hours, minutes] = selectedTime.split(':').map(Number);
+          const startMinutes = hours * 60 + minutes;
+          const endMinutes = startMinutes + tile.time_slot_config.slot_duration_minutes;
+          const endHours = Math.floor(endMinutes / 60);
+          const endMins = endMinutes % 60;
+          endTime = `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}:00`;
+        }
+
+        const { data: rpcData, error: rpcError } = await supabase.rpc('create_booking_with_conflict_check', {
+          p_application_id: draftApplicationId || null,
+          p_tile_id: tile.id,
+          p_user_id: profile?.id || '',
+          p_customer_id: tile.customer_id,
+          p_booking_date: selectedDate.toISOString().split('T')[0],
+          p_booking_start_time: selectedTime,
+          p_booking_end_time: endTime,
+          p_booking_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          p_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
+          p_form_data: {
+            ...formData,
+            applicant_name: formData.name || formData.full_name || `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || null,
+            applicant_email: formData.email || null,
+            applicant_phone: formData.phone || formData.phone_number || null,
+            business_legal_name: formData.business_name || formData.business_legal_name || formData.company_name || null,
+            street_address: formData.address || formData.street_address || formData.street || null,
+            apt_number: formData.apt || formData.apt_number || formData.apartment || null,
+            city: formData.city || null,
+            state: formData.state || null,
+            zip_code: formData.zip || formData.zip_code || formData.postal_code || null,
+          },
+        });
+
+        // Check for Postgres errors
+        if (rpcError) {
+          throw rpcError;
+        }
+
+        // Check for application-level conflicts in the response
+        const response = rpcData as { success: boolean; error?: string; message?: string; application_id?: string };
+        
+        if (!response.success) {
+          toast({
+            title: 'Time Slot Unavailable',
+            description: response.message || 'This time slot was just booked by someone else. Please select a different time.',
+            variant: 'destructive',
+          });
+          return; // Don't advance to next step
+        }
+
+        // Store the application ID (either newly created or updated draft)
+        if (response.application_id) {
+          setDraftApplicationId(response.application_id);
+          console.log('✅ Booking data saved to application:', response.application_id);
+        }
+      } catch (error) {
+        console.error('Error saving booking data:', error);
+        toast({
+          title: "Booking Error",
+          description: "Failed to save your time slot selection. Please try again.",
+          variant: "destructive",
+        });
+        return; // Don't advance to next step
+      }
     }
 
     if (currentStep < totalSteps) {
@@ -384,9 +453,10 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
     try {
       let applicationData;
       
-      // PRIORITY 1: For services with time slots, ALWAYS use RPC function for atomic booking
-      // This must be checked FIRST, even if draftApplicationId exists
-      if (tile.has_time_slots && selectedDate && selectedTime) {
+      // PRIORITY 1: For services with time slots, use RPC function for atomic booking
+      // For non-reviewable services, booking data should already be saved from Step 2->3 transition
+      // For reviewable services, we need to call the RPC here
+      if (tile.has_time_slots && selectedDate && selectedTime && tile.requires_review) {
         // Calculate end time based on booking mode
         let endTime = '';
         if (tile.booking_mode === 'time_period' && tile.time_slot_config?.slot_duration_minutes) {
@@ -442,6 +512,10 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         }
 
         applicationData = { id: response.application_id! };
+      }
+      // For non-reviewable services with time slots, booking data already saved in Step 2->3 transition
+      else if (tile.has_time_slots && draftApplicationId) {
+        applicationData = { id: draftApplicationId };
       }
       // PRIORITY 2: For non-reviewable services with existing draft (non-time-slot only)
       else if (!tile.requires_review && draftApplicationId) {
