@@ -445,7 +445,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         applicationData = await updateApplication.mutateAsync({
           id: draftApplicationId,
           status: 'draft',
-          payment_status: 'unpaid',
+          payment_status: !tile.requires_payment ? 'not_required' : 'unpaid',
           ...applicantData,
           additional_information: formData.additional_information || formData.notes || formData.comments || undefined,
           service_specific_data: formData,
