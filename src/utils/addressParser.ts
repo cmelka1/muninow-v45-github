@@ -32,6 +32,19 @@ export function parseAddressString(addressString: string): ParsedAddress {
   // First part is likely the street address
   result.street_address = parts[0];
 
+  // Handle 4-part addresses: "Street, City, State, Zip"
+  if (parts.length === 4) {
+    const potentialZip = parts[3];
+    const potentialState = parts[2];
+    
+    if (/^\d{5}$/.test(potentialZip) && /^[A-Z]{2}$/.test(potentialState)) {
+      result.city = parts[1];
+      result.state = potentialState;
+      result.zip_code = potentialZip;
+      return result;
+    }
+  }
+
   // Last part might contain state and zip
   const lastPart = parts[parts.length - 1];
   
