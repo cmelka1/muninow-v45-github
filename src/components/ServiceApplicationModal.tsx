@@ -13,7 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { KeyboardNavigationForm } from '@/components/ui/keyboard-navigation-form';
 
-import { FileText, Download, User, Copy, ExternalLink, AlertCircle, Upload, X, Image, FileCheck, ArrowLeft, ArrowRight, CheckCircle, Edit, ChevronLeft, ChevronRight, Plus, Info, Loader2 } from 'lucide-react';
+import { FileText, Download, User, Copy, ExternalLink, AlertCircle, Upload, X, Image, FileCheck, ArrowLeft, ArrowRight, CheckCircle, Edit, ChevronLeft, ChevronRight, Plus, Info, Loader2, Calendar } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { useCreateServiceApplication, useUpdateServiceApplication } from '@/hooks/useServiceApplications';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,7 +25,8 @@ import PaymentMethodSelector from './PaymentMethodSelector';
 import { AddPaymentMethodDialog } from './profile/AddPaymentMethodDialog';
 import { useUserPaymentInstruments } from '@/hooks/useUserPaymentInstruments';
 import { UnifiedPaymentDialog } from '@/components/unified/UnifiedPaymentDialog';
-import { formatCurrency } from '@/lib/formatters';
+import { formatCurrency, formatDate } from '@/lib/formatters';
+import { format } from 'date-fns';
 import ServiceApplicationReviewStep from './ServiceApplicationReviewStep';
 import { useServiceApplicationPaymentMethods } from '@/hooks/useServiceApplicationPaymentMethods';
 import { InlinePaymentFlow } from './payment/InlinePaymentFlow';
@@ -1156,6 +1157,59 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
               uploadedDocuments={uploadedDocuments}
               onEdit={() => setCurrentStep(1)}
             />
+            
+            {/* Reservation Information - Only for booking appointments */}
+            {tile.has_time_slots && selectedDate && selectedTime && (
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Calendar className="h-5 w-5" />
+                    Reservation Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        Reservation Date
+                      </Label>
+                      <p className="text-base font-medium">{formatDate(selectedDate.toISOString())}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        Time Slot
+                      </Label>
+                      <p className="text-base font-medium">
+                        {(() => {
+                          const startTime = selectedTime;
+                          const duration = tile.time_slot_config?.slot_duration_minutes || 60;
+                          const [hours, minutes] = startTime.split(':').map(Number);
+                          const startDate = new Date(2000, 0, 1, hours, minutes);
+                          const endDate = new Date(startDate.getTime() + duration * 60000);
+                          
+                          return `${format(startDate, 'h:mm a')} - ${format(endDate, 'h:mm a')}`;
+                        })()}
+                        <span className="text-sm text-muted-foreground ml-2">
+                          ({tile.time_slot_config?.slot_duration_minutes} min)
+                        </span>
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        Service
+                      </Label>
+                      <p className="text-base font-medium">{tile.title}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        Timezone
+                      </Label>
+                      <p className="text-base">{tile.time_slot_config?.timezone || 'America/New_York'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             
             {/* Conditional Payment or Submit Section */}
             {!tile.requires_review ? (
