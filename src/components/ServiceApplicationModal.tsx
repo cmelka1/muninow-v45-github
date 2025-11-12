@@ -1177,34 +1177,32 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
                     </div>
                     <div>
                       <Label className="text-sm font-medium text-muted-foreground">
-                        Time Slot
+                        {tile.booking_mode === 'start_time' ? 'Tee Time' : 'Time Slot'}
                       </Label>
                       <p className="text-base font-medium">
                         {(() => {
                           const startTime = selectedTime;
-                          const duration = tile.time_slot_config?.slot_duration_minutes || 60;
                           const [hours, minutes] = startTime.split(':').map(Number);
                           const startDate = new Date(2000, 0, 1, hours, minutes);
-                          const endDate = new Date(startDate.getTime() + duration * 60000);
                           
-                          return `${format(startDate, 'h:mm a')} - ${format(endDate, 'h:mm a')}`;
+                          // For 'start_time' mode (tee times), show only start time
+                          if (tile.booking_mode === 'start_time') {
+                            return format(startDate, 'h:mm a');
+                          }
+                          
+                          // For 'time_period' mode (court bookings), show full range with duration
+                          const duration = tile.time_slot_config?.slot_duration_minutes || 60;
+                          const endDate = new Date(startDate.getTime() + duration * 60000);
+                          return (
+                            <>
+                              {format(startDate, 'h:mm a')} - {format(endDate, 'h:mm a')}
+                              <span className="text-sm text-muted-foreground ml-2">
+                                ({tile.time_slot_config?.slot_duration_minutes} min)
+                              </span>
+                            </>
+                          );
                         })()}
-                        <span className="text-sm text-muted-foreground ml-2">
-                          ({tile.time_slot_config?.slot_duration_minutes} min)
-                        </span>
                       </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-muted-foreground">
-                        Service
-                      </Label>
-                      <p className="text-base font-medium">{tile.title}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-muted-foreground">
-                        Timezone
-                      </Label>
-                      <p className="text-base">{tile.time_slot_config?.timezone || 'America/New_York'}</p>
                     </div>
                   </div>
                 </CardContent>
