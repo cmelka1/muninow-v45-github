@@ -120,15 +120,16 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({
         uploadStatus: 'uploading',
       };
 
-      // Add document to list
-      onDocumentsChange([...documents, newDocument]);
+      // Add document to list and keep a reference including the new item
+      const docsWithNew = [...documents, newDocument];
+      onDocumentsChange(docsWithNew);
 
       try {
         const { path } = await uploadFile(file, documentId);
         
         // Update document status to completed
         onDocumentsChange(
-          documents.map(doc =>
+          docsWithNew.map(doc =>
             doc.id === documentId
               ? { ...doc, uploadStatus: 'completed' as const, filePath: path, uploadProgress: 100 }
               : doc
@@ -144,7 +145,7 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({
         
         // Update document status to error
         onDocumentsChange(
-          documents.map(doc =>
+          docsWithNew.map(doc =>
             doc.id === documentId
               ? { ...doc, uploadStatus: 'error' as const, error: 'Upload failed' }
               : doc
