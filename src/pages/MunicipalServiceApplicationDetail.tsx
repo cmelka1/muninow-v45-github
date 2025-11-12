@@ -426,13 +426,35 @@ const MunicipalServiceApplicationDetail = () => {
                       {format(new Date(application.booking_date), 'EEEE, MMMM d, yyyy')}
                     </p>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Time Slot</Label>
-                    <p className="text-base font-semibold">
-                      {application.booking_start_time}
-                      {application.booking_end_time && ` - ${application.booking_end_time}`}
-                    </p>
-                  </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Time Slot</Label>
+                  <p className="text-base font-semibold">
+                    {application.booking_start_time ? (
+                      <>
+                        {format(new Date(`2000-01-01T${application.booking_start_time}`), 'h:mm a')}
+                        {application.booking_end_time && (
+                          <>
+                            {' - '}
+                            {format(new Date(`2000-01-01T${application.booking_end_time}`), 'h:mm a')}
+                            <span className="text-sm text-muted-foreground ml-2">
+                              ({(() => {
+                                const start = new Date(`2000-01-01T${application.booking_start_time}`);
+                                const end = new Date(`2000-01-01T${application.booking_end_time}`);
+                                const diffMs = end.getTime() - start.getTime();
+                                const diffMins = Math.floor(diffMs / 60000);
+                                const hours = Math.floor(diffMins / 60);
+                                const mins = diffMins % 60;
+                                return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+                              })()})
+                            </span>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      'Time not specified'
+                    )}
+                  </p>
+                </div>
                   {application.booking_timezone && (
                     <div>
                       <Label className="text-sm font-medium text-muted-foreground">Timezone</Label>
