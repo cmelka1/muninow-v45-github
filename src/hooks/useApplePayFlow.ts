@@ -55,6 +55,8 @@ export const useApplePayFlow = (params: ApplePayFlowParams) => {
   }, [user]);
 
   const handleApplePayPayment = useCallback((): Promise<PaymentResponse> => {
+    console.log('%c🍎 APPLE PAY DEBUG MODE ENABLED', 'background: #000; color: #fff; font-size: 16px; padding: 10px;');
+    console.log('%cIf payment fails, please copy ALL console logs and share them.', 'color: #ff0000; font-size: 12px;');
     console.log('🍎 [useApplePayFlow] ========================================');
     console.log('🍎 [useApplePayFlow] STARTING APPLE PAY PAYMENT');
     console.log('🍎 [useApplePayFlow] ========================================');
@@ -213,6 +215,10 @@ export const useApplePayFlow = (params: ApplePayFlowParams) => {
           console.log('🍎 [useApplePayFlow] ========================================');
           console.log('🍎 [useApplePayFlow] PAYMENT AUTHORIZED');
           console.log('🍎 [useApplePayFlow] ========================================');
+          console.log('🍎 [useApplePayFlow] Event object keys:', Object.keys(event));
+          console.log('🍎 [useApplePayFlow] Payment object keys:', Object.keys(event.payment || {}));
+          console.log('🍎 [useApplePayFlow] Token present:', !!event.payment?.token);
+          console.log('🍎 [useApplePayFlow] Billing contact present:', !!event.payment?.billingContact);
           console.log('🍎 [useApplePayFlow] Token received');
 
           try {
@@ -359,14 +365,78 @@ export const useApplePayFlow = (params: ApplePayFlowParams) => {
 
         // Handle cancellation
         session.oncancel = () => {
-          console.log('🍎 [useApplePayFlow] Payment cancelled by user');
+          console.log('🍎 [useApplePayFlow] ========================================');
+          console.log('🍎 [useApplePayFlow] ❌ PAYMENT CANCELLED BY USER');
+          console.log('🍎 [useApplePayFlow] ========================================');
           clearTimeout(timeoutId);
           setIsProcessing(false);
+          
+          toast({
+            title: "Payment Cancelled",
+            description: "You cancelled the Apple Pay payment.",
+            variant: "destructive",
+          });
+          
+          params.onError?.({
+            type: 'user_cancelled',
+            message: 'Payment cancelled by user',
+            originalError: new Error('Payment cancelled')
+          });
+          
           reject(new Error('Payment cancelled'));
         };
 
+        // Handle Apple Pay errors
+        session.onerror = (event: any) => {
+          console.log('🍎 [useApplePayFlow] ========================================');
+          console.error('🍎 [useApplePayFlow] ❌ APPLE PAY ERROR EVENT');
+          console.log('🍎 [useApplePayFlow] ========================================');
+          console.error('🍎 [useApplePayFlow] Error event:', event);
+          console.error('🍎 [useApplePayFlow] Error details:', JSON.stringify(event, null, 2));
+          console.error('🍎 [useApplePayFlow] Error type:', typeof event);
+          console.error('🍎 [useApplePayFlow] Error keys:', Object.keys(event || {}));
+          
+          clearTimeout(timeoutId);
+          setIsProcessing(false);
+          
+          toast({
+            title: "Apple Pay Error",
+            description: "Unable to complete Apple Pay authorization. Please try a different payment method.",
+            variant: "destructive",
+          });
+          
+          const errorResponse: PaymentResponse = {
+            success: false,
+            error: 'APPLE_PAY_ERROR',
+            retryable: true
+          };
+          
+          params.onError?.({
+            type: 'retryable',
+            message: 'Apple Pay authorization failed',
+            originalError: event
+          });
+          
+          reject(new Error('Apple Pay authorization failed'));
+        };
+
         console.log('🍎 [useApplePayFlow] Starting Apple Pay session...');
-        session.begin();
+        console.log('🍎 [useApplePayFlow] Session state before begin:', {
+          hasOnValidateMerchant: !!session.onvalidatemerchant,
+          hasOnPaymentAuthorized: !!session.onpaymentauthorized,
+          hasOnCancel: !!session.oncancel,
+          hasOnError: !!session.onerror
+        });
+
+        try {
+          session.begin();
+          console.log('🍎 [useApplePayFlow] ✅ Session.begin() called successfully');
+        } catch (beginError) {
+          console.error('🍎 [useApplePayFlow] ❌ Error calling session.begin():', beginError);
+          setIsProcessing(false);
+          reject(beginError);
+          return;
+        }
 
       } catch (err) {
         console.error('🍎 [useApplePayFlow] ❌ Setup error:', err);
