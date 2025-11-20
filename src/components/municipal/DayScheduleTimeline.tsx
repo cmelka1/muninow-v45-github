@@ -27,6 +27,8 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
       for (let minute = 0; minute < 60; minute += 30) {
         const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
         slots.push(time);
+        // Stop after 10:00 PM (22:00)
+        if (hour === 22 && minute === 0) break;
       }
     }
     return slots;
