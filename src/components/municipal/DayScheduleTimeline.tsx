@@ -31,8 +31,12 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
         minHour = Math.min(minHour, startHour);
       }
       if (facility.time_slot_config?.end_time) {
-        const endHour = parseInt(facility.time_slot_config.end_time.split(':')[0]);
-        maxHour = Math.max(maxHour, endHour);
+        const [hourStr, minuteStr] = facility.time_slot_config.end_time.split(':');
+        const endHour = parseInt(hourStr);
+        const endMinute = parseInt(minuteStr);
+        // If end time has minutes (e.g., 18:30), extend to next hour to show the last slot
+        const adjustedEndHour = endMinute > 0 ? endHour + 1 : endHour;
+        maxHour = Math.max(maxHour, adjustedEndHour);
       }
     });
     
