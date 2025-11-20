@@ -202,10 +202,18 @@ const ServiceApplicationDetail: React.FC = () => {
   };
 
   const getBackRoute = () => {
+    // Check if this is a sport reservation (has booking/time slot data)
+    const isSportReservation = !!application?.booking_date;
+    
     if (profile?.account_type === 'municipal') {
-      return '/municipal/other-services';
+      return isSportReservation 
+        ? '/municipal/sport-reservations' 
+        : '/municipal/other-services';
     }
-    return '/other-services';
+    
+    return isSportReservation 
+      ? '/sport-reservations' 
+      : '/other-services';
   };
 
   if (isLoading) {
