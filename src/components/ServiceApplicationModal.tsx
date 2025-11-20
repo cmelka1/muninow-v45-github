@@ -296,19 +296,19 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         }
 
         const { data: rpcData, error: rpcError } = await supabase.rpc('create_booking_with_conflict_check', {
-          p_application_id: draftApplicationId || null,
           p_tile_id: tile.id,
           p_user_id: profile?.id || '',
           p_customer_id: tile.customer_id,
-          p_booking_date: selectedDate.toISOString().split('T')[0],
-          p_booking_start_time: selectedTime,
-          p_booking_end_time: endTime,
-          p_booking_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          p_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
           p_form_data: {
             ...formData,
             ...extractApplicantData(enrichFormDataWithParsedAddress(formData)),
           },
+          p_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
+          p_booking_date: selectedDate.toISOString().split('T')[0],
+          p_booking_start_time: selectedTime,
+          p_booking_end_time: endTime,
+          p_booking_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          p_application_id: draftApplicationId || null,
         });
 
         // Check for Postgres errors
@@ -394,19 +394,19 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         }
 
         const { data: rpcData, error: rpcError } = await supabase.rpc('create_booking_with_conflict_check', {
-          p_application_id: draftApplicationId || null,  // Pass draft ID if exists
           p_tile_id: tile.id,
           p_user_id: profile?.id || '',
           p_customer_id: tile.customer_id,
-          p_booking_date: selectedDate.toISOString().split('T')[0],
-          p_booking_start_time: selectedTime,
-          p_booking_end_time: endTime,
-          p_booking_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          p_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
           p_form_data: {
             ...formData,
             ...extractApplicantData(enrichFormDataWithParsedAddress(formData)),
           },
+          p_amount_cents: tile.allow_user_defined_amount ? formData.amount_cents : tile.amount_cents,
+          p_booking_date: selectedDate.toISOString().split('T')[0],
+          p_booking_start_time: selectedTime,
+          p_booking_end_time: endTime,
+          p_booking_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          p_application_id: draftApplicationId || null,
         });
 
         // Check for Postgres errors first
