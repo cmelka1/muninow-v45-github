@@ -20,21 +20,40 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
   onBookingClick,
   onNewBooking,
 }) => {
-  // Generate time slots (6 AM to 10 PM, 30-min intervals)
-  const generateTimeSlots = () => {
+  // Calculate timeline range from facilities' operating hours
+  const getTimelineRange = (facilities: any[]) => {
+    let minHour = 6;
+    let maxHour = 22;
+    
+    facilities.forEach(facility => {
+      if (facility.time_slot_config?.start_time) {
+        const startHour = parseInt(facility.time_slot_config.start_time.split(':')[0]);
+        minHour = Math.min(minHour, startHour);
+      }
+      if (facility.time_slot_config?.end_time) {
+        const endHour = parseInt(facility.time_slot_config.end_time.split(':')[0]);
+        maxHour = Math.max(maxHour, endHour);
+      }
+    });
+    
+    return { minHour, maxHour };
+  };
+
+  // Generate time slots based on facility hours
+  const generateTimeSlots = (minHour: number, maxHour: number) => {
     const slots = [];
-    for (let hour = 6; hour <= 22; hour++) {
+    for (let hour = minHour; hour <= maxHour; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
         const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
         slots.push(time);
-        // Stop after 10:00 PM (22:00)
-        if (hour === 22 && minute === 0) break;
+        if (hour === maxHour && minute === 0) break;
       }
     }
     return slots;
   };
 
-  const timeSlots = generateTimeSlots();
+  const { minHour, maxHour } = getTimelineRange(facilities);
+  const timeSlots = generateTimeSlots(minHour, maxHour);
 
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':');
@@ -88,7 +107,14 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div 
+      className="overflow-x-auto pb-4"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: `auto repeat(${facilities.length}, minmax(250px, 1fr))`,
+        gap: '1rem'
+      }}
+    >
       {/* Time labels column */}
       <div className="sticky left-0 bg-background z-10 pr-4">
         <div className="h-12 font-semibold">Time</div>
@@ -106,7 +132,7 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
         const facilityBookings = bookings.filter(b => b.tile_id === facility.id);
 
         return (
-          <div key={facility.id} className="min-w-[250px]">
+          <div key={facility.id}>
             <div className="h-12 font-semibold text-center border-b pb-2 mb-2">
               {facility.title}
             </div>
