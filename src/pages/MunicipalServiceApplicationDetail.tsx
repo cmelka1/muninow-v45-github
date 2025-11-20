@@ -187,6 +187,15 @@ const MunicipalServiceApplicationDetail = () => {
     );
   }
 
+  const getBackRoute = () => {
+    // Check if this is a sport reservation (has booking/time slot data)
+    const isSportReservation = !!application?.booking_date;
+    
+    return isSportReservation 
+      ? '/municipal/sport-reservations' 
+      : '/municipal/other-services';
+  };
+
   if (error || !application) {
     return (
       <div className="p-6">
@@ -301,15 +310,6 @@ const MunicipalServiceApplicationDetail = () => {
         </div>
       );
     });
-  };
-
-  const getBackRoute = () => {
-    // Check if this is a sport reservation (has booking/time slot data)
-    const isSportReservation = !!application?.booking_date;
-    
-    return isSportReservation 
-      ? '/municipal/sport-reservations' 
-      : '/municipal/other-services';
   };
 
   return (

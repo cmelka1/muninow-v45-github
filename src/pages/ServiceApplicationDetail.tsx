@@ -240,6 +240,12 @@ const ServiceApplicationDetail: React.FC = () => {
   if (error || !application) {
     return (
       <div className="min-h-screen bg-gray-100 p-6">
+        <div className="flex items-center gap-4 mb-6">
+          <Button variant="outline" onClick={() => navigate(getBackRoute())}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+        </div>
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-destructive">Error loading service application details. Please try again.</p>
