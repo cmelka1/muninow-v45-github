@@ -191,7 +191,7 @@ const MunicipalServiceApplicationDetail = () => {
     return (
       <div className="p-6">
         <div className="flex items-center gap-4 mb-6">
-          <Button variant="outline" onClick={() => navigate('/municipal/other-services')}>
+          <Button variant="outline" onClick={() => navigate(getBackRoute())}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Applications
           </Button>
@@ -303,6 +303,15 @@ const MunicipalServiceApplicationDetail = () => {
     });
   };
 
+  const getBackRoute = () => {
+    // Check if this is a sport reservation (has booking/time slot data)
+    const isSportReservation = !!application?.booking_date;
+    
+    return isSportReservation 
+      ? '/municipal/sport-reservations' 
+      : '/municipal/other-services';
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       {/* Header */}
@@ -311,7 +320,7 @@ const MunicipalServiceApplicationDetail = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/municipal/other-services')}
+            onClick={() => navigate(getBackRoute())}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
