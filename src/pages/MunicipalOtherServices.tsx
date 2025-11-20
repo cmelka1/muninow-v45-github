@@ -19,13 +19,16 @@ const MunicipalOtherServices = () => {
   const { data: serviceTiles, isLoading: tilesLoading } = useMunicipalServiceTiles(profile?.customer_id);
   const { data: applications, isLoading: applicationsLoading } = useServiceApplications();
   
+  // Filter OUT sport facilities (has_time_slots = true)
+  const nonSportTiles = serviceTiles?.filter(tile => tile.has_time_slots !== true) || [];
+  
   // Filter applications for this municipality and exclude drafts
   const municipalApplications = applications?.filter(app => 
     app.customer_id === profile?.customer_id && app.status !== 'draft'
   ) || [];
   
   // Calculate stats
-  const activeServices = serviceTiles?.filter(tile => tile.is_active)?.length || 0;
+  const activeServices = nonSportTiles.filter(tile => tile.is_active)?.length || 0;
   const totalApplications = municipalApplications.length;
   const pendingReviews = municipalApplications.filter(app => app.status === 'under_review').length;
   const thisMonthRevenue = municipalApplications
@@ -35,7 +38,7 @@ const MunicipalOtherServices = () => {
       return appDate.getMonth() === now.getMonth() && appDate.getFullYear() === now.getFullYear() && app.status === 'issued';
     })
     .reduce((sum, app) => {
-      const tile = serviceTiles?.find(t => t.id === app.tile_id);
+      const tile = nonSportTiles.find(t => t.id === app.tile_id);
       return sum + (tile?.amount_cents || 0);
     }, 0);
 
@@ -61,7 +64,7 @@ const MunicipalOtherServices = () => {
           <CardContent>
             <div className="text-2xl font-bold">{activeServices}</div>
             <p className="text-xs text-muted-foreground">
-              {serviceTiles?.length || 0} total services
+              {nonSportTiles.length} total services
             </p>
           </CardContent>
         </Card>
@@ -115,7 +118,7 @@ const MunicipalOtherServices = () => {
         
         <TabsContent value="services" className="space-y-4">
           <ServiceTileManager 
-            serviceTiles={serviceTiles || []} 
+            serviceTiles={nonSportTiles} 
             isLoading={tilesLoading}
             customerId={profile?.customer_id}
           />
@@ -124,7 +127,7 @@ const MunicipalOtherServices = () => {
         <TabsContent value="applications" className="space-y-4">
           <ApplicationHistoryTable 
             applications={municipalApplications}
-            serviceTiles={serviceTiles || []}
+            serviceTiles={nonSportTiles}
             isLoading={applicationsLoading}
             totalCount={totalApplications}
           />

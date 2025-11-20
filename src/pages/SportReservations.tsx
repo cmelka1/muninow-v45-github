@@ -25,7 +25,7 @@ const SportReservations: React.FC = () => {
   const [selectedMunicipality, setSelectedMunicipality] = useState<Municipality | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
-  const [selectedTile, setSelectedTile] = useState(null);
+  const [selectedTile, setSelectedTile] = useState<MunicipalServiceTile | null>(null);
 
   // Fetch service tiles for the selected municipality
   const { 
