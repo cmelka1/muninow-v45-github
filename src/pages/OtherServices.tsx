@@ -7,7 +7,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { MunicipalityAutocomplete } from '@/components/ui/municipality-autocomplete';
-import { useMunicipalServiceTiles } from '@/hooks/useMunicipalServiceTiles';
+import { useMunicipalServiceTiles, MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import ServiceTileCard from '@/components/ServiceTileCard';
 import ServiceApplicationModal from '@/components/ServiceApplicationModal';
 import { MigratePDFButton } from '@/components/MigratePDFButton';
@@ -44,7 +44,7 @@ const OtherServices: React.FC = () => {
     (tile.description && tile.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const handleTileApply = (tile) => {
+  const handleTileApply = (tile: MunicipalServiceTile) => {
     setSelectedTile(tile);
     setIsApplicationModalOpen(true);
   };
