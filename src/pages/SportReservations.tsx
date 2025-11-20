@@ -205,6 +205,7 @@ const SportReservations: React.FC = () => {
               <ServiceApplicationModal
                 tile={selectedTile}
                 isOpen={isApplicationModalOpen}
+                returnPath="/sport-reservations"
                 onClose={() => {
                   setIsApplicationModalOpen(false);
                   setSelectedTile(null);

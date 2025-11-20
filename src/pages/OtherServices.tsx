@@ -207,6 +207,7 @@ const OtherServices: React.FC = () => {
               <ServiceApplicationModal
                 tile={selectedTile}
                 isOpen={isApplicationModalOpen}
+                returnPath="/other-services"
                 onClose={() => {
                   setIsApplicationModalOpen(false);
                   setSelectedTile(null);

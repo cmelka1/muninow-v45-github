@@ -49,6 +49,7 @@ interface ServiceApplicationModalProps {
   tile: MunicipalServiceTile | null;
   isOpen: boolean;
   onClose: () => void;
+  returnPath?: string;
 }
 
 interface UploadedDocument {
@@ -77,6 +78,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   tile,
   isOpen,
   onClose,
+  returnPath = '/dashboard',
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [draftApplicationId, setDraftApplicationId] = useState<string | null>(null);
@@ -520,7 +522,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       description: 'Your service application has been submitted and paid successfully.',
     });
     onClose();
-    navigate('/dashboard');
+    navigate(returnPath);
   };
 
   const handlePaymentError = (error: any) => {
