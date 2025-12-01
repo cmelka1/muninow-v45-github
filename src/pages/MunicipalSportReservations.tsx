@@ -234,6 +234,7 @@ const MunicipalSportReservations = () => {
               bookings={dailyBookings || []}
               facilities={sportTiles}
               isLoading={dailyLoading}
+              selectedDate={selectedDate}
               onBookingClick={handleBookingClick}
               onNewBooking={handleNewBooking}
             />
