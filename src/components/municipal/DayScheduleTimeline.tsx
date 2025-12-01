@@ -43,7 +43,7 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
     const config = facility.time_slot_config || {};
     
     // Check day-of-week availability
-    const dayName = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
+    const dayName = new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' });
     const availableDays = config.available_days || [];
     if (availableDays.length > 0 && !availableDays.includes(dayName)) {
       return false; // Facility closed this day
@@ -188,7 +188,7 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
                   <div
                     key={booking.id}
                     className={cn(
-                      'absolute w-full px-2 py-1 rounded border-l-4 cursor-pointer transition-all',
+                      'absolute w-full px-2 py-1 rounded border-l-4 cursor-pointer transition-all z-10',
                       getStatusColor(booking.status)
                     )}
                     style={{ top: `${top}px`, height: `${height}px` }}
