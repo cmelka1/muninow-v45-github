@@ -168,7 +168,7 @@ const MunicipalSportReservations = () => {
         </TabsList>
 
         {/* NEW: Schedule Tab */}
-        <TabsContent value="schedule" className="space-y-4">
+        <TabsContent value="schedule" className="space-y-4 focus-visible:ring-0">
           {/* Week Navigator */}
           <WeekNavigator
             customerId={profile?.customer_id}
@@ -255,7 +255,7 @@ const MunicipalSportReservations = () => {
         </TabsContent>
         
         {/* All Bookings Tab */}
-        <TabsContent value="bookings" className="space-y-4">
+        <TabsContent value="bookings" className="space-y-4 focus-visible:ring-0">
           <ApplicationHistoryTable 
             applications={sportApplications}
             serviceTiles={sportTiles}
@@ -265,7 +265,7 @@ const MunicipalSportReservations = () => {
         </TabsContent>
 
         {/* Facilities Tab */}
-        <TabsContent value="facilities" className="space-y-4">
+        <TabsContent value="facilities" className="space-y-4 focus-visible:ring-0">
           <ServiceTileManager 
             serviceTiles={sportTiles} 
             isLoading={tilesLoading}
