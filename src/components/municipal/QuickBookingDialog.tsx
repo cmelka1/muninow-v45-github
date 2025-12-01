@@ -38,8 +38,13 @@ export const QuickBookingDialog: React.FC<QuickBookingDialogProps> = ({
   prefilledTime,
   onSuccess,
 }) => {
+  // Helper to get local date string (YYYY-MM-DD)
+  const getLocalDateString = (date: Date = new Date()) => {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
+  
   const [facilityId, setFacilityId] = useState(prefilledFacilityId || '');
-  const [date, setDate] = useState(prefilledDate || new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(prefilledDate || getLocalDateString());
   const [startTime, setStartTime] = useState(prefilledTime || '09:00:00');
   const [duration, setDuration] = useState(60); // minutes
   const [firstName, setFirstName] = useState('');
