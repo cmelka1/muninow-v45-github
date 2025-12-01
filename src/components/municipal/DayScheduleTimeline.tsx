@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -24,11 +24,22 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
   onBookingClick,
   onNewBooking,
 }) => {
-  // Generate fixed 24-hour time slots (30-minute intervals)
+  // Calculate the smallest interval across all facilities to use as base grid
+  const baseInterval = useMemo(() => {
+    const intervals = facilities
+      .filter(f => f.booking_mode === 'start_time')
+      .map(f => f.time_slot_config?.start_time_interval_minutes || 30);
+    return intervals.length > 0 ? Math.min(...intervals, 30) : 30;
+  }, [facilities]);
+
+  // Calculate dynamic slot height based on interval
+  const slotHeight = baseInterval === 15 ? 24 : 48;
+
+  // Generate time slots based on dynamic interval
   const generateTimeSlots = () => {
     const slots = [];
     for (let hour = 0; hour < 24; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
+      for (let minute = 0; minute < 60; minute += baseInterval) {
         const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
         slots.push(time);
       }
@@ -36,7 +47,7 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
     return slots;
   };
 
-  const timeSlots = generateTimeSlots(); // Always 48 slots (00:00:00 to 23:30:00)
+  const timeSlots = generateTimeSlots();
 
   // Check if a slot is available based on facility operating hours and day-of-week
   const isSlotAvailable = (time: string, facility: MunicipalServiceTile) => {
@@ -66,19 +77,20 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
   };
 
   const getBookingPosition = (startTime: string, endTime: string | null) => {
-    // Calculate position based on fixed 24-hour timeline
+    // Calculate position based on dynamic interval
+    const slotsPerHour = 60 / baseInterval;
     const [startHour, startMin] = startTime.split(':').map(Number);
-    const startIndex = startHour * 2 + Math.floor(startMin / 30);
+    const startIndex = startHour * slotsPerHour + Math.floor(startMin / baseInterval);
     
-    let endIndex = startIndex + 1; // Default to 1 slot (30 min)
+    let endIndex = startIndex + 1; // Default to 1 slot
     if (endTime) {
       const [endHour, endMin] = endTime.split(':').map(Number);
-      endIndex = endHour * 2 + Math.floor(endMin / 30);
+      endIndex = endHour * slotsPerHour + Math.floor(endMin / baseInterval);
     }
     
-    const height = (endIndex - startIndex) * 48;
-    const top = startIndex * 48;
-    return { top, height: Math.max(height, 48) };
+    const height = (endIndex - startIndex) * slotHeight;
+    const top = startIndex * slotHeight;
+    return { top, height: Math.max(height, slotHeight) };
   };
 
   const getStatusColor = (status: string) => {
@@ -129,8 +141,8 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
       <div className="sticky left-0 bg-background z-10 pr-4">
         <div className="h-12 font-semibold">Time</div>
         {timeSlots.map((time, index) => (
-          index % 2 === 0 && (
-            <div key={time} className="h-24 text-sm text-muted-foreground flex items-start pt-1">
+          time.endsWith(':00:00') && (
+            <div key={time} style={{ height: `${slotHeight * (60 / baseInterval)}px` }} className="text-sm text-muted-foreground flex items-start pt-1">
               {formatTime(time)}
             </div>
           )
@@ -146,7 +158,7 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
             <div className="h-12 font-semibold text-center border-b pb-2 mb-2">
               {facility.title}
             </div>
-            <div className="relative" style={{ height: `${timeSlots.length * 48}px` }}>
+            <div className="relative" style={{ height: `${timeSlots.length * slotHeight}px` }}>
               {/* Grid lines with availability-aware styling */}
               {timeSlots.map((time, index) => {
                 const isAvailable = isSlotAvailable(time, facility);
@@ -155,12 +167,12 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
                   <div
                     key={time}
                     className={cn(
-                      'absolute w-full h-12 border-t border-border/50 transition-colors',
+                      'absolute w-full border-t border-border/50 transition-colors',
                       isAvailable 
                         ? 'bg-gray-100 hover:bg-gray-200 cursor-pointer group' 
                         : 'bg-gray-300 cursor-not-allowed'
                     )}
-                    style={{ top: `${index * 48}px` }}
+                    style={{ top: `${index * slotHeight}px`, height: `${slotHeight}px` }}
                     onClick={isAvailable ? () => onNewBooking(facility.id, time) : undefined}
                   >
                     {isAvailable && (
