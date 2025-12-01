@@ -45,6 +45,11 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
     const endTime = config.end_time || '17:00';
     const duration = config.slot_duration_minutes || 60;
     
+    // For start_time mode, use interval; for time_period, use duration
+    const interval = bookingMode === 'start_time' 
+      ? (config.start_time_interval_minutes || 30)
+      : duration;
+    
     const slots: { time: string; endTime?: string; isBooked: boolean }[] = [];
     
     const startDate = parse(startTime, 'HH:mm', new Date());
@@ -71,8 +76,8 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
       
       slots.push({ time: timeStr, endTime: endTimeStr, isBooked });
       
-      // Move to next slot
-      currentTime = endTimeDate;
+      // Advance by interval (not duration)
+      currentTime = new Date(currentTime.getTime() + interval * 60000);
     }
     
     return slots;
