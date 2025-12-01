@@ -26,14 +26,37 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
 }) => {
   // Calculate the smallest interval across all facilities to use as base grid
   const baseInterval = useMemo(() => {
-    const intervals = facilities
+    // Get intervals from start_time mode facilities
+    const startTimeIntervals = facilities
       .filter(f => f.booking_mode === 'start_time')
       .map(f => f.time_slot_config?.start_time_interval_minutes || 30);
-    return intervals.length > 0 ? Math.min(...intervals, 30) : 30;
+    
+    // Get intervals from time_period mode facilities (use slot_duration)
+    const timePeriodIntervals = facilities
+      .filter(f => f.booking_mode === 'time_period' || !f.booking_mode)
+      .map(f => f.time_slot_config?.slot_duration_minutes || 60);
+    
+    const allIntervals = [...startTimeIntervals, ...timePeriodIntervals];
+    
+    // Use smallest interval as base grid (no artificial cap)
+    return allIntervals.length > 0 ? Math.min(...allIntervals) : 30;
   }, [facilities]);
 
   // Calculate dynamic slot height based on interval
-  const slotHeight = baseInterval === 15 ? 24 : 48;
+  const slotHeight = baseInterval <= 15 ? 24 : baseInterval <= 30 ? 48 : 96;
+
+  // Check if a time is valid for a specific facility's interval
+  const isValidIntervalForFacility = (time: string, facility: MunicipalServiceTile) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    
+    // Get the facility's specific interval
+    const facilityInterval = facility.booking_mode === 'start_time'
+      ? (facility.time_slot_config?.start_time_interval_minutes || 30)
+      : (facility.time_slot_config?.slot_duration_minutes || 60);
+    
+    // Check if minutes are divisible by the facility's interval
+    return minutes % facilityInterval === 0;
+  };
 
   // Generate time slots based on dynamic interval
   const generateTimeSlots = () => {
@@ -162,20 +185,24 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
               {/* Grid lines with availability-aware styling */}
               {timeSlots.map((time, index) => {
                 const isAvailable = isSlotAvailable(time, facility);
+                const isValidInterval = isValidIntervalForFacility(time, facility);
+                const canBook = isAvailable && isValidInterval;
                 
                 return (
                   <div
                     key={time}
                     className={cn(
                       'absolute w-full border-t border-border/50 transition-colors',
-                      isAvailable 
+                      canBook 
                         ? 'bg-gray-100 hover:bg-gray-200 cursor-pointer group' 
-                        : 'bg-gray-300 cursor-not-allowed'
+                        : isAvailable && !isValidInterval
+                          ? 'bg-gray-50/50 cursor-default'  // Available but not valid interval
+                          : 'bg-gray-300 cursor-not-allowed'  // Closed hours
                     )}
                     style={{ top: `${index * slotHeight}px`, height: `${slotHeight}px` }}
-                    onClick={isAvailable ? () => onNewBooking(facility.id, time) : undefined}
+                    onClick={canBook ? () => onNewBooking(facility.id, time) : undefined}
                   >
-                    {isAvailable && (
+                    {canBook && (
                       <Button
                         variant="ghost"
                         size="sm"
