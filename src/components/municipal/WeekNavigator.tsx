@@ -66,7 +66,7 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex gap-3 overflow-x-auto p-2 -m-2 scrollbar-hide" ref={scrollRef}>
+      <div className="flex gap-3 overflow-x-auto p-2 -m-2 scrollbar-hide outline-none" ref={scrollRef}>
         {Array.from({ length: 10 }).map((_, i) => (
           <Skeleton key={i} className="min-w-[140px] h-24" />
         ))}
@@ -75,7 +75,7 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({
   }
 
   return (
-    <div className="flex gap-3 overflow-x-auto p-2 -m-2 scrollbar-hide" ref={scrollRef}>
+    <div className="flex gap-3 overflow-x-auto p-2 -m-2 scrollbar-hide outline-none" ref={scrollRef}>
       {dates.map((date) => {
         const { dayName, dayNum, month } = formatDate(date);
         const count = bookingCounts?.find(b => b.date === date)?.count || 0;
