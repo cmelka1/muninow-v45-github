@@ -103,6 +103,7 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
   const [endTime, setEndTime] = useState(tile?.time_slot_config?.end_time || '17:00');
   const [maxAdvanceDays, setMaxAdvanceDays] = useState(tile?.time_slot_config?.max_advance_days || 30);
   const [timezone, setTimezone] = useState(tile?.time_slot_config?.timezone || 'America/New_York');
+  const [startTimeInterval, setStartTimeInterval] = useState(tile?.time_slot_config?.start_time_interval_minutes || 30);
 
   // Fetch merchants for this municipality on mount
   useEffect(() => {
@@ -239,6 +240,7 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
       booking_mode: hasTimeSlots ? bookingMode : undefined,
       time_slot_config: hasTimeSlots ? {
         slot_duration_minutes: slotDuration,
+        start_time_interval_minutes: bookingMode === 'start_time' ? startTimeInterval : undefined,
         available_days: availableDays,
         start_time: startTime,
         end_time: endTime,
@@ -614,6 +616,25 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
                         <SelectItem value="120">2 hours</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                )}
+                
+                {bookingMode === 'start_time' && (
+                  <div>
+                    <Label htmlFor="start-time-interval">Start Time Intervals (minutes)</Label>
+                    <Select value={startTimeInterval.toString()} onValueChange={(val) => setStartTimeInterval(parseInt(val))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="15">15 minutes</SelectItem>
+                        <SelectItem value="30">30 minutes</SelectItem>
+                        <SelectItem value="60">60 minutes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Time between available start time options
+                    </p>
                   </div>
                 )}
                 

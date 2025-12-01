@@ -4,6 +4,7 @@ import { toast } from '@/hooks/use-toast';
 
 export interface TimeSlotConfig {
   slot_duration_minutes?: number;
+  start_time_interval_minutes?: number; // Spacing between start times (15, 30, or 60)
   available_days?: string[]; // ['Monday', 'Tuesday', etc.]
   start_time?: string; // '09:00'
   end_time?: string; // '17:00'
