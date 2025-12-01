@@ -40,14 +40,14 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({
 
   // Auto-scroll to selected date
   useEffect(() => {
-    if (scrollRef.current) {
-      const selectedIndex = dates.indexOf(selectedDate);
-      if (selectedIndex !== -1) {
-        const cardWidth = 140; // Approximate card width
-        const scrollPosition = selectedIndex * cardWidth - scrollRef.current.offsetWidth / 2 + cardWidth / 2;
-        scrollRef.current.scrollTo({ left: Math.max(0, scrollPosition), behavior: 'smooth' });
+      if (scrollRef.current) {
+        const selectedIndex = dates.indexOf(selectedDate);
+        if (selectedIndex !== -1) {
+          const cardWidth = 150; // Approximate card width + gap
+          const scrollPosition = selectedIndex * cardWidth - scrollRef.current.offsetWidth / 2 + cardWidth / 2;
+          scrollRef.current.scrollTo({ left: Math.max(0, scrollPosition), behavior: 'smooth' });
+        }
       }
-    }
   }, [selectedDate, dates]);
 
   const getAvailabilityColor = (count: number) => {
@@ -66,16 +66,16 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide" ref={scrollRef}>
+      <div className="flex gap-3 overflow-x-auto p-2 -m-2 scrollbar-hide" ref={scrollRef}>
         {Array.from({ length: 10 }).map((_, i) => (
-          <Skeleton key={i} className="min-w-[130px] h-24" />
+          <Skeleton key={i} className="min-w-[140px] h-24" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide" ref={scrollRef}>
+    <div className="flex gap-3 overflow-x-auto p-2 -m-2 scrollbar-hide" ref={scrollRef}>
       {dates.map((date) => {
         const { dayName, dayNum, month } = formatDate(date);
         const count = bookingCounts?.find(b => b.date === date)?.count || 0;
@@ -86,8 +86,8 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({
           <Card
             key={date}
             className={cn(
-              'min-w-[130px] p-3 cursor-pointer transition-all hover:shadow-md',
-              isSelected && 'ring-2 ring-primary bg-primary/5'
+              'min-w-[140px] p-3 cursor-pointer transition-all hover:shadow-md',
+              isSelected && 'ring-2 ring-primary ring-offset-2 bg-primary/5 shadow-md'
             )}
             onClick={() => onDateChange(date)}
           >
