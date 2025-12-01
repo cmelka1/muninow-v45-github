@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
 import { DailyBooking } from '@/hooks/useDailyBookings';
 
@@ -135,10 +136,14 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex gap-4 overflow-x-auto">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="min-w-[250px] h-[800px]" />
-        ))}
+      <div className="flex flex-col">
+        <div className="flex gap-4 border-b pb-2 mb-2">
+          <Skeleton className="w-20 h-6" />
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="flex-1 h-6" />
+          ))}
+        </div>
+        <Skeleton className="w-full h-[500px]" />
       </div>
     );
   }
@@ -152,101 +157,119 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
   }
 
   return (
-    <div 
-      className="overflow-x-auto pb-4"
-      style={{
-        display: 'grid',
-        gridTemplateColumns: `auto repeat(${facilities.length}, minmax(250px, 1fr))`,
-        gap: '1rem'
-      }}
-    >
-      {/* Time labels column */}
-      <div className="sticky left-0 bg-background z-10 pr-4">
-        <div className="h-12 font-semibold">Time</div>
-        {timeSlots.map((time, index) => (
-          time.endsWith(':00:00') && (
-            <div key={time} style={{ height: `${slotHeight * (60 / baseInterval)}px` }} className="text-sm text-muted-foreground flex items-start pt-1">
-              {formatTime(time)}
-            </div>
-          )
+    <div className="flex flex-col">
+      {/* Fixed Header Row - Facility Names */}
+      <div 
+        className="flex border-b pb-2 mb-2"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `80px repeat(${facilities.length}, minmax(250px, 1fr))`,
+          gap: '1rem'
+        }}
+      >
+        <div className="font-semibold text-sm">Time</div>
+        {facilities.map((facility) => (
+          <div key={facility.id} className="font-semibold text-center text-sm">
+            {facility.title}
+          </div>
         ))}
       </div>
 
-      {/* Facility columns */}
-      {facilities.map((facility) => {
-        const facilityBookings = bookings.filter(b => b.tile_id === facility.id);
-
-        return (
-          <div key={facility.id}>
-            <div className="h-12 font-semibold text-center border-b pb-2 mb-2">
-              {facility.title}
-            </div>
-            <div className="relative" style={{ height: `${timeSlots.length * slotHeight}px` }}>
-              {/* Grid lines with availability-aware styling */}
-              {timeSlots.map((time, index) => {
-                const isAvailable = isSlotAvailable(time, facility);
-                const isValidInterval = isValidIntervalForFacility(time, facility);
-                const canBook = isAvailable && isValidInterval;
-                
-                return (
-                  <div
-                    key={time}
-                    className={cn(
-                      'absolute w-full border-t border-border/50 transition-colors',
-                      canBook 
-                        ? 'bg-gray-100 hover:bg-gray-200 cursor-pointer group' 
-                        : isAvailable && !isValidInterval
-                          ? 'bg-gray-50/50 cursor-default'  // Available but not valid interval
-                          : 'bg-gray-300 cursor-not-allowed'  // Closed hours
-                    )}
-                    style={{ top: `${index * slotHeight}px`, height: `${slotHeight}px` }}
-                    onClick={canBook ? () => onNewBooking(facility.id, time) : undefined}
-                  >
-                    {canBook && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-1 right-1"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
-
-              {/* Booking blocks */}
-              {facilityBookings.map((booking) => {
-                const { top, height } = getBookingPosition(
-                  booking.booking_start_time,
-                  booking.booking_end_time
-                );
-                const applicantName = booking.applicant_name || 'Unknown';
-
-                return (
-                  <div
-                    key={booking.id}
-                    className={cn(
-                      'absolute w-full px-2 py-1 rounded border-l-4 cursor-pointer transition-all z-10',
-                      getStatusColor(booking.status)
-                    )}
-                    style={{ top: `${top}px`, height: `${height}px` }}
-                    onClick={() => onBookingClick(booking.id)}
-                  >
-                    <div className="text-xs font-medium truncate">
-                      {formatTime(booking.booking_start_time)}
-                    </div>
-                    <div className="text-xs truncate">{applicantName}</div>
-                    <div className="text-xs text-muted-foreground truncate capitalize">
-                      {booking.status.replace('_', ' ')}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+      {/* Scrollable Timeline Body */}
+      <ScrollArea className="h-[500px] w-full rounded-md border">
+        <div 
+          className="overflow-x-auto"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `80px repeat(${facilities.length}, minmax(250px, 1fr))`,
+            gap: '1rem'
+          }}
+        >
+          {/* Time labels column */}
+          <div className="sticky left-0 bg-background z-10 pr-4">
+            {timeSlots.map((time) => (
+              time.endsWith(':00:00') && (
+                <div key={time} style={{ height: `${slotHeight * (60 / baseInterval)}px` }} className="text-sm text-muted-foreground flex items-start pt-1">
+                  {formatTime(time)}
+                </div>
+              )
+            ))}
           </div>
-        );
-      })}
+
+          {/* Facility columns */}
+          {facilities.map((facility) => {
+            const facilityBookings = bookings.filter(b => b.tile_id === facility.id);
+
+            return (
+              <div key={facility.id} className="relative" style={{ height: `${timeSlots.length * slotHeight}px` }}>
+                {/* Grid lines with availability-aware styling */}
+                {timeSlots.map((time, index) => {
+                  const isAvailable = isSlotAvailable(time, facility);
+                  const isValidInterval = isValidIntervalForFacility(time, facility);
+                  const canBook = isAvailable && isValidInterval;
+                  
+                  return (
+                    <div
+                      key={time}
+                      className={cn(
+                        'absolute w-full border-t border-border/50 transition-colors',
+                        canBook 
+                          ? 'bg-gray-100 hover:bg-gray-200 cursor-pointer group' 
+                          : isAvailable && !isValidInterval
+                            ? 'bg-gray-50/50 cursor-default'  // Available but not valid interval
+                            : 'bg-gray-300 cursor-not-allowed'  // Closed hours
+                      )}
+                      style={{ top: `${index * slotHeight}px`, height: `${slotHeight}px` }}
+                      onClick={canBook ? () => onNewBooking(facility.id, time) : undefined}
+                    >
+                      {canBook && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-1 right-1"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Booking blocks */}
+                {facilityBookings.map((booking) => {
+                  const { top, height } = getBookingPosition(
+                    booking.booking_start_time,
+                    booking.booking_end_time
+                  );
+                  const applicantName = booking.applicant_name || 'Unknown';
+
+                  return (
+                    <div
+                      key={booking.id}
+                      className={cn(
+                        'absolute w-full px-2 py-1 rounded border-l-4 cursor-pointer transition-all z-10',
+                        getStatusColor(booking.status)
+                      )}
+                      style={{ top: `${top}px`, height: `${height}px` }}
+                      onClick={() => onBookingClick(booking.id)}
+                    >
+                      <div className="text-xs font-medium truncate">
+                        {formatTime(booking.booking_start_time)}
+                      </div>
+                      <div className="text-xs truncate">{applicantName}</div>
+                      <div className="text-xs text-muted-foreground truncate capitalize">
+                        {booking.status.replace('_', ' ')}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+        <ScrollBar orientation="vertical" />
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
     </div>
   );
 };
