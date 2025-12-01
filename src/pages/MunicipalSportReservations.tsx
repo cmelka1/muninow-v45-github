@@ -21,8 +21,13 @@ const MunicipalSportReservations = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
+  // Helper to get local date string (YYYY-MM-DD)
+  const getLocalDateString = (date: Date = new Date()) => {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
+  
   // State management
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(getLocalDateString());
   const [viewMode, setViewMode] = useState<'timeline' | 'list'>(isMobile ? 'list' : 'timeline');
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [prefilledBooking, setPrefilledBooking] = useState<{

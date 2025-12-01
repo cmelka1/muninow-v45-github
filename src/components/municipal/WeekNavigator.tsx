@@ -20,12 +20,17 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   
+  // Helper to get local date string (YYYY-MM-DD)
+  const getLocalDateString = (date: Date = new Date()) => {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
+  
   // Generate date range
   const today = new Date();
   const dates = Array.from({ length: daysToShow }, (_, i) => {
     const date = new Date(today);
     date.setDate(today.getDate() + i);
-    return date.toISOString().split('T')[0];
+    return getLocalDateString(date);
   });
 
   const startDate = dates[0];
@@ -52,7 +57,7 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({
   };
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+    const date = new Date(dateStr + 'T12:00:00');
     const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
     const dayNum = date.getDate();
     const month = date.toLocaleDateString('en-US', { month: 'short' });
@@ -75,7 +80,7 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({
         const { dayName, dayNum, month } = formatDate(date);
         const count = bookingCounts?.find(b => b.date === date)?.count || 0;
         const isSelected = date === selectedDate;
-        const isToday = date === new Date().toISOString().split('T')[0];
+        const isToday = date === getLocalDateString();
 
         return (
           <Card
