@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -45,7 +45,6 @@ export const QuickBookingDialog: React.FC<QuickBookingDialogProps> = ({
   
   const [facilityId, setFacilityId] = useState(prefilledFacilityId || '');
   const [date, setDate] = useState(prefilledDate || getLocalDateString());
-  const [timeInterval, setTimeInterval] = useState(30); // minutes between start times
   const [startTime, setStartTime] = useState(prefilledTime || '09:00:00');
   const [duration, setDuration] = useState(60); // minutes
   const [firstName, setFirstName] = useState('');
@@ -54,25 +53,6 @@ export const QuickBookingDialog: React.FC<QuickBookingDialogProps> = ({
   const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Generate time slots based on interval
-  const generateTimeSlots = (interval: number) => {
-    const slots = [];
-    for (let hour = 6; hour < 22; hour++) { // 6 AM to 10 PM
-      for (let minute = 0; minute < 60; minute += interval) {
-        const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
-        const displayTime = new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        });
-        slots.push({ value: time, label: displayTime });
-      }
-    }
-    return slots;
-  };
-
-  const timeSlots = useMemo(() => generateTimeSlots(timeInterval), [timeInterval]);
 
   // Calculate end time
   const endTime = React.useMemo(() => {
@@ -202,40 +182,19 @@ export const QuickBookingDialog: React.FC<QuickBookingDialogProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="start-time">Start Time *</Label>
-              <Select value={startTime} onValueChange={setStartTime}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select time" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {timeSlots.map((slot) => (
-                    <SelectItem key={slot.value} value={slot.value}>
-                      {slot.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                id="start-time"
+                type="time"
+                value={startTime.slice(0, 5)}
+                onChange={(e) => setStartTime(`${e.target.value}:00`)}
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="interval">Time Interval</Label>
-              <Select value={timeInterval.toString()} onValueChange={(v) => setTimeInterval(parseInt(v))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5 min</SelectItem>
-                  <SelectItem value="15">15 min</SelectItem>
-                  <SelectItem value="30">30 min</SelectItem>
-                  <SelectItem value="60">1 hour</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="duration">Duration</Label>
+              <Label htmlFor="duration">Duration (min)</Label>
               <Select value={duration.toString()} onValueChange={(v) => setDuration(parseInt(v))}>
                 <SelectTrigger>
                   <SelectValue />
