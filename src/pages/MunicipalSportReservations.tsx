@@ -168,90 +168,88 @@ const MunicipalSportReservations = () => {
         </TabsList>
 
         {/* NEW: Schedule Tab */}
-        <TabsContent value="schedule" className="space-y-4 focus-visible:ring-0">
-          {/* Week Navigator */}
-          <WeekNavigator
-            customerId={profile?.customer_id}
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
-            daysToShow={30}
-          />
+        <TabsContent value="schedule" className="space-y-4 focus-visible:ring-0 focus-visible:outline-none">
+          <Card className="p-6">
+            {/* Week Navigator */}
+            <div className="mb-6">
+              <WeekNavigator
+                customerId={profile?.customer_id}
+                selectedDate={selectedDate}
+                onDateChange={setSelectedDate}
+                daysToShow={30}
+              />
+            </div>
 
-          {/* Quick Stats Bar for Selected Date */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Bookings Today</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
+            {/* Quick Stats Bar for Selected Date */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="p-4 rounded-lg bg-muted/50 border">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Bookings Today</span>
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                </div>
                 <div className="text-2xl font-bold">{todayBookings}</div>
                 <p className="text-xs text-muted-foreground">
                   {todayPending} pending approval
                 </p>
-              </CardContent>
-            </Card>
+              </div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Paid</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
+              <div className="p-4 rounded-lg bg-muted/50 border">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Paid</span>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </div>
                 <div className="text-2xl font-bold">{todayPaid}</div>
                 <p className="text-xs text-muted-foreground">
                   Payment completed
                 </p>
-              </CardContent>
-            </Card>
+              </div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Facilities</CardTitle>
-                <Settings className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
+              <div className="p-4 rounded-lg bg-muted/50 border">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Active Facilities</span>
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                </div>
                 <div className="text-2xl font-bold">{activeFacilities}</div>
                 <p className="text-xs text-muted-foreground">
                   Available for booking
                 </p>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </div>
 
-          {/* View Toggle */}
-          <div className="flex justify-end">
-            <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as any)}>
-              <ToggleGroupItem value="timeline" aria-label="Timeline view">
-                <Calendar className="h-4 w-4 mr-2" />
-                Timeline
-              </ToggleGroupItem>
-              <ToggleGroupItem value="list" aria-label="List view">
-                <FileText className="h-4 w-4 mr-2" />
-                List
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </div>
+            {/* View Toggle */}
+            <div className="flex justify-end mb-4">
+              <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as any)}>
+                <ToggleGroupItem value="timeline" aria-label="Timeline view">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Timeline
+                </ToggleGroupItem>
+                <ToggleGroupItem value="list" aria-label="List view">
+                  <FileText className="h-4 w-4 mr-2" />
+                  List
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
 
-          {/* Schedule Views */}
-          {viewMode === 'timeline' ? (
-            <DayScheduleTimeline
-              bookings={dailyBookings || []}
-              facilities={sportTiles}
-              isLoading={dailyLoading}
-              selectedDate={selectedDate}
-              onBookingClick={handleBookingClick}
-              onNewBooking={handleNewBooking}
-            />
-          ) : (
-            <DayScheduleList
-              bookings={dailyBookings || []}
-              facilities={sportTiles}
-              isLoading={dailyLoading}
-              onBookingClick={handleBookingClick}
-              onNewBooking={() => handleNewBooking()}
-            />
-          )}
+            {/* Schedule Views */}
+            {viewMode === 'timeline' ? (
+              <DayScheduleTimeline
+                bookings={dailyBookings || []}
+                facilities={sportTiles}
+                isLoading={dailyLoading}
+                selectedDate={selectedDate}
+                onBookingClick={handleBookingClick}
+                onNewBooking={handleNewBooking}
+              />
+            ) : (
+              <DayScheduleList
+                bookings={dailyBookings || []}
+                facilities={sportTiles}
+                isLoading={dailyLoading}
+                onBookingClick={handleBookingClick}
+                onNewBooking={() => handleNewBooking()}
+              />
+            )}
+          </Card>
         </TabsContent>
         
         {/* All Bookings Tab */}
