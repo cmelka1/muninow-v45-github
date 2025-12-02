@@ -4,8 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, Calendar, Clock, User, Eye } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Search, Calendar, Clock, Eye } from 'lucide-react';
 import { SportBooking } from '@/hooks/useSportBookings';
 import { format } from 'date-fns';
 import { InlineApprovalMenu } from '@/components/municipal/InlineApprovalMenu';
@@ -17,7 +17,7 @@ interface SportBookingHistoryTableProps {
 }
 
 type FilterPeriod = 'all' | 'today' | 'week' | 'upcoming' | 'past';
-type FilterStatus = 'all' | 'pending' | 'approved' | 'denied' | 'cancelled';
+type FilterStatus = 'all' | 'pending' | 'submitted' | 'under_review' | 'approved' | 'issued' | 'denied' | 'cancelled';
 
 export function SportBookingHistoryTable({ bookings, isLoading, onViewBooking }: SportBookingHistoryTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -64,13 +64,27 @@ export function SportBookingHistoryTable({ bookings, isLoading, onViewBooking }:
   const getStatusBadge = (status: string) => {
     const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
       pending: 'secondary',
+      submitted: 'secondary',
+      under_review: 'secondary',
       approved: 'default',
+      issued: 'default',
       denied: 'destructive',
       cancelled: 'outline',
     };
+    
+    const labels: Record<string, string> = {
+      pending: 'Pending',
+      submitted: 'Submitted',
+      under_review: 'Under Review',
+      approved: 'Approved',
+      issued: 'Issued',
+      denied: 'Denied',
+      cancelled: 'Cancelled',
+    };
+    
     return (
       <Badge variant={variants[status] || 'secondary'}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {labels[status] || status.charAt(0).toUpperCase() + status.slice(1)}
       </Badge>
     );
   };
@@ -111,13 +125,16 @@ export function SportBookingHistoryTable({ bookings, isLoading, onViewBooking }:
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as FilterStatus)}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="submitted">Submitted</SelectItem>
+            <SelectItem value="under_review">Under Review</SelectItem>
             <SelectItem value="approved">Approved</SelectItem>
+            <SelectItem value="issued">Issued</SelectItem>
             <SelectItem value="denied">Denied</SelectItem>
             <SelectItem value="cancelled">Cancelled</SelectItem>
           </SelectContent>
