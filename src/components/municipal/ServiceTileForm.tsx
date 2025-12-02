@@ -92,18 +92,6 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
   const [guidanceText, setGuidanceText] = useState(tile?.guidance_text || '');
   const [requiresDocumentUpload, setRequiresDocumentUpload] = useState(tile?.requires_document_upload || false);
   
-  // Time slot booking state
-  const [hasTimeSlots, setHasTimeSlots] = useState(tile?.has_time_slots || false);
-  const [bookingMode, setBookingMode] = useState<'time_period' | 'start_time'>(tile?.booking_mode || 'time_period');
-  const [slotDuration, setSlotDuration] = useState(tile?.time_slot_config?.slot_duration_minutes || 60);
-  const [availableDays, setAvailableDays] = useState<string[]>(
-    tile?.time_slot_config?.available_days || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-  );
-  const [startTime, setStartTime] = useState(tile?.time_slot_config?.start_time || '09:00');
-  const [endTime, setEndTime] = useState(tile?.time_slot_config?.end_time || '17:00');
-  const [maxAdvanceDays, setMaxAdvanceDays] = useState(tile?.time_slot_config?.max_advance_days || 30);
-  const [timezone, setTimezone] = useState(tile?.time_slot_config?.timezone || 'America/New_York');
-  const [startTimeInterval, setStartTimeInterval] = useState(tile?.time_slot_config?.start_time_interval_minutes || 30);
 
   // Fetch merchants for this municipality on mount
   useEffect(() => {
@@ -170,29 +158,6 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
       return;
     }
 
-    // Validate time slot configuration if enabled
-    if (hasTimeSlots) {
-      // Check end time is after start time
-      if (endTime <= startTime) {
-        toast({
-          title: 'Error',
-          description: 'End time must be after start time',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      // Check minimum slot duration (only for time_period mode)
-      if (bookingMode === 'time_period' && slotDuration < 15) {
-        toast({
-          title: 'Error',
-          description: 'Slot duration must be at least 15 minutes',
-          variant: 'destructive',
-        });
-        return;
-      }
-    }
-
     const amountCents = Math.round(parseFloat(amountDollars || '0') * 100);
     
     let finalPdfUrl = tile?.pdf_form_url; // Keep existing URL if no new file uploaded
@@ -236,17 +201,7 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
       renewal_frequency: isRenewable ? renewalFrequency : undefined,
       renewal_reminder_days: renewalReminderDays,
       auto_renew_enabled: autoRenewEnabled,
-      has_time_slots: hasTimeSlots,
-      booking_mode: hasTimeSlots ? bookingMode : undefined,
-      time_slot_config: hasTimeSlots ? {
-        slot_duration_minutes: slotDuration,
-        start_time_interval_minutes: bookingMode === 'start_time' ? startTimeInterval : undefined,
-        available_days: availableDays,
-        start_time: startTime,
-        end_time: endTime,
-        max_advance_days: maxAdvanceDays,
-        timezone: timezone,
-      } : undefined,
+      has_time_slots: false, // Time slots now managed via Sport Facilities
       customer_id: customerId || profile?.customer_id!,
       created_by: profile?.id!,
     };
@@ -563,157 +518,6 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
               </div>
             </>
           )}
-          
-          {/* Time Slot Booking Configuration */}
-          <div className="border-t pt-4 mt-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <Label htmlFor="has-time-slots">Enable Time Slot Booking</Label>
-                <p className="text-sm text-muted-foreground">
-                  Require users to select specific date and time when applying
-                </p>
-              </div>
-              <Switch
-                id="has-time-slots"
-                checked={hasTimeSlots}
-                onCheckedChange={setHasTimeSlots}
-              />
-            </div>
-            
-            {hasTimeSlots && (
-              <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
-                <div>
-                  <Label htmlFor="booking-mode">Booking Mode</Label>
-                  <Select value={bookingMode} onValueChange={(value: 'time_period' | 'start_time') => setBookingMode(value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="time_period">Time Period (with duration)</SelectItem>
-                      <SelectItem value="start_time">Start Time Only</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {bookingMode === 'time_period' 
-                      ? 'Users select a start time, and a duration is automatically calculated'
-                      : 'Users select only a start time (no end time)'}
-                  </p>
-                </div>
-                
-                {bookingMode === 'time_period' && (
-                  <div>
-                    <Label htmlFor="slot-duration">Slot Duration (minutes)</Label>
-                    <Select value={slotDuration.toString()} onValueChange={(val) => setSlotDuration(parseInt(val))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="15">15 minutes</SelectItem>
-                        <SelectItem value="30">30 minutes</SelectItem>
-                        <SelectItem value="45">45 minutes</SelectItem>
-                        <SelectItem value="60">1 hour</SelectItem>
-                        <SelectItem value="90">1.5 hours</SelectItem>
-                        <SelectItem value="120">2 hours</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                
-                {bookingMode === 'start_time' && (
-                  <div>
-                    <Label htmlFor="start-time-interval">Start Time Intervals (minutes)</Label>
-                    <Select value={startTimeInterval.toString()} onValueChange={(val) => setStartTimeInterval(parseInt(val))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="15">15 minutes</SelectItem>
-                        <SelectItem value="30">30 minutes</SelectItem>
-                        <SelectItem value="60">60 minutes</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Time between available start time options
-                    </p>
-                  </div>
-                )}
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="start-time">Start Time</Label>
-                    <Input
-                      id="start-time"
-                      type="time"
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="end-time">End Time</Label>
-                    <Input
-                      id="end-time"
-                      type="time"
-                      value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <Label>Available Days</Label>
-                  <div className="grid grid-cols-3 gap-2 mt-2">
-                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
-                      <Button
-                        key={day}
-                        type="button"
-                        variant={availableDays.includes(day) ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => {
-                          if (availableDays.includes(day)) {
-                            setAvailableDays(availableDays.filter(d => d !== day));
-                          } else {
-                            setAvailableDays([...availableDays, day]);
-                          }
-                        }}
-                      >
-                        {day.slice(0, 3)}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="max-advance">Maximum Days in Advance</Label>
-                  <Input
-                    id="max-advance"
-                    type="number"
-                    min="1"
-                    max="365"
-                    value={maxAdvanceDays}
-                    onChange={(e) => setMaxAdvanceDays(parseInt(e.target.value) || 30)}
-                  />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    How far in advance can users book?
-                  </p>
-                </div>
-                
-                <div>
-                  <Label htmlFor="timezone">Timezone</Label>
-                  <Select value={timezone} onValueChange={setTimezone}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="America/New_York">Eastern Time</SelectItem>
-                      <SelectItem value="America/Chicago">Central Time</SelectItem>
-                      <SelectItem value="America/Denver">Mountain Time</SelectItem>
-                      <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
-          </div>
           
           <div>
             <Label htmlFor="pdf-upload">Upload PDF Form (Optional)</Label>

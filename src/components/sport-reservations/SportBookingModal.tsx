@@ -5,8 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ChevronLeft, ChevronRight, Calendar, User, CreditCard, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, User, CreditCard, CheckCircle, Loader2 } from 'lucide-react';
 import { SportFacility } from '@/hooks/useSportFacilities';
 import { TimeSlotBooking } from '@/components/TimeSlotBooking';
 import { InlinePaymentFlow } from '@/components/payment/InlinePaymentFlow';
@@ -17,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { formatCurrency } from '@/lib/formatters';
 import { useServiceApplicationPaymentMethods } from '@/hooks/useServiceApplicationPaymentMethods';
 import { extractApplicantData, enrichFormDataWithParsedAddress } from '@/utils/serviceFormUtils';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface SportBookingModalProps {
   facility: SportFacility | null;
@@ -27,6 +27,7 @@ interface SportBookingModalProps {
 export function SportBookingModal({ facility, isOpen, onClose }: SportBookingModalProps) {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -197,6 +198,11 @@ export function SportBookingModal({ facility, isOpen, onClose }: SportBookingMod
             })
             .eq('id', appId);
 
+          // Invalidate sport booking queries
+          queryClient.invalidateQueries({ queryKey: ['sport-bookings'] });
+          queryClient.invalidateQueries({ queryKey: ['booked-time-slots'] });
+          queryClient.invalidateQueries({ queryKey: ['daily-bookings'] });
+
           toast({
             title: 'Booking Confirmed!',
             description: facility?.requires_review
@@ -355,6 +361,11 @@ export function SportBookingModal({ facility, isOpen, onClose }: SportBookingMod
               baseAmountCents={facility.amount_cents}
               initialExpanded={true}
               onPaymentSuccess={() => {
+                // Invalidate sport booking queries
+                queryClient.invalidateQueries({ queryKey: ['sport-bookings'] });
+                queryClient.invalidateQueries({ queryKey: ['booked-time-slots'] });
+                queryClient.invalidateQueries({ queryKey: ['daily-bookings'] });
+
                 toast({
                   title: 'Booking Confirmed!',
                   description: 'Your payment was successful and your booking is confirmed.',
