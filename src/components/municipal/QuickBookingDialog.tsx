@@ -16,11 +16,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { SportFacility } from '@/hooks/useSportFacilities';
 
 interface QuickBookingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  facilities: any[];
+  facilities: SportFacility[];
   customerId: string | undefined;
   prefilledFacilityId?: string;
   prefilledDate?: string;
@@ -38,6 +40,8 @@ export const QuickBookingDialog: React.FC<QuickBookingDialogProps> = ({
   prefilledTime,
   onSuccess,
 }) => {
+  const queryClient = useQueryClient();
+  
   // Helper to get local date string (YYYY-MM-DD)
   const getLocalDateString = (date: Date = new Date()) => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -75,6 +79,14 @@ export const QuickBookingDialog: React.FC<QuickBookingDialogProps> = ({
     if (prefilledDate) setDate(prefilledDate);
     if (prefilledTime) setStartTime(prefilledTime);
   }, [prefilledFacilityId, prefilledDate, prefilledTime]);
+
+  const invalidateBookingQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['sport-bookings'] });
+    queryClient.invalidateQueries({ queryKey: ['daily-bookings'] });
+    queryClient.invalidateQueries({ queryKey: ['weekly-bookings'] });
+    queryClient.invalidateQueries({ queryKey: ['booked-time-slots'] });
+    queryClient.invalidateQueries({ queryKey: ['conflict-check'] });
+  };
 
   const handleSubmit = async () => {
     if (!facilityId || !date || !startTime || !firstName || !lastName) {
@@ -126,6 +138,9 @@ export const QuickBookingDialog: React.FC<QuickBookingDialogProps> = ({
         title: 'Success',
         description: 'Booking created successfully',
       });
+
+      // Invalidate all booking-related queries
+      invalidateBookingQueries();
 
       onSuccess?.();
       onOpenChange(false);

@@ -2,13 +2,15 @@ import React from 'react';
 import { BookingCard } from './BookingCard';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
+import { useQueryClient } from '@tanstack/react-query';
+import { DailyBooking } from '@/hooks/useDailyBookings';
+import { SportFacility } from '@/hooks/useSportFacilities';
 
 interface DayScheduleListProps {
-  bookings: any[];
-  facilities: any[];
+  bookings: DailyBooking[];
+  facilities: SportFacility[];
   isLoading: boolean;
   onBookingClick: (bookingId: string) => void;
   onNewBooking: () => void;
@@ -21,7 +23,14 @@ export const DayScheduleList: React.FC<DayScheduleListProps> = ({
   onBookingClick,
   onNewBooking,
 }) => {
-  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const invalidateBookingQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['sport-bookings'] });
+    queryClient.invalidateQueries({ queryKey: ['daily-bookings'] });
+    queryClient.invalidateQueries({ queryKey: ['weekly-bookings'] });
+    queryClient.invalidateQueries({ queryKey: ['booked-time-slots'] });
+  };
 
   if (isLoading) {
     return (
@@ -63,7 +72,7 @@ export const DayScheduleList: React.FC<DayScheduleListProps> = ({
             facilityName={facility?.title || 'Unknown Facility'}
             viewMode="expanded"
             onClick={() => onBookingClick(booking.id)}
-            onActionComplete={() => window.location.reload()}
+            onActionComplete={invalidateBookingQueries}
           />
         );
       })}
