@@ -59,6 +59,8 @@ export const useQuickApproval = () => {
       queryClient.invalidateQueries({ queryKey: ['daily-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['weekly-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['service-applications'] });
+      queryClient.invalidateQueries({ queryKey: ['sport-bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['booked-time-slots'] });
 
       const actionText = variables.action === 'approve' ? 'approved' : 
                         variables.action === 'deny' ? 'denied' : 
