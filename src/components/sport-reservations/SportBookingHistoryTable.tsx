@@ -173,7 +173,7 @@ export function SportBookingHistoryTable({ bookings, isLoading, onViewBooking }:
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {booking.status === 'pending' && (
+                      {['pending', 'submitted', 'under_review'].includes(booking.status) && (
                         <InlineApprovalMenu
                           applicationId={booking.id}
                         />
