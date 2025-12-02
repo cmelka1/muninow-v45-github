@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, FileText, DollarSign, Settings, Clock, CheckCircle } from 'lucide-react';
+import { Calendar, FileText, DollarSign, Settings } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { ServiceTileManager } from '@/components/municipal/ServiceTileManager';
-import { ApplicationHistoryTable } from '@/components/municipal/ApplicationHistoryTable';
+import { SportFacilityManager } from '@/components/sport-reservations/SportFacilityManager';
+import { SportBookingHistoryTable } from '@/components/sport-reservations/SportBookingHistoryTable';
 import { WeekNavigator } from '@/components/municipal/WeekNavigator';
 import { DayScheduleTimeline } from '@/components/municipal/DayScheduleTimeline';
 import { DayScheduleList } from '@/components/municipal/DayScheduleList';
 import { QuickBookingDialog } from '@/components/municipal/QuickBookingDialog';
-import { useMunicipalServiceTiles } from '@/hooks/useMunicipalServiceTiles';
-import { useServiceApplications } from '@/hooks/useServiceApplications';
+import { useSportFacilities } from '@/hooks/useSportFacilities';
+import { useSportBookings } from '@/hooks/useSportBookings';
 import { useDailyBookings } from '@/hooks/useDailyBookings';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -21,12 +21,10 @@ const MunicipalSportReservations = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
-  // Helper to get local date string (YYYY-MM-DD)
   const getLocalDateString = (date: Date = new Date()) => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   };
   
-  // State management
   const [selectedDate, setSelectedDate] = useState(getLocalDateString());
   const [viewMode, setViewMode] = useState<'timeline' | 'list'>(isMobile ? 'list' : 'timeline');
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
@@ -36,65 +34,42 @@ const MunicipalSportReservations = () => {
     time?: string;
   }>({});
   
-  // Fetch service tiles and applications for this municipality
-  const { data: serviceTiles, isLoading: tilesLoading } = useMunicipalServiceTiles(profile?.customer_id);
-  const { data: applications, isLoading: applicationsLoading } = useServiceApplications();
+  // Use sport-specific hooks
+  const { data: sportFacilities, isLoading: facilitiesLoading } = useSportFacilities(profile?.customer_id);
+  const { data: sportBookings, isLoading: bookingsLoading } = useSportBookings(profile?.customer_id);
   const { data: dailyBookings, isLoading: dailyLoading } = useDailyBookings(profile?.customer_id, selectedDate);
   
-  // Filter for sport facilities only (has_time_slots = true)
-  const sportTiles = serviceTiles?.filter(tile => tile.has_time_slots === true) || [];
-  
-  // Filter applications for sport facilities and exclude drafts
-  const sportApplications = applications?.filter(app => {
-    const isFromSportTile = sportTiles.some(tile => tile.id === app.tile_id);
-    return app.customer_id === profile?.customer_id && app.status !== 'draft' && isFromSportTile;
-  }) || [];
-  
   // Calculate stats
-  const activeFacilities = sportTiles.filter(tile => tile.is_active)?.length || 0;
-  const totalBookings = sportApplications.length;
-  const upcomingReservations = sportApplications.filter(app => 
-    app.status === 'approved' && app.booking_date && new Date(app.booking_date) >= new Date()
-  ).length;
-  const thisMonthRevenue = sportApplications
-    .filter(app => {
-      const appDate = new Date(app.created_at);
+  const activeFacilities = sportFacilities?.filter(f => f.is_active)?.length || 0;
+  const totalBookings = sportBookings?.length || 0;
+  const upcomingReservations = sportBookings?.filter(b => 
+    b.status === 'approved' && b.booking_date && new Date(b.booking_date) >= new Date()
+  ).length || 0;
+  const thisMonthRevenue = sportBookings
+    ?.filter(b => {
+      const bDate = new Date(b.created_at);
       const now = new Date();
-      return appDate.getMonth() === now.getMonth() && 
-             appDate.getFullYear() === now.getFullYear() && 
-             app.status === 'issued';
+      return bDate.getMonth() === now.getMonth() && 
+             bDate.getFullYear() === now.getFullYear() && 
+             b.payment_status === 'paid';
     })
-    .reduce((sum, app) => {
-      const tile = sportTiles.find(t => t.id === app.tile_id);
-      return sum + (tile?.amount_cents || 0);
-    }, 0);
+    .reduce((sum, b) => sum + (b.total_amount_cents || 0), 0) || 0;
 
-  // Today's stats for selected date
   const todayBookings = dailyBookings?.length || 0;
   const todayPending = dailyBookings?.filter(b => b.status === 'pending' || b.status === 'under_review').length || 0;
   const todayPaid = dailyBookings?.filter(b => b.payment_status === 'paid').length || 0;
 
-  // Handlers
   const handleBookingClick = (bookingId: string) => {
     navigate(`/municipal/service-application/${bookingId}`);
   };
 
   const handleNewBooking = (facilityId?: string, time?: string) => {
-    setPrefilledBooking({
-      facilityId,
-      date: selectedDate,
-      time,
-    });
+    setPrefilledBooking({ facilityId, date: selectedDate, time });
     setBookingDialogOpen(true);
-  };
-
-  const handleBookingSuccess = () => {
-    // Queries will auto-refresh due to invalidation in the mutation
   };
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Sport Facility Management</h1>
@@ -113,9 +88,7 @@ const MunicipalSportReservations = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activeFacilities}</div>
-            <p className="text-xs text-muted-foreground">
-              {sportTiles.length} total facilities
-            </p>
+            <p className="text-xs text-muted-foreground">{sportFacilities?.length || 0} total</p>
           </CardContent>
         </Card>
 
@@ -126,22 +99,18 @@ const MunicipalSportReservations = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalBookings}</div>
-            <p className="text-xs text-muted-foreground">
-              All time reservations
-            </p>
+            <p className="text-xs text-muted-foreground">All time</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Reservations</CardTitle>
+            <CardTitle className="text-sm font-medium">Upcoming</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{upcomingReservations}</div>
-            <p className="text-xs text-muted-foreground">
-              Approved bookings ahead
-            </p>
+            <p className="text-xs text-muted-foreground">Approved bookings</p>
           </CardContent>
         </Card>
 
@@ -152,14 +121,12 @@ const MunicipalSportReservations = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${(thisMonthRevenue / 100).toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              From facility bookings
-            </p>
+            <p className="text-xs text-muted-foreground">From bookings</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Content Tabs */}
+      {/* Main Tabs */}
       <Tabs defaultValue="schedule" className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
@@ -167,10 +134,8 @@ const MunicipalSportReservations = () => {
           <TabsTrigger value="facilities">Facilities</TabsTrigger>
         </TabsList>
 
-        {/* NEW: Schedule Tab */}
         <TabsContent value="schedule" className="space-y-4 focus-visible:ring-0 focus-visible:outline-none">
           <Card className="p-6">
-            {/* Week Navigator */}
             <div className="mb-6">
               <WeekNavigator
                 customerId={profile?.customer_id}
@@ -180,7 +145,6 @@ const MunicipalSportReservations = () => {
               />
             </div>
 
-            {/* Quick Stats Bar for Selected Date */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="p-4 rounded-lg bg-muted/50 border">
                 <div className="flex items-center justify-between mb-2">
@@ -188,9 +152,7 @@ const MunicipalSportReservations = () => {
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div className="text-2xl font-bold">{todayBookings}</div>
-                <p className="text-xs text-muted-foreground">
-                  {todayPending} pending approval
-                </p>
+                <p className="text-xs text-muted-foreground">{todayPending} pending</p>
               </div>
 
               <div className="p-4 rounded-lg bg-muted/50 border">
@@ -199,9 +161,7 @@ const MunicipalSportReservations = () => {
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div className="text-2xl font-bold">{todayPaid}</div>
-                <p className="text-xs text-muted-foreground">
-                  Payment completed
-                </p>
+                <p className="text-xs text-muted-foreground">Completed</p>
               </div>
 
               <div className="p-4 rounded-lg bg-muted/50 border">
@@ -210,31 +170,21 @@ const MunicipalSportReservations = () => {
                   <Settings className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div className="text-2xl font-bold">{activeFacilities}</div>
-                <p className="text-xs text-muted-foreground">
-                  Available for booking
-                </p>
+                <p className="text-xs text-muted-foreground">Available</p>
               </div>
             </div>
 
-            {/* View Toggle */}
             <div className="flex justify-end mb-4">
               <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as any)}>
-                <ToggleGroupItem value="timeline" aria-label="Timeline view">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Timeline
-                </ToggleGroupItem>
-                <ToggleGroupItem value="list" aria-label="List view">
-                  <FileText className="h-4 w-4 mr-2" />
-                  List
-                </ToggleGroupItem>
+                <ToggleGroupItem value="timeline"><Calendar className="h-4 w-4 mr-2" />Timeline</ToggleGroupItem>
+                <ToggleGroupItem value="list"><FileText className="h-4 w-4 mr-2" />List</ToggleGroupItem>
               </ToggleGroup>
             </div>
 
-            {/* Schedule Views */}
             {viewMode === 'timeline' ? (
               <DayScheduleTimeline
                 bookings={dailyBookings || []}
-                facilities={sportTiles}
+                facilities={sportFacilities || []}
                 isLoading={dailyLoading}
                 selectedDate={selectedDate}
                 onBookingClick={handleBookingClick}
@@ -243,7 +193,7 @@ const MunicipalSportReservations = () => {
             ) : (
               <DayScheduleList
                 bookings={dailyBookings || []}
-                facilities={sportTiles}
+                facilities={sportFacilities || []}
                 isLoading={dailyLoading}
                 onBookingClick={handleBookingClick}
                 onNewBooking={() => handleNewBooking()}
@@ -252,36 +202,32 @@ const MunicipalSportReservations = () => {
           </Card>
         </TabsContent>
         
-        {/* All Bookings Tab */}
         <TabsContent value="bookings" className="space-y-4 focus-visible:ring-0">
-          <ApplicationHistoryTable 
-            applications={sportApplications}
-            serviceTiles={sportTiles}
-            isLoading={applicationsLoading}
-            totalCount={totalBookings}
+          <SportBookingHistoryTable 
+            bookings={sportBookings || []}
+            isLoading={bookingsLoading}
+            onViewBooking={(b) => handleBookingClick(b.id)}
           />
         </TabsContent>
 
-        {/* Facilities Tab */}
         <TabsContent value="facilities" className="space-y-4 focus-visible:ring-0">
-          <ServiceTileManager 
-            serviceTiles={sportTiles} 
-            isLoading={tilesLoading}
+          <SportFacilityManager 
+            facilities={sportFacilities || []} 
+            isLoading={facilitiesLoading}
             customerId={profile?.customer_id}
           />
         </TabsContent>
       </Tabs>
 
-      {/* Quick Booking Dialog */}
       <QuickBookingDialog
         open={bookingDialogOpen}
         onOpenChange={setBookingDialogOpen}
-        facilities={sportTiles}
+        facilities={sportFacilities || []}
         customerId={profile?.customer_id}
         prefilledFacilityId={prefilledBooking.facilityId}
         prefilledDate={prefilledBooking.date}
         prefilledTime={prefilledBooking.time}
-        onSuccess={handleBookingSuccess}
+        onSuccess={() => {}}
       />
     </div>
   );
