@@ -42,13 +42,18 @@ export const useWeeklyBookings = (customerId: string | undefined, startDate: str
         countMap.set(date, (countMap.get(date) || 0) + 1);
       });
 
-      // Convert to array
+      // Helper to get local date string (YYYY-MM-DD)
+      const getLocalDateString = (date: Date) => {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      };
+
+      // Convert to array using local dates
       const result: DayBookingCount[] = [];
-      const start = new Date(startDate);
-      const end = new Date(endDate);
+      const start = new Date(startDate + 'T12:00:00'); // Use noon to avoid timezone edge cases
+      const end = new Date(endDate + 'T12:00:00');
       
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().split('T')[0];
+        const dateStr = getLocalDateString(d);
         result.push({
           date: dateStr,
           count: countMap.get(dateStr) || 0,

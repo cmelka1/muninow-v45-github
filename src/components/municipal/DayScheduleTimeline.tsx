@@ -59,10 +59,34 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
     return minutes % facilityInterval === 0;
   };
 
-  // Generate time slots based on dynamic interval
+  // Calculate earliest start and latest end times across all facilities
+  const operatingHours = useMemo(() => {
+    let earliestStart = '23:59';
+    let latestEnd = '00:00';
+    
+    facilities.forEach(facility => {
+      const config = facility.time_slot_config || {};
+      const start = config.start_time || '06:00';
+      const end = config.end_time || '22:00';
+      
+      if (start < earliestStart) earliestStart = start;
+      if (end > latestEnd) latestEnd = end;
+    });
+    
+    // Add 1 hour buffer on each side for visibility
+    const [startHour] = earliestStart.split(':').map(Number);
+    const [endHour] = latestEnd.split(':').map(Number);
+    
+    return {
+      startHour: Math.max(0, startHour - 1),
+      endHour: Math.min(24, endHour + 1),
+    };
+  }, [facilities]);
+
+  // Generate time slots based on dynamic interval - only for operating hours
   const generateTimeSlots = () => {
     const slots = [];
-    for (let hour = 0; hour < 24; hour++) {
+    for (let hour = operatingHours.startHour; hour < operatingHours.endHour; hour++) {
       for (let minute = 0; minute < 60; minute += baseInterval) {
         const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
         slots.push(time);
@@ -71,7 +95,7 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
     return slots;
   };
 
-  const timeSlots = generateTimeSlots();
+  const timeSlots = useMemo(() => generateTimeSlots(), [operatingHours, baseInterval]);
 
   // Check if a slot is available based on facility operating hours and day-of-week
   const isSlotAvailable = (time: string, facility: MunicipalServiceTile) => {

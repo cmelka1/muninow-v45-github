@@ -210,7 +210,7 @@ export function SportBookingModal({ facility, isOpen, onClose }: SportBookingMod
               : 'Your booking has been confirmed.',
           });
           onClose();
-          navigate('/dashboard');
+          navigate(`/service-application/${appId}`);
           return;
         }
       } catch (error) {
@@ -371,7 +371,7 @@ export function SportBookingModal({ facility, isOpen, onClose }: SportBookingMod
                   description: 'Your payment was successful and your booking is confirmed.',
                 });
                 onClose();
-                navigate('/dashboard');
+                navigate(`/service-application/${draftApplicationId}`);
               }}
             />
           )}
