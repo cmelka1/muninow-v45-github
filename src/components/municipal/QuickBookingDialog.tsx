@@ -98,6 +98,35 @@ export const QuickBookingDialog: React.FC<QuickBookingDialogProps> = ({
       return;
     }
 
+    // Validate date is not in the past
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selectedDate < today) {
+      toast({
+        title: 'Invalid Date',
+        description: 'Cannot book a date in the past',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate max advance booking days
+    const selectedFacility = facilities.find(f => f.id === facilityId);
+    const maxAdvanceDays = selectedFacility?.time_slot_config?.max_advance_days;
+    if (maxAdvanceDays) {
+      const maxDate = new Date();
+      maxDate.setDate(maxDate.getDate() + maxAdvanceDays);
+      if (selectedDate > maxDate) {
+        toast({
+          title: 'Date Too Far',
+          description: `Bookings can only be made up to ${maxAdvanceDays} days in advance`,
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     if (conflictCheck?.hasConflict) {
       toast({
         title: 'Time Conflict',
@@ -115,6 +144,10 @@ export const QuickBookingDialog: React.FC<QuickBookingDialogProps> = ({
 
       if (!customerId) throw new Error('Customer ID not found');
 
+      // Determine payment_status based on facility fee
+      const requiresPayment = selectedFacility && (selectedFacility.amount_cents || 0) > 0;
+      const paymentStatus = requiresPayment ? 'unpaid' : 'not_required';
+
       const { error } = await supabase
         .from('municipal_service_applications')
         .insert({
@@ -130,6 +163,9 @@ export const QuickBookingDialog: React.FC<QuickBookingDialogProps> = ({
           status: 'approved', // Staff bookings are pre-approved
           approved_at: new Date().toISOString(),
           additional_information: notes || null,
+          service_name: selectedFacility?.title || null,
+          payment_status: paymentStatus,
+          base_amount_cents: selectedFacility?.amount_cents || 0,
         });
 
       if (error) throw error;
