@@ -191,6 +191,8 @@ export const useUpdateSportBookingStatus = () => {
       queryClient.invalidateQueries({ queryKey: ['today-sport-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['daily-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['weekly-bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['booked-time-slots'] });
+      queryClient.invalidateQueries({ queryKey: ['conflict-check'] });
       toast({
         title: 'Success',
         description: 'Booking status updated',

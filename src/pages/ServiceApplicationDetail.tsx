@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, User, Clock, Receipt, Calendar, Building, Download, Loader2, MessageSquare, CreditCard, Plus, RefreshCw } from 'lucide-react';
+import { ArrowLeft, FileText, User, Clock, Receipt, Calendar, Building, Download, Loader2, MessageSquare, CreditCard, Plus, RefreshCw, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { useServiceApplication } from '@/hooks/useServiceApplication';
 import { useServiceApplicationDocuments } from '@/hooks/useServiceApplicationDocuments';
+import { useCancelSportBooking } from '@/hooks/useSportBookings';
 import { InlinePaymentFlow } from '@/components/payment/InlinePaymentFlow';
 import { formatCurrency, formatDate, smartAbbreviateFilename } from '@/lib/formatters';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +23,7 @@ import { AddServiceApplicationDocumentDialog } from '@/components/AddServiceAppl
 import { ServiceApplicationCommunication } from '@/components/ServiceApplicationCommunication';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import { RenewServiceApplicationDialog } from '@/components/RenewServiceApplicationDialog';
+import { CancelBookingDialog } from '@/components/sport-reservations/CancelBookingDialog';
 import { format } from 'date-fns';
 
 const ServiceApplicationDetail: React.FC = () => {
@@ -33,6 +35,9 @@ const ServiceApplicationDetail: React.FC = () => {
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
   const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
   const [isRenewalDialogOpen, setIsRenewalDialogOpen] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  
+  const cancelBookingMutation = useCancelSportBooking();
   
   const { data: application, isLoading, error, refetch } = useServiceApplication(applicationId || '');
   const { data: documentsQuery, refetch: refetchDocuments } = useServiceApplicationDocuments(applicationId || '');
@@ -277,6 +282,20 @@ const ServiceApplicationDetail: React.FC = () => {
             <p className="text-muted-foreground">Application #{application.application_number || application.id}</p>
           </div>
           <div className="flex items-center gap-3">
+            {/* Cancel Booking Button - Show for sport reservations with future dates */}
+            {application.booking_date && 
+             ['approved', 'submitted', 'pending', 'under_review'].includes(application.status || '') &&
+             new Date(application.booking_date) >= new Date(new Date().toDateString()) && (
+              <Button
+                onClick={() => setIsCancelDialogOpen(true)}
+                variant="outline"
+                className="flex items-center gap-2 text-destructive border-destructive hover:bg-destructive/10"
+              >
+                <XCircle className="h-4 w-4" />
+                Cancel Reservation
+              </Button>
+            )}
+
             {/* Renewal Button - Show when within renewal window */}
             {application.status === 'issued' && 
              application.expires_at && 
@@ -811,6 +830,32 @@ const ServiceApplicationDetail: React.FC = () => {
           renewal_reminder_days: application.tile?.renewal_reminder_days,
         }}
       />
+
+      {/* Cancel Booking Dialog - For sport reservations */}
+      {application.booking_date && (
+        <CancelBookingDialog
+          open={isCancelDialogOpen}
+          onOpenChange={setIsCancelDialogOpen}
+          bookingDate={application.booking_date}
+          facilityName={application.tile?.title}
+          isLoading={cancelBookingMutation.isPending}
+          onConfirm={(reason) => {
+            cancelBookingMutation.mutate(
+              {
+                bookingId: application.id,
+                cancelledBy: profile?.id || 'user',
+                cancellationReason: reason || undefined,
+              },
+              {
+                onSuccess: () => {
+                  setIsCancelDialogOpen(false);
+                  refetch();
+                },
+              }
+            );
+          }}
+        />
+      )}
     </div>
   );
 };
