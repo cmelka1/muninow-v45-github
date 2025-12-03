@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Search, Calendar, Clock, Eye } from 'lucide-react';
 import { SportBooking } from '@/hooks/useSportBookings';
 import { format } from 'date-fns';
 import { InlineApprovalMenu } from '@/components/municipal/InlineApprovalMenu';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface SportBookingHistoryTableProps {
   bookings: SportBooking[];
@@ -21,10 +22,19 @@ type FilterStatus = 'all' | 'pending' | 'submitted' | 'under_review' | 'approved
 type FilterPaymentStatus = 'all' | 'paid' | 'unpaid' | 'not_required';
 
 export function SportBookingHistoryTable({ bookings, isLoading, onViewBooking }: SportBookingHistoryTableProps) {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [periodFilter, setPeriodFilter] = useState<FilterPeriod>('all');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<FilterPaymentStatus>('all');
+
+  const handleActionComplete = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['sport-bookings'] });
+    queryClient.invalidateQueries({ queryKey: ['daily-bookings'] });
+    queryClient.invalidateQueries({ queryKey: ['weekly-bookings'] });
+    queryClient.invalidateQueries({ queryKey: ['booked-time-slots'] });
+    queryClient.invalidateQueries({ queryKey: ['conflict-check'] });
+  }, [queryClient]);
 
   const today = new Date().toISOString().split('T')[0];
   const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -214,6 +224,7 @@ export function SportBookingHistoryTable({ bookings, isLoading, onViewBooking }:
                       {['pending', 'submitted', 'under_review'].includes(booking.status) && (
                         <InlineApprovalMenu
                           applicationId={booking.id}
+                          onActionComplete={handleActionComplete}
                         />
                       )}
                       {onViewBooking && (
