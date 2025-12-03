@@ -135,7 +135,7 @@ export function SportFacilityForm({ facility, customerId, onClose }: SportFacili
         start_time: startTime,
         end_time: endTime,
         max_advance_days: maxAdvanceDays,
-        timezone: 'America/New_York',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       },
       customer_id: customerId || profile?.customer_id!,
       created_by: profile?.id!,

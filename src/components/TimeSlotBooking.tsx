@@ -98,7 +98,9 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
   
   // Disable unavailable dates in calendar
   const disabledDates = (date: Date) => {
-    return !isDateAvailable(date) || date < new Date() || date > maxDate;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return !isDateAvailable(date) || date < today || date > maxDate;
   };
   
   return (
