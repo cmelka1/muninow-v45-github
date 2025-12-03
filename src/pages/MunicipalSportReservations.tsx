@@ -53,7 +53,7 @@ const MunicipalSportReservations = () => {
       return bDate.getMonth() === now.getMonth() && 
              bDate.getFullYear() === now.getFullYear() && 
              b.payment_status === 'paid' &&
-             ['approved', 'issued'].includes(b.status);
+             ['approved', 'issued', 'reserved'].includes(b.status);
     })
     .reduce((sum, b) => sum + (b.total_amount_cents || 0), 0) || 0;
 

@@ -117,15 +117,15 @@ export function SportBookingModal({ facility, isOpen, onClose }: SportBookingMod
 
   const calculateEndTime = () => {
     if (!selectedTime || !facility) return null;
-    if (facility.booking_mode === 'time_period' && facility.time_slot_config?.slot_duration_minutes) {
-      const [hours, minutes] = selectedTime.split(':').map(Number);
-      const startMinutes = hours * 60 + minutes;
-      const endMinutes = startMinutes + facility.time_slot_config.slot_duration_minutes;
-      const endHours = Math.floor(endMinutes / 60);
-      const endMins = endMinutes % 60;
-      return `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}:00`;
-    }
-    return null;
+    const duration = facility.time_slot_config?.slot_duration_minutes;
+    if (!duration) return null;
+    // Calculate end time for both time_period and start_time modes
+    const [hours, minutes] = selectedTime.split(':').map(Number);
+    const startMinutes = hours * 60 + minutes;
+    const endMinutes = startMinutes + duration;
+    const endHours = Math.floor(endMinutes / 60);
+    const endMins = endMinutes % 60;
+    return `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}:00`;
   };
 
   const createBooking = async () => {
@@ -163,6 +163,14 @@ export function SportBookingModal({ facility, isOpen, onClose }: SportBookingMod
         variant: 'destructive',
       });
       return null;
+    }
+
+    // Update service_name on the created application
+    if (row.application_id) {
+      await supabase
+        .from('municipal_service_applications')
+        .update({ service_name: facility.title })
+        .eq('id', row.application_id);
     }
 
     return row.application_id;

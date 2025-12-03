@@ -244,6 +244,7 @@ export const useCancelSportBooking = () => {
       queryClient.invalidateQueries({ queryKey: ['daily-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['weekly-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['booked-time-slots'] });
+      queryClient.invalidateQueries({ queryKey: ['conflict-check'] });
       toast({
         title: 'Booking Cancelled',
         description: 'The booking has been cancelled successfully',

@@ -30,6 +30,7 @@ export const DayScheduleList: React.FC<DayScheduleListProps> = ({
     queryClient.invalidateQueries({ queryKey: ['daily-bookings'] });
     queryClient.invalidateQueries({ queryKey: ['weekly-bookings'] });
     queryClient.invalidateQueries({ queryKey: ['booked-time-slots'] });
+    queryClient.invalidateQueries({ queryKey: ['conflict-check'] });
   };
 
   if (isLoading) {
