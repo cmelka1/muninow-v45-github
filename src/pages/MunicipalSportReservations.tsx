@@ -47,7 +47,8 @@ const MunicipalSportReservations = () => {
   ).length || 0;
   const thisMonthRevenue = sportBookings
     ?.filter(b => {
-      const bDate = new Date(b.created_at);
+      if (!b.booking_date) return false;
+      const bDate = new Date(b.booking_date);
       const now = new Date();
       return bDate.getMonth() === now.getMonth() && 
              bDate.getFullYear() === now.getFullYear() && 

@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, Calendar, MapPin, DollarSign } from 'lucide-react';
+import { Clock, Calendar } from 'lucide-react';
 import { SportFacility } from '@/hooks/useSportFacilities';
 
 interface SportFacilityCardProps {

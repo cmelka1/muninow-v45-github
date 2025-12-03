@@ -18,11 +18,13 @@ interface SportBookingHistoryTableProps {
 
 type FilterPeriod = 'all' | 'today' | 'week' | 'upcoming' | 'past';
 type FilterStatus = 'all' | 'pending' | 'submitted' | 'under_review' | 'approved' | 'issued' | 'denied' | 'cancelled';
+type FilterPaymentStatus = 'all' | 'paid' | 'unpaid' | 'not_required';
 
 export function SportBookingHistoryTable({ bookings, isLoading, onViewBooking }: SportBookingHistoryTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [periodFilter, setPeriodFilter] = useState<FilterPeriod>('all');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<FilterPaymentStatus>('all');
 
   const today = new Date().toISOString().split('T')[0];
   const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -48,6 +50,14 @@ export function SportBookingHistoryTable({ bookings, isLoading, onViewBooking }:
 
     // Status filter
     if (statusFilter !== 'all' && booking.status !== statusFilter) return false;
+
+    // Payment status filter
+    if (paymentStatusFilter !== 'all') {
+      const paymentStatus = booking.payment_status;
+      if (paymentStatusFilter === 'paid' && paymentStatus !== 'paid') return false;
+      if (paymentStatusFilter === 'unpaid' && paymentStatus !== 'unpaid') return false;
+      if (paymentStatusFilter === 'not_required' && paymentStatus !== 'not_required') return false;
+    }
 
     return true;
   });
@@ -137,6 +147,17 @@ export function SportBookingHistoryTable({ bookings, isLoading, onViewBooking }:
             <SelectItem value="issued">Issued</SelectItem>
             <SelectItem value="denied">Denied</SelectItem>
             <SelectItem value="cancelled">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={paymentStatusFilter} onValueChange={(v) => setPaymentStatusFilter(v as FilterPaymentStatus)}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Payment" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Payments</SelectItem>
+            <SelectItem value="paid">Paid</SelectItem>
+            <SelectItem value="unpaid">Unpaid</SelectItem>
+            <SelectItem value="not_required">Not Required</SelectItem>
           </SelectContent>
         </Select>
       </div>
