@@ -127,6 +127,21 @@ export const QuickBookingDialog: React.FC<QuickBookingDialogProps> = ({
       }
     }
 
+    // Validate operating hours
+    const facilityStartTime = selectedFacility?.time_slot_config?.start_time || '00:00';
+    const facilityEndTime = selectedFacility?.time_slot_config?.end_time || '23:59';
+    const selectedTimeShort = startTime.slice(0, 5);
+    const endTimeShort = endTime.slice(0, 5);
+    
+    if (selectedTimeShort < facilityStartTime || endTimeShort > facilityEndTime) {
+      toast({
+        title: 'Outside Operating Hours',
+        description: `This facility operates from ${facilityStartTime} to ${facilityEndTime}`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (conflictCheck?.hasConflict) {
       toast({
         title: 'Time Conflict',
@@ -166,6 +181,7 @@ export const QuickBookingDialog: React.FC<QuickBookingDialogProps> = ({
           service_name: selectedFacility?.title || null,
           payment_status: paymentStatus,
           base_amount_cents: selectedFacility?.amount_cents || 0,
+          total_amount_cents: selectedFacility?.amount_cents || 0,
         });
 
       if (error) throw error;

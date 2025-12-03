@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { MoreVertical, Check, X, AlertCircle, Eye } from 'lucide-react';
+import { MoreVertical, Check, X, AlertCircle, Eye, Loader2 } from 'lucide-react';
 import { useQuickApproval } from '@/hooks/useQuickApproval';
 import { useNavigate } from 'react-router-dom';
 
@@ -79,7 +79,11 @@ export const InlineApprovalMenu: React.FC<InlineApprovalMenuProps> = ({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" disabled={isPending}>
-            <MoreVertical className="h-4 w-4" />
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <MoreVertical className="h-4 w-4" />
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
