@@ -22,9 +22,14 @@ const MunicipalOtherServices = () => {
   // Filter OUT sport facilities (has_time_slots = true)
   const nonSportTiles = serviceTiles?.filter(tile => tile.has_time_slots !== true) || [];
   
-  // Filter applications for this municipality and exclude drafts
+  // Get tile IDs for non-sport services to filter applications
+  const nonSportTileIds = new Set(nonSportTiles.map(tile => tile.id));
+  
+  // Filter applications for this municipality, exclude drafts, and only include non-sport service applications
   const municipalApplications = applications?.filter(app => 
-    app.customer_id === profile?.customer_id && app.status !== 'draft'
+    app.customer_id === profile?.customer_id && 
+    app.status !== 'draft' &&
+    nonSportTileIds.has(app.tile_id)
   ) || [];
   
   // Calculate stats
