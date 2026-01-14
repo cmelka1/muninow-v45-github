@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
+import { FinixAPI } from '../shared/finixAPI.ts';
+import { Logger } from '../shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -63,7 +65,7 @@ serve(async (req) => {
     });
 
     if (rolesError) {
-      console.error('Error checking user roles:', rolesError);
+      Logger.error('Error checking user roles', rolesError);
       return new Response(
         JSON.stringify({ error: 'Failed to verify permissions' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -89,7 +91,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('Updating fee profile for merchant:', merchantId);
+    Logger.info('Updating fee profile for merchant', { merchantId });
 
     // Get existing fee profile from database
     const { data: existingProfile, error: fetchError } = await supabaseClient
@@ -113,37 +115,19 @@ serve(async (req) => {
     }
 
     // Update fee profile in Finix API
-    const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
-    const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
-    const finixApiUrl = Deno.env.get('FINIX_API_URL') || 'https://finix.sandbox-payments-api.com';
+    const finixAPI = new FinixAPI();
 
-    if (!finixApplicationId || !finixApiSecret) {
-      return new Response(
-        JSON.stringify({ error: 'Finix API credentials not configured' }),
+    let finixData;
+    try {
+      finixData = await finixAPI.updateFeeProfile(existingProfile.finix_fee_profile_id, feeData);
+      Logger.info('Finix fee profile updated', { id: finixData.id });
+    } catch (error) {
+       Logger.error('Finix API error', error);
+       return new Response(
+        JSON.stringify({ error: 'Failed to update fee profile in Finix API', details: error instanceof Error ? error.message : 'Unknown error' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    const finixResponse = await fetch(`${finixApiUrl}/fee_profiles/${existingProfile.finix_fee_profile_id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${btoa(`${finixApplicationId}:${finixApiSecret}`)}`
-      },
-      body: JSON.stringify(feeData)
-    });
-
-    if (!finixResponse.ok) {
-      const finixError = await finixResponse.text();
-      console.error('Finix API error:', finixError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to update fee profile in Finix API', details: finixError }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const finixData = await finixResponse.json();
-    console.log('Finix fee profile updated:', finixData.id);
 
     // Update fee profile in our database
     const { data: updatedProfile, error: updateError } = await supabaseClient
@@ -182,14 +166,14 @@ serve(async (req) => {
       .single();
 
     if (updateError) {
-      console.error('Database update error:', updateError);
+      Logger.error('Database update error', updateError);
       return new Response(
         JSON.stringify({ error: 'Failed to update fee profile in database', details: updateError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Fee profile updated successfully:', updatedProfile.id);
+    Logger.info('Fee profile updated successfully', { id: updatedProfile.id });
 
     return new Response(
       JSON.stringify({ 
@@ -201,7 +185,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Unexpected error:', error);
+    Logger.error('Unexpected error in update-merchant-fee-profile', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error occurred' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

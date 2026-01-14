@@ -7,9 +7,10 @@ export const useServiceApplicationRenewal = () => {
   const queryClient = useQueryClient();
 
   const renewApplication = useMutation({
-    mutationFn: async (applicationId: string) => {
+    mutationFn: async ({ applicationId, autoApprove = false }: { applicationId: string; autoApprove?: boolean }) => {
       const { data, error } = await supabase.rpc('create_service_application_renewal', {
-        p_original_application_id: applicationId
+        p_original_application_id: applicationId,
+        p_auto_approve: autoApprove
       });
 
       if (error) throw error;

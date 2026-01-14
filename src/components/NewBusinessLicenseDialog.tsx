@@ -27,6 +27,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface NewBusinessLicenseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  existingApplication?: any;
 }
 
 interface SelectedMunicipality {
@@ -66,7 +67,8 @@ interface UploadedDocument {
 
 export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> = ({
   open,
-  onOpenChange
+  onOpenChange,
+  existingApplication
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedMunicipality, setSelectedMunicipality] = useState<SelectedMunicipality | null>(null);
@@ -102,7 +104,7 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
   const { data: licenseTypes = [] } = useBusinessLicenseTypes(
     selectedMunicipality?.customer_id 
   );
-  const { createApplication, submitApplication } = useBusinessLicenseApplication();
+  const { createApplication, updateApplication, submitApplication } = useBusinessLicenseApplication();
   const { uploadDocument } = useBusinessLicenseDocuments();
   
   const [merchantFinixId, setMerchantFinixId] = useState<string | null>(null);
@@ -139,6 +141,47 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
 
   // Initialize Finix Auth for fraud detection with correct Finix merchant ID
   const { finixSessionKey } = useFinixAuth(merchantFinixId);
+
+  // Effect to populate form when existingApplication changes
+  React.useEffect(() => {
+    if (existingApplication && open) {
+      // Create municipality object directly from existing application data
+      // We assume customer_id is present. For display names (merchant/business name), 
+      // we might fallback or leave empty if not critical for logic (logic uses customer_id).
+      setSelectedMunicipality({
+        id: existingApplication.customer_id,
+        merchant_name: existingApplication.merchant_name || '',
+        business_name: existingApplication.merchant_name || '',
+        customer_city: existingApplication.business_city || '', 
+        customer_state: existingApplication.business_state || '',
+        customer_id: existingApplication.customer_id
+      });
+
+      setSelectedBusinessType(existingApplication.license_type_id);
+
+      setBusinessInfo({
+        businessLegalName: existingApplication.business_legal_name || '',
+        businessOwner: `${existingApplication.owner_first_name || ''} ${existingApplication.owner_last_name || ''}`.trim(),
+        businessOwnerPhone: existingApplication.business_phone || '',
+        businessOwnerEmail: existingApplication.business_email || '',
+        businessAddress: existingApplication.business_street_address 
+          ? `${existingApplication.business_street_address}, ${existingApplication.business_city}, ${existingApplication.business_state} ${existingApplication.business_zip_code}`
+          : '',
+        businessEIN: existingApplication.federal_ein || '',
+        businessDescription: existingApplication.business_description || '',
+        additionalDetails: existingApplication.additional_info?.additionalDetails || '',
+        uploadedDocuments: [] // We don't load existing docs into the upload queue
+      });
+
+      if (existingApplication.form_responses) {
+        setUseBusinessProfileInfo(existingApplication.form_responses.useBusinessProfileInfo || false);
+        setIsDifferentPropertyOwner(existingApplication.form_responses.isDifferentPropertyOwner || false);
+        if (existingApplication.form_responses.propertyOwnerInfo) {
+          setPropertyOwnerInfo(existingApplication.form_responses.propertyOwnerInfo);
+        }
+      }
+    }
+  }, [existingApplication, open]);
 
   const totalSteps = 3;
   const progress = (currentStep / totalSteps) * 100;
@@ -570,7 +613,18 @@ export const NewBusinessLicenseDialog: React.FC<NewBusinessLicenseDialogProps> =
         ach_fixed_fee: applicationData.ach_fixed_fee,
         merchant_fee_profile_id: applicationData.merchant_fee_profile_id
       });
-      const result = await createApplication.mutateAsync(applicationData);
+
+      let result;
+      if (existingApplication) {
+        // Update existing application
+        result = await updateApplication.mutateAsync({
+           id: existingApplication.id,
+           data: applicationData
+        });
+      } else {
+        // Create new application
+        result = await createApplication.mutateAsync(applicationData);
+      }
       
 
       // Upload documents if any

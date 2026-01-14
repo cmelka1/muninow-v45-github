@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
+import { FinixAPI } from '../shared/finixAPI.ts';
+import { Logger } from '../shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -49,7 +51,7 @@ serve(async (req) => {
     });
 
     if (rolesError) {
-      console.error('Error checking user roles:', rolesError);
+      Logger.error('Error checking user roles', rolesError);
       return new Response(
         JSON.stringify({ error: 'Failed to verify permissions' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -74,7 +76,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('Confirming fee profile:', feeProfileId);
+    Logger.info('Confirming fee profile', { feeProfileId });
 
     // Get fee profile from database
     const { data: feeProfile, error: fetchError } = await supabaseClient
@@ -98,63 +100,41 @@ serve(async (req) => {
     }
 
     // Update merchant profile in Finix API
-    const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
-    const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
-    const finixApiUrl = Deno.env.get('FINIX_API_URL') || 'https://finix.sandbox-payments-api.com';
-
-    if (!finixApplicationId || !finixApiSecret) {
-      return new Response(
-        JSON.stringify({ error: 'Finix API credentials not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const finixAPI = new FinixAPI();
 
     const updateData = {
       fee_profile: feeProfile.finix_fee_profile_id,
       card_present_fee_profile: feeProfile.finix_fee_profile_id
     };
 
-    const finixResponse = await fetch(`${finixApiUrl}/merchant_profiles/${feeProfile.finix_merchant_profile_id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${btoa(`${finixApplicationId}:${finixApiSecret}`)}`
-      },
-      body: JSON.stringify(updateData)
-    });
-
-    if (!finixResponse.ok) {
-      const finixError = await finixResponse.text();
-      console.error('Finix API error:', finixError);
+    let merchantProfileData;
+    try {
+        merchantProfileData = await finixAPI.updateMerchantProfile(feeProfile.finix_merchant_profile_id, updateData);
+    } catch (finixError) {
+        Logger.error('Finix API error', finixError);
       
-      // Try to cleanup/rollback the fee profile creation
-      try {
-        await fetch(`${finixApiUrl}/fee_profiles/${feeProfile.finix_fee_profile_id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Basic ${btoa(`${finixApplicationId}:${finixApiSecret}`)}`
-          }
-        });
+        // Try to cleanup/rollback the fee profile creation
+        try {
+            await finixAPI.deleteFeeProfile(feeProfile.finix_fee_profile_id);
+            
+            // Also delete from our database
+            await supabaseClient
+            .from('merchant_fee_profiles')
+            .delete()
+            .eq('id', feeProfileId);
+            
+            Logger.info('Rollback completed due to merchant profile update failure');
+        } catch (rollbackError) {
+            Logger.error('Failed to rollback fee profile', rollbackError);
+        }
         
-        // Also delete from our database
-        await supabaseClient
-          .from('merchant_fee_profiles')
-          .delete()
-          .eq('id', feeProfileId);
-        
-        console.log('Rollback completed due to merchant profile update failure');
-      } catch (rollbackError) {
-        console.error('Failed to rollback fee profile:', rollbackError);
-      }
-      
-      return new Response(
-        JSON.stringify({ error: 'Failed to update merchant profile in Finix API', details: finixError }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        return new Response(
+            JSON.stringify({ error: 'Failed to update merchant profile in Finix API', details: finixError instanceof Error ? finixError.message : String(finixError) }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
     }
 
-    const merchantProfileData = await finixResponse.json();
-    console.log('Merchant profile updated with fee profile:', merchantProfileData.id);
+    Logger.info('Merchant profile updated with fee profile', { merchantProfileId: merchantProfileData.id });
 
     // Clean up old fee profiles for this merchant (keep only the current one)
     await supabaseClient
@@ -176,14 +156,14 @@ serve(async (req) => {
       .single();
 
     if (updateError) {
-      console.error('Database update error:', updateError);
+      Logger.error('Database update error', updateError);
       return new Response(
         JSON.stringify({ error: 'Failed to update fee profile in database', details: updateError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Fee profile confirmed successfully:', updatedFeeProfile.id);
+    Logger.info('Fee profile confirmed successfully', { id: updatedFeeProfile.id });
 
     return new Response(
       JSON.stringify({ 
@@ -195,7 +175,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Unexpected error:', error);
+    Logger.error('Unexpected error in confirm-merchant-fee-profile', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
       JSON.stringify({ error: 'Internal server error', details: errorMessage }),

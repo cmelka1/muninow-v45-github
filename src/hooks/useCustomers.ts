@@ -94,8 +94,9 @@ export const useCustomers = () => {
 
       setCustomers(data || []);
       return { data: data || [], count: count || 0 };
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
       toast({
         title: "Error",
         description: "Failed to fetch customers",
@@ -195,14 +196,15 @@ export const useCustomers = () => {
       await fetchCustomers();
       
       return data;
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errMessage);
       
       // Provide specific error messages for common issues
-      let errorMessage = err.message;
-      if (err.message.includes('row-level security policy')) {
+      let errorMessage = errMessage;
+      if (errMessage.includes('row-level security policy')) {
         errorMessage = "Access denied. You need superAdmin privileges to create customers. Please contact your administrator.";
-      } else if (err.message.includes('permission denied')) {
+      } else if (errMessage.includes('permission denied')) {
         errorMessage = "Permission denied. Please ensure you have the required role to perform this action.";
       }
       
@@ -233,8 +235,9 @@ export const useCustomers = () => {
       if (error) throw error;
 
       return data;
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
       toast({
         title: "Error",
         description: "Failed to fetch customer details",

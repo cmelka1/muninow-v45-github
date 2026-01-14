@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Logger } from '../shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,16 +16,16 @@ serve(async (req) => {
     const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
 
     if (!finixAppId) {
-      console.error('❌ Missing FINIX_USER_APPLICATION_ID');
+      Logger.error('Missing FINIX_USER_APPLICATION_ID');
       throw new Error('Finix user application ID not configured');
     }
 
     if (!finixAppId.startsWith('AP')) {
-      console.error('❌ Invalid FINIX_USER_APPLICATION_ID format. Expected AP... format, got:', finixAppId);
+      Logger.error('Invalid FINIX_USER_APPLICATION_ID format', { finixAppId });
       throw new Error('Invalid Finix user application ID format');
     }
 
-    console.log('✅ Returning Finix config:', {
+    Logger.info('Returning Finix config', {
       applicationId: finixAppId,
       environment: finixEnvironment
     });
@@ -42,7 +43,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('❌ Error getting Finix config:', error);
+    Logger.error('Error getting Finix config', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     
     return new Response(

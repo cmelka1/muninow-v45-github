@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+
 import { useAuth } from '@/contexts/SimpleAuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +42,7 @@ const MunicipalSignup = () => {
   const [selectedMunicipality, setSelectedMunicipality] = useState<Customer | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+
 
   // Scroll to top utility function
   const scrollToTop = () => {
@@ -119,10 +121,10 @@ const MunicipalSignup = () => {
       // Move to MFA step
       setCurrentStep(2);
       scrollToTop();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "An error occurred during validation.",
+        description: error instanceof Error ? error.message : "An error occurred during validation.",
         variant: "destructive"
       });
     } finally {
@@ -147,7 +149,7 @@ const MunicipalSignup = () => {
             account_type: 'municipaladmin',
             role: 'admin',
             customer_id: selectedCustomerId
-          }
+          },
         }
       });
 
@@ -162,10 +164,10 @@ const MunicipalSignup = () => {
 
       setCurrentStep(3);
       scrollToTop();
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Account Creation Failed",
-        description: error.message || "Failed to create account. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create account. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -380,6 +382,10 @@ const MunicipalSignup = () => {
                       </Label>
                     </div>
                   </div>
+                </div>
+
+                <div className="flex justify-center py-2">
+
                 </div>
 
                   <Button 

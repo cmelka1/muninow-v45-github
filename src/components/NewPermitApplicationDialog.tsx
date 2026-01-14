@@ -27,6 +27,8 @@ import { useFinixAuth } from '@/hooks/useFinixAuth';
 interface NewPermitApplicationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  editPermitId?: string;
+  onSuccess?: () => void;
 }
 
 interface SelectedMunicipality {
@@ -47,6 +49,7 @@ interface SelectedPermitType {
   requires_inspection: boolean;
   merchant_id: string | null;
   merchant_name: string | null;
+  renewal_fee_cents?: number | null;
 }
 
 interface PropertyInformation {
@@ -80,11 +83,14 @@ interface UploadedDocument {
   uploadStatus: 'pending' | 'uploading' | 'completed' | 'error';
   filePath?: string;
   error?: string;
+  isExisting?: boolean;
 }
 
 export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProps> = ({
   open,
-  onOpenChange
+  onOpenChange,
+  editPermitId,
+  onSuccess
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedMunicipality, setSelectedMunicipality] = useState<SelectedMunicipality | null>(null);
@@ -128,6 +134,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [merchantFinixId, setMerchantFinixId] = useState<string | null>(null);
+  const [isRenewal, setIsRenewal] = useState(false);
   
   const dialogContentRef = useRef<HTMLDivElement>(null);
 
@@ -145,6 +152,11 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
         .eq('id', selectedMunicipality.id)
         .single();
         
+      if (editPermitId && !data?.finix_merchant_id) {
+         // If editing, we might already have it or we fetch it.
+         // Pass through
+      }
+        
       if (data?.finix_merchant_id) {
         console.log('📊 Permit - Fetched Finix Merchant ID:', {
           merchant_id: selectedMunicipality.id,
@@ -159,6 +171,142 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     
     fetchMerchantFinixId();
   }, [selectedMunicipality?.id]);
+
+  // Load existing permit data if editing
+  React.useEffect(() => {
+    if (!open || !editPermitId) return;
+
+    const loadPermitData = async () => {
+      try {
+        // Fetch permit details with all relations
+        const { data: permit, error } = await supabase
+          .from('permit_applications')
+          .select(`
+            *,
+            permit_types_v2 (*),
+            permit_contractors (*),
+            permit_documents (*)
+          `)
+          .eq('permit_id', editPermitId)
+          .single();
+
+        if (error) throw error;
+        if (!permit) return;
+
+        // Fetch merchant details to reconstruct municipality state
+        const { data: merchantData } = await supabase
+          .from('merchants')
+          .select('*')
+          .eq('id', permit.merchant_id)
+          .single();
+
+        // 1. Set Municipality
+        if (merchantData) {
+          setSelectedMunicipality({
+            id: merchantData.id,
+            merchant_name: merchantData.merchant_name,
+            business_name: merchantData.merchant_name, // fallback
+            customer_city: '', // Not strictly needed for logic, mostly for display if used
+            customer_state: '',
+            customer_id: permit.customer_id
+          });
+        }
+
+        // 2. Set Permit Type
+        // Note: filteredPermitTypes depends on selectedMunicipality, 
+        // so we might need to wait or manually set this object.
+        // We set it manually here using the joined data
+        const typeData = permit.permit_types_v2 as any;
+        if (typeData) {
+          setSelectedPermitType({
+            id: typeData.id,
+            name: typeData.name,
+            description: typeData.description,
+            base_fee_cents: typeData.base_fee_cents,
+            processing_days: typeData.processing_days,
+            requires_inspection: typeData.requires_inspection,
+            merchant_id: typeData.merchant_id,
+            merchant_name: typeData.merchant_name,
+            renewal_fee_cents: typeData.renewal_fee_cents
+          });
+        }
+        
+        // Set Renewal State
+        setIsRenewal(!!(permit as any).is_renewal);
+
+        // 3. Set Info Fields
+        setPropertyInfo({
+          address: permit.property_address || '',
+          pinNumber: permit.property_pin || '',
+          estimatedValue: (permit.estimated_construction_value_cents || 0) / 100
+        });
+
+        setApplicantInfo({
+          nameOrCompany: permit.applicant_full_name || '',
+          phoneNumber: permit.applicant_phone || '',
+          email: permit.applicant_email || '',
+          address: permit.applicant_address || ''
+        });
+
+        setPropertyOwnerInfo({
+          nameOrCompany: permit.owner_full_name || '',
+          phoneNumber: permit.owner_phone || '',
+          email: permit.owner_email || '',
+          address: permit.owner_address || ''
+        });
+
+        setScopeOfWork(permit.scope_of_work || '');
+
+        // 4. Contractors
+        if (permit.permit_contractors && permit.permit_contractors.length > 0) {
+          setContractors(permit.permit_contractors.map((c: any) => ({
+            id: c.id, // Keep original ID if needed, or generates new
+            contractor_type: c.contractor_type,
+            contractor_name: c.contractor_name,
+            phone: c.contractor_phone || '',
+            email: c.contractor_email || '',
+            street_address: c.contractor_address || '', // Address parsing would be hard, putting full string in street for now or leaving partial
+            city: '', 
+            state: '', 
+            zip_code: '' 
+          })));
+        }
+
+        // 5. Questions
+        if (permit.municipal_questions_responses) {
+          setQuestionResponses(permit.municipal_questions_responses as Record<string, any>);
+        }
+
+        // 6. Documents
+        // We map existing docs to UploadedDocument state, marking them as completed
+        if (permit.permit_documents && permit.permit_documents.length > 0) {
+          const existingDocs: UploadedDocument[] = permit.permit_documents.map((d: any) => ({
+             id: d.id,
+             name: d.file_name,
+             size: d.file_size,
+             type: d.content_type || 'application/octet-stream',
+             documentType: d.document_type,
+             description: d.description,
+             uploadProgress: 100,
+             uploadStatus: 'completed',
+             filePath: d.storage_path,
+             isExisting: true
+          }));
+          setUploadedDocuments(existingDocs);
+        }
+
+      } catch (err) {
+        console.error('Error loading permit for edit:', err);
+        toast({
+          title: "Error loading application",
+          description: "Could not load the application details.",
+          variant: "destructive"
+        });
+      }
+    };
+
+    loadPermitData();
+  }, [open, editPermitId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initialize Finix Auth for fraud detection with correct Finix merchant ID
   const { finixSessionKey } = useFinixAuth(merchantFinixId);
@@ -300,7 +448,9 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
     setUploadedDocuments([]);
     setDragActive(false);
     setIsSubmitting(false);
+    setIsSubmitting(false);
     setValidationErrors({});
+    setIsRenewal(false);
     onOpenChange(false);
   };
 
@@ -393,7 +543,9 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
       });
       
       // Calculate payment amount from permit type
-      const paymentAmountCents = selectedPermitType!.base_fee_cents;
+      const paymentAmountCents = isRenewal 
+        ? (selectedPermitType!.renewal_fee_cents ?? 0) 
+        : selectedPermitType!.base_fee_cents;
 
 
       // Validate UUID fields before insertion
@@ -417,46 +569,97 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
       }
 
       // Create the permit application - let the database trigger generate the permit number atomically
-      const { data: permitApplication, error: permitError } = await supabase
-        .from('permit_applications')
-        .insert({
-          user_id: profile.id,
-          customer_id: selectedMunicipality!.customer_id,
-          merchant_id: selectedMunicipality!.id,
-          permit_type_id: selectedPermitType!.id,
-          property_address: propertyInfo.address,
-          property_pin: propertyInfo.pinNumber || null,
-          estimated_construction_value_cents: propertyInfo.estimatedValue * 100,
-          applicant_full_name: applicantInfo.nameOrCompany,
-          applicant_phone: applicantInfo.phoneNumber,
-          applicant_email: applicantInfo.email,
-          applicant_address: applicantInfo.address,
-          owner_full_name: propertyOwnerInfo.nameOrCompany,
-          owner_phone: propertyOwnerInfo.phoneNumber,
-          owner_email: propertyOwnerInfo.email,
-          owner_address: propertyOwnerInfo.address,
-          scope_of_work: scopeOfWork || null,
-          municipal_questions_responses: municipalQuestions && municipalQuestions.length > 0 ? questionResponses : null,
-          application_status: 'submitted' as const,
-          submitted_at: new Date().toISOString(),
-          // Merchant data
-          merchant_name: merchantData.merchant_name,
-          finix_merchant_id: merchantData.finix_merchant_id,
-          merchant_finix_identity_id: merchantData.finix_identity_id,
-          // Fee profile data
-          merchant_fee_profile_id: feeProfile?.id,
-          basis_points: feeProfile?.basis_points,
-          fixed_fee: feeProfile?.fixed_fee,
-          ach_basis_points: feeProfile?.ach_basis_points,
-          ach_fixed_fee: feeProfile?.ach_fixed_fee,
-          // Payment data
-          payment_amount_cents: paymentAmountCents,
-          fraud_session_id: fraudSessionId
-        })
-        .select()
-        .single();
+      // Create or Update permit application
+      let permitApplication;
 
-      if (permitError) throw permitError;
+      if (editPermitId) {
+        const { data, error } = await supabase
+          .from('permit_applications')
+          .update({
+            // Update fields
+            property_address: propertyInfo.address,
+            property_pin: propertyInfo.pinNumber || null,
+            estimated_construction_value_cents: propertyInfo.estimatedValue * 100,
+            applicant_full_name: applicantInfo.nameOrCompany,
+            applicant_phone: applicantInfo.phoneNumber,
+            applicant_email: applicantInfo.email,
+            applicant_address: applicantInfo.address,
+            owner_full_name: propertyOwnerInfo.nameOrCompany,
+            owner_phone: propertyOwnerInfo.phoneNumber,
+            owner_email: propertyOwnerInfo.email,
+            owner_address: propertyOwnerInfo.address,
+            scope_of_work: scopeOfWork || null,
+            municipal_questions_responses: municipalQuestions && municipalQuestions.length > 0 ? questionResponses : null,
+            application_status: 'submitted', // Transition to submitted
+            submitted_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            
+            // Re-calc fees if needed (assuming type didn't change, but base fee implies update)
+            merchant_name: merchantData.merchant_name,
+            finix_merchant_id: merchantData.finix_merchant_id,
+            merchant_finix_identity_id: merchantData.finix_identity_id,
+            merchant_fee_profile_id: feeProfile?.id,
+            basis_points: feeProfile?.basis_points,
+            fixed_fee: feeProfile?.fixed_fee,
+            ach_basis_points: feeProfile?.ach_basis_points,
+            ach_fixed_fee: feeProfile?.ach_fixed_fee,
+            payment_amount_cents: paymentAmountCents,
+            fraud_session_id: fraudSessionId
+          })
+          .eq('permit_id', editPermitId)
+          .select()
+          .single();
+          
+        if (error) throw error;
+        permitApplication = data;
+
+        // Clean up existing contractors to replace them (simplest strategy)
+        await supabase.from('permit_contractors').delete().eq('permit_id', editPermitId);
+
+      } else {
+        // INSERT Logic
+        const { data, error } = await supabase
+          .from('permit_applications')
+          .insert({
+            user_id: profile.id,
+            customer_id: selectedMunicipality!.customer_id,
+            merchant_id: selectedMunicipality!.id,
+            permit_type_id: selectedPermitType!.id,
+            property_address: propertyInfo.address,
+            property_pin: propertyInfo.pinNumber || null,
+            estimated_construction_value_cents: propertyInfo.estimatedValue * 100,
+            applicant_full_name: applicantInfo.nameOrCompany,
+            applicant_phone: applicantInfo.phoneNumber,
+            applicant_email: applicantInfo.email,
+            applicant_address: applicantInfo.address,
+            owner_full_name: propertyOwnerInfo.nameOrCompany,
+            owner_phone: propertyOwnerInfo.phoneNumber,
+            owner_email: propertyOwnerInfo.email,
+            owner_address: propertyOwnerInfo.address,
+            scope_of_work: scopeOfWork || null,
+            municipal_questions_responses: municipalQuestions && municipalQuestions.length > 0 ? questionResponses : null,
+            application_status: 'submitted' as const,
+            submitted_at: new Date().toISOString(),
+            // Merchant data
+            merchant_name: merchantData.merchant_name,
+            finix_merchant_id: merchantData.finix_merchant_id,
+            merchant_finix_identity_id: merchantData.finix_identity_id,
+            // Fee profile data
+            merchant_fee_profile_id: feeProfile?.id,
+            basis_points: feeProfile?.basis_points,
+            fixed_fee: feeProfile?.fixed_fee,
+            ach_basis_points: feeProfile?.ach_basis_points,
+            ach_fixed_fee: feeProfile?.ach_fixed_fee,
+            // Payment data
+            payment_amount_cents: paymentAmountCents,
+            fraud_session_id: fraudSessionId
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        permitApplication = data;
+      }
 
       // Insert contractors
       const contractorPromises = contractors
@@ -475,8 +678,34 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
       await Promise.all(contractorPromises);
 
       // Link uploaded documents
+      // Link uploaded documents
+      // For updates, we only link NEW documents (those without a matching record in DB already?)
+      // Actually, documents are inserted with IDs in this state.
+      // If we are editing, we should only insert documents that don't exist yet for this permit.
+      // But for simplicity, we insert all "completed" uploads that are not already in DB?
+      // State `uploadedDocuments` contains ALL docs. 
+      // If they were loaded from DB, they have an ID.
+      // The `insert` below will fail if we try to insert with existing ID (if ID column is used, but we don't pass ID here).
+      // If we don't pass ID, it creates NEW rows.
+      // So we must filter out documents that were loaded from DB (i.e., those that have an ID that exists in DB).
+      // The simplest way to know is keying off something we set in loadPermitData.
+      // But we just set ID. If ID is present, it's likely existing?
+      // Wait, newly uploaded docs get a random ID in the `uploadedDocuments` state (usually)?
+      // Actually, looking at `handleFileUpload`: `const newDoc = { id: crypto.randomUUID() ... }`.
+      // So ALL docs have an ID.
+      // We need to differentiate.
+      // We can check if `doc.filePath` already exists in `permit_documents` for this permit?
+      // Or easier: In loadPermitData, we set them.
+      // Let's assume we only insert docs that are NOT in the initial load list?
+      // But we don't track that separately.
+      
+      // Better strategy: Use a flag or check if the ID format matches DB vs generated? No.
+      // Let's filter by checking if we are in edit mode.
+      // If edit mode: Only insert docs where `!doc.isExisting`. (We need to add isExisting flag to interface or cast).
+      // Let's add `isExisting` property to the object we set in `loadPermitData` and check here.
+      
       const documentPromises = uploadedDocuments
-        .filter(doc => doc.uploadStatus === 'completed' && doc.filePath)
+        .filter(doc => doc.uploadStatus === 'completed' && doc.filePath && !doc.isExisting)
         .map(doc => 
           supabase.from('permit_documents').insert({
             permit_id: permitApplication.permit_id,
@@ -500,6 +729,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
         description: `Your permit application ${permitApplication.permit_number} has been submitted for review.`,
       });
 
+      if (onSuccess) onSuccess();
       handleClose();
     } catch (error: any) {
       console.error('Submission error:', error);
@@ -532,6 +762,7 @@ export const NewPermitApplicationDialog: React.FC<NewPermitApplicationDialogProp
         requires_inspection: permitType.requires_inspection,
         merchant_id: permitType.merchant_id,
         merchant_name: permitType.merchant_name,
+        renewal_fee_cents: permitType.renewal_fee_cents
       });
     }
   };

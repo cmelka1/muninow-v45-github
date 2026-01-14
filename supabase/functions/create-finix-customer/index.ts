@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
+import { FinixAPI } from '../shared/finixAPI.ts';
+import { createFinixIdentityPayload, mapBusinessType, formatFinixDate } from '../shared/finixOnboardingUtils.ts';
+import { Logger } from '../shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,159 +47,29 @@ serve(async (req) => {
       throw new Error('Customer not found');
     }
 
-    // Prepare Finix API request
-    const finixApiKey = Deno.env.get('FINIX_API_SECRET');
-    const finixAppId = Deno.env.get('FINIX_APPLICATION_ID');
-    const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
-    
-    const finixBaseUrl = finixEnvironment === 'production' 
-      ? 'https://finix.payments-api.com'
-      : 'https://finix.sandbox-payments-api.com';
+    // Initialize Finix API
+    const finixAPI = new FinixAPI();
 
-    if (!finixApiKey || !finixAppId) {
-      throw new Error('Missing Finix API credentials');
-    }
-
-    // Format dates for Finix API
-    const formatDate = (dateJson: any) => {
-      if (!dateJson) return null;
-      const date = new Date(dateJson.year, dateJson.month - 1, dateJson.day);
-      return {
-        year: date.getFullYear(),
-        month: date.getMonth() + 1,
-        day: date.getDate()
-      };
-    };
-
-    const incorporationDate = formatDate(customer.incorporation_date);
-    const dateOfBirth = formatDate(customer.date_of_birth);
-
-    // Map business type to Finix-compatible enum
-    const mapBusinessType = (entityType: string): string => {
-      const mappings: Record<string, string> = {
-        'Corporation': 'CORPORATION',
-        'LLC': 'LIMITED_LIABILITY_COMPANY',
-        'Limited Liability Company': 'LIMITED_LIABILITY_COMPANY', 
-        'Partnership': 'PARTNERSHIP',
-        'Limited Partnership': 'LIMITED_PARTNERSHIP',
-        'General Partnership': 'GENERAL_PARTNERSHIP',
-        'Sole Proprietorship': 'INDIVIDUAL_SOLE_PROPRIETORSHIP',
-        'Individual Sole Proprietorship': 'INDIVIDUAL_SOLE_PROPRIETORSHIP',
-        'Association Estate Trust': 'ASSOCIATION_ESTATE_TRUST',
-        'Tax Exempt Organization': 'TAX_EXEMPT_ORGANIZATION',
-        'International Organization': 'INTERNATIONAL_ORGANIZATION',
-        'Government Agency': 'GOVERNMENT_AGENCY',
-        'Joint Venture': 'JOINT_VENTURE',
-        'LLC Disregarded': 'LLC_DISREGARDED'
-      };
-      
-      const mapped = mappings[entityType] || mappings[entityType.toUpperCase()];
-      if (!mapped) {
-        console.error(`Unmapped business type: ${entityType}. Using CORPORATION as fallback.`);
-        return 'CORPORATION';
-      }
-      
-      console.log(`Mapped business type: ${entityType} -> ${mapped}`);
-      return mapped;
-    };
-
-    const mappedBusinessType = mapBusinessType(customer.entity_type);
-
-    // Create Finix identity payload
-    const finixPayload = {
-      additional_underwriting_data: {
-        annual_ach_volume: customer.annual_ach_volume || 0,
-        average_ach_transfer_amount: customer.average_ach_amount || 0,
-        average_card_transfer_amount: customer.average_card_amount || 0,
-        business_description: customer.entity_description,
-        card_volume_distribution: {
-          card_present_percentage: customer.card_present_percentage || 0,
-          mail_order_telephone_order_percentage: customer.moto_percentage || 0,
-          ecommerce_percentage: customer.ecommerce_percentage || 100
-        },
-        credit_check_allowed: true,
-        credit_check_ip_address: "42.1.1.112",
-        credit_check_timestamp: "2021-04-28T16:42:55Z",
-        credit_check_user_agent: "Mozilla 5.0(Macintosh; IntelMac OS X 10 _14_6)",
-        merchant_agreement_accepted: true,
-        merchant_agreement_ip_address: "42.1.1.113",
-        merchant_agreement_timestamp: "2021-04-28T16:42:55Z",
-        merchant_agreement_user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6)",
-        refund_policy: customer.refund_policy || "MERCHANDISE_EXCHANGE_ONLY",
-        volume_distribution_by_business_type: {
-          other_volume_percentage: 0,
-          consumer_to_consumer_volume_percentage: 0,
-          business_to_consumer_volume_percentage: customer.b2c_percentage || 100,
-          business_to_business_volume_percentage: customer.b2b_percentage || 0,
-          person_to_person_volume_percentage: customer.p2p_percentage || 0
-        }
-      },
-      entity: {
-        annual_card_volume: customer.annual_card_volume || 0,
-        business_address: {
-          city: customer.business_city,
-          country: customer.business_country || "USA",
-          region: customer.business_state,
-          line2: customer.business_address_line2 || null,
-          line1: customer.business_address_line1,
-          postal_code: customer.business_zip_code
-        },
-        business_name: customer.legal_entity_name,
-        business_phone: customer.entity_phone,
-        business_tax_id: customer.tax_id,
-        business_type: mappedBusinessType,
-        default_statement_descriptor: statement_descriptor,
-        dob: dateOfBirth,
-        doing_business_as: customer.doing_business_as,
-        email: customer.work_email,
-        first_name: customer.first_name,
-        has_accepted_credit_cards_previously: customer.has_accepted_cards_previously || false,
-        incorporation_date: incorporationDate,
-        last_name: customer.last_name,
-        max_transaction_amount: customer.max_card_amount || 999900,
-        ach_max_transaction_amount: customer.max_ach_amount || 999900,
-        mcc: customer.mcc_code,
-        ownership_type: customer.ownership_type.toUpperCase(),
-        personal_address: {
-          city: customer.personal_city,
-          country: customer.personal_country || "USA",
-          region: customer.personal_state,
-          line2: customer.personal_address_line2 || null,
-          line1: customer.personal_address_line1,
-          postal_code: customer.personal_zip_code
-        },
-        phone: customer.personal_phone,
-        principal_percentage_ownership: customer.ownership_percentage || 100,
-        tax_id: customer.personal_tax_id || customer.tax_id,
-        title: customer.job_title,
-        url: customer.entity_website || null
-      },
-      identity_roles: ["SELLER"],
-      tags: {
-        "Merchant Name": merchant_name,
-        "Customer ID": customer_id
-      },
-      type: "BUSINESS"
-    };
+    // Create Finix identity payload using shared utility
+    const finixPayload = createFinixIdentityPayload(customer, merchant_name, statement_descriptor);
 
     // Make API call to Finix
-    const finixResponse = await fetch(`${finixBaseUrl}/identities`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${btoa(finixAppId + ':' + finixApiKey)}`,
-        'Accept': 'application/hal+json',
-        'Content-Type': 'application/json',
-        'Finix-Version': '2022-02-01'
-      },
-      body: JSON.stringify(finixPayload)
-    });
+    Logger.info('Creating Finix identity...');
+    const finixData = await finixAPI.createIdentity(finixPayload);
 
-    if (!finixResponse.ok) {
-      const errorText = await finixResponse.text();
-      throw new Error(`Finix API error: ${finixResponse.status} - ${errorText}`);
-    }
-
-    const finixData = await finixResponse.json();
+    // Helper for date conversion for DB insert
+    const toDateObj = (dateJson: any) => {
+        if (!dateJson) return null;
+        if (dateJson.year && dateJson.month && dateJson.day) {
+             return new Date(dateJson.year, dateJson.month - 1, dateJson.day);
+        }
+        return null; 
+    };
+    
+    // Helper formatted dates for DB insert
+    const incorporationDateFnx = formatFinixDate(customer.incorporation_date);
+    const dateOfBirthFnx = formatFinixDate(customer.date_of_birth);
+    const mappedBusinessType = mapBusinessType(customer.entity_type);
 
     // Insert merchant record into database (Step 1: Identity created, bank fields left NULL)
     const { data: merchantData, error: insertError } = await supabase
@@ -205,7 +78,8 @@ serve(async (req) => {
         user_id: customer.user_id,
         customer_id: customer_id,
         finix_identity_id: finixData.id,
-        finix_application_id: finixData.application,
+        finix_application_id: (finixData as any).application || null,
+        
         merchant_name: merchant_name,
         business_name: customer.legal_entity_name,
         statement_descriptor: statement_descriptor,
@@ -229,7 +103,7 @@ serve(async (req) => {
         business_phone: customer.entity_phone,
         business_website: customer.entity_website,
         business_description: customer.entity_description,
-        incorporation_date: incorporationDate ? new Date(incorporationDate.year, incorporationDate.month - 1, incorporationDate.day) : null,
+        incorporation_date: toDateObj(incorporationDateFnx),
         ownership_type: customer.ownership_type,
         business_address_line1: customer.business_address_line1,
         business_address_line2: customer.business_address_line2,
@@ -250,7 +124,7 @@ serve(async (req) => {
         owner_personal_address_state: customer.personal_state,
         owner_personal_address_zip_code: customer.personal_zip_code,
         owner_personal_address_country: customer.personal_country,
-        owner_date_of_birth: dateOfBirth ? new Date(dateOfBirth.year, dateOfBirth.month - 1, dateOfBirth.day) : null,
+        owner_date_of_birth: toDateObj(dateOfBirthFnx),
         owner_personal_tax_id: customer.personal_tax_id,
         owner_ownership_percentage: customer.ownership_percentage,
         
@@ -271,7 +145,7 @@ serve(async (req) => {
         has_accepted_cards_previously: customer.has_accepted_cards_previously || false,
         refund_policy: customer.refund_policy || "MERCHANDISE_EXCHANGE_ONLY",
         
-        // Legal agreements (hardcoded as requested)
+        // Legal agreements
         merchant_agreement_accepted: true,
         merchant_agreement_ip_address: "42.1.1.113",
         merchant_agreement_timestamp: new Date(),
@@ -283,27 +157,25 @@ serve(async (req) => {
         
         // Finix response data
         finix_raw_response: finixData,
-        finix_entity_data: finixData.entity,
+        finix_entity_data: (finixData as any).entity, 
         finix_tags: finixData.tags,
         processing_status: 'seller_created',
         verification_status: 'pending',
         
-        // Internal tracking fields (not sent to Finix)
+        // Internal tracking fields
         data_source_system: data_source_system || null,
         category: category || null,
         subcategory: subcategory || null
-        
-        // Note: Bank account fields (bank_account_holder_name, bank_routing_number, etc.) 
-        // are now nullable and will be populated in Step 2
-        // Note: Final Finix merchant fields (finix_merchant_profile_id, onboarding_state, etc.)
-        // are nullable and will be populated in Step 3
       })
       .select()
       .single();
 
     if (insertError) {
+      Logger.error('Database insert error', insertError);
       throw new Error(`Database error: ${insertError.message}`);
     }
+
+    Logger.info('Finix customer created successfully', { merchant_id: merchantData.id });
 
     return new Response(
       JSON.stringify({
@@ -319,7 +191,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error creating Finix customer:', error);
+    Logger.error('Error creating Finix customer', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
       JSON.stringify({

@@ -7,27 +7,29 @@ interface Merchant {
   id: string;
   merchant_name: string;
   business_name: string;
-  verification_status: string;
-  processing_status: string;
+  verification_status?: string;
+  processing_status?: string;
   created_at: string;
-  business_address_line1: string;
+  business_address_line1?: string;
   business_address_line2?: string;
-  business_city: string;
-  business_state: string;
-  business_zip_code: string;
-  business_country: string;
-  finix_merchant_id: string | null;
-  onboarding_state: string | null;
-  processing_enabled: boolean | null;
-  settlement_enabled: boolean | null;
-  bank_account_holder_name: string | null;
-  bank_masked_account_number: string | null;
-  bank_routing_number: string | null;
+  business_city?: string;
+  business_state?: string;
+  business_zip_code?: string;
+  business_country?: string;
+  finix_merchant_id?: string | null;
+  onboarding_state?: string | null;
+  processing_enabled?: boolean | null;
+  settlement_enabled?: boolean | null;
+  bank_account_holder_name?: string | null;
+  bank_masked_account_number?: string | null;
+  bank_routing_number?: string | null;
   customer_id: string;
+  // Allow additional fields from the database
+  [key: string]: unknown;
 }
 
 export const useMerchants = () => {
-  const [merchants, setMerchants] = useState<any[]>([]);
+  const [merchants, setMerchants] = useState<Merchant[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
@@ -47,8 +49,9 @@ export const useMerchants = () => {
       if (error) throw error;
 
       return data;
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
       toast({
         title: "Error",
         description: "Failed to fetch payout profile",
@@ -60,7 +63,7 @@ export const useMerchants = () => {
     }
   };
 
-  const updatePayoutProfile = async (merchantId: string, profileData: any) => {
+  const updatePayoutProfile = async (merchantId: string, profileData: Record<string, unknown>) => {
     if (!user) return null;
     
     setIsLoading(true);
@@ -79,8 +82,9 @@ export const useMerchants = () => {
       });
 
       return data;
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
       toast({
         title: "Error",
         description: "Failed to update payout profile",
@@ -113,8 +117,9 @@ export const useMerchants = () => {
       
       setMerchants(data || []);
       return { data: data || [], count: count || 0 };
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
       toast({
         title: "Error",
         description: "Failed to fetch merchants",
@@ -145,8 +150,9 @@ export const useMerchants = () => {
 
       setMerchants(data || []);
       return { data: data || [], count: count || 0 };
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
       toast({
         title: "Error",
         description: "Failed to fetch merchants",
@@ -180,9 +186,10 @@ export const useMerchants = () => {
       
       console.log('Merchant data:', data);
       return data;
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
       console.error('fetchMerchantById error:', err);
-      setError(err.message);
+      setError(message);
       toast({
         title: "Error",
         description: "Failed to fetch merchant details",
@@ -269,8 +276,8 @@ export const useMerchants = () => {
       });
 
       return { success: true };
-    } catch (err: any) {
-      const errorMsg = err.message || 'Failed to delete merchant';
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to delete merchant';
       setError(errorMsg);
       toast({
         title: "Error",

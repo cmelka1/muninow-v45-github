@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, MapPin, User, Clock, MessageSquare, Download, CreditCard, Building, Plus, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, MapPin, User, Clock, MessageSquare, Download, CreditCard, Building, Plus, Loader2, RefreshCcw } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MunicipalLayout } from '@/components/layouts/MunicipalLayout';
@@ -18,6 +18,8 @@ import { AddPermitDocumentDialog } from '@/components/AddPermitDocumentDialog';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import { PermitStatusBadge } from '@/components/PermitStatusBadge';
 import { PermitCommunication } from '@/components/PermitCommunication';
+import { RenewPermitDialog } from '@/components/RenewPermitDialog';
+import { NewPermitApplicationDialog } from '@/components/NewPermitApplicationDialog';
 
 import { getStatusDescription, PermitStatus } from '@/hooks/usePermitWorkflow';
 import { formatCurrency, formatDate } from '@/lib/formatters';
@@ -34,6 +36,8 @@ const PermitDetail = () => {
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
   const [downloadingDocument, setDownloadingDocument] = useState<string | null>(null);
   const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
+  const [renewDialogOpen, setRenewDialogOpen] = useState(false);
+  const [resumeApplicationOpen, setResumeApplicationOpen] = useState(false);
   
   
   const isMunicipalUser = profile?.account_type === 'municipaladmin';
@@ -211,6 +215,16 @@ const PermitDetail = () => {
           </div>
           <div className="flex items-center gap-3">
             <PermitStatusBadge status={permit.application_status as PermitStatus} />
+            {permit.application_status === 'draft' && !isMunicipalUser && (
+              <Button 
+                size="sm"
+                onClick={() => setResumeApplicationOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                Resume Application
+              </Button>
+            )}
             {permit.application_status === 'issued' && permit.payment_status === 'paid' && (
               <Button 
                 variant="outline" 
@@ -221,6 +235,24 @@ const PermitDetail = () => {
                 <FileText className="h-4 w-4" />
                 View Permit
               </Button>
+            )}
+            
+            {/* Renewal Button */}
+            {!isMunicipalUser && permit.is_renewable && (permit.application_status === 'issued' || permit.application_status === 'expired') && permit.renewal_status !== 'renewed' && (
+              <Button 
+                size="sm"
+                onClick={() => setRenewDialogOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <RefreshCcw className="h-4 w-4" />
+                Renew Permit
+              </Button>
+            )}
+
+            {permit.renewal_status === 'renewed' && (
+               <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                 Renewed
+               </Badge>
             )}
           </div>
         </div>
@@ -266,6 +298,14 @@ const PermitDetail = () => {
                   <Label className="text-sm font-medium text-muted-foreground">Permit Fee</Label>
                   <p className="text-base">{formatCurrency(permit.payment_amount_cents || 0)}</p>
                 </div>
+                {permit.expires_at && (
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Expires</Label>
+                    <p className={`text-base ${new Date(permit.expires_at) < new Date() ? 'text-destructive font-bold' : ''}`}>
+                      {formatDate(permit.expires_at)}
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -548,6 +588,30 @@ const PermitDetail = () => {
         merchantId={permit.merchant_id}
         merchantName={permit.merchant_name}
         onSuccess={() => refetchDocuments()}
+      />
+
+      {/* Renewal Dialog */}
+      <RenewPermitDialog
+        open={renewDialogOpen}
+        onOpenChange={setRenewDialogOpen}
+        permit={{
+          permit_id: permit.permit_id,
+          permit_number: permit.permit_number,
+          property_address: permit.property_address,
+          permit_type_name: permit.permit_type_name,
+          applicant_full_name: permit.applicant_full_name
+        }}
+      />
+      
+      {/* Resume Application Dialog */}
+      <NewPermitApplicationDialog
+        open={resumeApplicationOpen}
+        onOpenChange={setResumeApplicationOpen}
+        editPermitId={permitId}
+        onSuccess={() => {
+          refetchPermit();
+          refetchDocuments();
+        }}
       />
     </div>
   );

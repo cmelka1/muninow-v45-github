@@ -1,19 +1,19 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.5';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import { corsHeaders } from '../shared/cors.ts';
 import { normalizeDomain, isValidDomain } from '../shared/domainHelpers.ts';
+import { FinixAPI } from '../shared/finixAPI.ts';
+import { Logger } from '../shared/logger.ts';
 
 Deno.serve(async (req) => {
   const requestStartTime = Date.now();
-  console.log('🍎 ========================================');
-  console.log('🍎 APPLE PAY SESSION VALIDATION REQUEST');
-  console.log('🍎 ========================================');
-  console.log('🍎 Timestamp:', new Date().toISOString());
-  console.log('🍎 Request URL:', req.url);
-  console.log('🍎 Request Method:', req.method);
+  Logger.info('APPLE PAY SESSION VALIDATION REQUEST', { 
+    timestamp: new Date().toISOString(),
+    url: req.url,
+    method: req.method
+  });
   
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    console.log('🍎 CORS preflight request handled');
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     if (authHeader) {
       const { data: { user } } = await supabase.auth.getUser(authHeader);
       if (user) {
-        console.log('[create-apple-pay-session] User:', user.id);
+        Logger.debug('[create-apple-pay-session] User authenticated', { userId: user.id });
       }
     }
 
@@ -37,18 +37,20 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { validation_url, merchant_id, domain_name, display_name } = body;
     
-    console.log('🍎 📦 Request Body:');
-    console.log('🍎   - Validation URL:', validation_url);
-    console.log('🍎   - Merchant ID:', merchant_id);
-    console.log('🍎   - Domain Name:', domain_name);
-    console.log('🍎   - Display Name:', display_name || 'Muni Now (default)');
+    Logger.info('Request Body', {
+      validation_url,
+      merchant_id,
+      domain_name,
+      display_name: display_name || 'Muni Now (default)'
+    });
 
     // Validate required fields
     if (!validation_url || !merchant_id || !domain_name) {
-      console.error('🍎 ❌ VALIDATION ERROR - Missing required fields');
-      console.error('🍎   - validation_url:', !!validation_url);
-      console.error('🍎   - merchant_id:', !!merchant_id);
-      console.error('🍎   - domain_name:', !!domain_name);
+      Logger.error('VALIDATION ERROR - Missing required fields', {
+        has_validation_url: !!validation_url,
+        has_merchant_id: !!merchant_id,
+        has_domain_name: !!domain_name
+      });
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -58,16 +60,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('🍎 ✅ Request validation passed');
+    Logger.info('Request validation passed');
 
     // Normalize domain
     const normalizedDomain = normalizeDomain(domain_name);
-    console.log('🍎 📍 Domain normalization:');
-    console.log('🍎   - Original:', domain_name);
-    console.log('🍎   - Normalized:', normalizedDomain);
+    Logger.info('Domain normalization', {
+      original: domain_name,
+      normalized: normalizedDomain
+    });
 
     if (!isValidDomain(normalizedDomain)) {
-      console.error('🍎 ❌ Invalid domain format:', normalizedDomain);
+      Logger.error('Invalid domain format', { normalizedDomain });
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -78,7 +81,7 @@ Deno.serve(async (req) => {
     }
 
     // Fetch merchant's Finix identity from database
-    console.log('🍎 📊 Querying merchant data from database...');
+    Logger.info('Querying merchant data from database...');
     const { data: merchantData, error: merchantError } = await supabase
       .from('merchants')
       .select('finix_merchant_id, finix_identity_id, merchant_name')
@@ -86,10 +89,11 @@ Deno.serve(async (req) => {
       .single();
 
     if (merchantError || !merchantData?.finix_identity_id) {
-      console.error('🍎 ❌ MERCHANT LOOKUP ERROR');
-      console.error('🍎   - Merchant ID:', merchant_id);
-      console.error('🍎   - Error:', merchantError);
-      console.error('🍎   - Data:', merchantData);
+      Logger.error('MERCHANT LOOKUP ERROR', {
+        merchant_id,
+        error: merchantError,
+        data: merchantData
+      });
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -100,17 +104,16 @@ Deno.serve(async (req) => {
     }
 
     const finixMerchantIdentity = merchantData.finix_identity_id;
-    console.log('🍎 ✅ Merchant data retrieved:');
-    console.log('🍎   - Merchant Name:', merchantData.merchant_name);
-    console.log('🍎   - Finix Merchant ID (MU):', merchantData.finix_merchant_id);
-    console.log('🍎   - Finix Identity ID (ID):', finixMerchantIdentity);
-    console.log('🍎   - Domain (normalized):', normalizedDomain);
+    Logger.info('Merchant data retrieved', {
+      merchant_name: merchantData.merchant_name,
+      finix_merchant_id: merchantData.finix_merchant_id,
+      finix_identity_id: finixMerchantIdentity,
+      domain: normalizedDomain
+    });
 
     // Validate identity format
     if (!finixMerchantIdentity.startsWith('ID')) {
-      console.error('🍎 ❌ Invalid finix_identity_id format');
-      console.error('🍎   - Expected: ID... (Identity ID)');
-      console.error('🍎   - Got:', finixMerchantIdentity);
+      Logger.error('Invalid finix_identity_id format', { finixMerchantIdentity });
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -120,79 +123,40 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('🍎 ✅ Identity validation passed');
+    Logger.info('Identity validation passed');
 
-    // Get Finix credentials
-    const finixAppId = Deno.env.get('FINIX_APPLICATION_ID');
-    const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
-    const finixEnv = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
-    
-    if (!finixAppId || !finixApiSecret) {
-      console.error('[create-apple-pay-session] Missing Finix credentials');
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Finix credentials not configured'
-        }),
-        { status: 500, headers: corsHeaders }
-      );
-    }
-
-    const finixBaseUrl = finixEnv === 'live' 
-      ? 'https://finix.payments-api.com'
-      : 'https://finix.sandbox-payments-api.com';
-
-    console.log('🍎 🌐 Finix Environment:', finixEnv);
-    console.log('🍎 🌐 Finix Base URL:', finixBaseUrl);
+    // Initialize Finix API
+    const finixAPI = new FinixAPI();
 
     // Call Finix API to create Apple Pay session
-    const finixRequestBody = {
-      display_name: display_name || 'Muni Now',
-      domain: normalizedDomain,
-      merchant_identity: finixMerchantIdentity,
-      validation_url: validation_url
-    };
-    
-    console.log('🍎 📤 Calling Finix API...');
-    console.log('🍎   - Endpoint:', `${finixBaseUrl}/apple_pay_sessions`);
-    console.log('🍎   - merchant_identity:', finixMerchantIdentity.substring(0, 6) + '...' + finixMerchantIdentity.slice(-6));
-    console.log('🍎   - domain:', normalizedDomain);
-    console.log('🍎   - Full Request Body:', JSON.stringify(finixRequestBody, null, 2));
-    
     const finixCallStart = Date.now();
-    const finixResponse = await fetch(`${finixBaseUrl}/apple_pay_sessions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Basic ' + btoa(`${finixAppId}:${finixApiSecret}`),
-        'Finix-Version': '2022-02-01'
-      },
-      body: JSON.stringify(finixRequestBody)
+    const sessionResult = await finixAPI.createApplePaySession({
+      displayName: display_name || 'Muni Now',
+      domain: normalizedDomain,
+      merchantIdentity: finixMerchantIdentity,
+      validationUrl: validation_url
     });
     const finixCallDuration = Date.now() - finixCallStart;
 
-    const finixData = await finixResponse.json();
-    
-    console.log('🍎 📥 Finix API Response:');
-    console.log('🍎   - Status:', finixResponse.status);
-    console.log('🍎   - Duration:', `${finixCallDuration}ms`);
-    console.log('🍎   - Response Data:', JSON.stringify(finixData, null, 2));
+    Logger.info('Finix API Result', {
+      success: sessionResult.success,
+      duration_ms: finixCallDuration
+    });
 
-    if (!finixResponse.ok) {
+    if (!sessionResult.success) {
+      const finixData = sessionResult.raw_response || {};
       // Check if error is domain-related
       const isDomainError = finixData.message?.toLowerCase().includes('domain') || 
                              finixData.message?.toLowerCase().includes('merchant');
 
       const errorMessage = isDomainError
         ? `Domain "${normalizedDomain}" is not registered in Finix. Please verify the domain is added and verified in your Finix Dashboard under Apple Pay settings.`
-        : finixData.message || 'Failed to create Apple Pay session';
+        : sessionResult.error || 'Failed to create Apple Pay session';
 
-      console.error('🍎 ❌ FINIX API ERROR');
-      console.error('🍎   - Status:', finixResponse.status);
-      console.error('🍎   - Error Message:', errorMessage);
-      console.error('🍎   - Domain Used:', normalizedDomain);
-      console.error('🍎   - Domain Registered?:', 'Check Finix Dashboard');
-      console.error('🍎   - Full Response:', JSON.stringify(finixData, null, 2));
+      Logger.error('FINIX API ERROR', {
+        error_message: errorMessage,
+        domain_used: normalizedDomain
+      });
       
       return new Response(
         JSON.stringify({ 
@@ -202,22 +166,21 @@ Deno.serve(async (req) => {
           hint: isDomainError ? 'Verify this domain is registered and verified in Finix Dashboard' : undefined,
           details: finixData
         }),
-        { status: finixResponse.status, headers: corsHeaders }
+        { status: 400, headers: corsHeaders }
       );
     }
 
     const totalDuration = Date.now() - requestStartTime;
-    console.log('🍎 ✅ ========================================');
-    console.log('🍎 ✅ SESSION CREATED SUCCESSFULLY');
-    console.log('🍎 ✅ ========================================');
-    console.log('🍎 ✅ Total Duration:', `${totalDuration}ms`);
-    console.log('🍎 ✅ Merchant:', merchantData.merchant_name);
-    console.log('🍎 ✅ Domain (normalized):', normalizedDomain);
+    Logger.info('SESSION CREATED SUCCESSFULLY', {
+      total_duration_ms: totalDuration,
+      merchant: merchantData.merchant_name,
+      domain: normalizedDomain
+    });
 
     return new Response(
       JSON.stringify({
         success: true,
-        session_details: finixData.session_details
+        session_details: sessionResult.session_details
       }),
       { 
         status: 200,
@@ -227,14 +190,12 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     const totalDuration = Date.now() - requestStartTime;
-    console.error('🍎 ❌ ========================================');
-    console.error('🍎 ❌ CRITICAL ERROR IN APPLE PAY SESSION');
-    console.error('🍎 ❌ ========================================');
-    console.error('🍎 ❌ Duration:', `${totalDuration}ms`);
-    console.error('🍎 ❌ Error Type:', error?.constructor?.name);
-    console.error('🍎 ❌ Error Message:', error instanceof Error ? error.message : 'Unknown error');
-    console.error('🍎 ❌ Error Stack:', error instanceof Error ? error.stack : 'No stack trace');
-    console.error('🍎 ❌ Full Error:', error);
+    Logger.error('CRITICAL ERROR IN APPLE PAY SESSION', {
+      duration_ms: totalDuration,
+      error_type: error?.constructor?.name,
+      error_message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    });
     
     return new Response(
       JSON.stringify({

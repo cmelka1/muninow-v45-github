@@ -53,6 +53,16 @@ const navigationItems = [
     url: '/municipal/other-services'
   },
   {
+    title: 'My Inspections',
+    icon: Search, // Or a better icon if available, reusing Search for now
+    url: '/my-inspections' 
+  },
+  {
+    title: 'Form Builder',
+    icon: Settings, 
+    url: '/admin/form-builder'
+  },
+  {
     title: 'Merchants',
     icon: Building2,
     url: '/municipal/merchants'

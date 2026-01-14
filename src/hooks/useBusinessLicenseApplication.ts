@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { FormResponses } from '@/types/rpc-types';
 
 export interface CreateBusinessLicenseApplicationData {
   customer_id: string;
@@ -32,8 +33,8 @@ export interface CreateBusinessLicenseApplicationData {
   total_fee_cents?: number;
   service_fee_cents?: number;
   total_amount_cents?: number;
-  additional_info?: any;
-  form_responses?: any;
+  additional_info?: Record<string, unknown>;
+  form_responses?: FormResponses;
   // Merchant fee profile fields
   merchant_name?: string;
   basis_points?: number;
@@ -98,7 +99,7 @@ export const useBusinessLicenseApplication = () => {
           finix_transfer_id: data.finix_transfer_id,
           fraud_session_id: data.fraud_session_id,
           application_status: 'draft',
-        } as any)
+        } as Record<string, unknown>)
         .select()
         .single();
 
@@ -114,7 +115,7 @@ export const useBusinessLicenseApplication = () => {
     mutationFn: async ({ id, data }: { id: string; data: Partial<CreateBusinessLicenseApplicationData> }) => {
       const { data: result, error } = await supabase
         .from('business_license_applications')
-        .update(data)
+        .update(data as Record<string, unknown>)
         .eq('id', id)
         .select()
         .single();

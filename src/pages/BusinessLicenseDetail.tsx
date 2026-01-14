@@ -22,6 +22,7 @@ import { BusinessLicenseCommunication } from '@/components/BusinessLicenseCommun
 import { BusinessLicenseStatusChangeDialog } from '@/components/BusinessLicenseStatusChangeDialog';
 import { AddBusinessLicenseDocumentDialog } from '@/components/AddBusinessLicenseDocumentDialog';
 import { RenewBusinessLicenseDialog } from '@/components/RenewBusinessLicenseDialog';
+import { NewBusinessLicenseDialog } from '@/components/NewBusinessLicenseDialog';
 import { InlinePaymentFlow } from '@/components/payment/InlinePaymentFlow';
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import { useAuth } from '@/contexts/AuthContext';
@@ -47,7 +48,9 @@ export const BusinessLicenseDetail = () => {
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
   const [withdrawReason, setWithdrawReason] = useState('');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
   const [showRenewDialog, setShowRenewDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   
   const { data: license, isLoading, error, refetch } = useBusinessLicense(id!);
   const { data: documents, isLoading: documentsLoading, refetch: refetchDocuments } = useBusinessLicenseDocumentsList(id!);
@@ -479,6 +482,18 @@ export const BusinessLicenseDetail = () => {
                 renewalStatus={license.renewal_status}
                 expiresAt={license.expires_at}
               />
+            )}
+            {/* Applicant Edit Button for Draft Applications */}
+            {!isMunicipalUser && isOwner && license.application_status === 'draft' && (
+               <Button
+                 variant="outline"
+                 size="sm"
+                 onClick={() => setShowEditDialog(true)}
+                 className="flex items-center gap-2"
+               >
+                 <Edit className="h-4 w-4" />
+                 Edit Application
+               </Button>
             )}
             {isMunicipalUser && license.application_status === 'issued' && 
              license.renewal_status && ['expiring_soon', 'expired'].includes(license.renewal_status) && (
@@ -1124,6 +1139,11 @@ export const BusinessLicenseDetail = () => {
       ) : (
         <PageContent />
       )}
+      <NewBusinessLicenseDialog 
+        open={showEditDialog} 
+        onOpenChange={setShowEditDialog}
+        existingApplication={license}
+      />
     </div>
   );
 };

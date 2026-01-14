@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
+import { sendUnifiedNotification } from '../shared/notificationUtils.ts';
+import { Logger } from '../shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,7 +25,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log('Starting renewal notification check...');
+    Logger.info('Starting renewal notification check...');
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -35,11 +37,11 @@ const handler = async (req: Request): Promise<Response> => {
       .rpc('check_expiring_licenses');
 
     if (checkError) {
-      console.error('Error checking expiring licenses:', checkError);
+      Logger.error('Error checking expiring licenses', checkError);
       throw checkError;
     }
 
-    console.log(`Found ${expiringLicenses?.length || 0} licenses with status changes`);
+    Logger.info(`Found ${expiringLicenses?.length || 0} licenses with status changes`);
 
     const notificationsSent: any[] = [];
     const notificationErrors: any[] = [];
@@ -65,7 +67,7 @@ const handler = async (req: Request): Promise<Response> => {
           .single();
 
         if (existingNotif) {
-          console.log(`Notification already sent for license ${license.license_number} in the last 24 hours`);
+          Logger.info(`Notification already sent for license ${license.license_number} in the last 24 hours`);
           continue;
         }
 
@@ -102,11 +104,10 @@ const handler = async (req: Request): Promise<Response> => {
           message = `Your business license #${license.license_number} will expire in ${daysText}. Please renew your license before ${new Date(license.expires_at).toLocaleDateString()}.`;
         }
 
-        // Call the unified notification function
-        const notificationResponse = await supabase.functions.invoke('send-unified-notification', {
-          body: {
+        // Call the unified notification function directly
+        const notificationInput = {
             user_id: license.user_id,
-            notification_type: 'service_update',
+            notification_type: 'service_update' as const,
             title,
             message,
             service_type: 'business_license',
@@ -124,18 +125,19 @@ const handler = async (req: Request): Promise<Response> => {
               renewal_status: license.new_status
             },
             delivery_method: 'both'
-          }
-        });
+        };
 
-        if (notificationResponse.error) {
-          console.error(`Error sending notification for license ${license.license_number}:`, notificationResponse.error);
+        const notificationResult = await sendUnifiedNotification(supabase, notificationInput);
+
+        if (!notificationResult.success) {
+          Logger.error(`Error sending notification for license ${license.license_number}`, notificationResult.error || 'Unknown error');
           notificationErrors.push({
             license_id: license.license_id,
             license_number: license.license_number,
-            error: notificationResponse.error
+            error: notificationResult.error
           });
         } else {
-          console.log(`Notification sent successfully for license ${license.license_number}`);
+          Logger.info(`Notification sent successfully for license ${license.license_number}`);
           notificationsSent.push({
             license_id: license.license_id,
             license_number: license.license_number,
@@ -145,7 +147,7 @@ const handler = async (req: Request): Promise<Response> => {
           });
         }
       } catch (error: any) {
-        console.error(`Error processing license ${license.license_number}:`, error);
+        Logger.error(`Error processing license ${license.license_number}`, error);
         notificationErrors.push({
           license_id: license.license_id,
           license_number: license.license_number,
@@ -174,10 +176,10 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
   } catch (error: any) {
-    console.error("Error in send-renewal-notifications function:", error);
+    Logger.error("Error in send-renewal-notifications function", error);
     return new Response(
       JSON.stringify({ 
-        success: false,
+        success: false, 
         error: error.message 
       }),
       {

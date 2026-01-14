@@ -13,6 +13,7 @@ export interface PermitInspection {
   result: string | null;
   created_at: string;
   updated_at: string;
+  inspection_form_template_id?: string;
 }
 
 export const usePermitInspections = (permitId: string) => {
@@ -69,6 +70,33 @@ export const useUpdateInspection = () => {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['permit_inspections', data.permit_id] });
+    },
+  });
+};
+
+export interface InspectionTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  structure: Record<string, unknown> | null; // JSONB structure
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export const useInspectionTemplates = () => {
+  return useQuery({
+    queryKey: ['inspection_form_templates'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Table exists in DB but not in generated types
+        .from('inspection_form_templates' as any)
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+        
+      if (error) throw error;
+      return data as unknown as InspectionTemplate[];
     },
   });
 };

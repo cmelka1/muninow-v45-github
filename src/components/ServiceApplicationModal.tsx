@@ -50,6 +50,7 @@ interface ServiceApplicationModalProps {
   isOpen: boolean;
   onClose: () => void;
   returnPath?: string;
+  existingApplication?: any;
 }
 
 interface UploadedDocument {
@@ -79,6 +80,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
   isOpen,
   onClose,
   returnPath = '/dashboard',
+  existingApplication,
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [draftApplicationId, setDraftApplicationId] = useState<string | null>(null);
@@ -141,8 +143,27 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       // Initialize form data using utility functions
       let initialData = initializeFormData(tile.form_fields || []);
       
-      // Smart auto-population if enabled
-      if (useAutoPopulate && profile && tile.form_fields) {
+      // Handle existing application (Edit Mode)
+      if (existingApplication) {
+        setDraftApplicationId(existingApplication.id);
+        
+        // Merge existing formatted data
+        if (existingApplication.service_specific_data) {
+          initialData = { ...initialData, ...existingApplication.service_specific_data };
+        }
+
+        // If booking data exists
+        if (existingApplication.booking_date) {
+           setSelectedDate(new Date(existingApplication.booking_date));
+           if (existingApplication.booking_start_time) {
+             // Extract HH:mm from time string
+             const timeMatch = existingApplication.booking_start_time.match(/(\d{2}:\d{2})/);
+             if (timeMatch) setSelectedTime(timeMatch[1]);
+           }
+        }
+      }
+      // Smart auto-population if enabled (only if not editing)
+      else if (useAutoPopulate && profile && tile.form_fields) {
         const profileData = mapProfileToFormData(profile, tile.form_fields);
         initialData = { ...initialData, ...profileData };
       } else if (!useAutoPopulate) {
@@ -161,7 +182,7 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
         servicePaymentMethods.loadPaymentInstruments();
       }
     }
-  }, [tile, isOpen, useAutoPopulate, profile]);
+  }, [tile, isOpen, useAutoPopulate, profile, existingApplication]);
 
   const handleInputChange = (fieldId: string, value: any) => {
     setFormData(prev => ({
@@ -443,20 +464,28 @@ const ServiceApplicationModal: React.FC<ServiceApplicationModalProps> = ({
       else if (tile.has_time_slots && draftApplicationId) {
         applicationData = { id: draftApplicationId };
       }
-      // PRIORITY 2: For non-reviewable services with existing draft (non-time-slot only)
-      else if (!tile.requires_review && draftApplicationId) {
+      // PRIORITY 2: For any existing draft, UPDATE instead of CREATE
+      else if (draftApplicationId) {
         const enrichedFormData = enrichFormDataWithParsedAddress(formData);
         const applicantData = extractApplicantData(enrichedFormData);
+        
+        // Determine status: if review is required, go to 'submitted'.
+        // If no review required, effectively 'approved' or 'issued' but backend might handle 'submitted' fine.
+        // Copying createApplication logic for status/payment_status.
+        
         applicationData = await updateApplication.mutateAsync({
           id: draftApplicationId,
-          status: 'draft',
-          payment_status: !tile.requires_payment ? 'not_required' : 'unpaid',
+          status: 'submitted',
+          payment_status: !tile.requires_payment 
+            ? 'not_required' 
+            : (tile.requires_review ? 'pending' : 'unpaid'),
+          submitted_at: new Date().toISOString(),
           ...applicantData,
           additional_information: formData.additional_information || formData.notes || formData.comments || undefined,
           service_specific_data: formData,
         });
       }
-      // PRIORITY 3: For reviewable services, create new application
+      // PRIORITY 3: Create new application
       else {
         const enrichedFormData = enrichFormDataWithParsedAddress(formData);
         const applicantData = extractApplicantData(enrichedFormData);

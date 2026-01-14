@@ -6,8 +6,6 @@ import {
   FileText, 
   User, 
   MapPin, 
-  Clock, 
-  MessageSquare, 
   Users,
   Building,
   Download,
@@ -16,7 +14,8 @@ import {
   Calendar,
   CreditCard,
   Plus,
-  Loader2
+  Loader2,
+  PlayCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,9 +32,12 @@ import { getStatusDisplayName, getStatusDescription, PermitStatus } from '@/hook
 import { useMunicipalPermitQuestions } from '@/hooks/useMunicipalPermitQuestions';
 import { usePermitDocuments } from '@/hooks/usePermitDocuments';
 import { ScheduleInspectionDialog } from '@/components/ScheduleInspectionDialog';
+import { PermitInspectionsList } from '@/components/PermitInspectionsList';
+import { InspectionFormDialog } from '@/components/InspectionFormDialog';
 import { PermitCommunication } from '@/components/PermitCommunication';
 import { SafeHtmlRenderer } from '@/components/ui/safe-html-renderer';
 import { AddPermitDocumentDialog } from '@/components/AddPermitDocumentDialog';
+import { usePermitInspections, PermitInspection } from '@/hooks/usePermitInspections';
 
 
 import { supabase } from '@/integrations/supabase/client';
@@ -48,6 +50,8 @@ const MunicipalPermitDetail = () => {
   const [reviewNotes, setReviewNotes] = useState('');
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isInspectionDialogOpen, setIsInspectionDialogOpen] = useState(false);
+  const [isPerformInspectionOpen, setIsPerformInspectionOpen] = useState(false);
+  const [selectedInspection, setSelectedInspection] = useState<PermitInspection | null>(null);
   
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
@@ -60,6 +64,7 @@ const MunicipalPermitDetail = () => {
     permit?.merchant_id
   );
   const { data: documents, refetch: refetchDocuments } = usePermitDocuments(permitId!);
+  const { data: inspections, isLoading: isLoadingInspections } = usePermitInspections(permitId!);
 
   const handleSaveNotes = async () => {
     if (!permitId || !reviewNotes.trim()) {
@@ -106,12 +111,36 @@ const MunicipalPermitDetail = () => {
     setIsStatusDialogOpen(true);
   };
 
-  const formatMunicipalQuestionResponse = (questionId: string, response: any) => {
+  const handlePerformInspection = (inspection?: PermitInspection) => {
+    // If specific inspection passed (from list), use it
+    if (inspection) {
+      setSelectedInspection(inspection);
+      setIsPerformInspectionOpen(true);
+      return;
+    }
+
+    // Otherwise find the first scheduled inspection (for sidebar button)
+    const scheduledInspection = inspections?.find(i => i.status === 'scheduled');
+    
+    if (scheduledInspection) {
+      setSelectedInspection(scheduledInspection);
+      setIsPerformInspectionOpen(true);
+    } else {
+      toast({
+        title: "No Scheduled Inspections",
+        description: "Please schedule an inspection first.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const formatMunicipalQuestionResponse = (questionId: string, response: string | number | boolean | null) => {
     const question = questions?.find(q => q.id === questionId);
     if (!question) return response;
     
     if (question.question_type === 'select' && question.question_options?.options) {
-      return question.question_options.options.find((opt: any) => opt.value === response)?.label || response;
+      const options = question.question_options.options as { label: string; value: string }[];
+      return options.find((opt) => opt.value == response)?.label || response;
     }
     
     return response;
@@ -419,6 +448,14 @@ const MunicipalPermitDetail = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Inspections List */}
+          <PermitInspectionsList
+            inspections={inspections}
+            isLoading={isLoadingInspections}
+            onPerformInspection={handlePerformInspection}
+            propertyAddress={permit.property_address || 'Address not available'}
+          />
         </div>
 
         {/* Right Column - Actions & Review */}
@@ -589,6 +626,11 @@ const MunicipalPermitDetail = () => {
         permitId={permitId!}
       />
 
+      <InspectionFormDialog 
+        open={isPerformInspectionOpen}
+        onOpenChange={setIsPerformInspectionOpen}
+        inspection={selectedInspection}
+      />
 
       {/* Status Change Dialog */}
       <PermitStatusChangeDialog

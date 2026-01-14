@@ -22,18 +22,36 @@ const ResetPassword = () => {
   
   const { 
     updatePassword, 
-    error
+    error,
+    user,
+    isLoading
   } = useAuth();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Capture hash immediately on mount to prevent race conditions with Supabase client
+  // which might strip the hash before useEffect runs
+  const initialHash = React.useRef(window.location.hash);
+
   // Check for valid reset token on mount
   useEffect(() => {
+    // Wait for auth to initialize
+    if (isLoading) return;
+
     const checkToken = () => {
-      const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
+      // 1. Check search params (query string)
+      let accessToken = searchParams.get('access_token');
+      let refreshToken = searchParams.get('refresh_token');
       
-      if (accessToken && refreshToken) {
+      // 2. Check detected hash fragment (from initial load)
+      if (!accessToken || !refreshToken) {
+        const hashParams = new URLSearchParams(initialHash.current.substring(1)); // remove #
+        if (!accessToken) accessToken = hashParams.get('access_token');
+        if (!refreshToken) refreshToken = hashParams.get('refresh_token');
+      }
+      
+      // 3. Check if user is already logged in (Supabase client might have auto-processed the hash)
+      if ((accessToken && refreshToken) || user) {
         setIsValidToken(true);
       } else {
         setIsValidToken(false);
@@ -42,7 +60,7 @@ const ResetPassword = () => {
     };
 
     checkToken();
-  }, [searchParams]);
+  }, [searchParams, user, isLoading]);
 
   const validatePasswords = () => {
     if (newPassword.length < 8) {

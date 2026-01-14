@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -441,7 +442,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
                (formData.accountType === 'business' ? 'businessadmin' : 'residentadmin'),
              business_legal_name: formData.accountType === 'business' ? formData.businessLegalName : null,
              industry: formData.accountType === 'business' && formData.industry ? formData.industry : null
-          }
+          },
         }
       });
       
@@ -1160,6 +1161,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
 
             {/* Submit Button */}
             <div className="pt-4">
+              <div className="flex justify-center py-2 mb-4">
+              </div>
+
               <Button
                 type="submit"
                 className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground"

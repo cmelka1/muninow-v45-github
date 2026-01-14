@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
+import { FinixAPI } from '../shared/finixAPI.ts';
+import { Logger } from '../shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -36,7 +38,7 @@ serve(async (req) => {
       .single();
 
     if (merchantError || !merchant) {
-      console.error('Merchant not found:', merchantError);
+      Logger.error('Merchant not found', merchantError);
       return new Response(
         JSON.stringify({ error: 'Merchant not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -51,58 +53,27 @@ serve(async (req) => {
     }
 
     // Fetch payout profile from Finix API
-    const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
-    const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
-    const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
-    
-    if (!finixApplicationId || !finixApiSecret) {
-      console.error('Missing Finix credentials:', { 
-        hasApplicationId: !!finixApplicationId, 
-        hasApiSecret: !!finixApiSecret 
-      });
+    const finixAPI = new FinixAPI();
+    let finixProfile;
+
+    try {
+      finixProfile = await finixAPI.getPayoutProfile(merchant.finix_merchant_id);
+    } catch (error) {
+      Logger.error('Finix API error', error);
       return new Response(
-        JSON.stringify({ error: 'Finix API credentials not configured' }),
+        JSON.stringify({ error: 'Failed to fetch payout profile from Finix', details: error instanceof Error ? error.message : 'Unknown error' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
-    const baseUrl = finixEnvironment === 'live' 
-      ? 'https://finix.payments-api.com' 
-      : 'https://finix.sandbox-payments-api.com';
-
-    console.log(`Fetching payout profile for merchant: ${merchant.finix_merchant_id}`);
-
-    const finixResponse = await fetch(
-      `${baseUrl}/merchants/${merchant.finix_merchant_id}/payout_profile`,
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Basic ${btoa(finixApplicationId + ':' + finixApiSecret)}`,
-          'Content-Type': 'application/json',
-          'Finix-Version': '2022-02-01',
-        },
-      }
-    );
-
-    if (!finixResponse.ok) {
-      const errorText = await finixResponse.text();
-      console.error('Finix API error:', errorText);
-      
-      if (finixResponse.status === 404) {
-        return new Response(
-          JSON.stringify({ error: 'No payout profile found for this merchant' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
+    if (!finixProfile) {
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch payout profile from Finix' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'No payout profile found for this merchant' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const finixProfile = await finixResponse.json();
-    console.log('Finix payout profile:', JSON.stringify(finixProfile, null, 2));
+    Logger.info('Finix payout profile fetched', { id: finixProfile.id, type: finixProfile.type });
 
     // Transform Finix profile to our database format
     let profileData: any = {
@@ -144,7 +115,7 @@ serve(async (req) => {
       .single();
 
     if (saveError) {
-      console.error('Error saving payout profile:', saveError);
+      Logger.error('Error saving payout profile', saveError);
       return new Response(
         JSON.stringify({ error: 'Failed to save payout profile' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -164,7 +135,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in fetch-merchant-payout-profile:', error);
+    Logger.error('Error in fetch-merchant-payout-profile', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

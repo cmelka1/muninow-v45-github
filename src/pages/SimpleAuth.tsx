@@ -11,11 +11,12 @@ import { ForgotPasswordDialog } from '@/components/auth/ForgotPasswordDialog';
 import { PreloginHeader } from '@/components/layout/PreloginHeader';
 import { PreloginFooter } from '@/components/layout/PreloginFooter';
 
+
+
 const SimpleAuth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
@@ -119,20 +120,7 @@ const SimpleAuth = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="remember"
-                      checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                    />
-                    <Label 
-                      htmlFor="remember" 
-                      className="text-sm text-muted-foreground cursor-pointer"
-                    >
-                      Remember Me
-                    </Label>
-                  </div>
+                <div className="flex items-center justify-end">
                   <button
                     type="button"
                     onClick={handleForgotPassword}
@@ -147,6 +135,8 @@ const SimpleAuth = () => {
                     <p className="text-sm text-destructive">{loginError}</p>
                   </div>
                 )}
+                
+
                 
                 <Button 
                   type="submit" 

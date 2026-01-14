@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { useCreateInspection } from '@/hooks/usePermitInspections';
+import { useCreateInspection, useInspectionTemplates } from '@/hooks/usePermitInspections';
 import { useToast } from '@/hooks/use-toast';
 
 interface ScheduleInspectionDialogProps {
@@ -25,11 +25,13 @@ export const ScheduleInspectionDialog: React.FC<ScheduleInspectionDialogProps> =
   permitId,
 }) => {
   const [inspectionType, setInspectionType] = useState('');
+  const [templateId, setTemplateId] = useState('');
   const [scheduledDate, setScheduledDate] = useState<Date>();
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createInspection = useCreateInspection();
+  const { data: templates } = useInspectionTemplates();
   const { toast } = useToast();
 
   const inspectionTypes = [
@@ -69,6 +71,7 @@ export const ScheduleInspectionDialog: React.FC<ScheduleInspectionDialogProps> =
         completed_date: null,
         status: 'scheduled',
         result: null,
+        inspection_form_template_id: templateId || undefined,
       });
 
       toast({
@@ -78,6 +81,7 @@ export const ScheduleInspectionDialog: React.FC<ScheduleInspectionDialogProps> =
 
       // Reset form
       setInspectionType('');
+      setTemplateId('');
       setScheduledDate(undefined);
       setNotes('');
       onOpenChange(false);
@@ -118,6 +122,25 @@ export const ScheduleInspectionDialog: React.FC<ScheduleInspectionDialogProps> =
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="template">Inspection Form Template</Label>
+            <Select value={templateId} onValueChange={setTemplateId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a template (Optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {templates?.map((template) => (
+                  <SelectItem key={template.id} value={template.id}>
+                    {template.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Select the form template the inspector should use.
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Label>Scheduled Date *</Label>
             <Popover>
               <PopoverTrigger asChild>
@@ -145,6 +168,15 @@ export const ScheduleInspectionDialog: React.FC<ScheduleInspectionDialogProps> =
             </Popover>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add any notes for the inspector..."
+            />
+          </div>
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

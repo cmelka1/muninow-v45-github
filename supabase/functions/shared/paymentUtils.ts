@@ -1,4 +1,5 @@
 // Shared payment utility functions for edge functions
+import { Logger } from './logger.ts';
 
 // UUIDv5 namespace for payment idempotency (deterministic UUID generation)
 const PAYMENT_IDEMPOTENCY_NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
@@ -123,7 +124,7 @@ export const generateDeterministicUUID = (params: {
   // Generate a truly random UUID to avoid hash collisions
   // The idempotency metadata still tracks all session info for debugging
   const uuid = crypto.randomUUID();
-  console.log('Generated random UUID:', uuid, 'for session:', params.sessionId);
+  Logger.debug('Generated random UUID', { uuid, sessionId: params.sessionId });
   return uuid;
 };
 
@@ -180,10 +181,10 @@ export const generateIdempotencyId = (prefix: string, entityId?: string): string
     
     return id;
   } catch (error) {
-    console.error('Error generating idempotency ID:', error);
+    Logger.error('Error generating idempotency ID', error);
     // Fallback generation
     const fallbackId = `${prefix}_fallback_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
-    console.warn('Using fallback idempotency ID:', fallbackId);
+    Logger.warn('Using fallback idempotency ID', { fallbackId });
     return fallbackId;
   }
 };

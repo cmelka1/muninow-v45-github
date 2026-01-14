@@ -34,8 +34,9 @@ export const useCustomer = () => {
 
         if (error) throw error;
         setCustomer(data);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        setError(message);
         console.error('Error fetching customer:', err);
       } finally {
         setIsLoading(false);

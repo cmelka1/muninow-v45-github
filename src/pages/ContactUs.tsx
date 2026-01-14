@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,6 +22,7 @@ const ContactUs: React.FC = () => {
     message: ''
   });
 
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setFormData(prev => ({
@@ -37,7 +39,9 @@ const ContactUs: React.FC = () => {
       console.log("Submitting contact form...");
       // Call the edge function to send the email
       const { data, error } = await supabase.functions.invoke('send-contact-email', {
-        body: formData
+        body: {
+          ...formData
+        }
       });
       
       console.log("Response:", { data, error });
@@ -60,12 +64,13 @@ const ContactUs: React.FC = () => {
         organization: '',
         message: ''
       });
+
     } catch (error) {
       console.error("Error sending message:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to send message. Please try again later.",
+        description: error instanceof Error ? error.message : "Failed to send message. Please try again later.",
       });
     } finally {
       setIsSubmitting(false);
@@ -168,6 +173,8 @@ const ContactUs: React.FC = () => {
                       />
                     </div>
                     
+
+
                     <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
                       {isSubmitting ? 
                         "Sending..." : 

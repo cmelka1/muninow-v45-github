@@ -1,55 +1,13 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
+import { Logger } from '../shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Import the shared fee calculation utility
-const calculateServiceFeeUtil = (params: {
-  baseAmountCents: number;
-  isCard: boolean;
-  cardBasisPoints?: number;
-  cardFixedFeeCents?: number;
-  achBasisPoints?: number;
-  achFixedFeeCents?: number;
-  achBasisPointsFeeLimitCents?: number;
-}) => {
-  const {
-    baseAmountCents,
-    isCard,
-    cardBasisPoints = 300,
-    cardFixedFeeCents = 50,
-    achBasisPoints = 150,
-    achFixedFeeCents = 50,
-    achBasisPointsFeeLimitCents
-  } = params;
 
-  const basisPoints = isCard ? cardBasisPoints : achBasisPoints;
-  const fixedFeeCents = isCard ? cardFixedFeeCents : achFixedFeeCents;
-
-  let serviceFeePercentageCents = Math.round((baseAmountCents * basisPoints) / 10000);
-  let totalServiceFeeCents = serviceFeePercentageCents + fixedFeeCents;
-  
-  // Apply ACH fee limit to total service fee (percentage + fixed) if applicable
-  if (!isCard && achBasisPointsFeeLimitCents && totalServiceFeeCents > achBasisPointsFeeLimitCents) {
-    totalServiceFeeCents = achBasisPointsFeeLimitCents;
-    serviceFeePercentageCents = totalServiceFeeCents - fixedFeeCents;
-  }
-  
-  const totalChargeCents = baseAmountCents + totalServiceFeeCents;
-
-  return {
-    baseAmountCents,
-    serviceFeePercentageCents,
-    serviceFeeFixedCents: fixedFeeCents,
-    totalServiceFeeCents,
-    totalChargeCents,
-    basisPoints,
-    isCard
-  };
-};
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -58,11 +16,11 @@ serve(async (req) => {
   }
 
   try {
-    console.log('=== SERVICE FEE CALCULATION REQUEST ===');
+    Logger.info('=== SERVICE FEE CALCULATION REQUEST ===');
     
     const { baseAmountCents, paymentMethodType, paymentInstrumentId, merchantId } = await req.json();
     
-    console.log('Request params:', {
+    Logger.info('Request params', {
       baseAmountCents,
       paymentMethodType,
       paymentInstrumentId,
@@ -83,18 +41,18 @@ serve(async (req) => {
       );
     }
 
+    // Initialize Supabase Client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     // Determine if it's a card payment
     let isCard = true; // Default to card
     
     if (paymentMethodType) {
-      // Direct payment method type provided
-      isCard = paymentMethodType === 'card' || paymentMethodType === 'PAYMENT_CARD';
+      isCard = paymentMethodType === 'card' || paymentMethodType === 'PAYMENT_CARD' || paymentMethodType === 'google-pay' || paymentMethodType === 'apple-pay';
     } else if (paymentInstrumentId) {
       // Query payment instrument to determine type
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-      const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
       const { data: instrument, error } = await supabase
         .from('user_payment_instruments')
         .select('instrument_type')
@@ -102,93 +60,78 @@ serve(async (req) => {
         .single();
 
       if (error) {
-        console.error('Error fetching payment instrument:', error);
-        // Fall back to card assumption
+        Logger.error('Error fetching payment instrument', error);
         isCard = true;
       } else {
         isCard = instrument.instrument_type === 'PAYMENT_CARD';
       }
     }
 
-    // Get fee profile for merchant
-    let achBasisPointsFeeLimitCents = 2500; // Default ACH limit to $25.00
+    // Resolve Merchant ID
+    let targetMerchantId = merchantId;
     
-    if (merchantId || paymentInstrumentId) {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // If no direct merchantId, try to get it through payment instrument
+    if (!targetMerchantId && paymentInstrumentId) {
+      const { data: userInstrument } = await supabase
+        .from('user_payment_instruments')
+        .select('user_id')
+        .eq('id', paymentInstrumentId)
+        .single();
 
-      let targetMerchantId = merchantId;
-      
-      // If no direct merchantId, try to get it through payment instrument
-      if (!targetMerchantId && paymentInstrumentId) {
-        const { data: userInstrument } = await supabase
-          .from('user_payment_instruments')
-          .select('user_id')
-          .eq('id', paymentInstrumentId)
+      if (userInstrument?.user_id) {
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('customer_id')
+          .eq('id', userInstrument.user_id)
           .single();
 
-        if (userInstrument?.user_id) {
-          const { data: userProfile } = await supabase
-            .from('profiles')
-            .select('customer_id')
-            .eq('id', userInstrument.user_id)
+        if (userProfile?.customer_id) {
+          const { data: merchant } = await supabase
+            .from('merchants')
+            .select('id')
+            .eq('customer_id', userProfile.customer_id)
+            .eq('subcategory', 'Other')
             .single();
-
-          if (userProfile?.customer_id) {
-            const { data: merchant } = await supabase
-              .from('merchants')
-              .select('id')
-              .eq('customer_id', userProfile.customer_id)
-              .eq('subcategory', 'Other')
-              .single();
-            
-            targetMerchantId = merchant?.id;
-          }
+          
+          targetMerchantId = merchant?.id;
         }
-      }
-
-      // Get fee profile using merchant ID
-      if (targetMerchantId) {
-        const { data: feeProfile } = await supabase
-          .from('merchant_fee_profiles')
-          .select('ach_basis_points_fee_limit')
-          .eq('merchant_id', targetMerchantId)
-          .single();
-        
-        if (feeProfile?.ach_basis_points_fee_limit) {
-          achBasisPointsFeeLimitCents = feeProfile.ach_basis_points_fee_limit;
-        }
-        
-        console.log('Fee profile retrieved:', { targetMerchantId, achBasisPointsFeeLimitCents });
       }
     }
 
-    // Calculate service fee using unified formula
-    const feeCalculation = calculateServiceFeeUtil({
-      baseAmountCents,
-      isCard,
-      achBasisPointsFeeLimitCents
+    // Call RPC to calculate fees
+    Logger.info('Calculating fees with RPC', { targetMerchantId, isCard, baseAmountCents });
+
+    const { data: feeResult, error: feeError } = await supabase.rpc('preview_service_fee', {
+      p_base_amount_cents: baseAmountCents,
+      p_merchant_id: targetMerchantId || '00000000-0000-0000-0000-000000000000', // Handle null case safely
+      p_is_card: isCard
     });
 
-    console.log('Fee calculation result:', feeCalculation);
+    if (feeError || !feeResult || !feeResult.success) {
+      Logger.error('Fee calculation RPC error', feeError);
+      throw new Error('Failed to calculate service fee');
+    }
+
+    const response = {
+      success: true,
+      baseAmount: baseAmountCents,
+      serviceFee: feeResult.serviceFee,
+      totalAmount: feeResult.totalAmount,
+      isCard: feeResult.isCard,
+      basisPoints: feeResult.basisPoints
+    };
+
+    Logger.info('Fee calculation result', response);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        baseAmount: feeCalculation.baseAmountCents,
-        serviceFee: feeCalculation.totalServiceFeeCents,
-        totalAmount: feeCalculation.totalChargeCents,
-        isCard: feeCalculation.isCard,
-        basisPoints: feeCalculation.basisPoints
-      }),
+      JSON.stringify(response),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
 
   } catch (error) {
-    console.error('Service fee calculation error:', error);
+    Logger.error('Service fee calculation error', error);
     
     return new Response(
       JSON.stringify({

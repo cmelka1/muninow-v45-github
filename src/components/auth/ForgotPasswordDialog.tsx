@@ -12,6 +12,8 @@ import {
 import { useAuth } from '@/contexts/SimpleAuthContext';
 import { Mail, ArrowLeft } from 'lucide-react';
 
+
+
 interface ForgotPasswordDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -30,6 +32,7 @@ export const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
   const [emailError, setEmailError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -139,6 +142,8 @@ export const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
                 <p className="text-sm text-destructive">{error}</p>
               </div>
             )}
+
+
 
             <div className="space-y-3">
               <Button

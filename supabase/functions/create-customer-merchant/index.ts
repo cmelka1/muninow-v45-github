@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
+import { FinixAPI } from '../shared/finixAPI.ts';
+import { Logger } from '../shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -37,7 +39,7 @@ serve(async (req) => {
       .single();
 
     if (merchantError || !merchant) {
-      console.error('Merchant lookup error:', merchantError);
+      Logger.error('Merchant lookup error', merchantError);
       throw new Error('Merchant record not found. Please complete previous steps first.');
     }
 
@@ -49,12 +51,12 @@ serve(async (req) => {
       .single();
 
     if (customerError || !customer) {
-      console.error('Customer lookup error:', customerError);
+      Logger.error('Customer lookup error', customerError);
       throw new Error('Customer not found.');
     }
 
     if (merchant.user_id !== customer.user_id) {
-      console.error('Security validation failed: merchant user_id does not match customer user_id');
+      Logger.error('Security validation failed: merchant user_id does not match customer user_id');
       throw new Error('Invalid merchant-customer relationship.');
     }
 
@@ -66,18 +68,8 @@ serve(async (req) => {
       throw new Error('Payment instrument must be created before creating merchant account. Please complete Step 2 first.');
     }
 
-    // Prepare Finix API request
-    const finixApiKey = Deno.env.get('FINIX_API_SECRET');
-    const finixAppId = Deno.env.get('FINIX_APPLICATION_ID');
-    const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
-    
-    const finixBaseUrl = finixEnvironment === 'production' 
-      ? 'https://finix.payments-api.com'
-      : 'https://finix.sandbox-payments-api.com';
-
-    if (!finixApiKey || !finixAppId) {
-      throw new Error('Missing Finix API credentials');
-    }
+    // Initialize Finix API
+    const finixAPI = new FinixAPI();
 
     // Create Finix merchant payload
     const merchantPayload = {
@@ -85,28 +77,12 @@ serve(async (req) => {
       level_two_level_three_data_enabled: true
     };
 
-    console.log('Creating Finix merchant for identity:', merchant.finix_identity_id);
+    Logger.info('Creating Finix merchant for identity', { identityId: merchant.finix_identity_id });
 
     // Make API call to Finix to create merchant
-    const finixResponse = await fetch(`${finixBaseUrl}/identities/${merchant.finix_identity_id}/merchants`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${btoa(finixAppId + ':' + finixApiKey)}`,
-        'Accept': 'application/hal+json',
-        'Content-Type': 'application/json',
-        'Finix-Version': '2022-02-01'
-      },
-      body: JSON.stringify(merchantPayload)
-    });
-
-    if (!finixResponse.ok) {
-      const errorText = await finixResponse.text();
-      console.error('Finix API error:', finixResponse.status, errorText);
-      throw new Error(`Finix API error: ${finixResponse.status} - ${errorText}`);
-    }
-
-    const finixData = await finixResponse.json();
-    console.log('Finix merchant created:', finixData.id);
+    const finixData = await finixAPI.createMerchant(merchant.finix_identity_id, merchantPayload);
+    
+    Logger.info('Finix merchant created', { finixMerchantId: finixData.id });
 
     // Map Finix response to database columns
     const merchantUpdate = {
@@ -143,11 +119,11 @@ serve(async (req) => {
       .single();
 
     if (updateError) {
-      console.error('Database update error:', updateError);
+      Logger.error('Database update error', updateError);
       throw new Error(`Database error: ${updateError.message}`);
     }
 
-    console.log('Merchant record updated successfully with Finix merchant data');
+    Logger.info('Merchant record updated successfully with Finix merchant data');
 
     return new Response(
       JSON.stringify({
@@ -164,7 +140,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error creating Finix merchant:', error);
+    Logger.error('Error creating Finix merchant', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
       JSON.stringify({

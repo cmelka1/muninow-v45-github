@@ -1,7 +1,8 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.5';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import { processUnifiedPayment } from '../shared/unifiedPaymentProcessor.ts';
 import { FinixAPI } from '../shared/finixAPI.ts';
 import { corsHeaders } from '../shared/cors.ts';
+import { Logger } from '../shared/logger.ts';
 
 interface BillingAddress {
   name?: string;
@@ -14,7 +15,7 @@ interface BillingAddress {
 }
 
 Deno.serve(async (req) => {
-  console.log('=== UNIFIED GOOGLE PAY REQUEST ===');
+  Logger.info('=== UNIFIED GOOGLE PAY REQUEST ===');
   
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -33,13 +34,14 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader);
     
     if (userError || !user) {
+      Logger.warn('Authentication failed', userError);
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized', retryable: false }),
         { status: 401, headers: corsHeaders }
       );
     }
 
-    console.log('[process-unified-google-pay] Authenticated user:', user.id);
+    Logger.info('Authenticated user', { userId: user.id });
 
     // Parse request body
     const body = await req.json();
@@ -83,7 +85,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('[process-unified-google-pay] Processing Google Pay payment:', {
+    Logger.info('Processing Google Pay payment', {
       entity_type,
       entity_id,
       base_amount_cents
@@ -97,7 +99,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (merchantError || !merchant || !merchant.finix_merchant_id || !merchant.finix_identity_id) {
-      console.error('Merchant fetch error:', merchantError);
+      Logger.error('Merchant fetch error', merchantError);
       return new Response(
         JSON.stringify({ success: false, error: 'Merchant not found or not properly configured', retryable: false }),
         { status: 404, headers: corsHeaders }
@@ -112,7 +114,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (identityError || !userIdentity) {
-      console.error('User identity fetch error:', identityError);
+      Logger.error('User identity fetch error', identityError);
       return new Response(
         JSON.stringify({ success: false, error: 'User identity not found. Please complete payment setup first.', retryable: false }),
         { status: 404, headers: corsHeaders }
@@ -120,7 +122,7 @@ Deno.serve(async (req) => {
     }
 
     // STEP 1: Create Finix payment instrument from Google Pay token
-    console.log('[process-unified-google-pay] Creating payment instrument from Google Pay token');
+    Logger.info('Creating payment instrument from Google Pay token');
     
     const finixAPI = new FinixAPI();
     const paymentInstrument = await finixAPI.createPaymentInstrument({
@@ -132,7 +134,7 @@ Deno.serve(async (req) => {
     });
     
     if (!paymentInstrument.success) {
-      console.error('[process-unified-google-pay] Failed to create payment instrument:', paymentInstrument.error);
+      Logger.error('Failed to create payment instrument', paymentInstrument.error);
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -143,7 +145,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('[process-unified-google-pay] Payment instrument created:', paymentInstrument.id);
+    Logger.info('Payment instrument created', { id: paymentInstrument.id });
     
     // STEP 2: Call shared payment processor with created payment instrument
     const result = await processUnifiedPayment({
@@ -163,7 +165,7 @@ Deno.serve(async (req) => {
       lastName: last_name
     }, supabase);
 
-    console.log('[process-unified-google-pay] Payment result:', result.success ? 'SUCCESS' : 'FAILED');
+    Logger.info('Payment result', { success: result.success });
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -171,7 +173,7 @@ Deno.serve(async (req) => {
     });
     
   } catch (error) {
-    console.error('[process-unified-google-pay] Error:', error);
+    Logger.error('Error in process-unified-google-pay', error);
     
     return new Response(JSON.stringify({
       success: false,

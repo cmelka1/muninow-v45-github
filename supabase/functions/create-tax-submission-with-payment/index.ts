@@ -1,8 +1,9 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.5';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import { corsHeaders } from '../shared/cors.ts';
+import { Logger } from '../shared/logger.ts';
 
 Deno.serve(async (req) => {
-  console.log('=== CREATE TAX SUBMISSION REQUEST ===');
+  Logger.info('=== CREATE TAX SUBMISSION REQUEST ===');
   
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -21,13 +22,14 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader);
     
     if (userError || !user) {
+      Logger.warn('Authentication failed', userError);
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized' }),
         { status: 401, headers: corsHeaders }
       );
     }
 
-    console.log('[create-tax-submission] Authenticated user:', user.id);
+    Logger.info('Authenticated user', { userId: user.id });
 
     // Parse request body
     const body = await req.json();
@@ -65,7 +67,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('[create-tax-submission] Creating tax submission:', {
+    Logger.info('Creating tax submission', {
       user_id,
       customer_id,
       tax_type,
@@ -105,7 +107,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (insertError) {
-      console.error('[create-tax-submission] Insert error:', insertError);
+      Logger.error('Insert error', insertError);
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -115,7 +117,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('[create-tax-submission] Tax submission created:', taxSubmission.id);
+    Logger.info('Tax submission created', { id: taxSubmission.id });
 
     return new Response(
       JSON.stringify({ 
@@ -127,7 +129,7 @@ Deno.serve(async (req) => {
     );
     
   } catch (error) {
-    console.error('[create-tax-submission] Error:', error);
+    Logger.error('Error in create-tax-submission-with-payment', error);
     
     return new Response(
       JSON.stringify({

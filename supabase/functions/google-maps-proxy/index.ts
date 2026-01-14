@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Logger } from '../shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,7 +16,7 @@ serve(async (req) => {
     const googleMapsApiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
     
     if (!googleMapsApiKey) {
-      console.error('Google Maps API key not configured');
+      Logger.error('Google Maps API key not configured');
       return new Response(
         JSON.stringify({ error: 'Google Maps API key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -31,21 +32,21 @@ serve(async (req) => {
       try {
         requestBody = await req.json();
         service = requestBody.service;
-        console.log('Extracted service from request body:', service);
+        Logger.debug('Extracted service from request body', { service });
       } catch (error) {
-        console.error('Failed to parse request body:', error);
+        Logger.error('Failed to parse request body', error);
       }
     }
     
     if (!service) {
-      console.error('Service parameter missing from both query params and request body');
+      Logger.error('Service parameter missing from both query params and request body');
       return new Response(
         JSON.stringify({ error: 'Service parameter required (provide as query param ?service=js or in request body)' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Processing request for service:', service);
+    Logger.info('Processing request for service', { service });
 
     switch (service) {
       case 'js':
@@ -99,7 +100,7 @@ serve(async (req) => {
           if (sessionToken) autocompleteBody.sessionToken = sessionToken;
           if (includedPrimaryTypes) autocompleteBody.includedPrimaryTypes = includedPrimaryTypes;
 
-          console.log('Making autocomplete request:', autocompleteBody);
+          Logger.debug('Making autocomplete request', autocompleteBody);
 
           const response = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
             method: 'POST',
@@ -114,7 +115,7 @@ serve(async (req) => {
           const data = await response.json();
           
           if (!response.ok) {
-            console.error('Autocomplete API error:', data);
+            Logger.error('Autocomplete API error', data);
             return new Response(
               JSON.stringify({ error: 'Autocomplete API error', details: data }),
               { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -126,7 +127,7 @@ serve(async (req) => {
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         } catch (error) {
-          console.error('Error processing autocomplete request:', error);
+          Logger.error('Error processing autocomplete request', error);
           return new Response(
             JSON.stringify({ error: 'Failed to process autocomplete request' }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -157,7 +158,7 @@ serve(async (req) => {
           const detailsBody: any = {};
           if (sessionToken) detailsBody.sessionToken = sessionToken;
 
-          console.log('Making place details request for:', placeId);
+          Logger.debug('Making place details request', { placeId });
 
           const response = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, {
             method: 'GET',
@@ -171,7 +172,7 @@ serve(async (req) => {
           const data = await response.json();
           
           if (!response.ok) {
-            console.error('Place details API error:', data);
+            Logger.error('Place details API error', data);
             return new Response(
               JSON.stringify({ error: 'Place details API error', details: data }),
               { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -183,7 +184,7 @@ serve(async (req) => {
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         } catch (error) {
-          console.error('Error processing place details request:', error);
+          Logger.error('Error processing place details request', error);
           return new Response(
             JSON.stringify({ error: 'Failed to process place details request' }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -212,7 +213,7 @@ serve(async (req) => {
             }
           );
         } catch (error) {
-          console.error('Geocoding error:', error);
+          Logger.error('Geocoding error', error);
           return new Response(
             JSON.stringify({ error: 'Geocoding API error' }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -226,6 +227,7 @@ serve(async (req) => {
         );
     }
   } catch (error) {
+    Logger.error('Internal server error in google-maps-proxy', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

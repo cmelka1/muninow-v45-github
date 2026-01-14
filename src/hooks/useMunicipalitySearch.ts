@@ -35,8 +35,9 @@ export const useMunicipalitySearch = (searchTerm: string, minLength: number = 2)
 
         if (error) throw error;
         setMunicipalities(data || []);
-      } catch (err: any) {
-        setError(err.message || 'Failed to search municipalities');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Failed to search municipalities';
+        setError(message);
         setMunicipalities([]);
       } finally {
         setIsLoading(false);

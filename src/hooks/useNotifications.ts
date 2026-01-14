@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  NotificationEntityDetails,
+  NotificationPaymentDetails,
+  NotificationCommunicationDetails
+} from '@/types/rpc-types';
 
 export interface UserNotification {
   id: string;
@@ -20,9 +25,9 @@ export interface UserNotification {
   update_type?: string;
   status_change_from?: string;
   status_change_to?: string;
-  entity_details?: any;
-  payment_details?: any;
-  communication_details?: any;
+  entity_details?: NotificationEntityDetails;
+  payment_details?: NotificationPaymentDetails;
+  communication_details?: NotificationCommunicationDetails;
 }
 
 export const useNotifications = () => {
@@ -39,7 +44,7 @@ export const useNotifications = () => {
 
       if (error) throw error;
 
-      setNotifications(data || []);
+      setNotifications((data || []) as UserNotification[]);
       setUnreadCount(data?.filter(n => !n.is_read).length || 0);
     } catch (error) {
       console.error('Error fetching notifications:', error);

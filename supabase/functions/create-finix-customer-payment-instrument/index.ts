@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
+import { FinixAPI } from '../shared/finixAPI.ts';
+import { mapBankAccountType } from '../shared/finixOnboardingUtils.ts';
+import { Logger } from '../shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -54,7 +57,7 @@ serve(async (req) => {
       .single();
 
     if (merchantError || !merchant) {
-      console.error('Merchant lookup error:', merchantError);
+      Logger.error('Merchant lookup error', merchantError);
       throw new Error('Merchant record not found. Please complete Step 1 first.');
     }
 
@@ -66,12 +69,12 @@ serve(async (req) => {
       .single();
 
     if (customerError || !customer) {
-      console.error('Customer lookup error:', customerError);
+      Logger.error('Customer lookup error', customerError);
       throw new Error('Customer not found.');
     }
 
     if (merchant.user_id !== customer.user_id) {
-      console.error('Security validation failed: merchant user_id does not match customer user_id');
+      Logger.error('Security validation failed: merchant user_id does not match customer user_id');
       throw new Error('Invalid merchant-customer relationship.');
     }
 
@@ -80,68 +83,37 @@ serve(async (req) => {
     }
 
     // Prepare Finix API request
-    const finixApiKey = Deno.env.get('FINIX_API_SECRET');
-    const finixAppId = Deno.env.get('FINIX_APPLICATION_ID');
-    const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
-    
-    const finixBaseUrl = finixEnvironment === 'production' 
-      ? 'https://finix.payments-api.com'
-      : 'https://finix.sandbox-payments-api.com';
+    const finixAPI = new FinixAPI();
 
-    if (!finixApiKey || !finixAppId) {
-      throw new Error('Missing Finix API credentials');
-    }
-
-    // Map bank account type to Finix format
-    const mapBankAccountType = (type: string): string => {
-      const mappings: Record<string, string> = {
-        'business_checking': 'CHECKING',
-        'business_savings': 'SAVINGS',
-        'personal_checking': 'CHECKING',
-        'personal_savings': 'SAVINGS'
-      };
-      return mappings[type] || 'CHECKING';
-    };
-
-    // Create Finix payment instrument payload
-    const paymentInstrumentPayload = {
-      account_type: mapBankAccountType(bank_account_type),
-      bank_code: bank_routing_number,
-      account_number: bank_account_number,
-      type: "BANK_ACCOUNT",
-      identity: merchant.finix_identity_id,
-      tags: {
-        "Step": "2",
-        "Customer ID": customer_id,
-        "Account Holder": bank_account_holder_name
-      }
-    };
-
-    console.log('Creating Finix payment instrument for identity:', merchant.finix_identity_id);
+    Logger.info('Creating Finix payment instrument for identity', { identityId: merchant.finix_identity_id });
 
     // Make API call to Finix to create payment instrument
-    const finixResponse = await fetch(`${finixBaseUrl}/payment_instruments`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${btoa(finixAppId + ':' + finixApiKey)}`,
-        'Accept': 'application/hal+json',
-        'Content-Type': 'application/json',
-        'Finix-Version': '2022-02-01'
-      },
-      body: JSON.stringify(paymentInstrumentPayload)
+    const finixResponse = await finixAPI.createPaymentInstrument({
+        type: 'BANK_ACCOUNT',
+        identity: merchant.finix_identity_id,
+        bankDetails: {
+            account_type: mapBankAccountType(bank_account_type),
+            bank_code: bank_routing_number,
+            account_number: bank_account_number
+        },
+        tags: {
+            "Step": "2",
+            "Customer ID": customer_id,
+            "Account Holder": bank_account_holder_name
+        }
     });
 
-    if (!finixResponse.ok) {
-      const errorText = await finixResponse.text();
-      console.error('Finix API error:', finixResponse.status, errorText);
-      throw new Error(`Finix API error: ${finixResponse.status} - ${errorText}`);
+    if (!finixResponse.success || !finixResponse.data) {
+      Logger.error('Finix API error', finixResponse.error);
+      throw new Error(`Finix API error: ${finixResponse.error}`);
     }
 
-    const finixData = await finixResponse.json();
-    console.log('Finix payment instrument created:', finixData.id);
-    console.log('Finix response masked_account_number:', finixData.masked_account_number);
+    const finixData = finixResponse.data;
 
-    // Extract masked account data from Finix response for security (consistent with create-user-bank-account)
+    Logger.info('Finix payment instrument created', { id: finixData.id });
+    Logger.debug('Finix response masked_account_number', { masked: finixData.masked_account_number });
+
+    // Extract masked account data from Finix response for security
     const bankLastFour = finixData.masked_account_number 
       ? finixData.masked_account_number.slice(-4)
       : bank_account_number.slice(-4);
@@ -161,7 +133,7 @@ serve(async (req) => {
         // Update processing status
         processing_status: 'payment_instrument_created',
         
-        // Store raw Finix payment instrument response (this can be merged with existing data)
+        // Store raw Finix payment instrument response
         finix_raw_response: merchant.finix_raw_response ? 
           { ...merchant.finix_raw_response, payment_instrument: finixData } : 
           { payment_instrument: finixData },
@@ -173,11 +145,11 @@ serve(async (req) => {
       .single();
 
     if (updateError) {
-      console.error('Database update error:', updateError);
+      Logger.error('Database update error', updateError);
       throw new Error(`Database error: ${updateError.message}`);
     }
 
-    console.log('Merchant record updated successfully');
+    Logger.info('Merchant record updated successfully');
 
     return new Response(
       JSON.stringify({
@@ -193,7 +165,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error creating Finix payment instrument:', error);
+    Logger.error('Error creating Finix payment instrument', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
       JSON.stringify({

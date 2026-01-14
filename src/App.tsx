@@ -66,19 +66,39 @@ import { MunicipalLayout } from "@/components/layouts/MunicipalLayout";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 
+import { OfflineProvider } from "@/components/offline/OfflineProvider";
+import { MyInspections } from "@/pages/MyInspections";
+import { FormBuilder } from "@/pages/admin/FormBuilder";
+
 const App = () => (
   <HelmetProvider>
     <TooltipProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <ScrollToTop />
-          <CookieConsentProvider>
-            <Toaster />
-            <Sonner />
-            <Routes>
+        <OfflineProvider>
+          <BrowserRouter>
+            <ScrollToTop />
+            <CookieConsentProvider>
+              <Toaster />
+              <Sonner />
+              <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/signin" element={<Auth />} />
                 <Route path="/signup" element={<Signup />} />
+                
+                {/* OFFLINE ROUTES */}
+                <Route path="/my-inspections" element={
+                  <SimpleProtectedRoute requireAccountType={["municipal"]}>
+                    <MyInspections />
+                  </SimpleProtectedRoute>
+                } />
+                <Route path="/admin/form-builder" element={
+                  <SimpleProtectedRoute requireAccountType={["municipaladmin"]}>
+                    <MunicipalLayout>
+                       <FormBuilder />
+                    </MunicipalLayout>
+                  </SimpleProtectedRoute>
+                } />
+
                 <Route path="/dashboard" element={
                   <SimpleProtectedRoute requireAccountType={["residentadmin", "businessadmin"]}>
                     <Dashboard />
@@ -352,9 +372,10 @@ const App = () => (
               </Routes>
             </CookieConsentProvider>
           </BrowserRouter>
-        </AuthProvider>
-      </TooltipProvider>
-    </HelmetProvider>
+        </OfflineProvider>
+      </AuthProvider>
+    </TooltipProvider>
+  </HelmetProvider>
 );
 
 export default App;

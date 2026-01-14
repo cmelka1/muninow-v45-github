@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
+import { FinixAPI } from '../shared/finixAPI.ts';
+import { Logger } from '../shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,14 +22,14 @@ serve(async (req) => {
   try {
     const { 
       customer_id, 
-      merchant_id,
+      merchant_id, 
       finix_token
     }: CreateTokenizedPaymentInstrumentRequest = await req.json();
     
-    console.log('🔐 Creating tokenized payment instrument for merchant:', merchant_id);
+    Logger.info('Creating tokenized payment instrument for merchant', { merchant_id });
     
     if (!finix_token || !finix_token.startsWith('TK')) {
-      console.error('❌ Invalid token format:', finix_token);
+      Logger.error('Invalid token format', { finix_token });
       throw new Error('Invalid Finix token format. Token must start with TK prefix.');
     }
     
@@ -47,16 +49,16 @@ serve(async (req) => {
       .single();
 
     if (merchantError) {
-      console.error('❌ Merchant lookup error:', merchantError);
+      Logger.error('Merchant lookup error', merchantError);
       throw new Error(`Merchant lookup failed: ${merchantError.message}`);
     }
 
     if (!merchant || !merchant.finix_identity_id) {
-      console.error('❌ Merchant not found or missing Finix identity');
+      Logger.error('Merchant not found or missing Finix identity');
       throw new Error('Merchant not found or missing Finix identity. Please complete Step 1 first.');
     }
 
-    console.log('✅ Merchant found:', {
+    Logger.info('Merchant found', {
       id: merchant.id,
       finix_identity_id: merchant.finix_identity_id
     });
@@ -68,40 +70,26 @@ serve(async (req) => {
       .single();
 
     if (customerError || !customer) {
-      console.error('❌ Customer lookup error:', customerError);
+      Logger.error('Customer lookup error', customerError);
       throw new Error('Customer not found');
     }
 
     if (merchant.user_id !== customer.user_id) {
-      console.error('❌ Security validation failed: merchant-customer mismatch');
+      Logger.error('Security validation failed: merchant-customer mismatch');
       throw new Error('Invalid merchant-customer relationship. Security check failed.');
     }
 
-    console.log('✅ Security validation passed');
+    Logger.info('Security validation passed');
 
-    const finixApiKey = Deno.env.get('FINIX_API_SECRET');
-    const finixAppId = Deno.env.get('FINIX_APPLICATION_ID');
-    const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
-    const finixBaseUrl = finixEnvironment === 'production' 
-      ? 'https://finix.payments-api.com'
-      : 'https://finix.sandbox-payments-api.com';
+    const finixAPI = new FinixAPI();
 
-    if (!finixApiKey || !finixAppId) {
-      console.error('❌ Missing Finix API credentials');
-      throw new Error('Finix payment processing is not configured properly');
-    }
+    Logger.info('Creating payment instrument via Finix API');
 
-    console.log('🔧 Finix configuration:', {
-      environment: finixEnvironment,
-      baseUrl: finixBaseUrl,
-      applicationId: finixAppId
-    });
-
-    const paymentInstrumentPayload = {
-      type: "TOKEN",
+    const finixData = await finixAPI.createPaymentInstrument({
+      type: 'TOKEN',
       token: finix_token,
       identity: merchant.finix_identity_id,
-      attempt_bank_account_validation_check: true,
+      bankAccountValidationCheck: true,
       tags: {
         "Step": "2",
         "Customer ID": customer_id,
@@ -109,52 +97,33 @@ serve(async (req) => {
         "Created Via": "Tokenized Form - Merchant Onboarding",
         "Flow": "PCI Compliant"
       }
-    };
-
-    console.log('📤 Creating payment instrument via Finix API...');
-
-    const finixResponse = await fetch(`${finixBaseUrl}/payment_instruments`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${btoa(finixAppId + ':' + finixApiKey)}`,
-        'Accept': 'application/hal+json',
-        'Content-Type': 'application/json',
-        'Finix-Version': '2022-02-01'
-      },
-      body: JSON.stringify(paymentInstrumentPayload)
     });
 
-    if (!finixResponse.ok) {
-      const errorText = await finixResponse.text();
-      console.error('❌ Finix API error:', {
-        status: finixResponse.status,
-        statusText: finixResponse.statusText,
-        body: errorText
-      });
-      throw new Error(`Finix API error: ${finixResponse.status} - ${finixResponse.statusText}`);
+    if (!finixData.success) {
+      Logger.error('Finix API error', finixData.error);
+      throw new Error(`Finix API error: ${finixData.error}`);
     }
 
-    const finixData = await finixResponse.json();
-    console.log('✅ Payment instrument created:', {
-      id: finixData.id,
-      instrument_type: finixData.instrument_type,
-      validation: finixData.bank_account_validation_check
+    Logger.info('Payment instrument created', {
+      id: finixData.data?.id,
+      instrument_type: finixData.data?.instrument_type,
+      validation: finixData.data?.bank_account_validation_check
     });
 
-    const bankLastFour = finixData.masked_account_number?.slice(-4) || '0000';
-    const maskedAccountNumber = finixData.masked_account_number || '****0000';
-    const accountType = (finixData.account_type || 'CHECKING').toLowerCase();
-    const accountHolderName = finixData.name || '';
-    const bankCode = finixData.bank_code || '';
-    const validationCheck = finixData.bank_account_validation_check || 'PENDING';
+    const instrumentData = finixData.data!;
+    const bankLastFour = instrumentData.masked_account_number?.slice(-4) || '0000';
+    const maskedAccountNumber = instrumentData.masked_account_number || '****0000';
+    const accountType = (instrumentData.account_type || 'CHECKING').toLowerCase();
+    const accountHolderName = instrumentData.name || '';
+    const bankCode = instrumentData.bank_code || '';
+    const validationCheck = instrumentData.bank_account_validation_check || 'PENDING';
 
     const maskedRoutingNumber = bankCode ? `***${bankCode.slice(-4)}` : null;
 
-    console.log('🔐 Extracted masked data:', {
+    Logger.info('Extracted masked data', {
       last_four: bankLastFour,
       account_type: accountType,
-      validation: validationCheck,
-      masked_routing: maskedRoutingNumber
+      validation: validationCheck
     });
 
     const { error: updateError } = await supabase
@@ -169,12 +138,12 @@ serve(async (req) => {
         finix_raw_response: {
           ...merchant.finix_raw_response,
           payment_instrument: {
-            id: finixData.id,
-            fingerprint: finixData.fingerprint,
-            created_at: finixData.created_at,
-            updated_at: finixData.updated_at,
+            id: instrumentData.id,
+            fingerprint: instrumentData.fingerprint,
+            created_at: instrumentData.created_at,
+            updated_at: instrumentData.updated_at,
             bank_account_validation_check: validationCheck,
-            instrument_type: finixData.instrument_type
+            instrument_type: instrumentData.instrument_type
           }
         },
         updated_at: new Date().toISOString()
@@ -182,17 +151,17 @@ serve(async (req) => {
       .eq('id', merchant.id);
 
     if (updateError) {
-      console.error('❌ Database update error:', updateError);
+      Logger.error('Database update error', updateError);
       throw new Error(`Database error: ${updateError.message}`);
     }
 
-    console.log('✅ Merchant record updated successfully with masked data');
+    Logger.info('Merchant record updated successfully with masked data');
 
     return new Response(
       JSON.stringify({
         success: true,
         merchant_id: merchant.id,
-        finix_payment_instrument_id: finixData.id,
+        finix_payment_instrument_id: instrumentData.id,
         bank_last_four: bankLastFour,
         account_type: accountType,
         account_holder_name: accountHolderName,
@@ -206,7 +175,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('❌ Error creating tokenized payment instrument:', error);
+    Logger.error('Error creating tokenized payment instrument', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     
     return new Response(

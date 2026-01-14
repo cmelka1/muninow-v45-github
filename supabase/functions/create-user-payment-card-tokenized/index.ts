@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
+import { FinixAPI } from '../shared/finixAPI.ts';
+import { Logger } from '../shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,112 +15,80 @@ serve(async (req) => {
   }
 
   try {
-    // Get request body
     const { finixToken, nickname, addressOverride } = await req.json();
 
-    console.log('Creating payment card from Finix token:', {
+    Logger.info('Creating payment card from Finix token', {
       hasToken: !!finixToken,
       hasNickname: !!nickname,
       hasAddressOverride: !!addressOverride,
     });
+
+    // Initialize Supabase Client
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization')! },
+        },
+      }
+    );
+
+    // Get User
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Get Finix Identity for User
+    const { data: finixIdentity, error: identityError } = await supabase
+      .from('customers')
+      .select('finix_identity_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (identityError || !finixIdentity || !finixIdentity.finix_identity_id) {
+        Logger.error('Finix Identity not found for user', { userId: user.id });
+        throw new Error('Finix Identity not found. Please complete profile setup.');
+    }
 
     // Validate required fields
     if (!finixToken || !finixToken.startsWith('TK')) {
       throw new Error('Valid Finix token is required (must start with TK)');
     }
 
-    // Get Finix credentials
-    const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
-    const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
-    const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
+    // Initialize Finix API
+    const finixAPI = new FinixAPI();
 
-    if (!finixApplicationId || !finixApiSecret) {
-      console.error('Missing Finix credentials');
-      throw new Error('Finix payment processing is not configured');
-    }
-
-    // Initialize Supabase client with auth
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing authorization header');
-    }
-
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      global: {
-        headers: { Authorization: authHeader },
-      },
-    });
-
-    // Get authenticated user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      throw new Error('User not authenticated');
-    }
-
-    console.log('User authenticated:', user.id);
-
-    // Get user's Finix identity ID
-    const { data: finixIdentity, error: identityError } = await supabase
-      .from('finix_identities')
-      .select('finix_identity_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (identityError || !finixIdentity) {
-      console.error('Finix identity not found for user:', user.id);
-      throw new Error('Payment profile not found. Please complete your profile setup.');
-    }
-
-    console.log('Finix identity found:', finixIdentity.finix_identity_id);
-
-    // Prepare payment instrument data
-    const paymentInstrumentData: any = {
-      type: "TOKEN",
-      token: finixToken,
+    Logger.info('Creating Finix payment instrument with token...');
+    
+    // Create payment instrument via Finix API
+    const instrumentResult = await finixAPI.createPaymentInstrument({
+      type: 'TOKEN',
       identity: finixIdentity.finix_identity_id,
-    };
-
-    // Add address override if provided
-    if (addressOverride) {
-      paymentInstrumentData.address = {
+      token: finixToken,
+      billingAddress: addressOverride ? {
         line1: addressOverride.streetAddress,
         city: addressOverride.city,
         region: addressOverride.state,
         postal_code: addressOverride.zipCode,
         country: addressOverride.country || 'USA',
-      };
-    }
-
-    console.log('Creating Finix payment instrument with token...');
-
-    // Create payment instrument via Finix API
-    const finixUrl = finixEnvironment === 'live'
-      ? `https://finix.live/payment_instruments`
-      : `https://finix.sandbox-payments-api.com/payment_instruments`;
-
-    const finixResponse = await fetch(finixUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/vnd.json+api',
-        'Authorization': 'Basic ' + btoa(`${finixApplicationId}:${finixApiSecret}`),
-        'Finix-Version': '2022-02-01',
-      },
-      body: JSON.stringify(paymentInstrumentData),
+      } : undefined
     });
 
-    if (!finixResponse.ok) {
-      const errorText = await finixResponse.text();
-      console.error('Finix API error response:', errorText);
-      throw new Error(`Finix API error: ${finixResponse.status} ${finixResponse.statusText}`);
+    if (!instrumentResult.success || !instrumentResult.data?.id) {
+      Logger.error('Finix API error', instrumentResult.error);
+      throw new Error(`Finix API error: ${instrumentResult.error}`);
     }
 
-    const paymentInstrument = await finixResponse.json();
-    console.log('Payment instrument created:', paymentInstrument.id);
+    const paymentInstrument = instrumentResult.data;
+    Logger.info('Payment instrument created', { id: paymentInstrument.id });
 
     // Extract card details
-    const cardBrand = paymentInstrument.brand || 'UNKNOWN';
+    const cardBrand = paymentInstrument.card_brand || 'UNKNOWN';
     const cardLastFour = paymentInstrument.last_four || '0000';
     const cardExpMonth = paymentInstrument.expiration_month;
     const cardExpYear = paymentInstrument.expiration_year;
@@ -151,17 +121,17 @@ serve(async (req) => {
         card_last_four: cardLastFour,
         card_expiration_month: cardExpMonth,
         card_expiration_year: cardExpYear,
-        billing_address_line1: addressOverride?.streetAddress || paymentInstrument.address?.line1,
-        billing_city: addressOverride?.city || paymentInstrument.address?.city,
-        billing_region: addressOverride?.state || paymentInstrument.address?.region,
-        billing_postal_code: addressOverride?.zipCode || paymentInstrument.address?.postal_code,
+        billing_address_line1: addressOverride?.streetAddress,
+        billing_city: addressOverride?.city,
+        billing_region: addressOverride?.state,
+        billing_postal_code: addressOverride?.zipCode,
         // Store only essential Finix data instead of full response
         raw_finix_response: {
           id: paymentInstrument.id,
           fingerprint: paymentInstrument.fingerprint,
           created_at: paymentInstrument.created_at,
           updated_at: paymentInstrument.updated_at,
-          links: paymentInstrument._links?.self?.href
+          links: paymentInstrument.links?.self?.href
         },
         created_via: 'tokenized_form',
       })
@@ -169,11 +139,11 @@ serve(async (req) => {
       .single();
 
     if (saveError) {
-      console.error('Error saving payment instrument:', saveError);
+      Logger.error('Error saving payment instrument', saveError);
       throw new Error('Failed to save payment method');
     }
 
-    console.log('Payment method saved successfully:', savedInstrument.id);
+    Logger.info('Payment method saved successfully', { id: savedInstrument.id });
 
     return new Response(
       JSON.stringify({
@@ -186,7 +156,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error creating payment card from token:', error);
+    Logger.error('Error creating payment card from token', error);
     return new Response(
       JSON.stringify({
         success: false,

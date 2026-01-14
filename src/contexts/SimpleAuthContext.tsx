@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { UserRoleResponse } from '@/types/rpc-types';
 
 interface Profile {
   user_id: string;
   account_type: string;
   customer_id?: string;
-  [key: string]: any;
+  roles?: string[];
+  [key: string]: string | number | boolean | null | string[] | undefined;
 }
 
 interface AuthContextType {
@@ -15,11 +17,11 @@ interface AuthContextType {
   profile: Profile | null;
   isLoading: boolean;
   error: string | null;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: any }>;
-  updatePassword: (newPassword: string) => Promise<{ error: any }>;
+  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: AuthError | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -70,6 +72,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           customer_id: data.customer_id,
           ...data
         });
+
+        // Load roles properly
+        try {
+          const { data: roleData, error: roleError } = await supabase.rpc('get_user_roles', {
+             _user_id: userId
+          });
+          
+          if (!roleError && roleData) {
+            console.log('Roles loaded:', roleData);
+            const roles = roleData.map((r: UserRoleResponse) => r.role);
+            setProfile(prev => prev ? ({ ...prev, roles }) : null);
+          }
+        } catch (e) {
+          console.error('Error fetching roles:', e);
+        }
+
         setError(null);
         return true;
       } else {
@@ -179,7 +197,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email,
       password,
       options: {
-        emailRedirectTo: redirectUrl
+        emailRedirectTo: redirectUrl,
       }
     });
     return { error };

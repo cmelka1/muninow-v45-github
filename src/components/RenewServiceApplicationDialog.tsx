@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { AlertCircle, Calendar, DollarSign, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { useServiceApplicationRenewal } from '@/hooks/useServiceApplicationRenewal';
+import { useToast } from '@/hooks/use-toast';
 
 interface RenewServiceApplicationDialogProps {
   open: boolean;
@@ -36,8 +37,9 @@ export const RenewServiceApplicationDialog = ({
   application,
 }: RenewServiceApplicationDialogProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { renewApplication, isRenewing } = useServiceApplicationRenewal();
-  const [confirmed, setConfirmed] = useState(false);
+  const [isCurrent, setIsCurrent] = useState<boolean | null>(null);
 
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -47,10 +49,31 @@ export const RenewServiceApplicationDialog = ({
   };
 
   const handleConfirmRenewal = async () => {
+    if (isCurrent === null) return;
+    
     try {
-      const newApplicationId = await renewApplication(application.id);
+      // If information is current, auto-approve (true). 
+      // If not, creates draft (false) for them to edit.
+      const newApplicationId = await renewApplication({ 
+        applicationId: application.id, 
+        autoApprove: isCurrent 
+      });
+      
       onOpenChange(false);
-      navigate(`/service-application/${newApplicationId}`);
+      
+      if (isCurrent) {
+        // If approved, go to payment/details (backend sets simple 'approved' logic? 
+        // Actually for Service Apps, backend sets 'approved' if autoApprove=true)
+        // We probably want to go to the detail page in either case.
+        navigate(`/service-application/${newApplicationId}`);
+      } else {
+        // If not current, it's a draft. Navigate to it so they can edit.
+        toast({
+          title: "Renewal Started",
+          description: "A draft renewal has been created. Please update your information and submit.",
+        });
+        navigate(`/service-application/${newApplicationId}`);
+      }
     } catch (error) {
       // Error is handled in the hook
     }
@@ -190,35 +213,50 @@ export const RenewServiceApplicationDialog = ({
             </div>
           </div>
 
-          {/* Information Notice */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-medium text-blue-900 text-sm">Important Information</p>
-                <p className="text-sm text-blue-700 mt-1">
-                  The renewal will be automatically approved and ready for immediate payment. 
-                  All information from your current application will be copied to the renewal.
-                </p>
+          {/* Change Info Selection */}
+          <div className="space-y-3 pt-2">
+            <Label className="text-base font-semibold">Is your information current?</Label>
+            <div className="grid grid-cols-1 gap-3">
+              <div 
+                className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${
+                  isCurrent === true ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-muted/50'
+                }`}
+                onClick={() => setIsCurrent(true)}
+              >
+                <div className={`mt-0.5 h-4 w-4 rounded-full border border-primary flex items-center justify-center ${
+                  isCurrent === true ? 'bg-primary' : ''
+                }`}>
+                  {isCurrent === true && <div className="h-2 w-2 rounded-full bg-white" />}
+                </div>
+                <div>
+                  <p className="font-medium">Yes, my information is current</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Proceed with automatic approval.
+                  </p>
+                </div>
+              </div>
+
+              <div 
+                className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${
+                  isCurrent === false ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-muted/50'
+                }`}
+                onClick={() => setIsCurrent(false)}
+              >
+                <div className={`mt-0.5 h-4 w-4 rounded-full border border-primary flex items-center justify-center ${
+                  isCurrent === false ? 'bg-primary' : ''
+                }`}>
+                  {isCurrent === false && <div className="h-2 w-2 rounded-full bg-white" />}
+                </div>
+                <div>
+                  <p className="font-medium">No, I need to make changes</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Create a draft application to update your information.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Confirmation Checkbox */}
-          <div className="flex items-start gap-3 pt-2">
-            <Checkbox
-              id="confirm"
-              checked={confirmed}
-              onCheckedChange={(checked) => setConfirmed(checked as boolean)}
-            />
-            <Label
-              htmlFor="confirm"
-              className="text-sm leading-relaxed cursor-pointer"
-            >
-              I confirm that my information is accurate and up to date. 
-              I understand that the renewal will be automatically approved and ready for payment.
-            </Label>
-          </div>
         </div>
 
         <DialogFooter>
@@ -231,7 +269,7 @@ export const RenewServiceApplicationDialog = ({
           </Button>
           <Button
             onClick={handleConfirmRenewal}
-            disabled={!confirmed || isRenewing || isOutsideRenewalWindow}
+            disabled={isCurrent === null || isRenewing || isOutsideRenewalWindow}
           >
             {isRenewing ? (
               <>

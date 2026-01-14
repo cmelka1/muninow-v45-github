@@ -7,13 +7,15 @@ interface SimpleProtectedRouteProps {
   redirectTo?: string;
   requireAccountType?: string | string[];
   requireCustomerId?: boolean;
+  exactMatch?: boolean;
 }
 
 export const SimpleProtectedRoute: React.FC<SimpleProtectedRouteProps> = ({
   children,
   redirectTo = '/signin',
   requireAccountType,
-  requireCustomerId = false
+  requireCustomerId = false,
+  exactMatch = false
 }) => {
   const { user, profile, isLoading } = useAuth();
 
@@ -36,10 +38,25 @@ export const SimpleProtectedRoute: React.FC<SimpleProtectedRouteProps> = ({
     const allowedTypes = Array.isArray(requireAccountType) ? requireAccountType : [requireAccountType];
     const userAccountType = profile.account_type;
     
-    // Check if user's account type matches any allowed type or starts with allowed prefix
-    const hasAccess = allowedTypes.some(allowedType => 
-      userAccountType === allowedType || userAccountType.startsWith(allowedType)
-    );
+    // Check if user's account type matches any allowed type
+    // First check the new roles array if it exists
+    let hasAccess = false;
+    
+    if (profile.roles && profile.roles.length > 0) {
+      hasAccess = allowedTypes.some(allowedType => 
+        profile.roles!.includes(allowedType)
+      );
+    } 
+    
+    // If no access from roles (or no roles), fall back to account_type (legacy)
+    if (!hasAccess) {
+      hasAccess = allowedTypes.some(allowedType => {
+        if (exactMatch) {
+          return userAccountType === allowedType;
+        }
+        return userAccountType === allowedType || userAccountType.startsWith(allowedType);
+      });
+    }
     
     if (!hasAccess) {
       console.log('Access denied - redirecting to dashboard:', { userAccountType, allowedTypes });

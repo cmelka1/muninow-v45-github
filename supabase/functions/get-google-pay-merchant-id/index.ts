@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
+import { Logger } from '../shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,45 +22,45 @@ serve(async (req) => {
     // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.error('Missing authorization header');
+      Logger.error('Missing authorization header');
       throw new Error('No authorization header');
     }
 
     // Verify the user is authenticated
     const token = authHeader.replace('Bearer ', '');
-    console.log('Verifying JWT token...');
+    Logger.debug('Verifying JWT token...');
     
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError) {
-      console.error('JWT verification error:', authError);
+      Logger.error('JWT verification error', authError);
       throw new Error(`Authentication failed: ${authError.message}`);
     }
     
+    // Verify user is authenticated
     if (!user) {
-      console.error('No user found after JWT verification');
+      Logger.error('No user found after JWT verification');
       throw new Error('Unauthorized');
     }
     
-    console.log('User authenticated successfully:', user.id);
+    Logger.info('User authenticated', { userId: user.id });
 
-    // Parse request body to get merchant_id if provided
+    // Parse request body for merchant_id
     let merchantId = null;
     if (req.method === 'POST') {
       try {
         const body = await req.json();
         merchantId = body?.merchant_id;
-      } catch (e) {
-        // Body parsing failed, continue with fallback
-        console.log('Failed to parse request body, using fallback');
+      } catch {
+        // Body parsing failed, harmless callback
       }
     }
 
     let googlePayMerchantId = null;
 
-    // If merchant_id is provided, try to get the finix_identity_id from database
+    // 1. Try Specific Merchant Lookup (for sub-merchants)
     if (merchantId) {
-      console.log('Looking up finix_identity_id for merchant:', merchantId);
+      Logger.info('Lookup for merchant', { merchantId });
       
       const { data: merchant, error: merchantError } = await supabase
         .from('merchants')
@@ -69,33 +70,35 @@ serve(async (req) => {
 
       if (!merchantError && merchant?.finix_identity_id) {
         googlePayMerchantId = merchant.finix_identity_id;
-        console.log('Found finix_identity_id from database:', googlePayMerchantId);
+        Logger.info('Found Identity ID', { googlePayMerchantId });
       } else {
-        console.log('Merchant not found or no finix_identity_id, falling back to env variable');
+        Logger.warn('Merchant lookup failed or missing Identity ID');
       }
-    }
-
-    // Fallback to environment variable if no merchant-specific ID found
+    } 
+    
+    // 2. Fallback to Environment Variable (Platform Account)
+    // This is useful for general platform payments or testing
     if (!googlePayMerchantId) {
       googlePayMerchantId = Deno.env.get('GOOGLE_PAY_MERCHANT_ID');
-      console.log('Using fallback Google Pay merchant ID from environment');
+      if (googlePayMerchantId) {
+         Logger.info('Using Env Var fallback');
+      }
     }
     
     if (!googlePayMerchantId) {
-      console.error('Google Pay merchant ID not configured');
+      Logger.error('No Google Pay Merchant ID configured');
       return new Response(
         JSON.stringify({ 
-          error: 'Google Pay merchant ID not configured',
+          success: false,
+          error: 'Google Pay configuration missing',
           merchant_id: null 
         }), 
         { 
-          status: 200, 
+          status: 404, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
     }
-
-    console.log('Retrieved Google Pay merchant ID:', googlePayMerchantId);
 
     return new Response(
       JSON.stringify({ 
@@ -109,7 +112,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in get-google-pay-merchant-id function:', error);
+    Logger.error('Error in get-google-pay-merchant-id function', error);
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Unknown error occurred',

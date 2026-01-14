@@ -1,4 +1,6 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.5'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0'
+import { FinixAPI } from '../shared/finixAPI.ts';
+import { Logger } from '../shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -37,7 +39,7 @@ Deno.serve(async (req) => {
     // Parse request body
     const { payment_transaction_id, reason, refund_amount_cents }: RefundRequest = await req.json();
 
-    console.log('Processing refund request:', {
+    Logger.info('Processing refund request', {
       payment_transaction_id,
       reason,
       refund_amount_cents,
@@ -70,14 +72,14 @@ Deno.serve(async (req) => {
       .single();
 
     if (paymentError || !paymentTransaction) {
-      console.error('Payment transaction fetch error:', paymentError);
+      Logger.error('Payment transaction fetch error', paymentError);
       return new Response(
         JSON.stringify({ success: false, error: 'Payment not found' }),
         { status: 404, headers: corsHeaders }
       );
     }
 
-    console.log('Payment transaction details:', {
+    Logger.info('Payment transaction details', {
       id: paymentTransaction.id,
       total_amount_cents: paymentTransaction.total_amount_cents,
       finix_transfer_id: paymentTransaction.finix_transfer_id,
@@ -136,7 +138,7 @@ Deno.serve(async (req) => {
 
     // Validate refund amount doesn't exceed original payment
     if (refundAmount > paymentTransaction.total_amount_cents) {
-      console.error('Refund amount exceeds payment amount:', {
+      Logger.error('Refund amount exceeds payment amount', {
         refundAmount,
         totalAmount: paymentTransaction.total_amount_cents
       });
@@ -151,69 +153,45 @@ Deno.serve(async (req) => {
     }
 
     // Call Finix API for refund
-    const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
-    const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
-    const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
-    
-    if (!finixApplicationId || !finixApiSecret) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Finix credentials not configured' }),
-        { status: 500, headers: corsHeaders }
-      );
-    }
+    const finixAPI = new FinixAPI();
 
-    const finixApiUrl = finixEnvironment === 'production' 
-      ? 'https://finix.payments-api.com'
-      : 'https://finix.sandbox-payments-api.com';
-
-    const finixCredentials = btoa(`${finixApplicationId}:${finixApiSecret}`);
-
-    console.log('Calling Finix API to create reversal:', {
+    Logger.info('Calling Finix API to create reversal', {
       transfer_id: paymentTransaction.finix_transfer_id,
       refund_amount: refundAmount
     });
 
-    const finixResponse = await fetch(
-      `${finixApiUrl}/transfers/${paymentTransaction.finix_transfer_id}/reversals`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${finixCredentials}`,
-          'Content-Type': 'application/vnd.json+api',
-          'Finix-Version': '2022-02-01',
-        },
-        body: JSON.stringify({
+    // Generate deterministic idempotency key for this refund
+    const idempotency_header = `refund-${payment_transaction_id}-${refundAmount}`;
+    
+    const reversalData = {
           amount: refundAmount,
           tags: {
             payment_transaction_id: payment_transaction_id,
             municipal_user_id: user.id,
             reason: reason
-          }
-        })
-      }
-    );
+          },
+          idempotency_id: idempotency_header
+    };
 
-    const finixData = await finixResponse.json();
+    let finixData;
+    try {
+        finixData = await finixAPI.createReversal(paymentTransaction.finix_transfer_id, reversalData);
+    } catch (finixError) {
+        Logger.error('Finix API error', finixError);
+        return new Response(
+            JSON.stringify({ 
+            success: false, 
+            error: `Finix API error: ${finixError instanceof Error ? finixError.message : String(finixError)}` 
+            }),
+            { status: 400, headers: corsHeaders }
+        );
+    }
 
-    console.log('Finix API response:', {
-      success: finixResponse.ok,
-      status: finixResponse.status,
+    Logger.info('Finix API response', {
+      success: true,
       reversal_id: finixData.id,
       state: finixData.state
     });
-
-    if (!finixResponse.ok) {
-      console.error('Finix API error:', finixData);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: `Finix API error: ${finixData.message || 'Unknown error'}` 
-        }),
-        { status: 400, headers: corsHeaders }
-      );
-    }
-
-    
 
     // Map Finix state to our status
     const statusMapping: Record<string, string> = {
@@ -268,14 +246,14 @@ Deno.serve(async (req) => {
       .single();
 
     if (refundError) {
-      console.error('Database insert error:', refundError);
+      Logger.error('Database insert error', refundError);
       return new Response(
         JSON.stringify({ success: false, error: 'Failed to save refund record' }),
         { status: 500, headers: corsHeaders }
       );
     }
 
-    console.log('Refund created successfully:', {
+    Logger.info('Refund created successfully', {
       refund_id: refundRecord.id,
       refund_status: refundRecord.refund_status,
       refund_amount_cents: refundRecord.refund_amount_cents,
@@ -298,7 +276,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Process refund error:', error);
+    Logger.error('Process refund error', error);
     return new Response(
       JSON.stringify({ 
         success: false, 

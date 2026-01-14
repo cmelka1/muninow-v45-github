@@ -1,9 +1,10 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.5';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import { processUnifiedPayment } from '../shared/unifiedPaymentProcessor.ts';
 import { corsHeaders } from '../shared/cors.ts';
+import { Logger } from '../shared/logger.ts';
 
 Deno.serve(async (req) => {
-  console.log('=== UNIFIED PAYMENT REQUEST ===');
+  Logger.info('=== UNIFIED PAYMENT REQUEST ===');
   
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -22,13 +23,14 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader);
     
     if (userError || !user) {
+      Logger.warn('Authentication failed', userError);
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized', retryable: false }),
         { status: 401, headers: corsHeaders }
       );
     }
 
-    console.log('[process-unified-payment] Authenticated user:', user.id);
+    Logger.info('Authenticated user', { userId: user.id });
 
     // Parse request body
     const body = await req.json();
@@ -62,7 +64,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('[process-unified-payment] Processing payment:', {
+    Logger.info('Processing payment', {
       entity_type,
       entity_id,
       base_amount_cents
@@ -87,7 +89,7 @@ Deno.serve(async (req) => {
       lastName: last_name
     }, supabase);
 
-    console.log('[process-unified-payment] Payment result:', result.success ? 'SUCCESS' : 'FAILED');
+    Logger.info('Payment result', { success: result.success });
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -95,7 +97,7 @@ Deno.serve(async (req) => {
     });
     
   } catch (error) {
-    console.error('[process-unified-payment] Error:', error);
+    Logger.error('Error in process-unified-payment', error);
     
     return new Response(JSON.stringify({
       success: false,

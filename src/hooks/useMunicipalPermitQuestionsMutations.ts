@@ -2,11 +2,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/SimpleAuthContext';
 import { toast } from 'sonner';
+import { QuestionOptions } from '@/types/rpc-types';
 
 interface CreateMunicipalPermitQuestionData {
   question_text: string;
   question_type: string;
-  question_options?: any;
+  question_options?: QuestionOptions | null;
   is_required: boolean;
   display_order: number;
   is_active: boolean;
@@ -18,7 +19,7 @@ interface UpdateMunicipalPermitQuestionData {
   id: string;
   question_text?: string;
   question_type?: string;
-  question_options?: any;
+  question_options?: QuestionOptions | null;
   is_required?: boolean;
   display_order?: number;
   is_active?: boolean;

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { QuestionOptions } from '@/types/rpc-types';
 
 export interface MunicipalPermitQuestion {
   id: string;
@@ -8,7 +9,7 @@ export interface MunicipalPermitQuestion {
   merchant_name: string | null;
   question_text: string;
   question_type: string;
-  question_options: any;
+  question_options: QuestionOptions | null;
   is_required: boolean;
   display_order: number;
   is_active: boolean;

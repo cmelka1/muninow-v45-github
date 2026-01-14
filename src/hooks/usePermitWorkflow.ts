@@ -94,7 +94,7 @@ export const usePermitWorkflow = () => {
   ) => {
     setIsUpdating(true);
     try {
-      const updateData: any = {
+      const updateData: Record<string, string | null | undefined> = {
         application_status: newStatus,
         municipal_review_status: mapToMunicipalReviewStatus(newStatus),
         updated_at: new Date().toISOString()
@@ -127,14 +127,15 @@ export const usePermitWorkflow = () => {
       });
 
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating permit status:', error);
       
       let errorMessage = "Failed to update permit status";
-      if (error?.message?.includes('check constraint')) {
+      const errMsg = error instanceof Error ? error.message : '';
+      if (errMsg.includes('check constraint')) {
         errorMessage = "Invalid status transition. Please try a different status.";
-      } else if (error?.message) {
-        errorMessage = error.message;
+      } else if (errMsg) {
+        errorMessage = errMsg;
       }
       
       toast({

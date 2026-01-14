@@ -42,6 +42,10 @@ export interface PermitDetail {
   finix_merchant_id: string | null;
   customer_id: string;
   user_id: string;
+  is_renewable?: boolean;
+  renewal_reminder_days?: number;
+  expires_at?: string | null;
+  renewal_status?: string | null;
 }
 
 export const usePermit = (permitId: string) => {
@@ -56,7 +60,7 @@ export const usePermit = (permitId: string) => {
         .from('permit_applications')
         .select(`
           *,
-          permit_types_v2(name)
+          permit_types_v2(name, is_renewable, renewal_reminder_days, validity_duration_days)
         `)
         .eq('permit_id', permitId)
         .single();
@@ -67,9 +71,12 @@ export const usePermit = (permitId: string) => {
       }
       
       // Transform to flatten the join
+      const typeData = permitData.permit_types_v2 as any;
       const transformedPermit = {
         ...permitData,
-        permit_type_name: (permitData.permit_types_v2 as any)?.name || null
+        permit_type_name: typeData?.name || null,
+        is_renewable: typeData?.is_renewable || false,
+        renewal_reminder_days: typeData?.renewal_reminder_days || 30
       };
       
       return transformedPermit as PermitDetail;

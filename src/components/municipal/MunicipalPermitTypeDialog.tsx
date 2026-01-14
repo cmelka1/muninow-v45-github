@@ -47,6 +47,10 @@ const formSchema = z.object({
   processing_days: z.number().min(1, 'Processing days must be at least 1'),
   requires_inspection: z.boolean(),
   description: z.string().optional(),
+  is_renewable: z.boolean().default(false),
+  renewal_reminder_days: z.number().min(0).optional(),
+  renewal_fee_cents: z.number().min(0).optional(),
+  validity_duration_days: z.number().min(1).optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -87,6 +91,10 @@ export const MunicipalPermitTypeDialog: React.FC<MunicipalPermitTypeDialogProps>
       processing_days: permitType?.processing_days || 30,
       requires_inspection: permitType?.requires_inspection || false,
       description: permitType?.description || '',
+      is_renewable: permitType?.is_renewable || false,
+      renewal_reminder_days: permitType?.renewal_reminder_days || 30,
+      renewal_fee_cents: permitType?.renewal_fee_cents ? permitType.renewal_fee_cents / 100 : 0,
+      validity_duration_days: permitType?.validity_duration_days || 365,
     },
   });
 
@@ -112,6 +120,10 @@ export const MunicipalPermitTypeDialog: React.FC<MunicipalPermitTypeDialogProps>
         description: data.description || null,
         merchant_name: merchants.find(m => m.id === data.merchant_id)?.merchant_name || null,
         customer_id: profile?.customer_id,
+        is_renewable: data.is_renewable,
+        renewal_reminder_days: data.is_renewable ? (data.renewal_reminder_days || 30) : null,
+        renewal_fee_cents: data.is_renewable && data.renewal_fee_cents ? Math.round(data.renewal_fee_cents * 100) : 0,
+        validity_duration_days: data.validity_duration_days || 365,
       };
 
       if (permitType) {
@@ -242,23 +254,105 @@ export const MunicipalPermitTypeDialog: React.FC<MunicipalPermitTypeDialogProps>
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="requires_inspection"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Requires Inspection</FormLabel>
-                    <FormDescription>
-                      Whether this permit type requires an inspection after approval
-                    </FormDescription>
+              <FormField
+                control={form.control}
+                name="requires_inspection"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Requires Inspection</FormLabel>
+                      <FormDescription>
+                        Whether this permit type requires an inspection after approval
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <div className="space-y-4 rounded-lg border p-4">
+                <FormField
+                  control={form.control}
+                  name="is_renewable"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">Allow Renewals</FormLabel>
+                        <FormDescription>
+                          Enable permit renewal functionality
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                {form.watch('is_renewable') && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
+                    <FormField
+                      control={form.control}
+                      name="validity_duration_days"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Validity (Days)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="1"
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="renewal_reminder_days"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Reminder (Days)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="renewal_fee_cents"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Renewal Fee ($)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              {...field}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                  <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+                )}
+              </div>
 
             <FormField
               control={form.control}

@@ -15,6 +15,10 @@ export interface PermitType {
   merchant_name: string | null;
   display_order: number;
   is_active: boolean;
+  is_renewable: boolean;
+  renewal_reminder_days: number | null;
+  renewal_fee_cents: number | null;
+  validity_duration_days: number | null;
   created_at: string;
   updated_at: string;
 }

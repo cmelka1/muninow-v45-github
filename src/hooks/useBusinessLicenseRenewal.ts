@@ -7,9 +7,10 @@ export const useBusinessLicenseRenewal = () => {
   const queryClient = useQueryClient();
 
   const renewLicense = useMutation({
-    mutationFn: async (licenseId: string) => {
+    mutationFn: async ({ licenseId, autoApprove = false }: { licenseId: string; autoApprove?: boolean }) => {
       const { data, error } = await supabase.rpc('create_license_renewal', {
-        p_original_license_id: licenseId
+        p_original_license_id: licenseId,
+        p_auto_approve: autoApprove
       });
 
       if (error) throw error;

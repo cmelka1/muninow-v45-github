@@ -1,4 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Logger } from "../shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,7 +35,7 @@ serve(async (req) => {
     const googleMapsApiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
     
     if (!googleMapsApiKey) {
-      console.error('GOOGLE_MAPS_API_KEY not found in environment');
+      Logger.error('GOOGLE_MAPS_API_KEY not found in environment');
       return new Response(
         JSON.stringify({ error: 'Google Maps API key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -56,7 +57,7 @@ serve(async (req) => {
     if (body.state) fullAddress += `, ${body.state}`;
     if (body.zipCode) fullAddress += ` ${body.zipCode}`;
 
-    console.log('Validating address:', fullAddress);
+    Logger.info('Validating address', { fullAddress });
 
     // Use Google Geocoding API for validation
     const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(fullAddress)}&key=${googleMapsApiKey}`;
@@ -134,7 +135,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in address-validation:', error);
+    Logger.error('Error in address-validation', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

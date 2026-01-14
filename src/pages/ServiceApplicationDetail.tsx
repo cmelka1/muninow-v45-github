@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, User, Clock, Receipt, Calendar, Building, Download, Loader2, MessageSquare, CreditCard, Plus, RefreshCw, XCircle } from 'lucide-react';
+import { ArrowLeft, FileText, User, Clock, Receipt, Calendar, Building, Download, Loader2, MessageSquare, CreditCard, Plus, RefreshCw, XCircle, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,6 +24,7 @@ import { ServiceApplicationCommunication } from '@/components/ServiceApplication
 import { AddPaymentMethodDialog } from '@/components/profile/AddPaymentMethodDialog';
 import { RenewServiceApplicationDialog } from '@/components/RenewServiceApplicationDialog';
 import { CancelBookingDialog } from '@/components/sport-reservations/CancelBookingDialog';
+import ServiceApplicationModal from '@/components/ServiceApplicationModal';
 import { format } from 'date-fns';
 
 const ServiceApplicationDetail: React.FC = () => {
@@ -38,12 +39,16 @@ const ServiceApplicationDetail: React.FC = () => {
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   
   const cancelBookingMutation = useCancelSportBooking();
+  const [showEditModal, setShowEditModal] = useState(false);
   
   const { data: application, isLoading, error, refetch } = useServiceApplication(applicationId || '');
   const { data: documentsQuery, refetch: refetchDocuments } = useServiceApplicationDocuments(applicationId || '');
   const [documents, setDocuments] = useState<any[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [documentsError, setDocumentsError] = useState<string | null>(null);
+
+  const isMunicipalUser = profile?.account_type === 'municipaladmin' || profile?.account_type === 'municipal';
+  const isOwner = profile?.id === application?.user_id;
 
   const handleAddPaymentMethodSuccess = () => {
     setIsAddPaymentDialogOpen(false);
@@ -297,7 +302,7 @@ const ServiceApplicationDetail: React.FC = () => {
             )}
 
             {/* Renewal Button - Show when within renewal window */}
-            {application.status === 'issued' && 
+            {['issued', 'expired'].includes(application.status || '') && 
              application.expires_at && 
              application.tile?.is_renewable && 
              isWithinRenewalWindow(
@@ -315,7 +320,7 @@ const ServiceApplicationDetail: React.FC = () => {
             )}
 
             {/* Show disabled button with tooltip when NOT in renewal window */}
-            {application.status === 'issued' && 
+            {['issued', 'expired'].includes(application.status || '') && 
              application.expires_at && 
              application.tile?.is_renewable && 
              !isWithinRenewalWindow(
@@ -335,6 +340,18 @@ const ServiceApplicationDetail: React.FC = () => {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+            )}
+
+            {/* Edit Application Button for Drafts */}
+            {!isMunicipalUser && isOwner && application.status === 'draft' && (
+              <Button
+                variant="outline"
+                onClick={() => setShowEditModal(true)}
+                className="flex items-center gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Edit Application
+              </Button>
             )}
 
             <ServiceApplicationStatusBadge status={application.status} />
@@ -798,15 +815,28 @@ const ServiceApplicationDetail: React.FC = () => {
       </div>
 
       <AddServiceApplicationDocumentDialog
-        applicationId={applicationId!}
-        customerId={application?.customer_id || ''}
         open={addDocumentOpen}
         onOpenChange={setAddDocumentOpen}
+        applicationId={applicationId || ''}
+        customerId={application.customer_id}
         onSuccess={() => {
           refetchDocuments();
           setAddDocumentOpen(false);
         }}
       />
+
+       {/* Edit Application Modal */}
+      {application.tile && (
+        <ServiceApplicationModal
+          isOpen={showEditModal}
+          onClose={() => {
+             setShowEditModal(false);
+             refetch();
+          }}
+          tile={application.tile}
+          existingApplication={application}
+        />
+      )}
 
       {/* Add Payment Method Dialog */}
       <AddPaymentMethodDialog

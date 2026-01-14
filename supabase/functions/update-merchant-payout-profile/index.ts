@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
+import { FinixAPI } from '../shared/finixAPI.ts';
+import { Logger } from '../shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -36,7 +38,7 @@ serve(async (req) => {
       .single();
 
     if (merchantError || !merchant) {
-      console.error('Merchant not found:', merchantError);
+      Logger.error('Merchant not found', merchantError);
       return new Response(
         JSON.stringify({ error: 'Merchant not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -50,7 +52,7 @@ serve(async (req) => {
       .single();
 
     if (profileError) {
-      console.error('Payout profile not found:', profileError);
+      Logger.error('Payout profile not found', profileError);
       return new Response(
         JSON.stringify({ error: 'Payout profile not found. Please sync from Finix first.' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -109,68 +111,67 @@ serve(async (req) => {
       };
     }
 
-    console.log('Updating Finix payout profile:', JSON.stringify(finixPayload, null, 2));
+    Logger.info('Updating Finix payout profile', finixPayload);
 
     // Update payout profile in Finix
-    const finixApplicationId = Deno.env.get('FINIX_APPLICATION_ID');
-    const finixApiSecret = Deno.env.get('FINIX_API_SECRET');
-    const finixEnvironment = Deno.env.get('FINIX_ENVIRONMENT') || 'sandbox';
-    
-    if (!finixApplicationId || !finixApiSecret) {
-      console.error('Missing Finix credentials:', { 
-        hasApplicationId: !!finixApplicationId, 
-        hasApiSecret: !!finixApiSecret 
-      });
-      return new Response(
-        JSON.stringify({ error: 'Finix API credentials not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    const baseUrl = finixEnvironment === 'live' 
-      ? 'https://finix.payments-api.com' 
-      : 'https://finix.sandbox-payments-api.com';
+    const finixAPI = new FinixAPI();
+    let updatedFinixProfile;
 
-    const finixResponse = await fetch(
-      `${baseUrl}/payout_profiles/${existingProfile.finix_payout_profile_id}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Basic ${btoa(finixApplicationId + ':' + finixApiSecret)}`,
-          'Content-Type': 'application/json',
-          'Finix-Version': '2022-02-01',
-        },
-        body: JSON.stringify(finixPayload),
-      }
-    );
+    try {
+      updatedFinixProfile = await finixAPI.updatePayoutProfile(existingProfile.finix_payout_profile_id, finixPayload);
+    } catch (error) {
+      Logger.error('Finix API error', error);
+      const errorText = error instanceof Error ? error.message : String(error);
 
-    if (!finixResponse.ok) {
-      const errorText = await finixResponse.text();
-      console.error('Finix API error:', errorText);
-      
       // Check if the payout profile is no longer active
       if (errorText.includes('no longer active')) {
-        console.log('Payout profile is inactive, creating a new one...');
+        Logger.info('Payout profile is inactive, creating a new one...');
         
-        // Create a new payout profile
-        const createResponse = await fetch(
-          `${baseUrl}/merchants/${merchant.finix_merchant_id}/payout_profiles`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Basic ${btoa(finixApplicationId + ':' + finixApiSecret)}`,
-              'Content-Type': 'application/json',
-              'Finix-Version': '2022-02-01',
-            },
-            body: JSON.stringify(finixPayload),
-          }
-        );
+        try {
+          const newFinixProfile = await finixAPI.createPayoutProfile(merchant.finix_merchant_id, finixPayload);
+          Logger.info('Created new Finix profile', newFinixProfile);
 
-        if (!createResponse.ok) {
-          const createErrorText = await createResponse.text();
-          console.error('Failed to create new payout profile:', createErrorText);
-          
-          await supabase
+          // Update local database with new profile data
+          const dbUpdateData = {
+            ...profileData,
+            merchant_id: merchantId,
+            finix_payout_profile_id: newFinixProfile.id,
+            sync_status: 'synced',
+            last_synced_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+
+          const { data: savedProfile, error: saveError } = await supabase
+            .from('merchant_payout_profiles')
+            .update(dbUpdateData)
+            .eq('merchant_id', merchantId)
+            .select()
+            .single();
+
+          if (saveError) {
+             Logger.error('Error updating local payout profile', saveError);
+             return new Response(
+              JSON.stringify({ error: 'Failed to update local payout profile' }),
+              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              profile: savedProfile,
+              finixProfile: newFinixProfile,
+              message: 'Created new payout profile (previous was inactive)'
+            }),
+            { 
+              status: 200, 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          );
+
+        } catch (createError) {
+           Logger.error('Failed to create new payout profile', createError);
+           await supabase
             .from('merchant_payout_profiles')
             .update({ 
               sync_status: 'error',
@@ -178,52 +179,11 @@ serve(async (req) => {
             })
             .eq('merchant_id', merchantId);
 
-          return new Response(
-            JSON.stringify({ error: 'Failed to create new payout profile in Finix', details: createErrorText }),
+           return new Response(
+            JSON.stringify({ error: 'Failed to create new payout profile in Finix', details: createError instanceof Error ? createError.message : 'Unknown error' }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-
-        const newFinixProfile = await createResponse.json();
-        console.log('Created new Finix profile:', JSON.stringify(newFinixProfile, null, 2));
-
-        // Update local database with new profile data
-        const dbUpdateData = {
-          ...profileData,
-          merchant_id: merchantId,
-          finix_payout_profile_id: newFinixProfile.id,
-          sync_status: 'synced',
-          last_synced_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-
-        const { data: savedProfile, error: saveError } = await supabase
-          .from('merchant_payout_profiles')
-          .update(dbUpdateData)
-          .eq('merchant_id', merchantId)
-          .select()
-          .single();
-
-        if (saveError) {
-          console.error('Error updating local payout profile:', saveError);
-          return new Response(
-            JSON.stringify({ error: 'Failed to update local payout profile' }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            profile: savedProfile,
-            finixProfile: newFinixProfile,
-            message: 'Created new payout profile (previous was inactive)'
-          }),
-          { 
-            status: 200, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
       }
       
       // Update local profile with error status for other errors
@@ -240,9 +200,8 @@ serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    const updatedFinixProfile = await finixResponse.json();
-    console.log('Updated Finix profile:', JSON.stringify(updatedFinixProfile, null, 2));
+    
+    Logger.info('Updated Finix profile successfully', { id: updatedFinixProfile.id });
 
     // Update local database with new profile data
     const dbUpdateData = {
@@ -262,7 +221,7 @@ serve(async (req) => {
       .single();
 
     if (saveError) {
-      console.error('Error updating local payout profile:', saveError);
+      Logger.error('Error updating local payout profile', saveError);
       return new Response(
         JSON.stringify({ error: 'Failed to update local payout profile' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -282,7 +241,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in update-merchant-payout-profile:', error);
+    Logger.error('Error in update-merchant-payout-profile', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
