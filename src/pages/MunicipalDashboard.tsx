@@ -20,20 +20,21 @@ const MunicipalDashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("last_7_days");
   const { profile } = useAuth();
 
-  // Check if user has municipal access
-  if (!profile?.account_type || !["municipal", "municipaladmin", "municipaluser"].includes(profile.account_type)) {
-    return <Navigate to="/signin" replace />;
-  }
+  // Get customerId before hooks - hooks must be called unconditionally
+  const customerId = profile?.customer_id;
 
-  const customerId = profile.customer_id;
-
-  // Fetch real-time municipal data
+  // Fetch real-time municipal data - all hooks must be called before any conditional returns
   const { data: applications, isLoading: applicationsLoading } = useMunicipalApplications(customerId, selectedPeriod);
   const { data: processingTimes, isLoading: processingLoading } = useMunicipalProcessingTimes(customerId, selectedPeriod);
   const { data: revenue, isLoading: revenueLoading } = useMunicipalRevenue(customerId, selectedPeriod);
   const { data: reviewQueue, isLoading: reviewQueueLoading } = useMunicipalReviewQueue(customerId);
 
   const isLoading = applicationsLoading || processingLoading || revenueLoading || reviewQueueLoading;
+
+  // Check if user has municipal access - now safe to return early
+  if (!profile?.account_type || !["municipal", "municipaladmin", "municipaluser"].includes(profile.account_type)) {
+    return <Navigate to="/signin" replace />;
+  }
 
   const getPeriodLabel = (period: Period) => {
     switch (period) {

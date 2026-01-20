@@ -166,7 +166,7 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
     if (pdfFile) {
       try {
         setIsUploadingPdf(true);
-        const customerIdToUse = customerId || profile?.customer_id!;
+        const customerIdToUse = customerId || profile?.customer_id || "";
         finalPdfUrl = await uploadPdfFile(pdfFile, customerIdToUse);
       } catch (error) {
         toast({
@@ -202,8 +202,8 @@ export function ServiceTileForm({ tile, customerId, onClose }: ServiceTileFormPr
       renewal_reminder_days: renewalReminderDays,
       auto_renew_enabled: autoRenewEnabled,
       has_time_slots: false, // Time slots now managed via Sport Facilities
-      customer_id: customerId || profile?.customer_id!,
-      created_by: profile?.id!,
+      customer_id: (customerId || profile?.customer_id) as string,
+      created_by: profile?.id as string,
     };
 
     try {

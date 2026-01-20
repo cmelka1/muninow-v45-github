@@ -137,8 +137,8 @@ export function SportFacilityForm({ facility, customerId, onClose }: SportFacili
         max_advance_days: maxAdvanceDays,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       },
-      customer_id: customerId || profile?.customer_id!,
-      created_by: profile?.id!,
+      customer_id: (customerId || profile?.customer_id) as string,
+      created_by: profile?.id as string,
     };
 
     try {
