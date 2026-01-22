@@ -117,7 +117,7 @@ export const createFinixIdentityPayload = (
       business_phone: customer.entity_phone,
       business_tax_id: customer.tax_id,
       business_type: mappedBusinessType,
-      default_statement_descriptor: statement_descriptor,
+      default_statement_descriptor: statementDescriptor,
       dob: dateOfBirth,
       doing_business_as: customer.doing_business_as,
       email: customer.work_email,
