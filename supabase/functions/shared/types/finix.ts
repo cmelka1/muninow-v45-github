@@ -89,7 +89,13 @@ export interface FinixMerchant {
   merchant_profile?: string;
   processing_enabled: boolean;
   settlement_enabled: boolean;
+  onboarding_state?: 'PROVISIONING' | 'APPROVED' | 'REJECTED' | 'UPDATE_REQUESTED';
+  verification?: string;
+  application?: string;
+  mcc?: string;
+  mid?: string;
 }
+
 
 export interface FinixFeeProfile {
   id: string;
@@ -154,4 +160,16 @@ export interface FinixIdentityParams {
   identity_roles?: string[];
   tags?: Record<string, string>;
   type?: 'BUSINESS' | 'PERSON';
+}
+
+export interface FinixWebhookEvent {
+  id: string;
+  type: string; // e.g., 'created', 'updated'
+  entity: string; // e.g., 'transfer', 'merchant'
+  occurred_at: string;
+  _embedded: {
+    transfers?: FinixTransfer[];
+    merchants?: FinixMerchant[];
+    [key: string]: any;
+  };
 }
