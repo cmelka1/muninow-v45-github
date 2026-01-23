@@ -1,6 +1,6 @@
 /**
  * Phone number utilities for MFA verification
- * Matches the normalization logic in the send-verification edge function
+ * Matches the normalization logic used for Supabase Auth
  */
 
 /**

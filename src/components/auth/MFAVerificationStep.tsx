@@ -82,7 +82,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
       const { data, error } = await supabase.auth.signInWithOtp({
         [verificationMethod === 'email' ? 'email' : 'phone']: identifier,
         options: {
-          shouldCreateUser: false, // We only want to verify, not create user yet (or it's already creating)
+          shouldCreateUser: true, // Allow creating account for signup flow
           // For email, this might trigger a magic link if not configured strictly for OTP, 
           // but Supabase usually handles OTP if requested.
         }

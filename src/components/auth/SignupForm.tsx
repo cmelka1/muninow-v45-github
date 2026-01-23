@@ -421,36 +421,58 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
     let authData: any = null;
     
     try {
-      // Phase 1: Create Supabase auth account
-      const { data, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            phone: formData.mobileNumber, // Fixed: was mobileNumber, now phone
-            street_address: formData.streetAddress,
-            apt_number: formData.address2Type && formData.address2Value 
-              ? `${formData.address2Type} ${formData.address2Value.toUpperCase()}`
-              : null,
-            city: formData.city,
-            state: formData.state,
-            zip_code: formData.zipCode,
-             account_type: invitationData ? formData.accountType : 
-               (formData.accountType === 'business' ? 'businessadmin' : 'residentadmin'),
-             business_legal_name: formData.accountType === 'business' ? formData.businessLegalName : null,
-             industry: formData.accountType === 'business' && formData.industry ? formData.industry : null
-          },
+      // Check if we are already logged in (due to MFA step)
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const metadata = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone: formData.mobileNumber,
+        street_address: formData.streetAddress,
+        apt_number: formData.address2Type && formData.address2Value 
+          ? `${formData.address2Type} ${formData.address2Value.toUpperCase()}`
+          : null,
+        city: formData.city,
+        state: formData.state,
+        zip_code: formData.zipCode,
+         account_type: invitationData ? formData.accountType : 
+           (formData.accountType === 'business' ? 'businessadmin' : 'residentadmin'),
+         business_legal_name: formData.accountType === 'business' ? formData.businessLegalName : null,
+         industry: formData.accountType === 'business' && formData.industry ? formData.industry : null
+      };
+
+      if (session?.user) {
+        console.log('User already verified via MFA. Upgrading account...');
+        // User exists (Phone/Email Auth). We need to "Upgrade" them with password and metadata.
+        const { data, error: updateError } = await supabase.auth.updateUser({
+          email: formData.email, // Ensure email is set (if they used Phone Auth)
+          password: formData.password,
+          data: metadata
+        });
+
+        if (updateError) {
+           // If email is already taken by ANOTHER user, this will fail.
+           throw new Error(`Account update failed: ${updateError.message}`);
         }
-      });
-      
-      if (authError) {
-        throw new Error(`Account creation failed: ${authError.message}`);
+        authData = data;
+      } else {
+        console.log('No session found. Creating new account...');
+        // Fallback: User not logged in? (Maybe they skipped MFA or it failed to persist?)
+        // Try standard signup
+        const { data, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`,
+            data: metadata,
+          }
+        });
+        
+        if (authError) {
+          throw new Error(`Account creation failed: ${authError.message}`);
+        }
+        authData = data;
       }
-      
-      authData = data;
       
       // Phase 2: Wait for profile creation (database trigger should handle this)
       let profileVerified = false;
@@ -599,12 +621,12 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
       setCurrentStep(4);
       scrollToTop();
       
-    } catch (error: any) {
+    } catch (error: any) { // Catch block handles renaming
       // Enhanced error handling
       let errorMessage = "Failed to create account. Please try again.";
       
       if (error.message.includes('already registered')) {
-        errorMessage = "An account with this email already exists. Please sign in instead.";
+        errorMessage = "An account with this email/phone already exists. Please sign in instead.";
       } else if (error.message.includes('Password')) {
         errorMessage = "Password doesn't meet requirements. Please check your password.";
       } else if (error.message.includes('Email')) {
