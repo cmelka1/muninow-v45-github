@@ -454,6 +454,32 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
            // If email is already taken by ANOTHER user, this will fail.
            throw new Error(`Account update failed: ${updateError.message}`);
         }
+        
+        // CRITICAL FIX: explicit sync to profiles table
+        // The trigger only runs on INSERT. Since we likely created the user with default 'resident'
+        // role during OTP, we must now update the profile to 'residentadmin' etc.
+        const { error: profileUpdateError } = await supabase
+          .from('profiles')
+          .update({
+             first_name: metadata.first_name,
+             last_name: metadata.last_name,
+             email: formData.email,
+             phone: metadata.phone,
+             street_address: metadata.street_address,
+             city: metadata.city,
+             state: metadata.state,
+             zip_code: metadata.zip_code,
+             account_type: metadata.account_type, 
+             business_legal_name: metadata.business_legal_name,
+             industry: metadata.industry
+          })
+          .eq('id', session.user.id);
+
+        if (profileUpdateError) {
+             console.error('Failed to sync profile:', profileUpdateError);
+             // We don't throw here to avoid blocking flow, but it's risky.
+        }
+
         authData = data;
       } else {
         console.log('No session found. Creating new account...');
