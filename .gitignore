@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Supabase temp files
+supabase/.temp/
+
+# Dev/testing artifacts
+scripts/
+seed_output.txt
+lint_output.txt
+tables.txt
+triggers_*.txt
+dump.sql
