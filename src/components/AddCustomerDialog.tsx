@@ -39,10 +39,10 @@ const ENTITY_TYPES = [
   'Government Agency',
 ];
 
-// Ownership types
+// Ownership types - values must be lowercase to match database constraint
 const OWNERSHIP_TYPES = [
-  { value: 'Private', label: 'Private' },
-  { value: 'Public', label: 'Public' },
+  { value: 'private', label: 'Private' },
+  { value: 'public', label: 'Public' },
 ];
 
 // Step 1 schema
