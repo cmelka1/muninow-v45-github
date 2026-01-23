@@ -1,194 +1,221 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
-import { Logger } from '../shared/logger.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
 };
 
-const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
-
-// Rate limiting for EMAIL only (Twilio handles SMS rate limiting)
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT_MAX_ATTEMPTS = 3;
-const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-
-function checkEmailRateLimit(identifier: string): { allowed: boolean; resetIn?: number } {
-  const now = Date.now();
-  const record = rateLimitMap.get(identifier);
-  
-  if (!record || now > record.resetTime) {
-    rateLimitMap.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
-    return { allowed: true };
-  }
-  
-  if (record.count >= RATE_LIMIT_MAX_ATTEMPTS) {
-    const resetIn = Math.ceil((record.resetTime - now) / 1000 / 60);
-    return { allowed: false, resetIn };
-  }
-  
-  record.count++;
-  rateLimitMap.set(identifier, record);
-  return { allowed: true };
+// Simple logger for debugging
+function log(level: string, message: string, data?: unknown) {
+  console.log(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    level,
+    message,
+    data
+  }));
 }
 
 serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Parse request body
     const body = await req.json();
-    Logger.info('Request body', body);
+    log('INFO', 'Request received', { 
+      identifier: body.identifier,
+      type: body.type,
+      phone: body.phone,
+      email: body.email
+    });
 
-    let user_identifier: string | undefined;
-    let type: string;
+    // Extract identifier - support both new format (identifier/type) and old format (phone/email)
+    let userIdentifier: string;
+    let verificationType: string;
 
-    // Normalizing Input
-    const { identifier, type: requestType } = body;
-    const { phone, email } = body; // Old format fallback
-
-    if (identifier) {
-      user_identifier = identifier;
-      type = requestType;
+    if (body.identifier) {
+      userIdentifier = body.identifier;
+      verificationType = body.type || 'sms';
+    } else if (body.phone) {
+      userIdentifier = body.phone;
+      verificationType = 'sms';
+    } else if (body.email) {
+      userIdentifier = body.email;
+      verificationType = 'email';
     } else {
-      if (phone) { user_identifier = phone; type = 'sms'; }
-      else if (email) { user_identifier = email; type = 'email'; }
-      else throw new Error("Identifier (phone/email) is required");
+      log('ERROR', 'Missing identifier', body);
+      return new Response(
+        JSON.stringify({ success: false, error: "Phone or email is required" }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    if (!['sms', 'email'].includes(type) || !user_identifier) {
-      throw new Error("Invalid request: unknown type or missing identifier");
-    }
+    log('INFO', 'Processing verification', { userIdentifier, verificationType });
 
     // --- SMS PATH: TWILIO VERIFY API ---
-    if (type === 'sms') {
+    if (verificationType === 'sms') {
       const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
       const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
-      const serviceSid = Deno.env.get("TWILIO_VERIFY_SERVICE_SID"); // NEW SECRET
+      const serviceSid = Deno.env.get("TWILIO_VERIFY_SERVICE_SID");
+
+      log('INFO', 'Twilio credentials check', { 
+        hasAccountSid: !!accountSid, 
+        hasAuthToken: !!authToken, 
+        hasServiceSid: !!serviceSid 
+      });
 
       if (!accountSid || !authToken || !serviceSid) {
-        throw new Error("Twilio Verify is not configured (Missing Credentials or Service SID)");
+        log('ERROR', 'Twilio credentials missing');
+        return new Response(
+          JSON.stringify({ success: false, error: "SMS service is not configured" }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
-      const formattedPhone = formatPhoneNumber(user_identifier);
-      Logger.info(`Sending Twilio Verify SMS to: ${formattedPhone}`);
+      // Format phone number to E.164
+      const formattedPhone = formatPhoneNumber(userIdentifier);
+      log('INFO', 'Formatted phone', { original: userIdentifier, formatted: formattedPhone });
 
       // Call Twilio Verify API
-      const response = await fetch(
-        `https://verify.twilio.com/v2/Services/${serviceSid}/Verifications`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Basic ${btoa(`${accountSid}:${authToken}`)}`,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams({
-            To: formattedPhone,
-            Channel: "sms",
-          }),
-        }
-      );
+      const twilioUrl = `https://verify.twilio.com/v2/Services/${serviceSid}/Verifications`;
+      log('INFO', 'Calling Twilio Verify API', { url: twilioUrl });
+
+      const response = await fetch(twilioUrl, {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${btoa(`${accountSid}:${authToken}`)}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          To: formattedPhone,
+          Channel: "sms",
+        }),
+      });
+
+      const responseText = await response.text();
+      log('INFO', 'Twilio response', { status: response.status, body: responseText });
 
       if (!response.ok) {
-        const errText = await response.text();
-        Logger.error("Twilio Verify Error", errText);
-        throw new Error(`Twilio Verify Failed: ${errText}`);
+        log('ERROR', 'Twilio Verify failed', { status: response.status, error: responseText });
+        return new Response(
+          JSON.stringify({ success: false, error: `SMS delivery failed: ${responseText}` }),
+          { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
-      Logger.info("Twilio Verify SMS sent successfully");
+      log('INFO', 'SMS sent successfully');
       return new Response(
-        JSON.stringify({ success: true, message: "Verification code sent via SMS (Twilio Verify)" }),
+        JSON.stringify({ success: true, message: "Verification code sent via SMS" }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // --- EMAIL PATH: RESEND + SUPABASE DB ---
-    if (type === 'email') {
-      // 1. DB-Backed Rate Limiting (Max 3 attempts per 15 mins)
-      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-      
-      const { count, error: countError } = await supabase
-        .from('verification_codes')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_identifier', user_identifier)
-        .eq('verification_type', 'email')
-        .gt('created_at', fifteenMinutesAgo);
-        
-      if (countError) {
-        Logger.error("Rate limit check failed", countError);
-        // Fail open or closed? Safe to fail open if DB is acting up, but better to log.
-      }
-      
-      if (count !== null && count >= 3) {
-         Logger.warn(`Rate limit exceeded for ${user_identifier}`, { count });
-         return new Response(
-           JSON.stringify({ success: false, error: "Too many attempts. Please try again in 15 minutes." }),
-           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-         );
-      }
+    // --- EMAIL PATH: RESEND API ---
+    if (verificationType === 'email') {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "", 
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
 
+      // Generate 6-digit code
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       
-      // Hash Code
+      // Hash the code for storage
       const encoder = new TextEncoder();
       const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(code));
-      const codeHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+      const codeHash = Array.from(new Uint8Array(hashBuffer))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
 
-      // Store in DB
+      // Store in database
       const { error: dbError } = await supabase.from('verification_codes').insert({
-        user_identifier,
+        user_identifier: userIdentifier,
         code_hash: codeHash,
         verification_type: 'email',
         expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
         status: 'pending'
       });
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        log('ERROR', 'Database error', dbError);
+        throw dbError;
+      }
 
-      // Send Email via Resend
-      await sendEmailVerification(user_identifier, code);
+      // Send email via Resend
+      const resendApiKey = Deno.env.get("RESEND_API_KEY");
+      if (!resendApiKey) {
+        log('ERROR', 'RESEND_API_KEY missing');
+        throw new Error("Email service is not configured");
+      }
 
+      const fromAddress = Deno.env.get("EMAIL_FROM_ADDRESS") || "MuniNow <onboarding@resend.dev>";
+
+      const emailRes = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { 
+          "Authorization": `Bearer ${resendApiKey}`, 
+          "Content-Type": "application/json" 
+        },
+        body: JSON.stringify({
+          from: fromAddress,
+          to: [userIdentifier],
+          subject: "Your Verification Code",
+          html: `<p>Your verification code is: <strong>${code}</strong></p><p>This code expires in 10 minutes.</p>`
+        }),
+      });
+
+      if (!emailRes.ok) {
+        const errText = await emailRes.text();
+        log('ERROR', 'Resend error', errText);
+        throw new Error(`Email delivery failed: ${errText}`);
+      }
+
+      log('INFO', 'Email sent successfully');
       return new Response(
         JSON.stringify({ success: true, message: "Verification code sent via Email" }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-  } catch (error: any) {
-    Logger.error('Error in send-verification', error.message);
+    // Unknown type
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: "Invalid verification type" }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    log('ERROR', 'Error in send-verification', errorMessage);
+    return new Response(
+      JSON.stringify({ success: false, error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
 
-// Helpers
+// Format phone number to E.164 format for Twilio
 function formatPhoneNumber(phone: string): string {
+  // Remove all non-digit characters
   const cleaned = phone.replace(/\D/g, '');
-  if (cleaned.length === 10) return `+1${cleaned}`; // Default to US
-  if (cleaned.length > 10) return `+${cleaned}`; // Already intl?
-  return phone; // Fallback
-}
-
-async function sendEmailVerification(email: string, code: string) {
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendApiKey) throw new Error("RESEND_API_KEY missing");
-
-    const fromAddress = Deno.env.get("EMAIL_FROM_ADDRESS") || "MuniNow <onboarding@resend.dev>";
-
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: fromAddress,
-        to: [email],
-        subject: "Verification Code",
-        html: `<p>Your code is: <strong>${code}</strong></p>`
-      }),
-    });
-    
-    if (!res.ok) throw new Error(await res.text());
+  
+  // If 10 digits, assume US and add +1
+  if (cleaned.length === 10) {
+    return `+1${cleaned}`;
+  }
+  
+  // If 11 digits starting with 1, it's already US format
+  if (cleaned.length === 11 && cleaned.startsWith('1')) {
+    return `+${cleaned}`;
+  }
+  
+  // If it already has a + prefix, return as-is
+  if (phone.startsWith('+')) {
+    return phone;
+  }
+  
+  // Default: add + prefix
+  return `+${cleaned}`;
 }

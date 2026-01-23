@@ -53,6 +53,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
   const handleSendCode = async () => {
     setError(null);
     setIsSending(true);
+    console.log('handleSendCode called, verificationMethod:', verificationMethod);
 
     try {
       let identifier: string;
@@ -61,23 +62,29 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
       if (verificationMethod === 'email') {
         identifier = email;
         normalizedIdentifier = email.toLowerCase().trim();
+        console.log('Email mode, normalizedIdentifier:', normalizedIdentifier);
         
         // Basic email validation
         if (!normalizedIdentifier.includes('@') || normalizedIdentifier.length < 5) {
           throw new Error('Please enter a valid email address');
         }
       } else {
+        console.log('SMS mode, phone value:', phone);
         // Phone validation
         const phoneValidation = validatePhoneNumber(phone);
+        console.log('Phone validation result:', phoneValidation);
         if (!phoneValidation.isValid) {
           throw new Error(phoneValidation.error || 'Invalid phone number');
         }
         
         identifier = phone;
+        console.log('About to format phone for storage...');
         normalizedIdentifier = formatPhoneForStorage(phone);
+        console.log('Formatted phone:', normalizedIdentifier);
       }
 
       console.log('Sending verification code to:', normalizedIdentifier);
+      console.log('Calling supabase.functions.invoke...');
 
       const { data, error } = await supabase.functions.invoke('send-verification', {
         body: {
@@ -86,6 +93,8 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
           action: 'send'
         }
       });
+
+      console.log('Supabase response:', { data, error });
 
       if (error) {
         throw new Error(error.message);
