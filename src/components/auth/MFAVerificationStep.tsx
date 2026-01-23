@@ -15,6 +15,8 @@ interface MFAVerificationStepProps {
   defaultPhone: string;
   onVerificationComplete: () => void;
   onBack: () => void;
+  isLoading?: boolean;
+  onMethodChange?: (method: 'email' | 'sms') => void;
 }
 
 type VerificationMethod = 'email' | 'sms';
@@ -24,7 +26,9 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
   defaultEmail,
   defaultPhone,
   onVerificationComplete,
-  onBack
+  onBack,
+  isLoading = false,
+  onMethodChange
 }) => {
   const [verificationMethod, setVerificationMethod] = useState<VerificationMethod>('email');
   const [verificationStage, setVerificationStage] = useState<VerificationStage>('setup');
@@ -57,52 +61,39 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
 
     try {
       let identifier: string;
-      let normalizedIdentifier: string;
-
+      
       if (verificationMethod === 'email') {
-        identifier = email;
-        normalizedIdentifier = email.toLowerCase().trim();
-        console.log('Email mode, normalizedIdentifier:', normalizedIdentifier);
-        
+        identifier = email.toLowerCase().trim();
         // Basic email validation
-        if (!normalizedIdentifier.includes('@') || normalizedIdentifier.length < 5) {
+        if (!identifier.includes('@') || identifier.length < 5) {
           throw new Error('Please enter a valid email address');
         }
       } else {
-        console.log('SMS mode, phone value:', phone);
-        // Phone validation
         const phoneValidation = validatePhoneNumber(phone);
-        console.log('Phone validation result:', phoneValidation);
         if (!phoneValidation.isValid) {
           throw new Error(phoneValidation.error || 'Invalid phone number');
         }
-        
-        identifier = phone;
-        console.log('About to format phone for storage...');
-        normalizedIdentifier = formatPhoneForStorage(phone);
-        console.log('Formatted phone:', normalizedIdentifier);
+        // Ensure E.164 format
+        identifier = formatPhoneForStorage(phone);
       }
 
-      console.log('Sending verification code to:', normalizedIdentifier);
-      console.log('Calling supabase.functions.invoke...');
+      console.log('Sending OTP via Supabase Native Auth to:', identifier);
 
-      const { data, error } = await supabase.functions.invoke('send-verification', {
-        body: {
-          identifier: normalizedIdentifier,
-          type: verificationMethod,
-          action: 'send'
+      const { data, error } = await supabase.auth.signInWithOtp({
+        [verificationMethod === 'email' ? 'email' : 'phone']: identifier,
+        options: {
+          shouldCreateUser: false, // We only want to verify, not create user yet (or it's already creating)
+          // For email, this might trigger a magic link if not configured strictly for OTP, 
+          // but Supabase usually handles OTP if requested.
         }
       });
 
-      console.log('Supabase response:', { data, error });
-
       if (error) {
-        throw new Error(error.message);
+        console.error('Supabase Auth Error:', error);
+        throw error;
       }
 
-      if (!data?.success) {
-        throw new Error(data?.error || 'Failed to send verification code');
-      }
+      console.log('Supabase response:', data);
 
       toast({
         title: "Code Sent",
@@ -115,8 +106,12 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
       scrollToTop();
     } catch (error: any) {
       console.error('Error sending verification code:', error);
-      const errorMessage = error.message || 'Failed to send verification code';
+      let errorMessage = error.message || 'Failed to send verification code';
       
+      if (error.message?.includes('rate limit')) {
+        errorMessage = "Too many attempts. Please try again later.";
+      }
+
       toast({
         title: "Error",
         description: errorMessage,
@@ -140,38 +135,37 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
     setIsVerifying(true);
 
     try {
-      let normalizedIdentifier: string;
+      let identifier: string;
+      const type = verificationMethod === 'email' ? 'email' : 'sms';
 
       if (verificationMethod === 'email') {
-        normalizedIdentifier = email.toLowerCase().trim();
+        identifier = email.toLowerCase().trim();
       } else {
-        normalizedIdentifier = formatPhoneForStorage(phone);
+        identifier = formatPhoneForStorage(phone);
       }
 
-      console.log('Verifying code for:', normalizedIdentifier);
+      console.log('Verifying OTP via Supabase Native Auth for:', identifier);
 
-      const { data, error } = await supabase.functions.invoke('verify-code', {
-        body: {
-          user_identifier: normalizedIdentifier,
-          code: verificationCode,
-          verification_type: verificationMethod // 'sms' or 'email'
-        }
+      const { data, error } = await supabase.auth.verifyOtp({
+        [verificationMethod === 'email' ? 'email' : 'phone']: identifier,
+        token: verificationCode,
+        type: type as any // Cast to satisfy type checker if needed
       });
 
       if (error) {
-        throw new Error(error.message);
+        console.error('Supabase Verify Error:', error);
+        throw error;
       }
 
-      if (!data?.success) {
-        throw new Error(data?.error || 'Invalid verification code');
-      }
+      console.log('Verification successful:', data);
 
       toast({
         title: "Verification Successful",
         description: "Your identity has been verified successfully."
       });
 
-      onVerificationComplete();
+      // Pass the session/user data up if needed, or just signal completion
+      onVerificationComplete(); 
     } catch (error: any) {
       console.error('Error verifying code:', error);
       const errorMessage = error.message || 'Failed to verify code';
@@ -228,10 +222,17 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
           {/* Method Selection */}
           <div className="space-y-3">
             <Label className="text-base font-semibold">Verification Method</Label>
-            <Tabs value={verificationMethod} onValueChange={(value) => setVerificationMethod(value as VerificationMethod)}>
+            <Tabs 
+              value={verificationMethod} 
+              onValueChange={(value) => {
+                const method = value as VerificationMethod;
+                setVerificationMethod(method);
+                onMethodChange?.(method);
+              }}
+            >
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="email">Email</TabsTrigger>
-                <TabsTrigger value="sms">SMS</TabsTrigger>
+                <TabsTrigger value="email" disabled={isLoading || isSending}>Email</TabsTrigger>
+                <TabsTrigger value="sms" disabled={isLoading || isSending}>SMS</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
@@ -250,6 +251,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter email address"
                   className="h-11"
+                  disabled={isLoading || isSending}
                 />
                 <p className="text-xs text-muted-foreground">
                   We'll send a 6-digit code to this email address
@@ -265,6 +267,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
                   onChange={(e) => handlePhoneChange(e.target.value)}
                   placeholder="(555) 123-4567"
                   className="h-11"
+                  disabled={isLoading || isSending}
                 />
                 <p className="text-xs text-muted-foreground">
                   We'll send a 6-digit code via SMS to this number
@@ -280,7 +283,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
               variant="outline"
               onClick={onBack}
               className="flex-1"
-              disabled={isSending}
+              disabled={isSending || isLoading}
             >
               Back
             </Button>
@@ -288,7 +291,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
             <Button
               onClick={handleSendCode}
               className="flex-1"
-              disabled={isSending}
+              disabled={isSending || isLoading}
             >
               {isSending ? (
                 <>
@@ -313,6 +316,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
                   maxLength={6}
                   value={verificationCode}
                   onChange={setVerificationCode}
+                  disabled={isVerifying || isLoading}
                 >
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
@@ -340,7 +344,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
               variant="ghost"
               size="sm"
               onClick={handleResendCode}
-              disabled={resendCooldown > 0 || isSending}
+              disabled={resendCooldown > 0 || isSending || isVerifying || isLoading}
               className="text-primary hover:text-primary/80"
             >
               {resendCooldown > 0 ? (
@@ -363,7 +367,7 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
               variant="outline"
               onClick={handleBackToSetup}
               className="flex-1"
-              disabled={isVerifying}
+              disabled={isVerifying || isLoading}
             >
               Change Method
             </Button>
@@ -371,12 +375,12 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
             <Button
               onClick={handleVerifyCode}
               className="flex-1"
-              disabled={isVerifying || verificationCode.length !== 6}
+              disabled={isVerifying || verificationCode.length !== 6 || isLoading}
             >
-              {isVerifying ? (
+              {isVerifying || isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Verifying...
+                  {isLoading ? 'Creating Account...' : 'Verifying...'}
                 </>
               ) : (
                 'Verify Code'

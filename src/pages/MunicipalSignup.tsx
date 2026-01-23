@@ -42,6 +42,7 @@ const MunicipalSignup = () => {
   const [selectedMunicipality, setSelectedMunicipality] = useState<Customer | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [verificationMethod, setVerificationMethod] = useState<'email' | 'sms'>('email');
 
 
   // Scroll to top utility function
@@ -419,6 +420,8 @@ const MunicipalSignup = () => {
                   defaultPhone={phone}
                   onVerificationComplete={completeMunicipalSignup}
                   onBack={goBack}
+                  isLoading={isCreatingAccount}
+                  onMethodChange={setVerificationMethod}
                 />
               )}
 
@@ -439,6 +442,24 @@ const MunicipalSignup = () => {
                         {selectedMunicipality?.legal_entity_name}
                       </span>.
                     </p>
+                    {verificationMethod === 'sms' && (
+                       <p className="text-sm text-green-600 font-medium">
+                         ✓ Your phone number has been verified.
+                       </p>
+                    )}
+                  </div>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-2 text-left">
+                     <p className="font-semibold text-amber-800 flex items-center">
+                        <Shield className="h-4 w-4 mr-2" />
+                        Action Required: Confirm Email
+                     </p>
+                     <p className="text-sm text-amber-700">
+                        {verificationMethod === 'sms' 
+                          ? "Even though you verified your phone, we sent a confirmation link to your email. You MUST click that link before you can log in."
+                          : "We have sent a confirmation link to your email address. You MUST click that link before you can log in."
+                        }
+                     </p>
                   </div>
 
                   <div className="bg-muted/50 rounded-lg p-4 space-y-2">
@@ -446,7 +467,7 @@ const MunicipalSignup = () => {
                       <strong>Next steps:</strong>
                     </p>
                     <ul className="text-sm text-muted-foreground space-y-1 text-left">
-                      <li>• Check your email to verify your account</li>
+                      <li>• <strong>Check your email to verify your account</strong></li>
                       <li>• Complete your payment setup</li>
                       <li>• Configure your municipality settings</li>
                     </ul>
