@@ -96,7 +96,8 @@ const App = () => (
             <CookieConsentProvider>
               <Toaster />
               <Sonner />
-              <Routes>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/signin" element={<Auth />} />
                 <Route path="/signup" element={<Signup />} />
@@ -385,7 +386,8 @@ const App = () => (
             </SimpleProtectedRoute>
           } />
                 <Route path="*" element={<NotFound />} />
-              </Routes>
+                </Routes>
+              </Suspense>
             </CookieConsentProvider>
           </BrowserRouter>
         </OfflineProvider>
