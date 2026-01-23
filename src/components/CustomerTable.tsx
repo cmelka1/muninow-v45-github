@@ -10,7 +10,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { AddCustomerDialog } from '@/components/AddCustomerDialog';
@@ -54,18 +53,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
     setCustomersData(result);
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pending</Badge>;
-      case 'approved':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800">Approved</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
+
 
   const handlePageSizeChange = (newPageSize: string) => {
     setPageSize(Number(newPageSize));
@@ -134,14 +122,13 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
               <TableRow>
                 <TableHead>Customer Name</TableHead>
                 <TableHead className="hidden md:table-cell">Type</TableHead>
-                <TableHead className="hidden lg:table-cell">Status</TableHead>
                 <TableHead className="hidden sm:table-cell text-center">Created</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {customers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="py-8 text-center">
+                  <TableCell colSpan={3} className="py-8 text-center">
                     <span className="text-muted-foreground">
                       No customers found. Click "Add Customer" to get started.
                     </span>
@@ -163,9 +150,6 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onAddCustomer }) => {
                       <span className="truncate block max-w-[150px]" title={customer.entity_type}>
                         {customer.entity_type}
                       </span>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell py-2">
-                      {getStatusBadge(customer.status)}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell py-2 text-center">
                       {format(new Date(customer.created_at), 'MMM dd, yyyy')}
