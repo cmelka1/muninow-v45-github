@@ -1,4 +1,5 @@
 
+import React, { Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,9 @@ import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/SimpleAuthContext";
 import { CookieConsentProvider } from "@/components/CookieConsentProvider";
 import ScrollToTop from "@/components/navigation/ScrollToTop";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Static imports for frequently accessed pages
 import Index from "./pages/Index";
 import Auth from "./pages/SimpleAuth";
 import Signup from "./pages/Signup";
@@ -24,51 +28,63 @@ import TermsOfService from "./pages/TermsOfService";
 import CookiesPolicy from "./pages/CookiesPolicy";
 import Accessibility from "./pages/Accessibility";
 import NotFound from "./pages/NotFound";
-import SuperAdminDashboard from "./pages/SuperAdminDashboard";
-import SuperAdminCustomers from "./pages/SuperAdminCustomers";
-import SuperAdminCustomerDetail from "./pages/SuperAdminCustomerDetail";
-import SuperAdminMerchantDetail from "./pages/SuperAdminMerchantDetail";
-import SuperAdminProfile from "./pages/SuperAdminProfile";
-import PaymentConfirmation from "./pages/PaymentConfirmation";
-import PaymentHistory from "./pages/PaymentHistory";
-import MunicipalSignup from "./pages/MunicipalSignup";
-import MunicipalDashboard from "./pages/MunicipalDashboard";
-import MunicipalSearch from "./pages/MunicipalSearch";
-import MunicipalMembers from "./pages/MunicipalMembers";
-import MunicipalPermits from "./pages/MunicipalPermits";
-import MunicipalBusinessLicenses from "./pages/MunicipalBusinessLicenses";
-import MunicipalPermitDetail from "./pages/MunicipalPermitDetail";
-import MunicipalMerchants from "./pages/MunicipalMerchants";
-import MunicipalMerchantDetail from "./pages/MunicipalMerchantDetail";
-import MunicipalProfile from "./pages/MunicipalProfile";
-import MunicipalSettings from "./pages/MunicipalSettings";
-import MunicipalUserDetail from "./pages/MunicipalUserDetail";
-import MunicipalTaxes from "./pages/MunicipalTaxes";
-import MunicipalTaxDetail from "./pages/MunicipalTaxDetail";
-import MunicipalOtherServices from "./pages/MunicipalOtherServices";
-import Permits from "./pages/Permits";
-import BusinessLicenses from "./pages/BusinessLicenses";
-import { BusinessLicenseDetail } from "./pages/BusinessLicenseDetail";
-import Taxes from "./pages/Taxes";
-import OtherServices from "./pages/OtherServices";
-import SportReservations from "./pages/SportReservations";
-import MunicipalSportReservations from "./pages/MunicipalSportReservations";
-import PermitOverview from "./pages/PermitOverview";
-import PermitDetail from "./pages/PermitDetail";
-import PermitCertificate from "./pages/PermitCertificate";
-import BusinessLicenseCertificate from "./pages/BusinessLicenseCertificate";
-import TaxDetail from "./pages/TaxDetail";
-import ServiceApplicationDetail from "@/pages/ServiceApplicationDetail";
-import MunicipalServiceApplicationDetail from "@/pages/MunicipalServiceApplicationDetail";
 import Notifications from "./pages/Notifications";
 import { SimpleProtectedRoute } from "@/components/SimpleProtectedRoute";
 import { MunicipalLayout } from "@/components/layouts/MunicipalLayout";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-
 import { OfflineProvider } from "@/components/offline/OfflineProvider";
-import { MyInspections } from "@/pages/MyInspections";
-import { FormBuilder } from "@/pages/admin/FormBuilder";
+
+// Lazy-loaded pages (heavy components)
+const BusinessLicenseDetail = React.lazy(() => import('./pages/BusinessLicenseDetail').then(m => ({ default: m.BusinessLicenseDetail })));
+const ServiceApplicationDetail = React.lazy(() => import('@/pages/ServiceApplicationDetail'));
+const MunicipalServiceApplicationDetail = React.lazy(() => import('@/pages/MunicipalServiceApplicationDetail'));
+const MunicipalPermitDetail = React.lazy(() => import('./pages/MunicipalPermitDetail'));
+const PermitDetail = React.lazy(() => import('./pages/PermitDetail'));
+const BusinessLicenseCertificate = React.lazy(() => import('./pages/BusinessLicenseCertificate'));
+const PermitCertificate = React.lazy(() => import('./pages/PermitCertificate'));
+const MunicipalTaxDetail = React.lazy(() => import('./pages/MunicipalTaxDetail'));
+const TaxDetail = React.lazy(() => import('./pages/TaxDetail'));
+const PaymentConfirmation = React.lazy(() => import('./pages/PaymentConfirmation'));
+const PermitOverview = React.lazy(() => import('./pages/PermitOverview'));
+const MunicipalSignup = React.lazy(() => import('./pages/MunicipalSignup'));
+const SuperAdminDashboard = React.lazy(() => import('./pages/SuperAdminDashboard'));
+const SuperAdminCustomers = React.lazy(() => import('./pages/SuperAdminCustomers'));
+const SuperAdminCustomerDetail = React.lazy(() => import('./pages/SuperAdminCustomerDetail'));
+const SuperAdminMerchantDetail = React.lazy(() => import('./pages/SuperAdminMerchantDetail'));
+const SuperAdminProfile = React.lazy(() => import('./pages/SuperAdminProfile'));
+const PaymentHistory = React.lazy(() => import('./pages/PaymentHistory'));
+const MunicipalDashboard = React.lazy(() => import('./pages/MunicipalDashboard'));
+const MunicipalSearch = React.lazy(() => import('./pages/MunicipalSearch'));
+const MunicipalMembers = React.lazy(() => import('./pages/MunicipalMembers'));
+const MunicipalPermits = React.lazy(() => import('./pages/MunicipalPermits'));
+const MunicipalBusinessLicenses = React.lazy(() => import('./pages/MunicipalBusinessLicenses'));
+const MunicipalMerchants = React.lazy(() => import('./pages/MunicipalMerchants'));
+const MunicipalMerchantDetail = React.lazy(() => import('./pages/MunicipalMerchantDetail'));
+const MunicipalProfile = React.lazy(() => import('./pages/MunicipalProfile'));
+const MunicipalSettings = React.lazy(() => import('./pages/MunicipalSettings'));
+const MunicipalUserDetail = React.lazy(() => import('./pages/MunicipalUserDetail'));
+const MunicipalTaxes = React.lazy(() => import('./pages/MunicipalTaxes'));
+const MunicipalOtherServices = React.lazy(() => import('./pages/MunicipalOtherServices'));
+const Permits = React.lazy(() => import('./pages/Permits'));
+const BusinessLicenses = React.lazy(() => import('./pages/BusinessLicenses'));
+const Taxes = React.lazy(() => import('./pages/Taxes'));
+const OtherServices = React.lazy(() => import('./pages/OtherServices'));
+const SportReservations = React.lazy(() => import('./pages/SportReservations'));
+const MunicipalSportReservations = React.lazy(() => import('./pages/MunicipalSportReservations'));
+const MyInspections = React.lazy(() => import('@/pages/MyInspections').then(m => ({ default: m.MyInspections })));
+const FormBuilder = React.lazy(() => import('@/pages/admin/FormBuilder').then(m => ({ default: m.FormBuilder })));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen bg-gray-50">
+    <div className="space-y-4 text-center">
+      <Skeleton className="h-8 w-48 mx-auto" />
+      <Skeleton className="h-4 w-32 mx-auto" />
+    </div>
+  </div>
+);
+
 
 const App = () => (
   <HelmetProvider>

@@ -34,6 +34,7 @@ export default defineConfig(({ mode }) => ({
           'forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
           'supabase': ['@supabase/supabase-js'],
           'editor': ['@tiptap/react', '@tiptap/starter-kit'],
+          'pdf': ['jspdf', 'html2canvas'],
         },
       },
     },
