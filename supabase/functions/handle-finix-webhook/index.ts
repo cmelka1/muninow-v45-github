@@ -213,15 +213,23 @@ serve(async (req) => {
           switch (onboardingState) {
             case 'PROVISIONING':
               verificationStatus = 'Pending';
-              processingStatus = 'merchant_created';
+              processingStatus = 'pending';
               break;
             case 'APPROVED':
               verificationStatus = 'Approved';
-              processingStatus = 'approved';
+              processingStatus = 'merchant_created';
+              break;
+            case 'ENABLED':
+              verificationStatus = 'Approved';
+              processingStatus = 'processing_enabled';
               break;
             case 'REJECTED':
               verificationStatus = 'Rejected';
               processingStatus = 'rejected';
+              break;
+            case 'DISABLED':
+              verificationStatus = 'Approved';
+              processingStatus = 'disabled';
               break;
             case 'UPDATE_REQUESTED':
               verificationStatus = 'Update Requested';
@@ -243,22 +251,17 @@ serve(async (req) => {
             processing_enabled: processingEnabled,
             settlement_enabled: settlementEnabled,
             onboarding_state: onboardingState,
+            finix_raw_response: merchant, // Store full merchant object from Finix
             updated_at: new Date().toISOString()
           };
           
-          // Update processing/settlement enabled if columns exist
-          // Store in finix_raw_response if not
-          const existingResponse = localMerchant.finix_raw_response || {};
-          updateData.finix_raw_response = {
-            ...existingResponse,
-            latest_webhook: {
-              event_type: eventType,
-              onboarding_state: onboardingState,
-              processing_enabled: processingEnabled,
-              settlement_enabled: settlementEnabled,
-              received_at: new Date().toISOString()
-            }
-          };
+          // Update additional Finix IDs if present
+          if ((merchant as { merchant_profile?: string }).merchant_profile) {
+            (updateData as Record<string, unknown>).finix_merchant_profile_id = (merchant as { merchant_profile?: string }).merchant_profile;
+          }
+          if ((merchant as { verification?: string }).verification) {
+            (updateData as Record<string, unknown>).finix_verification_id = (merchant as { verification?: string }).verification;
+          }
           
           // Update the merchant record
           const { error: updateError } = await supabaseClient

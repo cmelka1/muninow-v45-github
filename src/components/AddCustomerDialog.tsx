@@ -41,16 +41,16 @@ const ENTITY_TYPES = [
 
 // Ownership types
 const OWNERSHIP_TYPES = [
-  { value: 'private', label: 'Private' },
-  { value: 'public', label: 'Public' },
+  { value: 'Private', label: 'Private' },
+  { value: 'Public', label: 'Public' },
 ];
 
 // Step 1 schema
 const step1Schema = z.object({
   entityType: z.string().min(1, 'Entity type is required'),
   ownershipType: z.string().min(1, 'Ownership type is required'),
-  legalEntityName: z.string().min(1, 'Legal entity name is required'),
-  doingBusinessAs: z.string().min(1, 'Doing business as name is required'),
+  legalEntityName: z.string().min(1, 'Legal entity name is required').max(120, 'Maximum 120 characters'),
+  doingBusinessAs: z.string().min(1, 'Doing business as name is required').max(120, 'Maximum 120 characters'),
   taxId: z.string()
     .min(9, 'Tax ID must be exactly 9 digits')
     .max(9, 'Tax ID must be exactly 9 digits')
@@ -65,7 +65,7 @@ const step1Schema = z.object({
     const [month, day, year] = val.split('/').map(Number);
     return new Date(year, month - 1, day);
   }),
-  entityDescription: z.string().min(10, 'Please provide a detailed description'),
+  entityDescription: z.string().min(10, 'Please provide a detailed description').max(250, 'Maximum 250 characters'),
   addressLine1: z.string().min(1, 'Address is required'),
   addressLine2: z.string().optional(),
   city: z.string().min(1, 'City is required'),
@@ -76,9 +76,9 @@ const step1Schema = z.object({
 
 // Step 2 schema with conditional validation
 const step2Schema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  jobTitle: z.string().min(1, 'Job title is required'),
+  firstName: z.string().min(1, 'First name is required').max(40, 'Maximum 40 characters'),
+  lastName: z.string().min(1, 'Last name is required').max(40, 'Maximum 40 characters'),
+  jobTitle: z.string().min(1, 'Job title is required').max(60, 'Maximum 60 characters'),
   workEmail: z.string().email('Please enter a valid email address'),
   personalPhone: z.string().min(14, 'Valid phone number is required'),
   dateOfBirth: z.union([
@@ -136,6 +136,19 @@ type Step1FormData = z.infer<typeof step1Schema>;
 type Step2FormData = z.infer<typeof step2Schema>;
 type Step3FormData = z.infer<typeof step3Schema>;
 
+// Currency formatting helpers
+const formatCurrency = (value: number | string): string => {
+  const num = typeof value === 'string' ? parseFloat(value.replace(/,/g, '')) : value;
+  if (isNaN(num) || num === 0) return '';
+  return num.toLocaleString('en-US');
+};
+
+const parseCurrency = (displayValue: string): number => {
+  const cleaned = displayValue.replace(/,/g, '');
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? 0 : num;
+};
+
 const REFUND_POLICY_OPTIONS = [
   { value: 'no_refunds', label: 'No Refunds' },
   { value: 'merchandise_exchange', label: 'Merchandise Exchange Only' },
@@ -158,8 +171,8 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
   const step1Form = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
-      entityType: 'government',
-      ownershipType: 'public',
+      entityType: 'Government Agency',
+      ownershipType: 'Public',
       entityWebsite: 'https://',
       country: 'USA',
     },
@@ -323,14 +336,21 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
     }, 100);
   };
 
-  const handleStep1AddressSelect = (addressComponents: any) => {
+  interface AddressComponents {
+    streetAddress: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  }
+
+  const handleStep1AddressSelect = (addressComponents: AddressComponents) => {
     step1Form.setValue('addressLine1', addressComponents.streetAddress);
     step1Form.setValue('city', addressComponents.city);
     step1Form.setValue('state', addressComponents.state);
     step1Form.setValue('zipCode', addressComponents.zipCode);
   };
 
-  const handleStep2AddressSelect = (addressComponents: any) => {
+  const handleStep2AddressSelect = (addressComponents: AddressComponents) => {
     step2Form.setValue('personalAddressLine1', addressComponents.streetAddress);
     step2Form.setValue('personalCity', addressComponents.city);
     step2Form.setValue('personalState', addressComponents.state);
@@ -494,7 +514,7 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                   <FormItem>
                     <FormLabel>Legal Entity Name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter legal entity name" {...field} />
+                      <Input placeholder="Enter legal entity name" maxLength={120} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -509,7 +529,7 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                   <FormItem>
                     <FormLabel>Doing Business As (DBA) *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter DBA name" {...field} />
+                      <Input placeholder="Enter DBA name" maxLength={120} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -645,10 +665,16 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                       <Textarea
                         placeholder="Describe the products or services offered by this entity..."
                         className="min-h-[100px]"
+                        maxLength={250}
                         {...field}
                       />
                     </FormControl>
-                    <FormMessage />
+                    <div className="flex justify-between items-center">
+                      <FormMessage />
+                      <span className="text-xs text-muted-foreground">
+                        {field.value?.length || 0}/250
+                      </span>
+                    </div>
                   </FormItem>
                 )}
               />
@@ -802,7 +828,7 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                     <FormItem>
                       <FormLabel>First Name *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter first name" {...field} />
+                        <Input placeholder="Enter first name" maxLength={40} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -817,7 +843,7 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                     <FormItem>
                       <FormLabel>Last Name *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter last name" {...field} />
+                        <Input placeholder="Enter last name" maxLength={40} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -833,7 +859,7 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                   <FormItem>
                     <FormLabel>Job Title *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter job title" {...field} />
+                      <Input placeholder="Enter job title" maxLength={60} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1134,18 +1160,11 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                          <FormLabel>Annual ACH Volume ($)</FormLabel>
                          <FormControl>
                            <Input
-                             type="number"
-                             className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                             type="text"
+                             inputMode="numeric"
                              placeholder="0"
-                             min="0"
-                             value={field.value}
-                             onChange={(e) => field.onChange(Number(e.target.value))}
-                             onFocus={(e) => {
-                               if (e.target.value === '0') {
-                                 field.onChange('');
-                                 e.target.value = '';
-                               }
-                             }}
+                             value={formatCurrency(field.value)}
+                             onChange={(e) => field.onChange(parseCurrency(e.target.value))}
                            />
                          </FormControl>
                          <FormMessage />
@@ -1162,18 +1181,11 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                          <FormLabel>Annual Card Volume ($)</FormLabel>
                          <FormControl>
                            <Input
-                             type="number"
-                             className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                             type="text"
+                             inputMode="numeric"
                              placeholder="0"
-                             min="0"
-                             value={field.value}
-                             onChange={(e) => field.onChange(Number(e.target.value))}
-                             onFocus={(e) => {
-                               if (e.target.value === '0') {
-                                 field.onChange('');
-                                 e.target.value = '';
-                               }
-                             }}
+                             value={formatCurrency(field.value)}
+                             onChange={(e) => field.onChange(parseCurrency(e.target.value))}
                            />
                          </FormControl>
                          <FormMessage />
@@ -1190,18 +1202,11 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                          <FormLabel>Average ACH Transfer Amount ($)</FormLabel>
                          <FormControl>
                            <Input
-                             type="number"
-                             className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                             type="text"
+                             inputMode="numeric"
                              placeholder="0"
-                             min="0"
-                             value={field.value}
-                             onChange={(e) => field.onChange(Number(e.target.value))}
-                             onFocus={(e) => {
-                               if (e.target.value === '0') {
-                                 field.onChange('');
-                                 e.target.value = '';
-                               }
-                             }}
+                             value={formatCurrency(field.value)}
+                             onChange={(e) => field.onChange(parseCurrency(e.target.value))}
                            />
                          </FormControl>
                          <FormMessage />
@@ -1218,18 +1223,11 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                          <FormLabel>Average Card Transfer Amount ($)</FormLabel>
                          <FormControl>
                            <Input
-                             type="number"
-                             className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                             type="text"
+                             inputMode="numeric"
                              placeholder="0"
-                             min="0"
-                             value={field.value}
-                             onChange={(e) => field.onChange(Number(e.target.value))}
-                             onFocus={(e) => {
-                               if (e.target.value === '0') {
-                                 field.onChange('');
-                                 e.target.value = '';
-                               }
-                             }}
+                             value={formatCurrency(field.value)}
+                             onChange={(e) => field.onChange(parseCurrency(e.target.value))}
                            />
                          </FormControl>
                          <FormMessage />
@@ -1246,21 +1244,13 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                           <FormLabel>Maximum ACH Transaction Amount ($)</FormLabel>
                           <FormControl>
                             <Input
-                              type="number"
-                              className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                              type="text"
+                              inputMode="numeric"
                               placeholder="0"
-                              min="0"
-                              max="9999"
-                              value={field.value}
+                              value={formatCurrency(field.value)}
                               onChange={(e) => {
-                                const value = Number(e.target.value);
+                                const value = parseCurrency(e.target.value);
                                 field.onChange(value > 9999 ? 9999 : value);
-                              }}
-                              onFocus={(e) => {
-                                if (e.target.value === '0') {
-                                  field.onChange('');
-                                  e.target.value = '';
-                                }
                               }}
                             />
                           </FormControl>
@@ -1278,21 +1268,13 @@ export const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({
                           <FormLabel>Maximum Card Transaction Amount ($)</FormLabel>
                           <FormControl>
                             <Input
-                              type="number"
-                              className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                              type="text"
+                              inputMode="numeric"
                               placeholder="0"
-                              min="0"
-                              max="9999"
-                              value={field.value}
+                              value={formatCurrency(field.value)}
                               onChange={(e) => {
-                                const value = Number(e.target.value);
+                                const value = parseCurrency(e.target.value);
                                 field.onChange(value > 9999 ? 9999 : value);
-                              }}
-                              onFocus={(e) => {
-                                if (e.target.value === '0') {
-                                  field.onChange('');
-                                  e.target.value = '';
-                                }
                               }}
                             />
                           </FormControl>

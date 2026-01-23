@@ -80,7 +80,7 @@ export const createFinixIdentityPayload = (
       annual_ach_volume: customer.annual_ach_volume || 0,
       average_ach_transfer_amount: customer.average_ach_amount || 0,
       average_card_transfer_amount: customer.average_card_amount || 0,
-      business_description: customer.entity_description,
+      business_description: customer.entity_description || customer.doing_business_as || customer.legal_entity_name || 'Government services',
       card_volume_distribution: {
         card_present_percentage: customer.card_present_percentage || 0,
         mail_order_telephone_order_percentage: customer.moto_percentage || 0,
@@ -117,7 +117,7 @@ export const createFinixIdentityPayload = (
       business_phone: customer.entity_phone,
       business_tax_id: customer.tax_id,
       business_type: mappedBusinessType,
-      default_statement_descriptor: statementDescriptor,
+      default_statement_descriptor: statementDescriptor.slice(0, 20), // Finix API limit is 20 chars
       dob: dateOfBirth,
       doing_business_as: customer.doing_business_as,
       email: customer.work_email,

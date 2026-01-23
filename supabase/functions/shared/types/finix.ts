@@ -89,7 +89,7 @@ export interface FinixMerchant {
   merchant_profile?: string;
   processing_enabled: boolean;
   settlement_enabled: boolean;
-  onboarding_state?: 'PROVISIONING' | 'APPROVED' | 'REJECTED' | 'UPDATE_REQUESTED';
+  onboarding_state?: 'PROVISIONING' | 'APPROVED' | 'ENABLED' | 'REJECTED' | 'DISABLED' | 'UPDATE_REQUESTED';
   verification?: string;
   application?: string;
   mcc?: string;

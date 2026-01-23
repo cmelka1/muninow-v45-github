@@ -176,7 +176,7 @@ export const useCustomers = () => {
         p2p_percentage: formData.p2pPercent,
         has_accepted_cards_previously: formData.hasAcceptedCardsPreviously,
         refund_policy: formData.refundPolicy.toUpperCase(),
-        status: 'pending'
+        status: 'active'
       };
 
       const { data, error } = await supabase

@@ -67,7 +67,17 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
   const { toast } = useToast();
   const dialogContentRef = useRef<HTMLDivElement>(null);
   
-  const [finixBankForm, setFinixBankForm] = useState<any>(null);
+  // Finix form types (external library without TypeScript definitions)
+  interface FinixBankTokenForm {
+    submit: (environment: string, applicationId: string, callback: (err: FinixTokenError | null, response: FinixTokenResponse) => void) => void;
+    destroy: () => void;
+    on: (event: string, handler: (data: unknown) => void) => void;
+  }
+  interface FinixTokenError { message?: string; }
+  interface FinixTokenResponse { data?: { id?: string; instrument_type?: string; expires_at?: string; }; }
+  interface FinixFormError { message?: string; }
+
+  const [finixBankForm, setFinixBankForm] = useState<FinixBankTokenForm | null>(null);
   const [isFinixFormReady, setIsFinixFormReady] = useState(false);
   const [finixConfig, setFinixConfig] = useState<{
     applicationId: string;
@@ -119,6 +129,7 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
     }, 100);
     
     return () => clearInterval(pollInterval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const step1Form = useForm<Step1Data>({
@@ -166,6 +177,7 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
     };
     
     fetchFinixConfig();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // Initialize Finix BankTokenForm with comprehensive fallbacks
@@ -200,7 +212,7 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
     }
     
     // Declare variables at useEffect scope so cleanup can access them
-    let form: any = null;
+    let form: FinixBankTokenForm | null = null;
     let observer: MutationObserver | null = null;
     let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
     
@@ -273,15 +285,15 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
           setIsFinixFormReady(true);
         });
         
-        form.on('change', (data: any) => {
+        form.on('change', (data: unknown) => {
           console.log('📝 Finix form changed:', data);
         });
         
-        form.on('error', (error: any) => {
+        form.on('error', (error: unknown) => {
           console.error('❌ Finix form error:', error);
           toast({
             title: "Form Error",
-            description: error.message || "Payment form error. Please check your input.",
+            description: (error as FinixFormError).message || "Payment form error. Please check your input.",
             variant: "destructive",
           });
         });
@@ -364,6 +376,7 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
         console.log('⚠️ Error destroying form on cleanup:', e);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep, finixConfig, finixLibraryLoaded, step1Data, customer, open]);
 
   const handleStep1Submit = async (data: Step1Data) => {
@@ -441,7 +454,7 @@ export function AddMerchantDialog({ open, onOpenChange, customer, onMerchantCrea
       finixBankForm.submit(
         finixConfig.environment,
         finixConfig.applicationId,
-        async (err: any, tokenResponse: any) => {
+        async (err: FinixTokenError | null, tokenResponse: FinixTokenResponse) => {
           if (err) {
             console.error('❌ Finix tokenization error:', err);
             toast({
