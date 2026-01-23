@@ -174,13 +174,13 @@ export async function processUnifiedPayment(
       };
     }
 
-    console.log('[UnifiedPaymentProcessor] Finix transfer succeeded:', transferResult.transfer_id);
+    console.log('[UnifiedPaymentProcessor] Finix transfer succeeded:', transferResult.data?.id);
 
     // STEP 8: UPDATE TRANSACTION STATUS
     await updateTransactionStatus(
       supabase,
       transactionId,
-      transferResult.transfer_id!,
+      transferResult.data!.id,
       finixPaymentInstrumentId,
       'paid',
       'SUCCEEDED',
@@ -220,7 +220,7 @@ export async function processUnifiedPayment(
       serviceFeeCents,
       totalAmountCents,
       finixPaymentInstrumentId,
-      transferResult.transfer_id!,
+      transferResult.data!.id,
       merchantData
     );
 
@@ -230,8 +230,8 @@ export async function processUnifiedPayment(
     return {
       success: true,
       transaction_id: transactionId,
-      payment_id: transferResult.transfer_id,
-      finix_transfer_id: transferResult.transfer_id,
+      payment_id: transferResult.data?.id,
+      finix_transfer_id: transferResult.data?.id,
       finix_payment_instrument_id: finixPaymentInstrumentId,
       service_fee_cents: serviceFeeCents,
       total_amount_cents: totalAmountCents,
@@ -439,7 +439,7 @@ async function rollbackTransaction(
 }
 
 // Helper: Update transaction status
-async function updateTransactionStatus(
+export async function updateTransactionStatus(
   supabase: any,
   transactionId: string,
   finixTransferId: string,
@@ -474,7 +474,7 @@ async function updateTransactionStatus(
 }
 
 // Helper: Map payment type to PostgreSQL ENUM
-function mapPaymentTypeToEnum(paymentType: string): string {
+export function mapPaymentTypeToEnum(paymentType: string): string {
   const enumMap: Record<string, string> = {
     'card': 'PAYMENT_CARD',
     'ach': 'BANK_ACCOUNT',
@@ -487,7 +487,7 @@ function mapPaymentTypeToEnum(paymentType: string): string {
 }
 
 // Helper: Update entity status
-async function updateEntityStatus(
+export async function updateEntityStatus(
   supabase: any,
   entityType: string,
   entityId: string,
@@ -581,7 +581,7 @@ async function updateEntityStatus(
 }
 
 // Helper: Auto-issue entity
-async function autoIssueEntity(
+export async function autoIssueEntity(
   supabase: any,
   entityType: string,
   entityId: string
