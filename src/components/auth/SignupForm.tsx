@@ -451,6 +451,19 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
         });
 
         if (updateError) {
+           // Handle specific case where user already has a password (re-registering)
+           if (updateError.message.includes('New password should be different') || 
+               updateError.message.includes('password') && updateError.message.includes('different')) {
+             console.log('User already has a password. Redirecting to login.');
+             toast({
+               title: "Account Already Exists",
+               description: "You already have an account with a password. Redirecting to login...",
+               variant: "default"
+             });
+             setTimeout(() => window.location.href = '/signin', 2000);
+             return;
+           }
+           
            // If email is already taken by ANOTHER user, this will fail.
            throw new Error(`Account update failed: ${updateError.message}`);
         }

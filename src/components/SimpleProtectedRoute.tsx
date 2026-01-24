@@ -59,8 +59,33 @@ export const SimpleProtectedRoute: React.FC<SimpleProtectedRouteProps> = ({
     }
     
     if (!hasAccess) {
-      console.log('Access denied - redirecting to dashboard:', { userAccountType, allowedTypes });
-      return <Navigate to="/dashboard" replace />;
+      console.log('Access denied - invalid role:', { userAccountType, allowedTypes });
+      // STOP THE LOOP: Do not redirect to /dashboard if we are already there or if dashboard requires the role we don't have.
+      // Instead, show an "Access Denied" state to break the cycle.
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+            <p className="text-gray-600 mb-6">
+              Your account type ({userAccountType}) does not have permission to view this page.
+              Required: {allowedTypes.join(', ')}
+            </p>
+            <p className="text-sm text-gray-500 mb-8">
+              This usually happens if your account setup is incomplete. Please log out and sign in again to refresh your permissions.
+            </p>
+            <button 
+              onClick={() => {
+                // Hard logout to clear everything
+                localStorage.clear();
+                window.location.href = '/signin';
+              }}
+              className="bg-primary text-white px-6 py-2 rounded hover:bg-primary/90 transition"
+            >
+              Log Out & Try Again
+            </button>
+          </div>
+        </div>
+      );
     }
   } else if (requireAccountType && !profile) {
     return <Navigate to="/signin" replace />;
