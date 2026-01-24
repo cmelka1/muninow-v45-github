@@ -471,27 +471,11 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
         // CRITICAL FIX: explicit sync to profiles table
         // The trigger only runs on INSERT. Since we likely created the user with default 'resident'
         // role during OTP, we must now update the profile to 'residentadmin' etc.
-        const { error: profileUpdateError } = await supabase
-          .from('profiles')
-          .update({
-             first_name: metadata.first_name,
-             last_name: metadata.last_name,
-             email: formData.email,
-             phone: metadata.phone,
-             street_address: metadata.street_address,
-             city: metadata.city,
-             state: metadata.state,
-             zip_code: metadata.zip_code,
-             account_type: metadata.account_type, 
-             business_legal_name: metadata.business_legal_name,
-             industry: metadata.industry
-          })
-          .eq('id', session.user.id);
+        // SMART TRIGGER HANDLING:
+        // We no longer manually sync to the profiles table.
+        // The 'updateUser' call above triggers the 'handle_new_user' database trigger
+        // which automatically copies all metadata (including account_type) to public.profiles.
 
-        if (profileUpdateError) {
-             console.error('Failed to sync profile:', profileUpdateError);
-             // We don't throw here to avoid blocking flow, but it's risky.
-        }
 
         authData = data;
       } else {
@@ -513,34 +497,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onBack }) => {
         authData = data;
       }
       
-      // Phase 2: Wait for profile creation (database trigger should handle this)
-      let profileVerified = false;
-      let attempts = 0;
-      const maxAttempts = 5;
-      
-      while (!profileVerified && attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-        
-        try {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('id, email, first_name, last_name')
-            .eq('id', authData.user.id)
-            .single();
-            
-          if (profile && !profileError) {
-            profileVerified = true;
-          }
-        } catch (error) {
-          // Continue attempting
-        }
-        
-        attempts++;
-      }
-      
-      if (!profileVerified) {
-        // Continue anyway - profile creation might be delayed but shouldn't block signup
-      }
+      // Phase 2: Profile creation handled by Smart Trigger (Instant)
+      // No waiting required.
+
       
       // Phase 3: Create Finix identity for payment processing
       try {
