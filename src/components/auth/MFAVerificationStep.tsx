@@ -85,26 +85,27 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
 
         console.log('Email OTP sent successfully:', response.data);
       } else {
-        // SMS: Use Supabase Native Auth
+        // SMS: Use custom Edge Function (enables shared phone numbers)
         const phoneValidation = validatePhoneNumber(phone);
         if (!phoneValidation.isValid) {
           throw new Error(phoneValidation.error || 'Invalid phone number');
         }
         identifier = formatPhoneForStorage(phone);
 
-        console.log('Sending SMS OTP via Supabase Native Auth');
-        const { data, error } = await supabase.auth.signInWithOtp({
-          phone: identifier,
-          options: {
-            shouldCreateUser: true,
-          }
+        console.log('Sending SMS OTP via custom Edge Function');
+        const response = await supabase.functions.invoke('send-sms-otp', {
+          body: { phone: identifier }
         });
 
-        if (error) {
-          console.error('Supabase Auth Error:', error);
-          throw new Error(`Auth Error: ${error.message}`);
+        if (response.error) {
+          throw new Error(response.error.message || 'Failed to send SMS verification code');
         }
-        console.log('SMS OTP sent successfully:', data);
+
+        if (response.data?.error) {
+          throw new Error(response.data.error);
+        }
+
+        console.log('SMS OTP sent successfully:', response.data);
       }
 
       toast({
@@ -172,19 +173,21 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
 
         console.log('Email verification successful:', response.data);
       } else {
-        // SMS: Use Supabase Native Auth verifyOtp
-        console.log('Verifying SMS OTP via Supabase Native Auth for:', identifier);
-        const { data, error } = await supabase.auth.verifyOtp({
-          phone: identifier,
-          token: verificationCode,
-          type: 'sms'
+        // SMS: Use custom Edge Function (enables shared phone numbers)
+        console.log('Verifying SMS OTP via custom Edge Function');
+        const response = await supabase.functions.invoke('verify-sms-otp', {
+          body: { phone: identifier, code: verificationCode }
         });
 
-        if (error) {
-          console.error('Supabase Verify Error:', error);
-          throw error;
+        if (response.error) {
+          throw new Error(response.error.message || 'Failed to verify SMS code');
         }
-        console.log('SMS verification successful:', data);
+
+        if (response.data?.error) {
+          throw new Error(response.data.error);
+        }
+
+        console.log('SMS verification successful:', response.data);
       }
 
       toast({
