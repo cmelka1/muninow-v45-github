@@ -77,20 +77,24 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
         identifier = formatPhoneForStorage(phone);
       }
 
-      console.log('Sending OTP via Supabase Native Auth to:', identifier);
-
+      console.log('--- SMS DEBUG START ---');
+      console.log('Sending OTP via Supabase Native Auth');
+      console.log('Method:', verificationMethod);
+      console.log('Identifier:', identifier);
+      
       const { data, error } = await supabase.auth.signInWithOtp({
         [verificationMethod === 'email' ? 'email' : 'phone']: identifier,
         options: {
           shouldCreateUser: true, // Allow creating account for signup flow
-          // For email, this might trigger a magic link if not configured strictly for OTP, 
-          // but Supabase usually handles OTP if requested.
         }
       });
 
+      console.log('Supabase Native Auth Response:', { data, error });
+      
       if (error) {
-        console.error('Supabase Auth Error:', error);
-        throw error;
+        console.error('Supabase Auth Error Object:', JSON.stringify(error, null, 2));
+        // Explicitly throw execution error to be caught below
+        throw new Error(`Auth Error: ${error.message} (Status: ${error.status})`);
       }
 
       console.log('Supabase response:', data);
