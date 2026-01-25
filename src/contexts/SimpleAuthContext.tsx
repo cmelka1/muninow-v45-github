@@ -65,6 +65,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data) {
+        // SECURITY: Block disabled accounts from accessing the app
+        if (data.account_type === 'disabled') {
+          console.log('Account is disabled, signing out user');
+          await supabase.auth.signOut();
+          setError('Your account has been disabled. Please contact support.');
+          return false;
+        }
+
         console.log('Profile loaded successfully:', data);
         setProfile({
           user_id: data.id,

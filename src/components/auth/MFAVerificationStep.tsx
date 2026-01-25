@@ -17,6 +17,8 @@ interface MFAVerificationStepProps {
   onBack: () => void;
   isLoading?: boolean;
   onMethodChange?: (method: 'email' | 'sms') => void;
+  emailOnly?: boolean;    // Force email verification, hide SMS option
+  lockedEmail?: boolean;  // Make email field read-only
 }
 
 type VerificationMethod = 'email' | 'sms';
@@ -28,7 +30,9 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
   onVerificationComplete,
   onBack,
   isLoading = false,
-  onMethodChange
+  onMethodChange,
+  emailOnly = false,
+  lockedEmail = false
 }) => {
   const [verificationMethod, setVerificationMethod] = useState<VerificationMethod>('email');
   const [verificationStage, setVerificationStage] = useState<VerificationStage>('setup');
@@ -250,23 +254,25 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
 
       {verificationStage === 'setup' ? (
         <div className="space-y-6">
-          {/* Method Selection */}
-          <div className="space-y-3">
-            <Label className="text-base font-semibold">Verification Method</Label>
-            <Tabs 
-              value={verificationMethod} 
-              onValueChange={(value) => {
-                const method = value as VerificationMethod;
-                setVerificationMethod(method);
-                onMethodChange?.(method);
-              }}
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="email" disabled={isLoading || isSending}>Email</TabsTrigger>
-                <TabsTrigger value="sms" disabled={isLoading || isSending}>SMS</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+          {/* Method Selection - Hide when emailOnly */}
+          {!emailOnly && (
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Verification Method</Label>
+              <Tabs 
+                value={verificationMethod} 
+                onValueChange={(value) => {
+                  const method = value as VerificationMethod;
+                  setVerificationMethod(method);
+                  onMethodChange?.(method);
+                }}
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="email" disabled={isLoading || isSending}>Email</TabsTrigger>
+                  <TabsTrigger value="sms" disabled={isLoading || isSending}>SMS</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+          )}
 
           {/* Contact Information */}
           <div className="space-y-4">
@@ -282,10 +288,13 @@ export const MFAVerificationStep: React.FC<MFAVerificationStepProps> = ({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter email address"
                   className="h-11"
-                  disabled={isLoading || isSending}
+                  disabled={isLoading || isSending || lockedEmail}
                 />
                 <p className="text-xs text-muted-foreground">
-                  We'll send a 6-digit code to this email address
+                  {lockedEmail 
+                    ? 'Verification code will be sent to this email'
+                    : "We'll send a 6-digit code to this email address"
+                  }
                 </p>
               </div>
             ) : (

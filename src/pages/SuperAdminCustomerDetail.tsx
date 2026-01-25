@@ -9,6 +9,7 @@ import { useCustomers } from '@/hooks/useCustomers';
 import { ArrowLeft } from 'lucide-react';
 import CustomerInformationTab from '@/components/customer-detail/CustomerInformationTab';
 import MerchantTab from '@/components/customer-detail/MerchantTab';
+import CustomerTeamTab from '@/components/customer-detail/CustomerTeamTab';
 
 interface Customer {
   customer_id: string;
@@ -147,7 +148,7 @@ const SuperAdminCustomerDetail = () => {
 
         {/* Tab Navigation */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 h-auto p-1 bg-white border border-slate-200 rounded-lg">
+          <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-white border border-slate-200 rounded-lg">
             <TabsTrigger 
               value="customer-info" 
               className="text-sm font-medium py-3 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -160,6 +161,12 @@ const SuperAdminCustomerDetail = () => {
             >
               Merchants
             </TabsTrigger>
+            <TabsTrigger 
+              value="team" 
+              className="text-sm font-medium py-3 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Team
+            </TabsTrigger>
           </TabsList>
 
           <div className="mt-6">
@@ -169,6 +176,10 @@ const SuperAdminCustomerDetail = () => {
 
             <TabsContent value="merchants" className="space-y-6">
               <MerchantTab customer={customer} />
+            </TabsContent>
+
+            <TabsContent value="team" className="space-y-6">
+              <CustomerTeamTab customerId={customer.customer_id} customerName={customer.legal_entity_name} />
             </TabsContent>
           </div>
         </Tabs>

@@ -10,7 +10,32 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.5"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -648,6 +673,93 @@ export type Database = {
         }
         Relationships: []
       }
+      finix_disputes: {
+        Row: {
+          amount_cents: number
+          created_at: string | null
+          dispute_details: Json | null
+          evidence_count: number | null
+          evidence_submitted: boolean | null
+          finix_application_id: string | null
+          finix_dispute_id: string
+          finix_identity_id: string | null
+          finix_transfer_id: string | null
+          id: string
+          last_webhook_event_id: string | null
+          last_webhook_received_at: string | null
+          merchant_id: string | null
+          message: string | null
+          occurred_at: string | null
+          payment_transaction_id: string | null
+          reason: string | null
+          respond_by: string | null
+          state: string
+          tags: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string | null
+          dispute_details?: Json | null
+          evidence_count?: number | null
+          evidence_submitted?: boolean | null
+          finix_application_id?: string | null
+          finix_dispute_id: string
+          finix_identity_id?: string | null
+          finix_transfer_id?: string | null
+          id?: string
+          last_webhook_event_id?: string | null
+          last_webhook_received_at?: string | null
+          merchant_id?: string | null
+          message?: string | null
+          occurred_at?: string | null
+          payment_transaction_id?: string | null
+          reason?: string | null
+          respond_by?: string | null
+          state?: string
+          tags?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string | null
+          dispute_details?: Json | null
+          evidence_count?: number | null
+          evidence_submitted?: boolean | null
+          finix_application_id?: string | null
+          finix_dispute_id?: string
+          finix_identity_id?: string | null
+          finix_transfer_id?: string | null
+          id?: string
+          last_webhook_event_id?: string | null
+          last_webhook_received_at?: string | null
+          merchant_id?: string | null
+          message?: string | null
+          occurred_at?: string | null
+          payment_transaction_id?: string | null
+          reason?: string | null
+          respond_by?: string | null
+          state?: string
+          tags?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finix_disputes_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finix_disputes_payment_transaction_id_fkey"
+            columns: ["payment_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finix_identities: {
         Row: {
           account_type: string
@@ -699,6 +811,36 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           verification_status?: string | null
+        }
+        Relationships: []
+      }
+      finix_webhook_logs: {
+        Row: {
+          created_at: string | null
+          entity_id: string | null
+          event_id: string | null
+          event_type: string | null
+          id: string
+          payload: Json | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          entity_id?: string | null
+          event_id?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          entity_id?: string | null
+          event_id?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          status?: string | null
         }
         Relationships: []
       }
@@ -1306,22 +1448,7 @@ export type Database = {
           question_type?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "municipal_permit_questions_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["customer_id"]
-          },
-          {
-            foreignKeyName: "municipal_permit_questions_merchant_id_fkey"
-            columns: ["merchant_id"]
-            isOneToOne: false
-            referencedRelation: "merchants"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       municipal_service_application_comments: {
         Row: {
@@ -1704,15 +1831,7 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_municipal_service_tiles_merchant_id"
-            columns: ["merchant_id"]
-            isOneToOne: false
-            referencedRelation: "merchants"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       municipal_tax_types: {
         Row: {
@@ -1805,13 +1924,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "municipal_team_members_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["customer_id"]
-          },
-          {
             foreignKeyName: "municipal_team_members_member_id_fkey"
             columns: ["member_id"]
             isOneToOne: false
@@ -1823,6 +1935,7 @@ export type Database = {
       organization_invitations: {
         Row: {
           activated_at: string | null
+          customer_id: string | null
           email_sent_at: string | null
           email_status: string | null
           expires_at: string | null
@@ -1839,6 +1952,7 @@ export type Database = {
         }
         Insert: {
           activated_at?: string | null
+          customer_id?: string | null
           email_sent_at?: string | null
           email_status?: string | null
           expires_at?: string | null
@@ -1855,6 +1969,7 @@ export type Database = {
         }
         Update: {
           activated_at?: string | null
+          customer_id?: string | null
           email_sent_at?: string | null
           email_status?: string | null
           expires_at?: string | null
@@ -1869,7 +1984,15 @@ export type Database = {
           role?: string
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organization_invitations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["customer_id"]
+          },
+        ]
       }
       organization_memberships: {
         Row: {
@@ -2029,6 +2152,7 @@ export type Database = {
           estimated_construction_value_cents: number
           expiration_date: string | null
           expired_at: string | null
+          expires_at: string | null
           finix_identity_id: string | null
           finix_merchant_id: string | null
           finix_payout_profile_id: string | null
@@ -2039,6 +2163,7 @@ export type Database = {
           idempotency_uuid: string | null
           information_request_reason: string | null
           information_requested_at: string | null
+          is_renewal: boolean | null
           issued_at: string | null
           merchant_fee_profile_id: string | null
           merchant_finix_identity_id: string | null
@@ -2046,6 +2171,7 @@ export type Database = {
           merchant_name: string | null
           municipal_questions_responses: Json | null
           municipal_review_status: string | null
+          original_permit_id: string | null
           owner_address: string | null
           owner_email: string | null
           owner_full_name: string | null
@@ -2064,6 +2190,10 @@ export type Database = {
           property_address: string
           property_pin: string | null
           raw_finix_response: Json | null
+          renewal_generation: number | null
+          renewal_notified_at: string | null
+          renewal_reminder_count: number | null
+          renewal_status: string | null
           resubmitted_at: string | null
           review_completed_at: string | null
           review_notes: string | null
@@ -2102,6 +2232,7 @@ export type Database = {
           estimated_construction_value_cents?: number
           expiration_date?: string | null
           expired_at?: string | null
+          expires_at?: string | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
           finix_payout_profile_id?: string | null
@@ -2112,6 +2243,7 @@ export type Database = {
           idempotency_uuid?: string | null
           information_request_reason?: string | null
           information_requested_at?: string | null
+          is_renewal?: boolean | null
           issued_at?: string | null
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
@@ -2119,6 +2251,7 @@ export type Database = {
           merchant_name?: string | null
           municipal_questions_responses?: Json | null
           municipal_review_status?: string | null
+          original_permit_id?: string | null
           owner_address?: string | null
           owner_email?: string | null
           owner_full_name?: string | null
@@ -2137,6 +2270,10 @@ export type Database = {
           property_address: string
           property_pin?: string | null
           raw_finix_response?: Json | null
+          renewal_generation?: number | null
+          renewal_notified_at?: string | null
+          renewal_reminder_count?: number | null
+          renewal_status?: string | null
           resubmitted_at?: string | null
           review_completed_at?: string | null
           review_notes?: string | null
@@ -2175,6 +2312,7 @@ export type Database = {
           estimated_construction_value_cents?: number
           expiration_date?: string | null
           expired_at?: string | null
+          expires_at?: string | null
           finix_identity_id?: string | null
           finix_merchant_id?: string | null
           finix_payout_profile_id?: string | null
@@ -2185,6 +2323,7 @@ export type Database = {
           idempotency_uuid?: string | null
           information_request_reason?: string | null
           information_requested_at?: string | null
+          is_renewal?: boolean | null
           issued_at?: string | null
           merchant_fee_profile_id?: string | null
           merchant_finix_identity_id?: string | null
@@ -2192,6 +2331,7 @@ export type Database = {
           merchant_name?: string | null
           municipal_questions_responses?: Json | null
           municipal_review_status?: string | null
+          original_permit_id?: string | null
           owner_address?: string | null
           owner_email?: string | null
           owner_full_name?: string | null
@@ -2210,6 +2350,10 @@ export type Database = {
           property_address?: string
           property_pin?: string | null
           raw_finix_response?: Json | null
+          renewal_generation?: number | null
+          renewal_notified_at?: string | null
+          renewal_reminder_count?: number | null
+          renewal_status?: string | null
           resubmitted_at?: string | null
           review_completed_at?: string | null
           review_notes?: string | null
@@ -2236,6 +2380,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "permit_types_v2"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_original_permit_id_fkey"
+            columns: ["original_permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["permit_id"]
           },
           {
             foreignKeyName: "permit_applications_permit_merchant_id_fkey"
@@ -2470,6 +2621,48 @@ export type Database = {
         }
         Relationships: []
       }
+      permit_renewal_history: {
+        Row: {
+          created_at: string
+          id: string
+          original_permit_id: string | null
+          renewal_generation: number
+          renewed_by: string | null
+          renewed_permit_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          original_permit_id?: string | null
+          renewal_generation: number
+          renewed_by?: string | null
+          renewed_permit_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          original_permit_id?: string | null
+          renewal_generation?: number
+          renewed_by?: string | null
+          renewed_permit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permit_renewal_history_original_permit_id_fkey"
+            columns: ["original_permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["permit_id"]
+          },
+          {
+            foreignKeyName: "permit_renewal_history_renewed_permit_id_fkey"
+            columns: ["renewed_permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["permit_id"]
+          },
+        ]
+      }
       permit_review_comments: {
         Row: {
           comment_text: string
@@ -2558,12 +2751,16 @@ export type Database = {
           display_order: number
           id: string
           is_active: boolean
+          is_renewable: boolean | null
           merchant_id: string | null
           merchant_name: string | null
           name: string
           processing_days: number
+          renewal_fee_cents: number | null
+          renewal_reminder_days: number | null
           requires_inspection: boolean
           updated_at: string
+          validity_duration_days: number | null
         }
         Insert: {
           base_fee_cents?: number
@@ -2573,12 +2770,16 @@ export type Database = {
           display_order?: number
           id?: string
           is_active?: boolean
+          is_renewable?: boolean | null
           merchant_id?: string | null
           merchant_name?: string | null
           name: string
           processing_days?: number
+          renewal_fee_cents?: number | null
+          renewal_reminder_days?: number | null
           requires_inspection?: boolean
           updated_at?: string
+          validity_duration_days?: number | null
         }
         Update: {
           base_fee_cents?: number
@@ -2588,21 +2789,18 @@ export type Database = {
           display_order?: number
           id?: string
           is_active?: boolean
+          is_renewable?: boolean | null
           merchant_id?: string | null
           merchant_name?: string | null
           name?: string
           processing_days?: number
+          renewal_fee_cents?: number | null
+          renewal_reminder_days?: number | null
           requires_inspection?: boolean
           updated_at?: string
+          validity_duration_days?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "permit_types_v2_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["customer_id"]
-          },
           {
             foreignKeyName: "permit_types_v2_merchant_id_fkey"
             columns: ["merchant_id"]
@@ -2621,7 +2819,7 @@ export type Database = {
           city: string | null
           created_at: string
           customer_id: string | null
-          email: string
+          email: string | null
           first_name: string
           id: string
           industry: string | null
@@ -2636,19 +2834,19 @@ export type Database = {
           zip_code: string | null
         }
         Insert: {
-          account_type: string
+          account_type?: string
           address_validation_status?: string | null
           apt_number?: string | null
           business_legal_name?: string | null
           city?: string | null
           created_at?: string
           customer_id?: string | null
-          email: string
-          first_name: string
+          email?: string | null
+          first_name?: string
           id: string
           industry?: string | null
           is_guest?: boolean | null
-          last_name: string
+          last_name?: string
           original_address?: Json | null
           phone?: string | null
           standardized_address?: Json | null
@@ -2665,7 +2863,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           customer_id?: string | null
-          email?: string
+          email?: string | null
           first_name?: string
           id?: string
           industry?: string | null
@@ -2679,15 +2877,7 @@ export type Database = {
           updated_at?: string
           zip_code?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["customer_id"]
-          },
-        ]
+        Relationships: []
       }
       refunds: {
         Row: {
@@ -3569,13 +3759,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "profiles_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["customer_id"]
-          },
-          {
             foreignKeyName: "user_roles_role_id_fkey"
             columns: ["role_id"]
             isOneToOne: false
@@ -3586,6 +3769,10 @@ export type Database = {
       }
     }
     Functions: {
+      accept_municipal_invitation: {
+        Args: { p_invitation_token: string; p_user_id: string }
+        Returns: boolean
+      }
       accept_organization_invitation: {
         Args: { p_invitation_token: string }
         Returns: boolean
@@ -3593,6 +3780,14 @@ export type Database = {
       assign_role_to_user: {
         Args: { _entity_id?: string; _role_name: string; _user_id: string }
         Returns: boolean
+      }
+      calculate_merchant_fee: {
+        Args: {
+          p_base_amount_cents: number
+          p_is_card: boolean
+          p_merchant_id: string
+        }
+        Returns: Json
       }
       calculate_unified_service_fee: {
         Args: {
@@ -3636,6 +3831,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      check_expiring_permits: { Args: never; Returns: undefined }
       cleanup_abandoned_bookings: { Args: never; Returns: undefined }
       cleanup_abandoned_tax_drafts: {
         Args: { p_hours_threshold?: number }
@@ -3694,6 +3890,10 @@ export type Database = {
         }
         Returns: string
       }
+      create_permit_renewal: {
+        Args: { p_auto_approve?: boolean; p_original_permit_id: string }
+        Returns: string
+      }
       create_service_application_renewal: {
         Args: { p_original_application_id: string }
         Returns: string
@@ -3731,6 +3931,14 @@ export type Database = {
           p_zip_code?: string
         }
         Returns: Json
+      }
+      create_superadmin_municipal_invitation: {
+        Args: {
+          p_customer_id: string
+          p_invitation_email: string
+          p_role: string
+        }
+        Returns: string
       }
       create_tax_submission_before_payment: {
         Args: {
@@ -3855,6 +4063,31 @@ export type Database = {
         }
       }
       get_current_user_role: { Args: never; Returns: string }
+      get_customer_invitations: {
+        Args: { p_customer_id: string }
+        Returns: {
+          expires_at: string
+          id: string
+          invitation_email: string
+          invited_at: string
+          role: string
+          status: string
+        }[]
+      }
+      get_customer_team_members: {
+        Args: { p_customer_id: string }
+        Returns: {
+          account_type: string
+          email: string
+          first_name: string
+          id: string
+          joined_at: string
+          last_name: string
+          member_id: string
+          role: string
+          status: string
+        }[]
+      }
       get_merchant_fee_profile: {
         Args: { p_merchant_id: string }
         Returns: {
@@ -3981,11 +4214,11 @@ export type Database = {
         Returns: boolean
       }
       has_permission:
-        | { Args: { permission_name: string }; Returns: boolean }
         | {
             Args: { _entity_id?: string; _permission: string; _user_id: string }
             Returns: boolean
           }
+        | { Args: { permission_name: string }; Returns: boolean }
       has_resident_access_to_customer: {
         Args: { customer_uuid: string; user_uuid: string }
         Returns: boolean
@@ -4023,6 +4256,14 @@ export type Database = {
         Args: { business_name: string }
         Returns: string
       }
+      preview_service_fee: {
+        Args: {
+          p_base_amount_cents: number
+          p_is_card: boolean
+          p_merchant_id: string
+        }
+        Returns: Json
+      }
       remove_municipal_team_member: {
         Args: { p_customer_id: string; p_member_id: string }
         Returns: boolean
@@ -4045,6 +4286,21 @@ export type Database = {
         Args: { p_customer_id: string; p_member_id: string; p_new_role: string }
         Returns: boolean
       }
+      update_own_profile_metadata: {
+        Args: {
+          p_account_type: string
+          p_business_legal_name?: string
+          p_city: string
+          p_first_name: string
+          p_industry?: string
+          p_last_name: string
+          p_phone: string
+          p_state: string
+          p_street_address: string
+          p_zip_code: string
+        }
+        Returns: Json
+      }
       update_unified_payment_status: {
         Args: {
           p_finix_transfer_id: string
@@ -4056,6 +4312,18 @@ export type Database = {
       validate_merchant_category_subcategory: {
         Args: { p_category: string; p_subcategory: string }
         Returns: boolean
+      }
+      validate_municipal_invitation: {
+        Args: { p_token: string }
+        Returns: {
+          customer_id: string
+          customer_name: string
+          error_message: string
+          invitation_email: string
+          invitation_id: string
+          is_valid: boolean
+          role: string
+        }[]
       }
       validate_payment_entity: {
         Args: { p_entity_id: string; p_entity_type: string; p_user_id: string }
@@ -4265,6 +4533,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: [

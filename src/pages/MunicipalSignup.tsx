@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '@/contexts/SimpleAuthContext';
 import { Button } from '@/components/ui/button';
@@ -8,28 +8,37 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { MunicipalityAutocomplete } from '@/components/ui/municipality-autocomplete';
 import { PreloginHeader } from '@/components/layout/PreloginHeader';
 import { PreloginFooter } from '@/components/layout/PreloginFooter';
 import { MFAVerificationStep } from '@/components/auth/MFAVerificationStep';
-import { Eye, EyeOff, Check, Shield } from 'lucide-react';
+import { Eye, EyeOff, Check, Shield, AlertTriangle, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { normalizePhoneInput } from '@/lib/phoneUtils';
 import { toast } from '@/hooks/use-toast';
 
-interface Customer {
+interface InvitationData {
+  invitation_id: string;
   customer_id: string;
-  legal_entity_name: string;
-  doing_business_as: string;
-  business_city: string;
-  business_state: string;
+  customer_name: string;
+  invitation_email: string;
+  role: string;
+  is_valid: boolean;
+  error_message: string | null;
 }
 
 const MunicipalSignup = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const invitationToken = searchParams.get('invitation');
+
+  // Invitation state
+  const [invitationData, setInvitationData] = useState<InvitationData | null>(null);
+  const [isValidating, setIsValidating] = useState(true);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Form state
   const [currentStep, setCurrentStep] = useState(1);
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -38,14 +47,9 @@ const MunicipalSignup = () => {
   const [marketingConsent, setMarketingConsent] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [selectedCustomerId, setSelectedCustomerId] = useState('');
-  const [selectedMunicipality, setSelectedMunicipality] = useState<Customer | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
-  const [verificationMethod, setVerificationMethod] = useState<'email' | 'sms'>('email');
 
-
-  // Scroll to top utility function
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -55,6 +59,51 @@ const MunicipalSignup = () => {
     setPhone(formatted);
   };
 
+  // Validate invitation token on mount
+  useEffect(() => {
+    const validateToken = async () => {
+      if (!invitationToken) {
+        setIsValidating(false);
+        setValidationError('No invitation token provided. Please use the link from your invitation email.');
+        return;
+      }
+
+      try {
+        // Call the validate RPC (cast to any temporarily until types are regenerated)
+        const { data, error } = await (supabase.rpc as any)('validate_municipal_invitation', {
+          p_token: invitationToken
+        });
+
+        if (error) {
+          setValidationError('Unable to validate invitation. Please try again or contact support.');
+          return;
+        }
+
+        const result = data?.[0];
+        if (!result?.is_valid) {
+          setValidationError(result?.error_message || 'Invalid or expired invitation.');
+          return;
+        }
+
+        setInvitationData({
+          invitation_id: result.invitation_id,
+          customer_id: result.customer_id,
+          customer_name: result.customer_name,
+          invitation_email: result.invitation_email,
+          role: result.role,
+          is_valid: true,
+          error_message: null
+        });
+      } catch (err) {
+        setValidationError('An error occurred while validating your invitation.');
+      } finally {
+        setIsValidating(false);
+      }
+    };
+
+    validateToken();
+  }, [invitationToken]);
+
   // Redirect authenticated users
   useEffect(() => {
     if (user) {
@@ -62,14 +111,13 @@ const MunicipalSignup = () => {
     }
   }, [user, navigate]);
 
-
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedCustomerId) {
+    if (!invitationData) {
       toast({
         title: "Error",
-        description: "Please select a municipality.",
+        description: "Invalid invitation data.",
         variant: "destructive"
       });
       return;
@@ -105,27 +153,13 @@ const MunicipalSignup = () => {
     setIsLoading(true);
 
     try {
-      // Check if customer already has an admin
-      const { data: hasAdmin } = await supabase
-        .rpc('check_customer_admin_exists', { p_customer_id: selectedCustomerId });
-
-      if (hasAdmin) {
-        toast({
-          title: "Error",
-          description: "This municipality already has an administrator.",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      // Move to MFA step
+      // Move to MFA step (email-only verification)
       setCurrentStep(2);
       scrollToTop();
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred during validation.",
+        description: error instanceof Error ? error.message : "An error occurred.",
         variant: "destructive"
       });
     } finally {
@@ -134,12 +168,14 @@ const MunicipalSignup = () => {
   };
 
   const completeMunicipalSignup = async () => {
+    if (!invitationData || !invitationToken) return;
+    
     setIsCreatingAccount(true);
 
     try {
-      // Create Supabase auth account
+      // Create Supabase auth account - email from invitation (locked)
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
+        email: invitationData.invitation_email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/municipal/dashboard`,
@@ -147,9 +183,10 @@ const MunicipalSignup = () => {
             first_name: firstName,
             last_name: lastName,
             phone: phone,
-            account_type: 'municipaladmin',
-            role: 'admin',
-            customer_id: selectedCustomerId
+            account_type: invitationData.role === 'admin' ? 'municipaladmin' : 'municipaluser',
+            role: invitationData.role,
+            customer_id: invitationData.customer_id,
+            invitation_token: invitationToken
           },
         }
       });
@@ -158,9 +195,22 @@ const MunicipalSignup = () => {
         throw new Error(`Account creation failed: ${authError.message}`);
       }
 
+      // Accept the invitation to update profile and team_members
+      if (authData.user) {
+        const { error: acceptError } = await (supabase.rpc as any)('accept_municipal_invitation', {
+          p_invitation_token: invitationToken,
+          p_user_id: authData.user.id
+        });
+
+        if (acceptError) {
+          console.error('Error accepting invitation:', acceptError);
+          // Don't throw - account is created, just log the error
+        }
+      }
+
       toast({
         title: "Account Created Successfully!",
-        description: "Your municipal administrator account has been created. Please check your email to verify your account.",
+        description: "Your municipal account has been created. Please check your email to verify.",
       });
 
       setCurrentStep(3);
@@ -168,7 +218,7 @@ const MunicipalSignup = () => {
     } catch (error) {
       toast({
         title: "Account Creation Failed",
-        description: error instanceof Error ? error.message : "Failed to create account. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create account.",
         variant: "destructive"
       });
     } finally {
@@ -183,10 +233,54 @@ const MunicipalSignup = () => {
     }
   };
 
-  const handleMunicipalitySelect = (municipality: Customer) => {
-    setSelectedMunicipality(municipality);
-    setSelectedCustomerId(municipality.customer_id);
-  };
+  // Loading state
+  if (isValidating) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <PreloginHeader />
+        <main className="flex-1 gradient-bg flex items-center justify-center p-4">
+          <Card className="w-full max-w-md text-center">
+            <CardContent className="py-12">
+              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+              <p className="text-muted-foreground">Validating your invitation...</p>
+            </CardContent>
+          </Card>
+        </main>
+        <PreloginFooter />
+      </div>
+    );
+  }
+
+  // Error state - no token or invalid token
+  if (validationError || !invitationData) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <PreloginHeader />
+        <main className="flex-1 gradient-bg flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="h-8 w-8 text-amber-600" />
+              </div>
+              <CardTitle className="text-xl">Invitation Required</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-center">
+              <p className="text-muted-foreground">
+                {validationError || 'A valid invitation is required to create a municipal account.'}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                If you believe you should have access, please contact your organization administrator or MuniNow support.
+              </p>
+              <Button variant="outline" onClick={() => navigate('/signin')} className="w-full">
+                Go to Sign In
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+        <PreloginFooter />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -199,7 +293,7 @@ const MunicipalSignup = () => {
                 Municipal Signup
               </CardTitle>
               <CardDescription className="text-muted-foreground text-base">
-                Create an administrator account for your municipality.
+                Complete your account for <span className="font-medium text-foreground">{invitationData.customer_name}</span>
               </CardDescription>
             </CardHeader>
             <CardContent className="px-8 pb-8">
@@ -209,7 +303,7 @@ const MunicipalSignup = () => {
                   <span>Step {currentStep} of 3</span>
                   <span>
                     {currentStep === 1 && "Information"}
-                    {currentStep === 2 && "Security Setup"}
+                    {currentStep === 2 && "Email Verification"}
                     {currentStep === 3 && "Complete"}
                   </span>
                 </div>
@@ -220,208 +314,205 @@ const MunicipalSignup = () => {
               {currentStep === 1 && (
                 <>
                   <form onSubmit={handleFormSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="municipality" className="text-sm font-medium text-foreground">
-                    Municipality *
-                  </Label>
-                  <MunicipalityAutocomplete
-                    onSelect={handleMunicipalitySelect}
-                    placeholder="Search for your municipality..."
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-sm font-medium text-foreground">
-                      First Name *
-                    </Label>
-                    <Input
-                      id="firstName"
-                      type="text"
-                      placeholder="John"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      required
-                      className="h-11"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-sm font-medium text-foreground">
-                      Last Name *
-                    </Label>
-                    <Input
-                      id="lastName"
-                      type="text"
-                      placeholder="Doe"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      required
-                      className="h-11"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-foreground">
-                    Email *
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="admin@municipality.gov"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="h-11"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-sm font-medium text-foreground">
-                    Phone Number *
-                  </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="(555) 123-4567"
-                    value={phone}
-                    onChange={handlePhoneChange}
-                    required
-                    className="h-11"
-                    maxLength={14}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium text-foreground">
-                    Password *
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Create a secure password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="h-11 pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
-                    Confirm Password *
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="confirmPassword"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Confirm your password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      className="h-11 pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Terms and Notifications */}
-                <div className="space-y-3">
-                  <div className="flex flex-row items-start space-x-3 space-y-0">
-                    <Checkbox
-                      checked={termsAccepted}
-                      onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
-                      className="mt-1"
-                    />
-                    <div className="space-y-1 leading-none">
-                      <Label className="cursor-pointer text-sm">
-                        I agree to the{' '}
-                        <Link to="/terms" className="text-primary hover:underline">
-                          terms of service
-                        </Link>
-                        {' '}and{' '}
-                        <Link to="/privacy" className="text-primary hover:underline">
-                          privacy policy
-                        </Link>
+                    {/* Municipality - Locked */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">
+                        Municipality
                       </Label>
+                      <div className="h-11 px-3 py-2 rounded-md border bg-muted/50 flex items-center">
+                        <span className="text-foreground">{invitationData.customer_name}</span>
+                        <span className="ml-2 text-xs text-muted-foreground">(from invitation)</span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex flex-row items-start space-x-3 space-y-0">
-                    <Checkbox
-                      checked={marketingConsent}
-                      onCheckedChange={(checked) => setMarketingConsent(checked as boolean)}
-                      className="mt-1"
-                    />
-                    <div className="space-y-1 leading-none">
-                      <Label className="cursor-pointer text-sm">
-                        I agree to receive notifications and messages from MuniNow
+                    {/* Email - Locked */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">
+                        Email
                       </Label>
+                      <div className="h-11 px-3 py-2 rounded-md border bg-muted/50 flex items-center">
+                        <span className="text-foreground">{invitationData.invitation_email}</span>
+                        <span className="ml-2 text-xs text-muted-foreground">(from invitation)</span>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="flex justify-center py-2">
+                    {/* Role - Display only */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground">
+                        Role
+                      </Label>
+                      <div className="h-11 px-3 py-2 rounded-md border bg-muted/50 flex items-center">
+                        <span className="text-foreground capitalize">
+                          {invitationData.role === 'admin' ? 'Municipal Admin' : 'Municipal User'}
+                        </span>
+                      </div>
+                    </div>
 
-                </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName" className="text-sm font-medium text-foreground">
+                          First Name *
+                        </Label>
+                        <Input
+                          id="firstName"
+                          type="text"
+                          placeholder="John"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          required
+                          className="h-11"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName" className="text-sm font-medium text-foreground">
+                          Last Name *
+                        </Label>
+                        <Input
+                          id="lastName"
+                          type="text"
+                          placeholder="Doe"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          required
+                          className="h-11"
+                        />
+                      </div>
+                    </div>
 
-                  <Button 
-                    type="submit" 
-                    disabled={isLoading}
-                    className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-sm transition-colors"
-                  >
-                    {isLoading ? 'Validating...' : 'Continue to Security Setup'}
-                  </Button>
-                </form>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="text-sm font-medium text-foreground">
+                        Phone Number *
+                      </Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="(555) 123-4567"
+                        value={phone}
+                        onChange={handlePhoneChange}
+                        required
+                        className="h-11"
+                        maxLength={14}
+                      />
+                    </div>
 
-                <div className="mt-6 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Already have an account?{' '}
-                    <button
-                      type="button"
-                      onClick={() => navigate('/signin')}
-                      className="text-primary hover:text-primary/80 font-medium transition-colors"
+                    <div className="space-y-2">
+                      <Label htmlFor="password" className="text-sm font-medium text-foreground">
+                        Password *
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Create a secure password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                          className="h-11 pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
+                        Confirm Password *
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="confirmPassword"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Confirm your password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                          className="h-11 pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Terms and Notifications */}
+                    <div className="space-y-3">
+                      <div className="flex flex-row items-start space-x-3 space-y-0">
+                        <Checkbox
+                          checked={termsAccepted}
+                          onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                          className="mt-1"
+                        />
+                        <div className="space-y-1 leading-none">
+                          <Label className="cursor-pointer text-sm">
+                            I agree to the{' '}
+                            <Link to="/terms" className="text-primary hover:underline">
+                              terms of service
+                            </Link>
+                            {' '}and{' '}
+                            <Link to="/privacy" className="text-primary hover:underline">
+                              privacy policy
+                            </Link>
+                          </Label>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-row items-start space-x-3 space-y-0">
+                        <Checkbox
+                          checked={marketingConsent}
+                          onCheckedChange={(checked) => setMarketingConsent(checked as boolean)}
+                          className="mt-1"
+                        />
+                        <div className="space-y-1 leading-none">
+                          <Label className="cursor-pointer text-sm">
+                            I agree to receive notifications and messages from MuniNow
+                          </Label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      disabled={isLoading}
+                      className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-sm transition-colors"
                     >
-                      Sign in here
-                    </button>
-                  </p>
-                </div>
+                      {isLoading ? 'Validating...' : 'Continue to Email Verification'}
+                    </Button>
+                  </form>
+
+                  <div className="mt-6 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Already have an account?{' '}
+                      <button
+                        type="button"
+                        onClick={() => navigate('/signin')}
+                        className="text-primary hover:text-primary/80 font-medium transition-colors"
+                      >
+                        Sign in here
+                      </button>
+                    </p>
+                  </div>
                 </>
               )}
 
-              {/* Step 2: MFA Verification */}
+              {/* Step 2: MFA Verification - Email Only */}
               {currentStep === 2 && (
                 <MFAVerificationStep
-                  defaultEmail={email}
+                  defaultEmail={invitationData.invitation_email}
                   defaultPhone={phone}
                   onVerificationComplete={completeMunicipalSignup}
                   onBack={goBack}
                   isLoading={isCreatingAccount}
-                  onMethodChange={setVerificationMethod}
+                  emailOnly={true}
+                  lockedEmail={true}
                 />
               )}
 
@@ -437,16 +528,11 @@ const MunicipalSignup = () => {
                       Account Created Successfully!
                     </h3>
                     <p className="text-muted-foreground">
-                      Your municipal administrator account has been created for{' '}
+                      Your municipal account has been created for{' '}
                       <span className="font-medium text-foreground">
-                        {selectedMunicipality?.legal_entity_name}
+                        {invitationData.customer_name}
                       </span>.
                     </p>
-                    {verificationMethod === 'sms' && (
-                       <p className="text-sm text-green-600 font-medium">
-                         ✓ Your phone number has been verified.
-                       </p>
-                    )}
                   </div>
 
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-2 text-left">
@@ -455,10 +541,7 @@ const MunicipalSignup = () => {
                         Action Required: Confirm Email
                      </p>
                      <p className="text-sm text-amber-700">
-                        {verificationMethod === 'sms' 
-                          ? "Even though you verified your phone, we sent a confirmation link to your email. You MUST click that link before you can log in."
-                          : "We have sent a confirmation link to your email address. You MUST click that link before you can log in."
-                        }
+                        We have sent a confirmation link to <strong>{invitationData.invitation_email}</strong>. You MUST click that link before you can log in.
                      </p>
                   </div>
 
