@@ -297,25 +297,14 @@ export const BusinessLicensesSettingsTab = () => {
                 Edit
               </Button>
             ) : (
-              <>
-                <Button
-                  onClick={handleCancel}
-                  variant="outline"
-                  size="sm"
-                  disabled={isSaving}
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSave}
-                  size="sm"
-                  disabled={isSaving || Object.keys(changes).length === 0}
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  {isSaving ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </>
+              <Button
+                onClick={handleSave}
+                size="sm"
+                disabled={isSaving || Object.keys(changes).length === 0}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </Button>
             )}
           </div>
         </CardHeader>
