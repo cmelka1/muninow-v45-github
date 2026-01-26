@@ -302,10 +302,10 @@ export const PermitsSettingsTab = () => {
             <div className="flex items-center justify-center py-8">
               <div className="text-muted-foreground">Loading permit types...</div>
             </div>
-          ) : !permitTypes?.length ? (
+          ) : !permitTypes?.length && !isEditMode ? (
             <div className="text-center py-8">
               <div className="text-muted-foreground">
-                No permit types available.
+                No permit types available. Click Edit to add your first permit type.
               </div>
             </div>
           ) : (
@@ -319,7 +319,7 @@ export const PermitsSettingsTab = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {permitTypes.map((permit) => (
+                  {(permitTypes || []).map((permit) => (
                     <TableRow key={permit.id}>
                       <TableCell className="font-medium">
                         <span>{permit.name}</span>
@@ -353,6 +353,14 @@ export const PermitsSettingsTab = () => {
                       onAdd={handleAddCustomType}
                       isLoading={createMutation.isPending}
                     />
+                  )}
+                  
+                  {(!permitTypes?.length) && isEditMode && !hasMerchantConfigured && (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-muted-foreground py-4">
+                        Configure a merchant below to add permit types.
+                      </TableCell>
+                    </TableRow>
                   )}
                 </TableBody>
               </Table>

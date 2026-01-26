@@ -324,9 +324,9 @@ export const BusinessLicensesSettingsTab = () => {
             <p className="text-muted-foreground text-center py-8">
               Loading business license types...
             </p>
-          ) : municipalTypes.length === 0 ? (
+          ) : municipalTypes.length === 0 && !isEditMode ? (
             <p className="text-muted-foreground text-center py-8">
-              No business license types configured yet.
+              No business license types configured yet. Click Edit to add your first license type.
             </p>
           ) : (
             <div className="rounded-md border">
@@ -335,7 +335,7 @@ export const BusinessLicensesSettingsTab = () => {
                   <TableRow>
                     <TableHead>Business License Type</TableHead>
                     <TableHead>Fee</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {!isEditMode && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -361,8 +361,8 @@ export const BusinessLicensesSettingsTab = () => {
                           className="text-right"
                         />
                       </TableCell>
-                      <TableCell className="text-right">
-                        {!isEditMode && (
+                      {!isEditMode && (
+                        <TableCell className="text-right">
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
@@ -397,8 +397,8 @@ export const BusinessLicensesSettingsTab = () => {
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
-                        )}
-                      </TableCell>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                   
@@ -407,6 +407,14 @@ export const BusinessLicensesSettingsTab = () => {
                       onAdd={handleAddCustomType}
                       isLoading={createMutation.isPending}
                     />
+                  )}
+                  
+                  {municipalTypes.length === 0 && isEditMode && !hasMerchantConfigured && (
+                    <TableRow>
+                      <TableCell colSpan={2} className="text-center text-muted-foreground py-4">
+                        Configure a merchant below to add license types.
+                      </TableCell>
+                    </TableRow>
                   )}
                 </TableBody>
               </Table>
