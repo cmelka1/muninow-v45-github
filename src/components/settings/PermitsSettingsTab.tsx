@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Edit2, Save, X, Plus } from 'lucide-react';
+import { Edit2, Save, Plus } from 'lucide-react';
 import { usePermitTypes, useCreatePermitType, useUpdatePermitType } from '@/hooks/usePermitTypes';
 import { useBuildingPermitsMerchant } from '@/hooks/useBuildingPermitsMerchant';
 import { useCustomerServiceConfig } from '@/hooks/useCustomerServiceConfig';
