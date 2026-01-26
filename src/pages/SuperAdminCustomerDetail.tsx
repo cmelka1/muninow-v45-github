@@ -10,6 +10,7 @@ import { ArrowLeft } from 'lucide-react';
 import CustomerInformationTab from '@/components/customer-detail/CustomerInformationTab';
 import MerchantTab from '@/components/customer-detail/MerchantTab';
 import CustomerTeamTab from '@/components/customer-detail/CustomerTeamTab';
+import CustomerServicesTab from '@/components/customer-detail/CustomerServicesTab';
 
 interface Customer {
   customer_id: string;
@@ -148,12 +149,18 @@ const SuperAdminCustomerDetail = () => {
 
         {/* Tab Navigation */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-white border border-slate-200 rounded-lg">
+          <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-white border border-slate-200 rounded-lg">
             <TabsTrigger 
               value="customer-info" 
               className="text-sm font-medium py-3 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
-              Customer Information
+              Customer Info
+            </TabsTrigger>
+            <TabsTrigger 
+              value="services" 
+              className="text-sm font-medium py-3 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Services
             </TabsTrigger>
             <TabsTrigger 
               value="merchants" 
@@ -172,6 +179,10 @@ const SuperAdminCustomerDetail = () => {
           <div className="mt-6">
             <TabsContent value="customer-info" className="space-y-6">
               <CustomerInformationTab customer={customer} />
+            </TabsContent>
+
+            <TabsContent value="services" className="space-y-6">
+              <CustomerServicesTab customerId={customer.customer_id} />
             </TabsContent>
 
             <TabsContent value="merchants" className="space-y-6">

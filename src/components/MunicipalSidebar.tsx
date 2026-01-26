@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -9,14 +9,23 @@ import {
   SidebarFooter,
   SidebarGroup
 } from '@/components/ui/sidebar';
-import { Home, Search, Users, User, Bell, LogOut, Building2, Wrench, Settings, Receipt, FileText, Calendar } from 'lucide-react';
+import { Home, Search, Users, User, LogOut, Building2, Wrench, Settings, Receipt, FileText, Calendar, LucideIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useCustomer } from '@/hooks/useCustomer';
 import { NotificationDropdown } from '@/components/NotificationDropdown';
 import { formatAccountType } from '@/lib/formatters';
+import { useCustomerServiceConfig } from '@/hooks/useCustomerServiceConfig';
 
-const navigationItems = [
+interface NavigationItem {
+  title: string;
+  icon: LucideIcon;
+  url: string;
+  serviceKey?: string; // Maps to customer_service_config field
+}
+
+// Define all possible navigation items
+const allNavigationItems: NavigationItem[] = [
   {
     title: 'Dashboard',
     icon: Home,
@@ -30,37 +39,32 @@ const navigationItems = [
   {
     title: 'Building Permits',
     icon: Wrench,
-    url: '/municipal/permits'
+    url: '/municipal/permits',
+    serviceKey: 'building_permits_enabled'
   },
   {
     title: 'Business Licenses',
     icon: FileText,
-    url: '/municipal/business-licenses'
+    url: '/municipal/business-licenses',
+    serviceKey: 'business_licenses_enabled'
   },
   {
     title: 'Taxes',
     icon: Receipt,
-    url: '/municipal/taxes'
+    url: '/municipal/taxes',
+    serviceKey: 'taxes_enabled'
   },
   {
     title: 'Sport Reservations',
     icon: Calendar,
-    url: '/municipal/sport-reservations'
+    url: '/municipal/sport-reservations',
+    serviceKey: 'sport_reservations_enabled'
   },
   {
     title: 'Other Services',
     icon: Settings,
-    url: '/municipal/other-services'
-  },
-  {
-    title: 'My Inspections',
-    icon: Search, // Or a better icon if available, reusing Search for now
-    url: '/my-inspections' 
-  },
-  {
-    title: 'Form Builder',
-    icon: Settings, 
-    url: '/admin/form-builder'
+    url: '/municipal/other-services',
+    serviceKey: 'other_services_enabled'
   },
   {
     title: 'Merchants',
@@ -88,11 +92,26 @@ export function MunicipalSidebar() {
   const location = useLocation();
   const { user, profile, signOut } = useAuth();
   const { customer } = useCustomer();
+  const { data: serviceConfig } = useCustomerServiceConfig(profile?.customer_id);
 
   // Get the logo URL from Supabase Storage
   const logoUrl = supabase.storage
     .from('muninow-logo')
     .getPublicUrl('MuniNow_Logo_Exploration_Blue.png').data.publicUrl;
+
+  // Filter navigation items based on service config
+  const navigationItems = useMemo(() => {
+    return allNavigationItems.filter(item => {
+      // If no serviceKey, always show (core navigation)
+      if (!item.serviceKey) return true;
+      
+      // If config not loaded yet, default to showing all services
+      if (!serviceConfig) return true;
+      
+      // Check if the service is enabled
+      return serviceConfig[item.serviceKey as keyof typeof serviceConfig] === true;
+    });
+  }, [serviceConfig]);
 
   const getInitials = (firstName?: string, lastName?: string) => {
     if (!firstName && !lastName) {

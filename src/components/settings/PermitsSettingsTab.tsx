@@ -14,9 +14,14 @@ import {
 } from '@/components/ui/table';
 import { Edit2, Save, X, Plus } from 'lucide-react';
 import { usePermitTypes, useCreatePermitType, useUpdatePermitType } from '@/hooks/usePermitTypes';
+import { useBuildingPermitsMerchant } from '@/hooks/useBuildingPermitsMerchant';
+import { useCustomerServiceConfig } from '@/hooks/useCustomerServiceConfig';
+import { useMerchantById } from '@/hooks/useMerchantById';
 import { useAuth } from '@/contexts/SimpleAuthContext';
 import { toast } from 'sonner';
 import { PermitQuestionsCard } from './PermitQuestionsCard';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface EditableFieldProps {
   value: string | number | boolean;
@@ -135,12 +140,31 @@ const NewPermitTypeRow: React.FC<NewPermitTypeRowProps> = ({ onAdd, isLoading })
 export const PermitsSettingsTab = () => {
   const { profile } = useAuth();
   const { data: permitTypes, isLoading } = usePermitTypes(profile?.customer_id);
+  
+  // Get merchant from service config (primary) or subcategory lookup (fallback)
+  const { data: serviceConfig, isLoading: isConfigLoading } = useCustomerServiceConfig(profile?.customer_id);
+  const { data: subcategoryMerchant, isLoading: isSubcategoryLoading } = useBuildingPermitsMerchant(profile?.customer_id);
+  
+  // Fetch configured merchant by ID (more efficient than fetching all)
+  const { data: configuredMerchant, isLoading: isConfiguredMerchantLoading } = useMerchantById(
+    serviceConfig?.building_permits_merchant_id
+  );
+  
+  // Determine which merchant to use: service config first, then subcategory lookup
+  const buildingPermitsMerchant = configuredMerchant 
+    ? { id: configuredMerchant.id, merchant_name: configuredMerchant.merchant_name }
+    : subcategoryMerchant;
+  
+  const isMerchantLoading = isConfigLoading || isSubcategoryLoading || isConfiguredMerchantLoading;
+  
   const updateMutation = useUpdatePermitType();
   const createMutation = useCreatePermitType();
   
   const [isEditMode, setIsEditMode] = useState(false);
   const [changes, setChanges] = useState<Record<string, any>>({});
   const [isSaving, setIsSaving] = useState(false);
+
+  const hasMerchantConfigured = !!buildingPermitsMerchant;
 
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -207,12 +231,19 @@ export const PermitsSettingsTab = () => {
   };
 
   const handleAddCustomType = async (permitType: { name: string; fee_cents: number; requires_inspection: boolean }) => {
+    if (!buildingPermitsMerchant) {
+      toast.error('A payment merchant must be configured before adding permit types. Please contact your administrator.');
+      return;
+    }
+    
     try {
       await createMutation.mutateAsync({
         name: permitType.name,
         base_fee_cents: permitType.fee_cents,
         processing_days: 30,
         requires_inspection: permitType.requires_inspection,
+        merchant_id: buildingPermitsMerchant.id,
+        merchant_name: buildingPermitsMerchant.merchant_name,
       });
       
       toast.success('Permit type added successfully');
@@ -317,7 +348,7 @@ export const PermitsSettingsTab = () => {
                     </TableRow>
                   ))}
                   
-                  {isEditMode && (
+                  {isEditMode && hasMerchantConfigured && (
                     <NewPermitTypeRow
                       onAdd={handleAddCustomType}
                       isLoading={createMutation.isPending}
@@ -326,6 +357,16 @@ export const PermitsSettingsTab = () => {
                 </TableBody>
               </Table>
             </div>
+          )}
+          
+          {isEditMode && !isMerchantLoading && !hasMerchantConfigured && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                A payment merchant for Building Permits must be configured before you can add custom permit types.
+                Please contact your platform administrator to set up the merchant account.
+              </AlertDescription>
+            </Alert>
           )}
         </CardContent>
       </Card>

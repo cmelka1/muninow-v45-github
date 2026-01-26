@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit2, Save, X, Plus, Trash2 } from 'lucide-react';
+import { Edit2, Save, X, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +19,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBusinessLicensesMerchant } from '@/hooks/useBusinessLicensesMerchant';
+import { useCustomerServiceConfig } from '@/hooks/useCustomerServiceConfig';
+import { useMerchantById } from '@/hooks/useMerchantById';
 import { 
   useBusinessLicenseTypes, 
   useCreateBusinessLicenseType, 
@@ -126,12 +129,29 @@ const NewBusinessLicenseTypeRow: React.FC<NewBusinessLicenseTypeRowProps> = ({ o
 
 export const BusinessLicensesSettingsTab = () => {
   const { profile } = useAuth();
-  const { data: businessLicensesMerchant } = useBusinessLicensesMerchant(profile?.customer_id);
+  
+  // Get merchant from service config (primary) or subcategory lookup (fallback)
+  const { data: serviceConfig, isLoading: isConfigLoading } = useCustomerServiceConfig(profile?.customer_id);
+  const { data: subcategoryMerchant, isLoading: isSubcategoryLoading } = useBusinessLicensesMerchant(profile?.customer_id);
   const { data: municipalTypes = [], isLoading } = useBusinessLicenseTypes(profile?.customer_id);
+  
+  // Fetch configured merchant by ID (more efficient than fetching all)
+  const { data: configuredMerchant, isLoading: isConfiguredMerchantLoading } = useMerchantById(
+    serviceConfig?.business_licenses_merchant_id
+  );
+  
+  // Determine which merchant to use: service config first, then subcategory lookup
+  const businessLicensesMerchant = configuredMerchant 
+    ? { id: configuredMerchant.id, merchant_name: configuredMerchant.merchant_name }
+    : subcategoryMerchant;
+  
+  const isMerchantLoading = isConfigLoading || isSubcategoryLoading || isConfiguredMerchantLoading;
   
   const createMutation = useCreateBusinessLicenseType();
   const updateMutation = useUpdateBusinessLicenseType();
   const deleteMutation = useDeleteBusinessLicenseType();
+  
+  const hasMerchantConfigured = !!businessLicensesMerchant;
   
   const [isEditMode, setIsEditMode] = useState(false);
   const [changes, setChanges] = useState<Record<string, any>>({});
@@ -208,7 +228,15 @@ export const BusinessLicensesSettingsTab = () => {
   };
 
   const handleAddCustomType = async (licenseType: { name: string; fee_cents: number }) => {
-    if (!profile?.customer_id || !businessLicensesMerchant) return;
+    if (!profile?.customer_id) {
+      toast.error('Customer profile not found. Please try refreshing the page.');
+      return;
+    }
+    
+    if (!businessLicensesMerchant) {
+      toast.error('A payment merchant must be configured before adding license types. Please contact your administrator.');
+      return;
+    }
 
     try {
       await createMutation.mutateAsync({
@@ -374,7 +402,7 @@ export const BusinessLicensesSettingsTab = () => {
                     </TableRow>
                   ))}
                   
-                  {isEditMode && (
+                  {isEditMode && hasMerchantConfigured && (
                     <NewBusinessLicenseTypeRow
                       onAdd={handleAddCustomType}
                       isLoading={createMutation.isPending}
@@ -383,6 +411,16 @@ export const BusinessLicensesSettingsTab = () => {
                 </TableBody>
               </Table>
             </div>
+          )}
+          
+          {isEditMode && !isMerchantLoading && !hasMerchantConfigured && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                A payment merchant for Business Licenses must be configured before you can add custom license types.
+                Please contact your platform administrator to set up the merchant account.
+              </AlertDescription>
+            </Alert>
           )}
         </CardContent>
       </Card>
