@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       business_license_applications: {
@@ -2977,27 +2952,6 @@ export type Database = {
           },
         ]
       }
-      roles: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
       service_application_documents: {
         Row: {
           application_id: string
@@ -3618,50 +3572,6 @@ export type Database = {
           },
         ]
       }
-      user_roles: {
-        Row: {
-          created_at: string
-          entity_id: string | null
-          id: string
-          role_id: string
-          role_name: string | null
-          user_email: string | null
-          user_first_name: string | null
-          user_id: string
-          user_last_name: string | null
-        }
-        Insert: {
-          created_at?: string
-          entity_id?: string | null
-          id?: string
-          role_id: string
-          role_name?: string | null
-          user_email?: string | null
-          user_first_name?: string | null
-          user_id: string
-          user_last_name?: string | null
-        }
-        Update: {
-          created_at?: string
-          entity_id?: string | null
-          id?: string
-          role_id?: string
-          role_name?: string | null
-          user_email?: string | null
-          user_first_name?: string | null
-          user_id?: string
-          user_last_name?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_role_id_fkey"
-            columns: ["role_id"]
-            isOneToOne: false
-            referencedRelation: "roles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       vehicles: {
         Row: {
           color: string
@@ -3742,31 +3652,7 @@ export type Database = {
       }
     }
     Views: {
-      user_roles_detailed: {
-        Row: {
-          account_type: string | null
-          created_at: string | null
-          customer_id: string | null
-          entity_id: string | null
-          id: string | null
-          role_id: string | null
-          role_name: string | null
-          role_name_current: string | null
-          user_email: string | null
-          user_first_name: string | null
-          user_id: string | null
-          user_last_name: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_role_id_fkey"
-            columns: ["role_id"]
-            isOneToOne: false
-            referencedRelation: "roles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       accept_municipal_invitation: {
@@ -3938,7 +3824,10 @@ export type Database = {
           p_invitation_email: string
           p_role: string
         }
-        Returns: string
+        Returns: {
+          invitation_id: string
+          invitation_token: string
+        }[]
       }
       create_tax_submission_before_payment: {
         Args: {
@@ -4066,6 +3955,7 @@ export type Database = {
       get_customer_invitations: {
         Args: { p_customer_id: string }
         Returns: {
+          activated_at: string
           expires_at: string
           id: string
           invitation_email: string
@@ -4198,13 +4088,6 @@ export type Database = {
           zip_code: string
         }[]
       }
-      get_user_roles: {
-        Args: { _user_id: string }
-        Returns: {
-          entity_id: string
-          role: string
-        }[]
-      }
       has_business_access_to_customer: {
         Args: { customer_uuid: string; user_uuid: string }
         Returns: boolean
@@ -4272,6 +4155,10 @@ export type Database = {
         Args: { _entity_id?: string; _role_name: string; _user_id: string }
         Returns: boolean
       }
+      revoke_municipal_invitation: {
+        Args: { p_invitation_id: string }
+        Returns: boolean
+      }
       rollback_service_application_payment: {
         Args: { p_payment_transaction_id: string }
         Returns: boolean
@@ -4331,14 +4218,6 @@ export type Database = {
       }
     }
     Enums: {
-      app_role:
-        | "superadmin"
-        | "municipaladmin"
-        | "municipaluser"
-        | "residentadmin"
-        | "residentuser"
-        | "businessadmin"
-        | "businessuser"
       assignment_status_enum: "assigned" | "unassigned" | "pending_review"
       business_license_status_enum:
         | "draft"
@@ -4533,20 +4412,8 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
-      app_role: [
-        "superadmin",
-        "municipaladmin",
-        "municipaluser",
-        "residentadmin",
-        "residentuser",
-        "businessadmin",
-        "businessuser",
-      ],
       assignment_status_enum: ["assigned", "unassigned", "pending_review"],
       business_license_status_enum: [
         "draft",
