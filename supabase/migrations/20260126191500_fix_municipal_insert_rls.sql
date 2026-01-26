@@ -6,14 +6,12 @@
 -- function-based approach that properly supports all municipal roles.
 
 -- =============================================================================
--- STEP 1: DROP ALL EXISTING MUNICIPAL-RELATED POLICIES ON BUSINESS_LICENSE_TYPES_V2
+-- STEP 1: FIX BUSINESS_LICENSE_TYPES_V2
 -- =============================================================================
 DROP POLICY IF EXISTS "Municipal admins manage customer license types" ON public.business_license_types_v2;
 DROP POLICY IF EXISTS "municipal_manage_business_license_types_v2" ON public.business_license_types_v2;
+DROP POLICY IF EXISTS "Municipal users manage business license types" ON public.business_license_types_v2;
 
--- =============================================================================
--- STEP 2: RECREATE USING ORIGINAL HELPER FUNCTION (supports all municipal roles)
--- =============================================================================
 CREATE POLICY "Municipal users manage business license types" ON public.business_license_types_v2
   FOR ALL
   TO authenticated
@@ -21,16 +19,15 @@ CREATE POLICY "Municipal users manage business license types" ON public.business
   WITH CHECK (has_municipal_access_to_customer(auth.uid(), customer_id));
 
 -- =============================================================================
--- STEP 3: FIX PERMIT_TYPES_V2 TABLE
+-- STEP 2: FIX PERMIT_TYPES_V2
 -- =============================================================================
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'permit_types_v2') THEN
-    -- Drop existing policies
     DROP POLICY IF EXISTS "Municipal admins manage permit types" ON public.permit_types_v2;
     DROP POLICY IF EXISTS "municipal_manage_permit_types_v2" ON public.permit_types_v2;
+    DROP POLICY IF EXISTS "Municipal users manage permit types" ON public.permit_types_v2;
     
-    -- Recreate using helper function
     CREATE POLICY "Municipal users manage permit types" ON public.permit_types_v2
       FOR ALL
       TO authenticated
@@ -40,7 +37,25 @@ BEGIN
 END $$;
 
 -- =============================================================================
--- DEBUG: Verify the has_municipal_access_to_customer function exists
+-- STEP 3: FIX MUNICIPAL_PERMIT_QUESTIONS
+-- =============================================================================
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'municipal_permit_questions') THEN
+    DROP POLICY IF EXISTS "Municipal users can manage permit questions for their customer" ON public.municipal_permit_questions;
+    DROP POLICY IF EXISTS "Municipal admins manage permit questions" ON public.municipal_permit_questions;
+    DROP POLICY IF EXISTS "Municipal users manage permit questions" ON public.municipal_permit_questions;
+    
+    CREATE POLICY "Municipal users manage permit questions" ON public.municipal_permit_questions
+      FOR ALL
+      TO authenticated
+      USING (has_municipal_access_to_customer(auth.uid(), customer_id))
+      WITH CHECK (has_municipal_access_to_customer(auth.uid(), customer_id));
+  END IF;
+END $$;
+
+-- =============================================================================
+-- VERIFY: has_municipal_access_to_customer function exists
 -- =============================================================================
 DO $$
 BEGIN
@@ -49,6 +64,6 @@ BEGIN
     JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE n.nspname = 'public' AND p.proname = 'has_municipal_access_to_customer'
   ) THEN
-    RAISE EXCEPTION 'CRITICAL: has_municipal_access_to_customer function does not exist! Please run migration 20250911174948.';
+    RAISE EXCEPTION 'CRITICAL: has_municipal_access_to_customer function does not exist!';
   END IF;
 END $$;
