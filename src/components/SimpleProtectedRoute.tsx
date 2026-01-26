@@ -38,25 +38,13 @@ export const SimpleProtectedRoute: React.FC<SimpleProtectedRouteProps> = ({
     const allowedTypes = Array.isArray(requireAccountType) ? requireAccountType : [requireAccountType];
     const userAccountType = profile.account_type;
     
-    // Check if user's account type matches any allowed type
-    // First check the new roles array if it exists
-    let hasAccess = false;
-    
-    if (profile.roles && profile.roles.length > 0) {
-      hasAccess = allowedTypes.some(allowedType => 
-        profile.roles!.includes(allowedType)
-      );
-    } 
-    
-    // If no access from roles (or no roles), fall back to account_type (legacy)
-    if (!hasAccess) {
-      hasAccess = allowedTypes.some(allowedType => {
-        if (exactMatch) {
-          return userAccountType === allowedType;
-        }
-        return userAccountType === allowedType || userAccountType.startsWith(allowedType);
-      });
-    }
+    // Check if user's account_type matches any allowed type
+    const hasAccess = allowedTypes.some(allowedType => {
+      if (exactMatch) {
+        return userAccountType === allowedType;
+      }
+      return userAccountType === allowedType || userAccountType.startsWith(allowedType);
+    });
     
     if (!hasAccess) {
       console.log('Access denied - invalid role:', { userAccountType, allowedTypes });

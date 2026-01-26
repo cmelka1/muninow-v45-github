@@ -1,13 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { UserRoleResponse } from '@/types/rpc-types';
 
 interface Profile {
   user_id: string;
   account_type: string;
   customer_id?: string;
-  roles?: string[];
   [key: string]: string | number | boolean | null | string[] | undefined;
 }
 
@@ -80,21 +78,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           customer_id: data.customer_id,
           ...data
         });
-
-        // Load roles properly
-        try {
-          const { data: roleData, error: roleError } = await supabase.rpc('get_user_roles', {
-             _user_id: userId
-          });
-          
-          if (!roleError && roleData) {
-            console.log('Roles loaded:', roleData);
-            const roles = roleData.map((r: UserRoleResponse) => r.role);
-            setProfile(prev => prev ? ({ ...prev, roles }) : null);
-          }
-        } catch (e) {
-          console.error('Error fetching roles:', e);
-        }
 
         setError(null);
         return true;

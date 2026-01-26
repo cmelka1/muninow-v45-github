@@ -59,20 +59,22 @@ serve(async (req) => {
       );
     }
 
-    // Check if user is SuperAdmin
-    const { data: userRoles, error: rolesError } = await supabaseClient.rpc('get_user_roles', {
-      _user_id: user.id
-    });
+    // Check if user is SuperAdmin via profiles.account_type
+    const { data: profile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('account_type')
+      .eq('id', user.id)
+      .single();
 
-    if (rolesError) {
-      Logger.error('Error checking user roles', rolesError);
+    if (profileError) {
+      Logger.error('Error checking user profile', profileError);
       return new Response(
         JSON.stringify({ error: 'Failed to verify permissions' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const isSuperAdmin = userRoles?.some((roleData: any) => roleData.role === 'superadmin');
+    const isSuperAdmin = profile?.account_type === 'superadmin';
     if (!isSuperAdmin) {
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions. SuperAdmin access required.' }),

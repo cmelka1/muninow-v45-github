@@ -8,15 +8,6 @@
 // ============================================================================
 
 /**
- * Response from `get_user_roles` RPC
- */
-export interface UserRoleResponse {
-  role: string;
-  user_id?: string;
-  created_at?: string;
-}
-
-/**
  * Response from `check_customer_admin_exists` RPC
  */
 export interface CustomerAdminExistsResponse {
