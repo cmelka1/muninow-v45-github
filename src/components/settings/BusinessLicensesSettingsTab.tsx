@@ -278,15 +278,15 @@ export const BusinessLicensesSettingsTab = () => {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div className="space-y-1">
+        <CardHeader className="flex flex-row items-start justify-between gap-4 pb-2">
+          <div className="space-y-1 flex-1 min-w-0">
             <CardTitle>Business License Types</CardTitle>
             <CardDescription>
               Configure business license fees for your municipality.
               {isEditMode && ' Make changes and click Save to apply them.'}
             </CardDescription>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {!isEditMode ? (
               <Button
                 onClick={() => setIsEditMode(true)}

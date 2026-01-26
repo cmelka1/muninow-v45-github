@@ -256,15 +256,15 @@ export const PermitsSettingsTab = () => {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div className="space-y-1">
+        <CardHeader className="flex flex-row items-start justify-between gap-4 pb-2">
+          <div className="space-y-1 flex-1 min-w-0">
             <CardTitle>Permit Types</CardTitle>
             <CardDescription>
               Configure permit fees and inspection requirements for your municipality.
               {isEditMode && ' Make changes and click Save to apply them.'}
             </CardDescription>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {!isEditMode ? (
               <Button
                 onClick={() => setIsEditMode(true)}
