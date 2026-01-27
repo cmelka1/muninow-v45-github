@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -44,6 +45,9 @@ const Profile = () => {
 
   return (
     <SidebarProvider>
+      <Helmet>
+        <title>Profile | MuniNow</title>
+      </Helmet>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <SidebarInset className="flex-1 bg-gray-100">

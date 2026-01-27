@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -126,7 +127,11 @@ const Notifications = () => {
   }
 
   return (
-    <div className="p-6">
+    <>
+      <Helmet>
+        <title>Notifications | MuniNow</title>
+      </Helmet>
+      <div className="p-6">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
@@ -291,7 +296,8 @@ const Notifications = () => {
           })
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

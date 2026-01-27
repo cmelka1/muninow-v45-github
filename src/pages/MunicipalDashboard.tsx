@@ -13,6 +13,7 @@ import { useMunicipalRevenue } from "@/hooks/useMunicipalRevenue";
 import { useMunicipalReviewQueue } from "@/hooks/useMunicipalReviewQueue";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Navigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { MunicipalRecentApplicationsTables } from "@/components/MunicipalRecentApplicationsTables";
 
 const MunicipalDashboard = () => {
@@ -59,7 +60,11 @@ const MunicipalDashboard = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <>
+      <Helmet>
+        <title>Municipal Dashboard | MuniNow</title>
+      </Helmet>
+      <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -157,6 +162,7 @@ const MunicipalDashboard = () => {
       {/* Recent Applications Tables */}
       <MunicipalRecentApplicationsTables />
     </div>
+    </>
   );
 };
 
