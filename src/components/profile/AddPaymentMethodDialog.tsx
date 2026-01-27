@@ -96,12 +96,8 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
 
   const useProfileAddress = form.watch('useProfileAddress');
 
-  // Watch address fields for dynamic updates to pass to Finix
-  const watchedStreetAddress = form.watch('streetAddress');
-  const watchedCity = form.watch('city');
-  const watchedState = form.watch('state');
-  const watchedZipCode = form.watch('zipCode');
-  const watchedCountry = form.watch('country') || 'USA';
+  // Note: Address fields are collected via form.getValues() at submit time
+  // No need to watch them since they don't affect the Finix iframe initialization
 
   // Wait for Finix library to load with retry mechanism
   useEffect(() => {
