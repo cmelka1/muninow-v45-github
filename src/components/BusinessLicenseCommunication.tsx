@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { useBusinessLicenseComments, useCreateBusinessLicenseComment } from '@/hooks/useBusinessLicenseComments';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
-import { MessageCircle, Send, User } from 'lucide-react';
+import { MessageCircle, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface BusinessLicenseCommunicationProps {
@@ -86,34 +86,29 @@ export const BusinessLicenseCommunication = ({ licenseId }: BusinessLicenseCommu
             ) : (
               visibleComments.map((comment, index) => (
                 <div key={comment.id}>
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <User className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm">
-                          {comment.reviewer.first_name} {comment.reviewer.last_name}
-                        </span>
-                        <Badge 
-                          variant={['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'secondary' : 'outline'} 
-                          className={`text-xs ${['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
-                        >
-                          {['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'Municipal Staff' : 'Applicant'}
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-sm">
+                        {comment.reviewer.first_name} {comment.reviewer.last_name}
+                      </span>
+                      <Badge 
+                        variant={['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'secondary' : 'outline'} 
+                        className={`text-xs ${['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
+                      >
+                        {['municipaladmin', 'municipaluser'].includes(comment.reviewer.account_type) ? 'Municipal Staff' : 'Applicant'}
+                      </Badge>
+                      {comment.is_internal && (
+                        <Badge variant="secondary" className="text-xs">
+                          Internal
                         </Badge>
-                        {comment.is_internal && (
-                          <Badge variant="secondary" className="text-xs">
-                            Internal
-                          </Badge>
-                        )}
-                        <span className="text-xs text-gray-500">
-                          {format(new Date(comment.created_at), 'MMM d, yyyy h:mm a')}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                        {comment.comment_text}
-                      </p>
+                      )}
+                      <span className="text-xs text-gray-500">
+                        {format(new Date(comment.created_at), 'MMM d, yyyy h:mm a')}
+                      </span>
                     </div>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {comment.comment_text}
+                    </p>
                   </div>
                   {index < visibleComments.length - 1 && (
                     <Separator className="my-4" />

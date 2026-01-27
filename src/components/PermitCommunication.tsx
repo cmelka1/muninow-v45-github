@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageSquare, Clock, User, Calendar, CheckCircle, AlertCircle, Bell, Send } from 'lucide-react';
+import { MessageSquare, Clock, Calendar, CheckCircle, AlertCircle, Send } from 'lucide-react';
 import { usePermitComments, useCreateComment } from '@/hooks/usePermitComments';
 import { usePermitRequests } from '@/hooks/usePermitRequests';
 import { usePermitInspections } from '@/hooks/usePermitInspections';
@@ -138,83 +138,76 @@ export const PermitCommunication: React.FC<PermitCommunicationProps> = ({
             ) : (
               allCommunication.map((item, index) => (
                 <div key={item.id}>
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      {item.type === 'request' && <Bell className="h-4 w-4" />}
-                      {item.type === 'inspection' && <Calendar className="h-4 w-4" />}
-                      {item.type === 'comment' && <User className="h-4 w-4" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        {item.type === 'request' && (
-                          <>
-                            <span className="font-medium text-sm">Information Request</span>
-                  <Badge variant="outline" className={getStatusColor(item.data.status)}>
-                    {item.data.status}
-                  </Badge>
-                          </>
-                        )}
-                        {item.type === 'inspection' && (
-                          <>
-                            <span className="font-medium text-sm">{item.data.inspection_type}</span>
-                  <Badge variant="outline" className={getStatusColor(item.data.status)}>
-                    {item.data.status}
-                  </Badge>
-                          </>
-                        )}
-                        {item.type === 'comment' && (
-                          <>
-                            <span className="font-medium text-sm">
-                              {item.data.reviewer?.first_name} {item.data.reviewer?.last_name}
-                            </span>
-                            <Badge 
-                              variant={['municipaladmin', 'municipaluser'].includes(item.data.reviewer?.account_type) ? 'secondary' : 'outline'} 
-                              className={`text-xs ${['municipaladmin', 'municipaluser'].includes(item.data.reviewer?.account_type) ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
-                            >
-                              {['municipaladmin', 'municipaluser'].includes(item.data.reviewer?.account_type) ? 'Municipal Staff' : 'Applicant'}
-                            </Badge>
-                          </>
-                        )}
-                        <span className="text-xs text-gray-500">
-                          {format(item.date, 'MMM d, yyyy h:mm a')}
-                        </span>
-                      </div>
-                      
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
                       {item.type === 'request' && (
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">{item.data.request_type?.replace('_', ' ').toUpperCase()}</p>
-                          <p className="text-sm text-gray-700">{item.data.request_details}</p>
-                          {item.data.due_date && (
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <Calendar className="h-3 w-3" />
-                              Due: {format(new Date(item.data.due_date), 'MMM d, yyyy')}
-                            </div>
-                          )}
-                        </div>
+                        <>
+                          <span className="font-medium text-sm">Information Request</span>
+                          <Badge variant="outline" className={getStatusColor(item.data.status)}>
+                            {item.data.status}
+                          </Badge>
+                        </>
                       )}
-                      
                       {item.type === 'inspection' && (
-                        <div className="space-y-1">
-                          {item.data.notes && <p className="text-sm text-gray-700">{item.data.notes}</p>}
-                          {item.data.result && (
-                            <div className="flex items-center gap-1 text-sm">
-                              {item.data.result === 'passed' ? (
-                                <CheckCircle className="h-4 w-4 text-green-600" />
-                              ) : (
-                                <AlertCircle className="h-4 w-4 text-red-600" />
-                              )}
-                              <span className="font-medium capitalize">{item.data.result}</span>
-                            </div>
-                          )}
-                        </div>
+                        <>
+                          <span className="font-medium text-sm">{item.data.inspection_type}</span>
+                          <Badge variant="outline" className={getStatusColor(item.data.status)}>
+                            {item.data.status}
+                          </Badge>
+                        </>
                       )}
-                      
                       {item.type === 'comment' && (
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                          {item.data.comment_text}
-                        </p>
+                        <>
+                          <span className="font-medium text-sm">
+                            {item.data.reviewer?.first_name} {item.data.reviewer?.last_name}
+                          </span>
+                          <Badge 
+                            variant={['municipaladmin', 'municipaluser'].includes(item.data.reviewer?.account_type) ? 'secondary' : 'outline'} 
+                            className={`text-xs ${['municipaladmin', 'municipaluser'].includes(item.data.reviewer?.account_type) ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
+                          >
+                            {['municipaladmin', 'municipaluser'].includes(item.data.reviewer?.account_type) ? 'Municipal Staff' : 'Applicant'}
+                          </Badge>
+                        </>
                       )}
+                      <span className="text-xs text-gray-500">
+                        {format(item.date, 'MMM d, yyyy h:mm a')}
+                      </span>
                     </div>
+                    
+                    {item.type === 'request' && (
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">{item.data.request_type?.replace('_', ' ').toUpperCase()}</p>
+                        <p className="text-sm text-gray-700">{item.data.request_details}</p>
+                        {item.data.due_date && (
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <Calendar className="h-3 w-3" />
+                            Due: {format(new Date(item.data.due_date), 'MMM d, yyyy')}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {item.type === 'inspection' && (
+                      <div className="space-y-1">
+                        {item.data.notes && <p className="text-sm text-gray-700">{item.data.notes}</p>}
+                        {item.data.result && (
+                          <div className="flex items-center gap-1 text-sm">
+                            {item.data.result === 'passed' ? (
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            ) : (
+                              <AlertCircle className="h-4 w-4 text-red-600" />
+                            )}
+                            <span className="font-medium capitalize">{item.data.result}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {item.type === 'comment' && (
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                        {item.data.comment_text}
+                      </p>
+                    )}
                   </div>
                   {index < allCommunication.length - 1 && (
                     <Separator className="my-4" />
