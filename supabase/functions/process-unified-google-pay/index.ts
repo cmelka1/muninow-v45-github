@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    Logger.info('Payment instrument created', { id: paymentInstrument.id });
+    Logger.info('Payment instrument created', { id: paymentInstrument.data?.id });
     
     // STEP 2: Call shared payment processor with created payment instrument
     const result = await processUnifiedPayment({
@@ -153,14 +153,14 @@ Deno.serve(async (req) => {
       entityId: entity_id,
       merchantId: merchant_id,
       baseAmountCents: base_amount_cents,
-      paymentInstrumentId: paymentInstrument.id!,
+      paymentInstrumentId: paymentInstrument.data!.id,
       fraudSessionId: fraud_session_id,
       clientSessionId: session_uuid || fraud_session_id,
       userId: user.id,
       userEmail: user_email || user.email!,
       paymentType: 'google-pay',
-      cardBrand: paymentInstrument.card_brand,
-      cardLastFour: paymentInstrument.last_four,
+      cardBrand: paymentInstrument.data?.card_brand,
+      cardLastFour: paymentInstrument.data?.last_four,
       firstName: first_name,
       lastName: last_name
     }, supabase);
