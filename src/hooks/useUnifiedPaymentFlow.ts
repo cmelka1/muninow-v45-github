@@ -597,7 +597,24 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
 
       if (error) {
         console.error('❌ Google Pay backend error:', error);
-        throw error;
+        
+        // Try to extract more details from the error
+        let errorMessage = 'Google Pay payment failed';
+        if (error.context) {
+          try {
+            // FunctionsHttpError stores response body in context
+            const errorBody = await error.context?.json?.() || error.context;
+            console.error('❌ Error body from Edge Function:', errorBody);
+            errorMessage = errorBody?.error || errorBody?.message || errorMessage;
+          } catch (parseErr) {
+            console.error('Could not parse error context:', parseErr);
+          }
+        }
+        if (error.message) {
+          console.error('❌ Error message:', error.message);
+        }
+        
+        throw new Error(errorMessage);
       }
 
       // Parse response if it's a string (handle edge function response format)
