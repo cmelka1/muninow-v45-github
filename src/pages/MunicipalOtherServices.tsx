@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -48,7 +49,11 @@ const MunicipalOtherServices = () => {
     }, 0);
 
   return (
-    <div className="p-6 space-y-6">
+    <>
+      <Helmet>
+        <title>Other Services | MuniNow</title>
+      </Helmet>
+      <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -139,6 +144,7 @@ const MunicipalOtherServices = () => {
         </TabsContent>
       </Tabs>
     </div>
+    </>
   );
 };
 

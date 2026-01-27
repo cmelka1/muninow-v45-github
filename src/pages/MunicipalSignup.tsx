@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '@/contexts/SimpleAuthContext';
@@ -283,7 +284,11 @@ const MunicipalSignup = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <>
+      <Helmet>
+        <title>Sign Up | MuniNow</title>
+      </Helmet>
+      <div className="flex flex-col min-h-screen">
       <PreloginHeader />
       <main className="flex-1 gradient-bg flex items-center justify-center p-4">
         <div className="w-full max-w-2xl">
@@ -570,6 +575,7 @@ const MunicipalSignup = () => {
       </main>
       <PreloginFooter />
     </div>
+    </>
   );
 };
 

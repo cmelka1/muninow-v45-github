@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -45,7 +46,11 @@ const MunicipalSearch = () => {
   };
 
   return (
-    <div className="container mx-auto p-6">
+    <>
+      <Helmet>
+        <title>Search | MuniNow</title>
+      </Helmet>
+      <div className="container mx-auto p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Municipal Search
@@ -98,6 +103,7 @@ const MunicipalSearch = () => {
         onPageSizeChange={handlePageSizeChange}
       />
     </div>
+    </>
   );
 };
 

@@ -62,7 +62,7 @@ const MunicipalDashboard = () => {
   return (
     <>
       <Helmet>
-        <title>Municipal Dashboard | MuniNow</title>
+        <title>Dashboard | MuniNow</title>
       </Helmet>
       <div className="p-6 space-y-6">
       {/* Header */}

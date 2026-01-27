@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@/contexts/AuthContext';
 import PermitsFilter, { PermitFilters } from '@/components/PermitsFilter';
 import MunicipalPermitsTable from '@/components/MunicipalPermitsTable';
@@ -23,7 +24,11 @@ const MunicipalPermits = () => {
   }
 
   return (
-    <div className="p-8">
+    <>
+      <Helmet>
+        <title>Permits | MuniNow</title>
+      </Helmet>
+      <div className="p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Building Permits
@@ -41,6 +46,7 @@ const MunicipalPermits = () => {
         }}
       />
     </div>
+    </>
   );
 };
 

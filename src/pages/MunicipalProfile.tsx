@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,7 +40,11 @@ const MunicipalProfile = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-6 lg:p-8">
+    <>
+      <Helmet>
+        <title>Profile | MuniNow</title>
+      </Helmet>
+      <div className="max-w-4xl mx-auto p-4 md:p-6 lg:p-8">
       {/* Header */}
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-2">
@@ -88,6 +93,7 @@ const MunicipalProfile = () => {
         </div>
       </Tabs>
     </div>
+    </>
   );
 };
 

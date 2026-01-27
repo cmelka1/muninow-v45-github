@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@/contexts/AuthContext';
 import TaxSubmissionsFilter, { TaxSubmissionFilters } from '@/components/TaxSubmissionsFilter';
 import MunicipalTaxSubmissionsTable from '@/components/MunicipalTaxSubmissionsTable';
@@ -21,7 +22,11 @@ const MunicipalTaxes = () => {
   }
 
   return (
-    <div className="p-8">
+    <>
+      <Helmet>
+        <title>Taxes | MuniNow</title>
+      </Helmet>
+      <div className="p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Tax Submissions
@@ -41,6 +46,7 @@ const MunicipalTaxes = () => {
         title="Municipal Tax Submissions"
       />
     </div>
+    </>
   );
 };
 
