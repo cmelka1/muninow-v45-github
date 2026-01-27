@@ -43,17 +43,20 @@ serve(async (req) => {
       throw new Error('User not authenticated');
     }
 
-    // Get Finix Identity for User
+    // Get Finix Buyer Identity from finix_identities table (created during signup)
     const { data: finixIdentity, error: identityError } = await supabase
-      .from('customers')
+      .from('finix_identities')
       .select('finix_identity_id')
       .eq('user_id', user.id)
       .single();
 
-    if (identityError || !finixIdentity || !finixIdentity.finix_identity_id) {
-        Logger.error('Finix Identity not found for user', { userId: user.id });
-        throw new Error('Finix Identity not found. Please complete profile setup.');
+    if (identityError || !finixIdentity?.finix_identity_id) {
+      Logger.error('Finix Identity not found for user', { userId: user.id, error: identityError });
+      throw new Error('Payment identity not found. Please complete account setup or contact support.');
     }
+
+    const finixBuyerIdentityId = finixIdentity.finix_identity_id;
+    Logger.info('Found Finix Buyer Identity', { userId: user.id, identityId: finixBuyerIdentityId });
 
     // Validate required fields
     if (!finixToken || !finixToken.startsWith('TK')) {
@@ -65,10 +68,10 @@ serve(async (req) => {
 
     Logger.info('Creating Finix bank account with token...');
     
-    // Create payment instrument via Finix API
+    // Create payment instrument via Finix API using BUYER identity
     const instrumentResult = await finixAPI.createPaymentInstrument({
       type: 'TOKEN',
-      identity: finixIdentity.finix_identity_id,
+      identity: finixBuyerIdentityId,
       token: finixToken,
       bankAccountValidationCheck: true,
       billingAddress: addressOverride ? {
@@ -112,7 +115,7 @@ serve(async (req) => {
       .insert({
         user_id: user.id,
         finix_payment_instrument_id: paymentInstrument.id,
-        finix_identity_id: finixIdentity.finix_identity_id,
+        finix_identity_id: finixBuyerIdentityId,
         instrument_type: 'BANK_ACCOUNT',
         nickname: nickname || null,
         is_default: isDefault,
