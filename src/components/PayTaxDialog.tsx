@@ -112,6 +112,38 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     instructions_document_path?: string;
     merchant_id?: string;
   } | null>(null);
+  
+  // Fallback merchant for the selected municipality (used when tax type doesn't have a merchant assigned)
+  const [fallbackMerchantId, setFallbackMerchantId] = useState<string | null>(null);
+  
+  // Fetch fallback merchant when municipality is selected
+  React.useEffect(() => {
+    const fetchFallbackMerchant = async () => {
+      if (!selectedMunicipality?.customer_id) {
+        setFallbackMerchantId(null);
+        return;
+      }
+      
+      console.log('[PayTaxDialog] Fetching fallback merchant for customer:', selectedMunicipality.customer_id);
+      
+      const { data, error } = await supabase
+        .from('merchants')
+        .select('id, merchant_name')
+        .eq('customer_id', selectedMunicipality.customer_id)
+        .limit(1)
+        .single();
+        
+      if (data) {
+        console.log('[PayTaxDialog] Fallback merchant found:', data.id, data.merchant_name);
+        setFallbackMerchantId(data.id);
+      } else if (error) {
+        console.warn('[PayTaxDialog] No fallback merchant found for customer:', error.message);
+        setFallbackMerchantId(null);
+      }
+    };
+    
+    fetchFallbackMerchant();
+  }, [selectedMunicipality?.customer_id]);
 
   // Submission state and errors
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -142,6 +174,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     hasUploadingDocuments,
     uploadingDocumentsCount 
   } = useTaxSubmissionDocuments(stagingId);
+
 
 
   // Helper function to parse formatted numbers (removes commas)
@@ -373,7 +406,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
           body: {
             user_id: profile.id,
             customer_id: selectedMunicipality.customer_id,
-            merchant_id: selectedTaxTypeData?.merchant_id || null,
+            merchant_id: selectedTaxTypeData?.merchant_id || fallbackMerchantId || null,
             tax_type: taxType,
             tax_period_start: getCurrentTaxPeriodStart(),
             tax_period_end: getCurrentTaxPeriodEnd(),
@@ -618,6 +651,12 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                             setTaxType(value);
                             // Find the selected tax type data for displaying instructions and merchant
                             const selectedType = availableTaxTypes.find(t => t.tax_type_code === value);
+                            console.log('[PayTaxDialog] Tax type selected:', {
+                              value,
+                              selectedType,
+                              merchant_id: selectedType?.merchant_id,
+                              instructions_document_path: selectedType?.instructions_document_path
+                            });
                             if (selectedType) {
                               setSelectedTaxTypeData({
                                 name: selectedType.tax_type_name,
@@ -1099,7 +1138,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                         entityId={taxSubmissionId}
                           entityName={`${taxType} Tax Payment`}
                           customerId={selectedMunicipality?.customer_id || ''}
-                          merchantId={selectedTaxTypeData?.merchant_id || ''}
+                          merchantId={selectedTaxTypeData?.merchant_id || fallbackMerchantId || ''}
                           baseAmountCents={getTaxAmountInCents()}
                           initialExpanded={true}
                           onPaymentSuccess={(response: PaymentResponse) => {
