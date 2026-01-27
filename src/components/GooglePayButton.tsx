@@ -28,8 +28,10 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
           return;
         }
 
+        // Use production in deployed environments
+        const isProduction = import.meta.env.PROD || import.meta.env.VITE_GOOGLE_PAY_ENV === 'PRODUCTION';
         const paymentsClient = new window.google.payments.api.PaymentsClient({
-          environment: 'TEST' // Change to 'PRODUCTION' for live environment
+          environment: isProduction ? 'PRODUCTION' : 'TEST'
         });
 
         window.googlePayClient = paymentsClient;

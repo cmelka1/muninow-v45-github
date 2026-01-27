@@ -91,12 +91,22 @@ Deno.serve(async (req) => {
       base_amount_cents
     });
 
-    // Get merchant information
-    const { data: merchant, error: merchantError } = await supabase
-      .from('merchants')
-      .select('finix_merchant_id, finix_identity_id')
-      .eq('id', merchant_id)
-      .single();
+    // Get merchant information and user's Finix identity in parallel
+    const [merchantResult, identityResult] = await Promise.all([
+      supabase
+        .from('merchants')
+        .select('finix_merchant_id, finix_identity_id')
+        .eq('id', merchant_id)
+        .single(),
+      supabase
+        .from('finix_identities')
+        .select('finix_identity_id')
+        .eq('user_id', user.id)
+        .single()
+    ]);
+
+    const { data: merchant, error: merchantError } = merchantResult;
+    const { data: userIdentity, error: identityError } = identityResult;
 
     if (merchantError || !merchant || !merchant.finix_merchant_id || !merchant.finix_identity_id) {
       Logger.error('Merchant fetch error', merchantError);
@@ -105,13 +115,6 @@ Deno.serve(async (req) => {
         { status: 404, headers: corsHeaders }
       );
     }
-
-    // Get user's Finix identity
-    const { data: userIdentity, error: identityError } = await supabase
-      .from('finix_identities')
-      .select('finix_identity_id')
-      .eq('user_id', user.id)
-      .single();
 
     if (identityError || !userIdentity) {
       Logger.error('User identity fetch error', identityError);

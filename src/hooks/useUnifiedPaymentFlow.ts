@@ -512,9 +512,10 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         throw new Error('Google Pay is not available');
       }
 
-      // Initialize Google Pay client
+      // Initialize Google Pay client - use production in deployed environments
+      const isProduction = import.meta.env.PROD || import.meta.env.VITE_GOOGLE_PAY_ENV === 'PRODUCTION';
       const paymentsClient = new window.google.payments.api.PaymentsClient({
-        environment: 'TEST' // Change to 'PRODUCTION' for live
+        environment: isProduction ? 'PRODUCTION' : 'TEST'
       });
 
       // Normalize Google Pay total amount calculation
@@ -528,7 +529,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           type: 'CARD' as const,
           parameters: {
             allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'] as const,
-            allowedCardNetworks: ['MASTERCARD', 'VISA'] as const
+            allowedCardNetworks: ['AMEX', 'DISCOVER', 'INTERAC', 'JCB', 'MASTERCARD', 'VISA'] as const
           },
           tokenizationSpecification: {
             type: 'PAYMENT_GATEWAY' as const,
@@ -569,6 +570,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       setIsProcessingPayment(true);
       console.log('📤 Sending Google Pay payment to backend...');
 
+      const startTime = Date.now();
       const { data, error } = await supabase.functions.invoke('process-unified-google-pay', {
         body: {
           entity_type: params.entityType,
@@ -590,7 +592,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         format: (finixSessionKey || `fallback_${uniqueSessionId}_${Date.now()}`).startsWith('FS') ? 'Finix (correct)' : 'UUID fallback'
       });
 
-      const responseTime = Date.now() - Date.now();
+      const responseTime = Date.now() - startTime;
       console.log(`📊 Google Pay function response received in ${responseTime}ms`);
       console.log('📦 Raw Google Pay response data:', JSON.stringify(data, null, 2));
       console.log('❗ Raw Google Pay response error:', JSON.stringify(error, null, 2));
