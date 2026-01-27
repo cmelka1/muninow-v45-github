@@ -30,7 +30,6 @@ export const useTaxMerchants = (searchTerm: string) => {
         const { data, error: supabaseError } = await supabase
           .from('merchants')
           .select('id, merchant_name, business_name, customer_city, customer_state, customer_id, finix_merchant_id')
-          .eq('subcategory', 'Tax')
           .or(`merchant_name.ilike.%${searchTerm}%,business_name.ilike.%${searchTerm}%`)
           .limit(10);
 
