@@ -20,6 +20,46 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { CreditCard, Building2, MapPin } from 'lucide-react';
 
+// Finix SDK type definitions
+interface FinixFormInstance {
+  on: (event: string, callback: (data?: FinixEventData | FinixError) => void) => void;
+  submit: (
+    environment: 'sandbox' | 'live',
+    applicationId: string,
+    callback: (err: FinixError | null, res: FinixTokenResponse | null) => void
+  ) => void;
+  destroy: () => void;
+  clear: () => void;
+}
+
+interface FinixEventData {
+  valid?: boolean;
+  complete?: boolean;
+  [key: string]: unknown;
+}
+
+interface FinixError {
+  message?: string;
+  code?: string;
+  [key: string]: unknown;
+}
+
+interface FinixTokenResponse {
+  data?: {
+    id: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+interface AddressComponents {
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
+}
+
 interface AddPaymentMethodDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -73,7 +113,7 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [finixConfig, setFinixConfig] = useState<{ applicationId: string; environment: 'sandbox' | 'live' } | null>(null);
   const [finixForm, setFinixForm] = useState<{
-    form: any;
+    form: FinixFormInstance;
     observer: MutationObserver | null;
     fallbackTimer: NodeJS.Timeout | null;
   } | null>(null);
@@ -213,7 +253,7 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
     }
 
     // Declare variables at useEffect scope so cleanup can access them
-    let form: any = null;
+    let form: FinixFormInstance | null = null;
     let observer: MutationObserver | null = null;
     let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -272,11 +312,11 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
           setFinixFormReady(true);
         });
 
-        form.on('change', (data: any) => {
+        form.on('change', (data: FinixEventData) => {
           console.log('📝 Finix form changed:', data);
         });
 
-        form.on('error', (error: any) => {
+        form.on('error', (error: FinixError) => {
           console.error('❌ Finix form error:', error);
           toast({
             title: "Form Error",
@@ -390,7 +430,7 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
   }, [paymentType, form]);
 
   // Handle address selection from Google Places
-  const handleAddressSelect = (addressComponents: any) => {
+  const handleAddressSelect = (addressComponents: AddressComponents) => {
     if (addressComponents.streetAddress) {
       form.setValue('streetAddress', addressComponents.streetAddress);
     }
@@ -440,7 +480,7 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
       console.log('Submitting Finix form...');
       
       // Submit Finix form to get token (callback-based per Finix docs)
-      finixForm.form.submit(finixConfig.environment, finixConfig.applicationId, async (err: any, res: any) => {
+      finixForm.form.submit(finixConfig.environment, finixConfig.applicationId, async (err: FinixError | null, res: FinixTokenResponse | null) => {
         if (err) {
           console.error('Finix submission error:', err);
           toast({
@@ -452,8 +492,7 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
           return;
         }
 
-        const tokenData = res.data || {};
-        const token = tokenData.id;
+        const token = res?.data?.id;
         console.log('Finix token received:', token);
 
         // Always send address to backend for storage and Finix validation
