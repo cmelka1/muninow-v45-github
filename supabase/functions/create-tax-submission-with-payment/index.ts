@@ -57,11 +57,18 @@ Deno.serve(async (req) => {
     } = body;
 
     // Validate required fields
-    if (!user_id || !customer_id || !merchant_id || !tax_type || !base_amount_cents) {
+    const missingFields = [];
+    if (!user_id) missingFields.push('user_id');
+    if (!customer_id) missingFields.push('customer_id');
+    if (!tax_type) missingFields.push('tax_type');
+    if (!base_amount_cents) missingFields.push('base_amount_cents');
+    
+    if (missingFields.length > 0) {
+      Logger.warn('Missing required fields', { missingFields });
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Missing required fields'
+          error: `Missing required fields: ${missingFields.join(', ')}`
         }),
         { status: 400, headers: corsHeaders }
       );
