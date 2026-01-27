@@ -114,6 +114,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
     name: string;
     code: string;
     instructions_document_path?: string;
+    merchant_id?: string;
   } | null>(null);
 
   // Submission state and errors
@@ -619,13 +620,14 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                           value={taxType} 
                           onValueChange={(value) => {
                             setTaxType(value);
-                            // Find the selected tax type data for displaying instructions
+                            // Find the selected tax type data for displaying instructions and merchant
                             const selectedType = availableTaxTypes.find(t => t.tax_type_code === value);
                             if (selectedType) {
                               setSelectedTaxTypeData({
                                 name: selectedType.tax_type_name,
                                 code: selectedType.tax_type_code,
                                 instructions_document_path: selectedType.instructions_document_path,
+                                merchant_id: selectedType.merchant_id,
                               });
                             }
                           }}
@@ -1101,7 +1103,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                         entityId={taxSubmissionId}
                           entityName={`${taxType} Tax Payment`}
                           customerId={selectedMunicipality?.customer_id || ''}
-                          merchantId={selectedMunicipality?.id || ''}
+                          merchantId={selectedTaxTypeData?.merchant_id || selectedMunicipality?.id || ''}
                           baseAmountCents={getTaxAmountInCents()}
                           initialExpanded={true}
                           onPaymentSuccess={(response: PaymentResponse) => {
