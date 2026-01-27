@@ -9,6 +9,7 @@ import { useUnifiedPaymentFlow, EntityType } from '@/hooks/useUnifiedPaymentFlow
 import { PaymentResponse } from '@/types/payment';
 import { useAuth } from '@/contexts/AuthContext';
 import ApplePayButton from '@/components/ApplePayButton';
+import GooglePayButton from '@/components/GooglePayButton';
 
 interface UnifiedPaymentDialogProps {
   open: boolean;
@@ -147,14 +148,20 @@ export const UnifiedPaymentDialog: React.FC<UnifiedPaymentDialogProps> = ({
 
             {/* Express checkout options */}
             <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={handleGooglePayment}
-                disabled={!googlePayMerchantId || isProcessingPayment}
-                className="flex-1"
-              >
-                Google Pay
-              </Button>
+              <div className="flex-1">
+                <GooglePayButton
+                  onPayment={async () => {
+                    try {
+                      await handleGooglePayment();
+                    } catch (error) {
+                      console.error('Google Pay error in dialog:', error);
+                    }
+                  }}
+                  totalAmount={totalWithFee / 100}
+                  merchantId={googlePayMerchantId || ''}
+                  isDisabled={!googlePayMerchantId || isProcessingPayment}
+                />
+              </div>
               <div className="flex-1">
                 {user ? (
                   <ApplePayButton

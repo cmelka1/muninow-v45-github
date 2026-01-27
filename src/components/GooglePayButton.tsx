@@ -62,15 +62,25 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
   }, []);
 
   const handleClick = async () => {
-    if (isDisabled || isProcessing || !isGooglePayReady) return;
+    console.group('🔘 GOOGLE_PAY_BUTTON_CLICK');
+    console.log('Button state:', { isDisabled, isProcessing, isGooglePayReady, merchantId });
+    
+    if (isDisabled || isProcessing || !isGooglePayReady) {
+      console.log('❌ Click blocked:', { isDisabled, isProcessing, isGooglePayReady });
+      console.groupEnd();
+      return;
+    }
 
     try {
+      console.log('✅ Starting Google Pay flow...');
       setIsProcessing(true);
       await onPayment();
+      console.log('✅ Google Pay flow completed successfully');
     } catch (error) {
-      console.error('Google Pay payment error:', error);
+      console.error('❌ Google Pay payment error:', error);
     } finally {
       setIsProcessing(false);
+      console.groupEnd();
     }
   };
 
