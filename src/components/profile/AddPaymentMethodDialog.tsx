@@ -251,17 +251,10 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
       
       const containerId = `finix-${paymentType}-form-container`;
       
-      // Prepare form configuration with address defaultValues for Finix validation
+      // Prepare form configuration - address is collected in parent form and sent at submit time
       const formConfig = {
         styles: formStyles,
         showAddress: false, // Keep address in parent form, not in iframe
-        defaultValues: {
-          address_line1: watchedStreetAddress || '',
-          address_city: watchedCity || '',
-          address_region: watchedState || '',
-          address_postal_code: watchedZipCode || '',
-          address_country: watchedCountry || 'USA'
-        }
       };
 
       // Create appropriate form type with address support for AVS validation
@@ -375,11 +368,9 @@ export const AddPaymentMethodDialog: React.FC<AddPaymentMethodDialogProps> = ({
     finixLibraryLoaded, 
     paymentType, 
     open,
-    watchedStreetAddress,
-    watchedCity,
-    watchedState,
-    watchedZipCode,
-    watchedCountry
+    // Note: Address fields intentionally NOT included as dependencies
+    // Address is collected from React form and passed to Edge function at submit time
+    // Including them here was causing the Finix iframe to destroy/recreate on every keystroke
   ]);
 
   // Reset form when dialog opens
