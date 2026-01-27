@@ -109,14 +109,33 @@ export class FinixAPI {
         };
       }
 
-      Logger.info('[FinixAPI] Payment instrument created successfully', { id: instrument.id });
+      // DEBUG: Log the raw Finix response to understand the structure
+      Logger.info('[FinixAPI] Payment instrument created - RAW RESPONSE', { 
+        id: instrument.id,
+        type: instrument.type,
+        card: instrument.card,
+        brand: instrument.brand,
+        last_four: instrument.last_four,
+        masked_account_number: instrument.masked_account_number,
+        all_keys: Object.keys(instrument),
+        raw: JSON.stringify(instrument)
+      });
+
+      // Extract card details with multiple fallback paths
+      // Finix may return data under .card or directly on the instrument
+      const cardBrand = instrument.card?.brand || instrument.brand || null;
+      const cardLastFour = instrument.card?.last_four || instrument.last_four || instrument.masked_account_number?.slice(-4) || null;
+      const cardExpMonth = instrument.card?.expiration_month || instrument.expiration_month || null;
+      const cardExpYear = instrument.card?.expiration_year || instrument.expiration_year || null;
+      
+      Logger.info('[FinixAPI] Extracted card details', { cardBrand, cardLastFour, cardExpMonth, cardExpYear });
 
       return {
         success: true,
         data: {
           id: instrument.id,
-          card_brand: instrument.card?.brand,
-          last_four: instrument.card?.last_four || instrument.masked_account_number?.slice(-4),
+          card_brand: cardBrand,
+          last_four: cardLastFour,
           masked_account_number: instrument.masked_account_number,
           bank_code: instrument.bank_code,
           account_type: instrument.account_type,
@@ -124,8 +143,8 @@ export class FinixAPI {
           fingerprint: instrument.fingerprint,
           created_at: instrument.created_at,
           updated_at: instrument.updated_at,
-          expiration_month: instrument.card?.expiration_month,
-          expiration_year: instrument.card?.expiration_year,
+          expiration_month: cardExpMonth,
+          expiration_year: cardExpYear,
           instrument_type: instrument.type,
           bank_account_validation_check: instrument.bank_account_validation_check,
           links: instrument._links

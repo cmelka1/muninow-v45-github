@@ -89,13 +89,25 @@ serve(async (req) => {
     }
 
     const paymentInstrument = instrumentResult.data;
-    Logger.info('Payment instrument created', { id: paymentInstrument.id });
+    
+    // DEBUG: Log the full payment instrument data to understand the structure
+    Logger.info('Payment instrument created - FULL DATA', { 
+      id: paymentInstrument.id,
+      card_brand: paymentInstrument.card_brand,
+      last_four: paymentInstrument.last_four,
+      expiration_month: paymentInstrument.expiration_month,
+      expiration_year: paymentInstrument.expiration_year,
+      all_keys: Object.keys(paymentInstrument),
+      raw_data: JSON.stringify(paymentInstrument)
+    });
 
-    // Extract card details
-    const cardBrand = paymentInstrument.card_brand || 'UNKNOWN';
-    const cardLastFour = paymentInstrument.last_four || '0000';
-    const cardExpMonth = paymentInstrument.expiration_month;
-    const cardExpYear = paymentInstrument.expiration_year;
+    // Extract card details with fallbacks
+    const cardBrand = paymentInstrument.card_brand || paymentInstrument.brand || 'UNKNOWN';
+    const cardLastFour = paymentInstrument.last_four || paymentInstrument.lastFour || '0000';
+    const cardExpMonth = paymentInstrument.expiration_month || paymentInstrument.expirationMonth;
+    const cardExpYear = paymentInstrument.expiration_year || paymentInstrument.expirationYear;
+    
+    Logger.info('Extracted card details', { cardBrand, cardLastFour, cardExpMonth, cardExpYear });
 
     // Generate display name
     const displayName = nickname || `${cardBrand} •••• ${cardLastFour}`;
