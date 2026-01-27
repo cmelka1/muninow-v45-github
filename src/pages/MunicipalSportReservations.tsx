@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, FileText, DollarSign, Settings } from 'lucide-react';
@@ -71,7 +72,11 @@ const MunicipalSportReservations = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <>
+      <Helmet>
+        <title>Rentals | MuniNow</title>
+      </Helmet>
+      <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Sport Facility Management</h1>
@@ -232,6 +237,7 @@ const MunicipalSportReservations = () => {
         onSuccess={() => {}}
       />
     </div>
+    </>
   );
 };
 

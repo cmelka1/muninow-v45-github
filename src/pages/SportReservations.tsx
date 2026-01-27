@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Search, MapPin, AlertCircle, Calendar } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -66,6 +67,9 @@ const SportReservations: React.FC = () => {
 
   return (
     <SidebarProvider>
+      <Helmet>
+        <title>Rentals | MuniNow</title>
+      </Helmet>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <SidebarInset className="flex-1 bg-gray-100">

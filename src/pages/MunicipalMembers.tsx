@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,7 +42,11 @@ const MunicipalMembers = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <>
+      <Helmet>
+        <title>Members | MuniNow</title>
+      </Helmet>
+      <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Team Members</h1>
@@ -159,6 +164,7 @@ const MunicipalMembers = () => {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 };
 
