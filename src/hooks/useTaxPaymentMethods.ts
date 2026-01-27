@@ -10,6 +10,7 @@ import { useSessionValidation } from '@/hooks/useSessionValidation';
 export const useTaxPaymentMethods = (taxData: {
   municipality: any;
   taxType: string;
+  taxTypeMerchantId?: string; // Optional: merchant_id from the selected tax type
   amount: number; // in cents
   calculationData?: any;
   payer?: any;
@@ -26,11 +27,14 @@ export const useTaxPaymentMethods = (taxData: {
   // State for tax submission ID once created
   const [taxSubmissionId, setTaxSubmissionId] = useState<string | null>(null);
   
+  // Determine merchant: use tax type's merchant if set, otherwise fall back to municipality
+  const effectiveMerchantId = taxData.taxTypeMerchantId || taxData.municipality?.merchant_id || '';
+  
   // Use unified payment flow for tax submissions
   const unifiedPayment = useUnifiedPaymentFlow({
     entityType: 'tax_submission',
     entityId: taxSubmissionId || 'temp-id', // Will be updated when tax submission is created
-    merchantId: taxData.municipality?.merchant_id || '',
+    merchantId: effectiveMerchantId,
     baseAmountCents: taxData.amount,
     onSuccess: (response) => {
       console.log('Tax payment successful:', response);

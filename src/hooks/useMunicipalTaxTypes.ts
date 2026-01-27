@@ -37,6 +37,7 @@ export interface UpdateMunicipalTaxTypeData {
   display_order?: number;
   required_documents?: string[];
   instructions_document_path?: string;
+  merchant_id?: string;
 }
 
 // Hook to fetch municipal tax types for a customer

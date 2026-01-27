@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Edit2, Save, X, Upload, Plus, FileText, Download, Trash2 } from 'lucide-react';
+import { useCustomerMerchants } from '@/hooks/useCustomerMerchants';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -79,6 +81,9 @@ const NewTaxTypeRow: React.FC<NewTaxTypeRowProps> = ({ onAdd, isLoading }) => {
         />
       </TableCell>
       <TableCell>
+        <span className="text-sm text-muted-foreground">Set after creation</span>
+      </TableCell>
+      <TableCell>
         <Badge variant="outline" className="text-xs">
           New
         </Badge>
@@ -106,6 +111,7 @@ export const TaxesSettingsTab = () => {
 
   // Queries and mutations
   const { data: taxTypes = [], isLoading } = useAllMunicipalTaxTypes();
+  const { data: merchants = [] } = useCustomerMerchants();
   const updateTaxTypesMutation = useUpdateMunicipalTaxTypes();
   const createTaxTypeMutation = useCreateMunicipalTaxType();
   const uploadDocumentMutation = useUploadTaxInstructionDocument();
@@ -144,6 +150,8 @@ export const TaxesSettingsTab = () => {
           acc[taxTypeId].tax_type_name = value;
           // Auto-generate tax_type_code from name
           acc[taxTypeId].tax_type_code = value.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        } else if (field === 'merchant_id') {
+          acc[taxTypeId].merchant_id = value === 'none' ? null : value;
         }
         return acc;
       }, {} as Record<string, any>);
@@ -160,6 +168,7 @@ export const TaxesSettingsTab = () => {
           display_order: taxType?.display_order || 0,
           required_documents: taxType?.required_documents || [],
           instructions_document_path: taxType?.instructions_document_path || null,
+          merchant_id: updateData.merchant_id !== undefined ? updateData.merchant_id : taxType?.merchant_id,
         }]);
       });
 
@@ -335,6 +344,7 @@ export const TaxesSettingsTab = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Tax Type</TableHead>
+                    <TableHead>Merchant</TableHead>
                     <TableHead>Instructions Document</TableHead>
                     {isEditMode && <TableHead className="w-20">Actions</TableHead>}
                   </TableRow>
@@ -349,6 +359,32 @@ export const TaxesSettingsTab = () => {
                           placeholder={taxType.tax_type_name}
                           isEditMode={isEditMode}
                         />
+                      </TableCell>
+                      <TableCell>
+                        {isEditMode ? (
+                          <Select
+                            value={getFieldValue(taxType, 'merchant_id', taxType.merchant_id || 'none')}
+                            onValueChange={(value) => handleFieldChange(taxType.id, 'merchant_id', value)}
+                          >
+                            <SelectTrigger className="w-[200px]">
+                              <SelectValue placeholder="Select merchant" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Default (Municipality)</SelectItem>
+                              {merchants.map((merchant) => (
+                                <SelectItem key={merchant.id} value={merchant.id}>
+                                  {merchant.merchant_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <span className="text-sm">
+                            {taxType.merchant_id 
+                              ? merchants.find(m => m.id === taxType.merchant_id)?.merchant_name || 'Custom'
+                              : 'Default (Municipality)'}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
