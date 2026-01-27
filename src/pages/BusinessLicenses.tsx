@@ -37,7 +37,7 @@ const BusinessLicenses = () => {
   return (
     <SidebarProvider>
       <Helmet>
-        <title>Business Licenses | MuniNow</title>
+        <title>Licenses | MuniNow</title>
       </Helmet>
       <div className="min-h-screen flex w-full">
         <AppSidebar />

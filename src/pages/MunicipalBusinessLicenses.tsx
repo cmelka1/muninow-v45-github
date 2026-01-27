@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@/contexts/AuthContext';
 import BusinessLicenseFilter, { BusinessLicenseFilters } from '@/components/BusinessLicenseFilter';
 import { MunicipalBusinessLicenseTable } from '@/components/MunicipalBusinessLicenseTable';
@@ -23,7 +24,11 @@ const MunicipalBusinessLicenses = () => {
   }
 
   return (
-    <div className="p-8">
+    <>
+      <Helmet>
+        <title>Licenses | MuniNow</title>
+      </Helmet>
+      <div className="p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Business Licenses
@@ -41,6 +46,7 @@ const MunicipalBusinessLicenses = () => {
         }}
       />
     </div>
+    </>
   );
 };
 
