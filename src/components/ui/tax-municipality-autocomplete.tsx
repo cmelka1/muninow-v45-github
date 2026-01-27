@@ -2,22 +2,19 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { useTaxMerchants } from '@/hooks/useTaxMerchants';
+import { useTaxMunicipalities, TaxMunicipality } from '@/hooks/useTaxMunicipalities';
 import { cn } from '@/lib/utils';
 
-export interface TaxMerchant {
-  id: string;
-  merchant_name: string;
-  business_name: string;
+// Re-export for backwards compatibility with PayTaxDialog
+export interface SelectedMunicipality {
+  customer_id: string;
   customer_city: string;
   customer_state: string;
-  customer_id: string;
-  finix_merchant_id: string;
 }
 
 interface TaxMunicipalityAutocompleteProps {
   value?: string;
-  onSelect: (merchant: TaxMerchant) => void;
+  onSelect: (municipality: SelectedMunicipality) => void;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
@@ -33,38 +30,42 @@ export const TaxMunicipalityAutocomplete: React.FC<TaxMunicipalityAutocompletePr
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [selectedMerchant, setSelectedMerchant] = useState<TaxMerchant | null>(null);
+  const [selectedMunicipality, setSelectedMunicipality] = useState<TaxMunicipality | null>(null);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
-  const { merchants, isLoading, error } = useTaxMerchants(searchTerm);
+  const { municipalities, isLoading, error } = useTaxMunicipalities(searchTerm);
 
   // Update input display when value prop changes
   useEffect(() => {
-    if (value && !selectedMerchant) {
+    if (value && !selectedMunicipality) {
       setSearchTerm('');
     }
-  }, [value, selectedMerchant]);
+  }, [value, selectedMunicipality]);
 
-  const getDisplayName = (merchant: TaxMerchant) => {
-    return merchant.merchant_name;
+  const getDisplayName = (municipality: TaxMunicipality) => {
+    return `${municipality.customer_city}, ${municipality.customer_state}`;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setSearchTerm(newValue);
-    setSelectedMerchant(null);
+    setSelectedMunicipality(null);
     setIsOpen(true);
     setHighlightedIndex(-1);
   };
 
-  const handleSelect = (merchant: TaxMerchant) => {
-    setSelectedMerchant(merchant);
-    setSearchTerm(getDisplayName(merchant));
+  const handleSelect = (municipality: TaxMunicipality) => {
+    setSelectedMunicipality(municipality);
+    setSearchTerm(getDisplayName(municipality));
     setIsOpen(false);
     setHighlightedIndex(-1);
-    onSelect(merchant);
+    onSelect({
+      customer_id: municipality.customer_id,
+      customer_city: municipality.customer_city,
+      customer_state: municipality.customer_state,
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -79,7 +80,7 @@ export const TaxMunicipalityAutocomplete: React.FC<TaxMunicipalityAutocompletePr
       case 'ArrowDown':
         e.preventDefault();
         setHighlightedIndex(prev => 
-          prev < merchants.length - 1 ? prev + 1 : prev
+          prev < municipalities.length - 1 ? prev + 1 : prev
         );
         break;
       case 'ArrowUp':
@@ -88,8 +89,8 @@ export const TaxMunicipalityAutocomplete: React.FC<TaxMunicipalityAutocompletePr
         break;
       case 'Enter':
         e.preventDefault();
-        if (highlightedIndex >= 0 && merchants[highlightedIndex]) {
-          handleSelect(merchants[highlightedIndex]);
+        if (highlightedIndex >= 0 && municipalities[highlightedIndex]) {
+          handleSelect(municipalities[highlightedIndex]);
         }
         break;
       case 'Escape':
@@ -156,32 +157,27 @@ export const TaxMunicipalityAutocomplete: React.FC<TaxMunicipalityAutocompletePr
             </div>
           )}
 
-          {!isLoading && !error && searchTerm.length >= 2 && merchants.length === 0 && (
+          {!isLoading && !error && searchTerm.length >= 2 && municipalities.length === 0 && (
             <div className="px-3 py-2 text-sm text-muted-foreground">
               No municipalities found matching "{searchTerm}"
             </div>
           )}
 
-          {!isLoading && merchants.length > 0 && (
+          {!isLoading && municipalities.length > 0 && (
             <div className="py-1">
-              {merchants.map((merchant, index) => (
+              {municipalities.map((municipality, index) => (
                 <Button
-                  key={merchant.id}
+                  key={municipality.customer_id}
                   variant="ghost"
                   className={cn(
                     "w-full justify-start text-left font-normal h-auto p-3 rounded-none",
                     index === highlightedIndex && "bg-accent text-accent-foreground"
                   )}
-                  onClick={() => handleSelect(merchant)}
+                  onClick={() => handleSelect(municipality)}
                   onMouseEnter={() => setHighlightedIndex(index)}
                 >
                   <div className="truncate">
-                    <div className="font-medium">{getDisplayName(merchant)}</div>
-                    {merchant.customer_city && merchant.customer_state && (
-                      <div className="text-xs text-muted-foreground">
-                        {merchant.customer_city}, {merchant.customer_state}
-                      </div>
-                    )}
+                    <div className="font-medium">{getDisplayName(municipality)}</div>
                   </div>
                 </Button>
               ))}

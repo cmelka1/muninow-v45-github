@@ -39,13 +39,9 @@ interface PayTaxDialogProps {
 }
 
 interface SelectedMunicipality {
-  id: string;
-  merchant_name: string;
-  business_name: string;
+  customer_id: string;
   customer_city: string;
   customer_state: string;
-  customer_id: string;
-  finix_merchant_id: string;
 }
 
 interface AddressComponents {
@@ -377,7 +373,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
           body: {
             user_id: profile.id,
             customer_id: selectedMunicipality.customer_id,
-            merchant_id: selectedMunicipality.id,
+            merchant_id: selectedTaxTypeData?.merchant_id || null,
             tax_type: taxType,
             tax_period_start: getCurrentTaxPeriodStart(),
             tax_period_end: getCurrentTaxPeriodEnd(),
@@ -979,7 +975,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="text-muted-foreground">Municipality:</span>
-                          <p className="font-medium">{selectedMunicipality?.merchant_name || 'Not selected'}</p>
+                          <p className="font-medium">{selectedMunicipality ? `${selectedMunicipality.customer_city}, ${selectedMunicipality.customer_state}` : 'Not selected'}</p>
                         </div>
                         <div>
                           <span className="text-muted-foreground">Tax Type:</span>
@@ -1103,7 +1099,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
                         entityId={taxSubmissionId}
                           entityName={`${taxType} Tax Payment`}
                           customerId={selectedMunicipality?.customer_id || ''}
-                          merchantId={selectedTaxTypeData?.merchant_id || selectedMunicipality?.id || ''}
+                          merchantId={selectedTaxTypeData?.merchant_id || ''}
                           baseAmountCents={getTaxAmountInCents()}
                           initialExpanded={true}
                           onPaymentSuccess={(response: PaymentResponse) => {
