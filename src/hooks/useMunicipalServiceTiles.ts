@@ -67,7 +67,7 @@ export const useMunicipalServiceTiles = (customerId?: string, includeInactive: b
         query = query.eq('customer_id', customerId);
       }
       
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await query.order('title', { ascending: true });
       
       if (error) throw error;
       return (data || []).map(tile => ({
