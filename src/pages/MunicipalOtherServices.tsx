@@ -17,7 +17,8 @@ const MunicipalOtherServices = () => {
   const [searchTerm, setSearchTerm] = useState('');
   
   // Fetch service tiles and applications for this municipality
-  const { data: serviceTiles, isLoading: tilesLoading } = useMunicipalServiceTiles(profile?.customer_id);
+  // Pass true for includeInactive so admins can see and manage all tiles
+  const { data: serviceTiles, isLoading: tilesLoading } = useMunicipalServiceTiles(profile?.customer_id, true);
   const { data: applications, isLoading: applicationsLoading } = useServiceApplications();
   
   // Filter OUT sport facilities (has_time_slots = true)

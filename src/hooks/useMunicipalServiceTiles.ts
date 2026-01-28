@@ -50,14 +50,18 @@ export interface MunicipalServiceTile {
   updated_at: string;
 }
 
-export const useMunicipalServiceTiles = (customerId?: string) => {
+export const useMunicipalServiceTiles = (customerId?: string, includeInactive: boolean = false) => {
   return useQuery({
-    queryKey: ['municipal-service-tiles', customerId],
+    queryKey: ['municipal-service-tiles', customerId, includeInactive],
     queryFn: async () => {
       let query = supabase
         .from('municipal_service_tiles')
-        .select('*')
-        .eq('is_active', true);
+        .select('*');
+      
+      // Only filter by is_active if not including inactive tiles (for resident view)
+      if (!includeInactive) {
+        query = query.eq('is_active', true);
+      }
       
       if (customerId) {
         query = query.eq('customer_id', customerId);
