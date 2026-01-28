@@ -98,24 +98,34 @@ export function useGooglePay(config: GooglePayConfig): UseGooglePayReturn {
           return;
         }
 
+        // In TEST mode, allow proceeding without google_merchant_id
+        // In PRODUCTION, this will cause OR_BIBED_11 error
+        const isProduction = import.meta.env.PROD || import.meta.env.VITE_GOOGLE_PAY_ENV === 'PRODUCTION';
+        
         if (!data.google_merchant_id) {
-          console.error('Missing google_merchant_id in response - Google Pay will fail!');
-          setError('Google Pay configuration incomplete');
-          setIsLoading(false);
-          console.groupEnd();
-          return;
+          if (isProduction) {
+            console.error('Missing google_merchant_id in response - Google Pay will fail in PRODUCTION!');
+            setError('Google Pay configuration incomplete');
+            setIsLoading(false);
+            console.groupEnd();
+            return;
+          } else {
+            console.warn('⚠️ Missing google_merchant_id - using TEST mode without Google merchant verification');
+            console.warn('⚠️ Set GOOGLE_PAY_MERCHANT_ID_GOOGLE secret in Supabase for production');
+          }
         }
 
         const merchantCfg: GooglePayMerchantConfig = {
           finixIdentityId: data.finix_identity_id,
-          googleMerchantId: data.google_merchant_id,
+          googleMerchantId: data.google_merchant_id || 'BCR2DN7TZDH05TZ4', // Fallback for TEST mode
           finixMerchantId: data.finix_merchant_id || null
         };
 
         console.log('✅ Merchant configuration loaded:', {
           finixIdentityId: merchantCfg.finixIdentityId,
           googleMerchantId: merchantCfg.googleMerchantId,
-          hasFinixMerchantId: !!merchantCfg.finixMerchantId
+          hasFinixMerchantId: !!merchantCfg.finixMerchantId,
+          isProduction
         });
 
         setMerchantConfig(merchantCfg);
