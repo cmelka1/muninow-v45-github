@@ -353,18 +353,12 @@ export const ApplicationFormStep: React.FC<ApplicationFormStepProps> = ({
             {tile.guidance_text ? (
               <p>{tile.guidance_text}</p>
             ) : (
-              <>
-                <p>
-                  Please review the attached PDF carefully and either (a) provide responses to any
-                  applicable questions in the Additional Information text area, or (b) upload a
-                  completed copy of the document in the Document Upload section.
-                </p>
-                <p>
-                  If your payment amount is variable, please calculate the amount due and enter
-                  both the total and the calculation reasoning as the final item in the Additional
-                  Information text area.
-                </p>
-              </>
+              <p>
+                Please complete all required fields below.
+                {tile.pdf_form_url && ' You may download and review the attached PDF form for reference.'}
+                {tile.requires_document_upload && ' Please upload any required supporting documents.'}
+                {tile.allow_user_defined_amount && ' Enter the total amount due for this service.'}
+              </p>
             )}
           </div>
         </AlertDescription>
@@ -523,7 +517,8 @@ export const ApplicationFormStep: React.FC<ApplicationFormStepProps> = ({
           </CardContent>
         </Card>
 
-        {/* Section 2: Document Upload */}
+        {/* Section 2: Document Upload - Only show if required or if there's a PDF form */}
+        {(tile.requires_document_upload || tile.pdf_form_url) && (
         <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
           <CardHeader className="pb-4">
             <CardTitle className="text-base flex items-center gap-2">
@@ -610,6 +605,7 @@ export const ApplicationFormStep: React.FC<ApplicationFormStepProps> = ({
             </div>
           </CardContent>
         </Card>
+        )}
 
         {/* Review Required Info Box */}
         {tile.requires_review && (
@@ -617,7 +613,7 @@ export const ApplicationFormStep: React.FC<ApplicationFormStepProps> = ({
             <Info className="h-4 w-4" />
             <AlertDescription>
               <strong>Review Required:</strong> This application will be reviewed by municipal staff
-              before approval. Payment will only be processed after approval.
+              before approval.{tile.requires_payment && ' Payment will only be processed after approval.'}
             </AlertDescription>
           </Alert>
         )}
