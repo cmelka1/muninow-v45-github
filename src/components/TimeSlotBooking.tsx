@@ -116,17 +116,16 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
         </AlertDescription>
       </Alert>
       
-      {/* Responsive grid: stacks until xl, then 55%/45% split */}
-      <div className="grid grid-cols-1 xl:grid-cols-[55%_45%] gap-4 md:gap-6">
-        {/* Calendar - needs minimum width to not truncate */}
-        <Card className="min-w-0">
-          <CardContent className="p-3 sm:p-4 flex flex-col items-center overflow-x-auto">
-            <Label className="flex items-center gap-2 mb-3 text-sm sm:text-base shrink-0">
+      {/* Side-by-side layout at md breakpoint */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Calendar Card */}
+        <Card>
+          <CardContent className="p-4 flex flex-col items-center">
+            <Label className="flex items-center gap-2 mb-3">
               <CalendarIcon className="h-4 w-4" />
               Select Date
             </Label>
-            {/* Calendar wrapper ensures it doesn't compress */}
-            <div className="flex justify-center shrink-0">
+            <div className="flex justify-center">
               <Calendar
                 mode="single"
                 selected={selectedDate}
@@ -135,7 +134,7 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
                 className="rounded-md border"
               />
             </div>
-            <div className="mt-3 text-xs sm:text-sm text-muted-foreground text-center shrink-0">
+            <div className="mt-3 text-sm text-muted-foreground text-center">
               <p>Available: {config.available_days?.join(', ')}</p>
               <p className="mt-1">Book up to {config.max_advance_days || 30} days in advance</p>
             </div>
@@ -143,9 +142,9 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
         </Card>
         
         {/* Time Slots */}
-        <Card className="min-w-0">
-          <CardContent className="p-3 sm:p-4">
-            <Label className="flex items-center gap-2 mb-3 text-sm sm:text-base">
+        <Card>
+          <CardContent className="p-4">
+            <Label className="flex items-center gap-2 mb-3">
               <Clock className="h-4 w-4" />
               Select Time
               {loadingSlots && <span className="text-xs text-muted-foreground">(Loading...)</span>}
