@@ -63,35 +63,52 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Validate merchant_id is provided
+    if (!merchantId) {
+      Logger.error('No merchant_id provided in request');
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'merchant_id is required'
+        }), 
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Fetch merchant configuration from database
-    let finixIdentityId: string | null = null;
-    let finixMerchantId: string | null = null;
+    Logger.info('Looking up merchant', { merchantId });
+    
+    const { data: merchant, error: merchantError } = await supabase
+      .from('merchants')
+      .select('finix_identity_id, finix_merchant_id')
+      .eq('id', merchantId)
+      .single();
 
-    if (merchantId) {
-      Logger.info('Looking up merchant', { merchantId });
-      
-      const { data: merchant, error: merchantError } = await supabase
-        .from('merchants')
-        .select('finix_identity_id, finix_merchant_id')
-        .eq('id', merchantId)
-        .single();
-
-      if (merchantError) {
-        Logger.error('Merchant lookup failed', merchantError);
-      } else if (merchant) {
-        finixIdentityId = merchant.finix_identity_id;
-        finixMerchantId = merchant.finix_merchant_id;
-        Logger.info('Found merchant', { finixIdentityId, finixMerchantId });
-      }
+    if (merchantError) {
+      Logger.error('Merchant lookup failed', merchantError);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Failed to lookup merchant'
+        }), 
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Fallback to environment variable if no merchant found
-    if (!finixIdentityId) {
-      finixIdentityId = Deno.env.get('GOOGLE_PAY_MERCHANT_ID');
-      if (finixIdentityId) {
-        Logger.info('Using GOOGLE_PAY_MERCHANT_ID env var fallback');
-      }
+    if (!merchant) {
+      Logger.error('Merchant not found', { merchantId });
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Merchant not found'
+        }), 
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    const finixIdentityId = merchant.finix_identity_id;
+    const finixMerchantId = merchant.finix_merchant_id;
+    Logger.info('Found merchant', { finixIdentityId, finixMerchantId });
 
     // Validate we have a Finix identity
     if (!finixIdentityId) {
