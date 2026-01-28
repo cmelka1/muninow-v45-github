@@ -7,6 +7,7 @@ import PaymentMethodSelector from '@/components/PaymentMethodSelector';
 import GooglePayButton from '@/components/GooglePayButton';
 import ApplePayButton from '@/components/ApplePayButton';
 import { useUnifiedPaymentFlow, EntityType } from '@/hooks/useUnifiedPaymentFlow';
+import { useGooglePay } from '@/hooks/useGooglePay';
 import { PaymentResponse } from '@/types/payment';
 import { formatCurrency } from '@/lib/formatters';
 import { useAuth } from '@/contexts/AuthContext';
@@ -65,10 +66,8 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
     totalWithFee,
     paymentInstruments,
     paymentMethodsLoading,
-    googlePayMerchantId,
     finixSessionKey,
     handlePayment,
-    handleGooglePayment,
   } = useUnifiedPaymentFlow({
     entityType,
     entityId,
@@ -108,6 +107,34 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
         isProcessingPayment
       });
       console.groupEnd();
+      onPaymentError?.(error);
+    },
+  });
+
+  // Use new dedicated Google Pay hook
+  const {
+    isReady: isGooglePayReady,
+    isLoading: isGooglePayLoading,
+    isProcessing: isGooglePayProcessing,
+    initiatePayment: initiateGooglePayment,
+    merchantConfig: googlePayMerchantConfig,
+  } = useGooglePay({
+    entityType,
+    entityId,
+    merchantId,
+    baseAmountCents,
+    serviceFeeAmountCents: serviceFee?.serviceFeeToDisplay,
+    onSuccess: (response) => {
+      console.log('🎊 Google Pay success via new hook:', response);
+      setShowSuccess(true);
+      onPaymentSuccess?.(response);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setIsExpanded(false);
+      }, 3000);
+    },
+    onError: (error) => {
+      console.error('❌ Google Pay error via new hook:', error);
       onPaymentError?.(error);
     },
   });
@@ -210,10 +237,10 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
 
         {/* Digital Payment Options */}
         <div className="space-y-3">
-          {!googlePayMerchantId && (
+          {isGooglePayLoading && (
             <div className="text-sm text-muted-foreground text-center py-2">
               <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
-              Loading payment methods...
+              Loading Google Pay...
             </div>
           )}
           
@@ -222,14 +249,16 @@ export const InlinePaymentFlow: React.FC<InlinePaymentFlowProps> = ({
               <GooglePayButton
                 onPayment={async () => {
                   try {
-                    await handleGooglePayment();
+                    console.log('🎯 Initiating Google Pay via new hook');
+                    console.log('   merchantConfig:', googlePayMerchantConfig);
+                    await initiateGooglePayment();
                   } catch (error) {
                     console.error('Google Pay error in button:', error);
                   }
                 }}
                 totalAmount={totalWithFee}
-                merchantId={googlePayMerchantId || ''}
-                isDisabled={!googlePayMerchantId || isProcessingPayment}
+                merchantId={googlePayMerchantConfig?.googleMerchantId || ''}
+                isDisabled={!isGooglePayReady || isProcessingPayment || isGooglePayProcessing}
                 onAvailabilityChange={setIsGooglePayAvailable}
               />
             </div>
