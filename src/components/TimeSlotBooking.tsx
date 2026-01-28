@@ -116,24 +116,26 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
         </AlertDescription>
       </Alert>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        {/* Calendar */}
-        <Card className="overflow-hidden">
-          <CardContent className="p-3 sm:p-4 flex flex-col items-center">
-            <Label className="flex items-center gap-2 mb-3 text-sm sm:text-base">
+      {/* Responsive grid: stacks until xl, then 55%/45% split */}
+      <div className="grid grid-cols-1 xl:grid-cols-[55%_45%] gap-4 md:gap-6">
+        {/* Calendar - needs minimum width to not truncate */}
+        <Card className="min-w-0">
+          <CardContent className="p-3 sm:p-4 flex flex-col items-center overflow-x-auto">
+            <Label className="flex items-center gap-2 mb-3 text-sm sm:text-base shrink-0">
               <CalendarIcon className="h-4 w-4" />
               Select Date
             </Label>
-            <div className="w-full flex justify-center">
+            {/* Calendar wrapper ensures it doesn't compress */}
+            <div className="flex justify-center shrink-0">
               <Calendar
                 mode="single"
                 selected={selectedDate}
                 onSelect={onDateSelect}
                 disabled={disabledDates}
-                className="rounded-md border w-full max-w-[280px] sm:max-w-none [&_.rdp-caption]:text-sm sm:[&_.rdp-caption]:text-base [&_.rdp-cell]:p-0 sm:[&_.rdp-cell]:p-0.5 [&_.rdp-button]:h-8 [&_.rdp-button]:w-8 sm:[&_.rdp-button]:h-9 sm:[&_.rdp-button]:w-9 [&_.rdp-head_cell]:text-xs sm:[&_.rdp-head_cell]:text-sm"
+                className="rounded-md border"
               />
             </div>
-            <div className="mt-3 text-xs sm:text-sm text-muted-foreground text-center">
+            <div className="mt-3 text-xs sm:text-sm text-muted-foreground text-center shrink-0">
               <p>Available: {config.available_days?.join(', ')}</p>
               <p className="mt-1">Book up to {config.max_advance_days || 30} days in advance</p>
             </div>
@@ -141,7 +143,7 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
         </Card>
         
         {/* Time Slots */}
-        <Card className="overflow-hidden">
+        <Card className="min-w-0">
           <CardContent className="p-3 sm:p-4">
             <Label className="flex items-center gap-2 mb-3 text-sm sm:text-base">
               <Clock className="h-4 w-4" />
