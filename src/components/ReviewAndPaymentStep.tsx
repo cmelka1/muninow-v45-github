@@ -106,8 +106,55 @@ export const ReviewAndPaymentStep = ({
       )}
       
       {/* Conditional Payment or Submit Section */}
-      {!tile.requires_review ? (
-        /* Payment Section for Auto-Approve Services */
+      {tile.requires_review ? (
+        /* Submit Section for Manual Review Services */
+        <>
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="text-base">Next Steps</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 text-sm">
+                <p>Your application will be submitted for manual review by municipal staff.</p>
+                {tile.requires_payment && totalAmount > 0 && (
+                  <p>Payment will be processed after your application is approved.</p>
+                )}
+                <p>You will receive notifications about your application status via email.</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Navigation & Submit Actions */}
+          <div className="flex justify-between pt-6">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onPrevious}
+              className="flex items-center gap-2"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            <div className="flex gap-3">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="button"
+                onClick={onSubmitApplication}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Application'}
+              </Button>
+            </div>
+          </div>
+        </>
+      ) : tile.requires_payment ? (
+        /* Payment Section for Auto-Approve Services that require payment */
         <div className="mt-8 space-y-6">
           {/* Payment Information Card */}
           <Card>
@@ -152,19 +199,16 @@ export const ReviewAndPaymentStep = ({
           </div>
         </div>
       ) : (
-        /* Submit Section for Manual Review Services */
+        /* Simple Submit Section for No-Payment, No-Review Services */
         <>
           <Card className="mt-8">
             <CardHeader>
-              <CardTitle className="text-base">Next Steps</CardTitle>
+              <CardTitle className="text-base">Ready to Submit</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3 text-sm">
-                <p>Your application will be submitted for manual review by municipal staff.</p>
-                {totalAmount > 0 && (
-                  <p>Payment will be processed after your application is approved.</p>
-                )}
-                <p>You will receive notifications about your application status via email.</p>
+                <p>Your application will be submitted and processed automatically.</p>
+                <p>You will receive a confirmation notification via email.</p>
               </div>
             </CardContent>
           </Card>
