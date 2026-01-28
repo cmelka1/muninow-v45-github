@@ -116,22 +116,24 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
         </AlertDescription>
       </Alert>
       
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Calendar */}
-        <Card>
-          <CardContent className="p-4 flex flex-col items-center">
-            <Label className="flex items-center gap-2 mb-3">
+        <Card className="overflow-hidden">
+          <CardContent className="p-3 sm:p-4 flex flex-col items-center">
+            <Label className="flex items-center gap-2 mb-3 text-sm sm:text-base">
               <CalendarIcon className="h-4 w-4" />
               Select Date
             </Label>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={onDateSelect}
-              disabled={disabledDates}
-              className="rounded-md border"
-            />
-            <div className="mt-3 text-sm text-muted-foreground">
+            <div className="w-full flex justify-center">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={onDateSelect}
+                disabled={disabledDates}
+                className="rounded-md border w-full max-w-[280px] sm:max-w-none [&_.rdp-caption]:text-sm sm:[&_.rdp-caption]:text-base [&_.rdp-cell]:p-0 sm:[&_.rdp-cell]:p-0.5 [&_.rdp-button]:h-8 [&_.rdp-button]:w-8 sm:[&_.rdp-button]:h-9 sm:[&_.rdp-button]:w-9 [&_.rdp-head_cell]:text-xs sm:[&_.rdp-head_cell]:text-sm"
+              />
+            </div>
+            <div className="mt-3 text-xs sm:text-sm text-muted-foreground text-center">
               <p>Available: {config.available_days?.join(', ')}</p>
               <p className="mt-1">Book up to {config.max_advance_days || 30} days in advance</p>
             </div>
@@ -139,40 +141,40 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
         </Card>
         
         {/* Time Slots */}
-        <Card>
-          <CardContent className="p-4">
-            <Label className="flex items-center gap-2 mb-3">
+        <Card className="overflow-hidden">
+          <CardContent className="p-3 sm:p-4">
+            <Label className="flex items-center gap-2 mb-3 text-sm sm:text-base">
               <Clock className="h-4 w-4" />
               Select Time
               {loadingSlots && <span className="text-xs text-muted-foreground">(Loading...)</span>}
             </Label>
             
             {!selectedDate ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <CalendarIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Please select a date first</p>
+              <div className="text-center py-6 sm:py-8 text-muted-foreground">
+                <CalendarIcon className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 opacity-50" />
+                <p className="text-sm sm:text-base">Please select a date first</p>
               </div>
             ) : availableTimeSlots.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>No time slots available for this date</p>
+              <div className="text-center py-6 sm:py-8 text-muted-foreground">
+                <Clock className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 opacity-50" />
+                <p className="text-sm sm:text-base">No time slots available for this date</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-1.5 sm:gap-2 max-h-[300px] sm:max-h-[400px] overflow-y-auto">
                 {availableTimeSlots.map((slot) => (
                   <Button
                     key={slot.time}
                     variant={selectedTime === slot.time ? "default" : "outline"}
                     disabled={slot.isBooked}
                     onClick={() => onTimeSelect(slot.time)}
-                    className="h-auto py-3 flex flex-col items-center"
+                    className="h-auto py-2 sm:py-3 px-2 sm:px-3 flex flex-col items-center text-xs sm:text-sm"
                   >
                     <span className="font-semibold">{slot.time}</span>
                     {slot.endTime && (
-                      <span className="text-xs opacity-80">to {slot.endTime}</span>
+                      <span className="text-[10px] sm:text-xs opacity-80">to {slot.endTime}</span>
                     )}
                     {slot.isBooked && (
-                      <Badge variant="secondary" className="mt-1 text-xs">Booked</Badge>
+                      <Badge variant="secondary" className="mt-1 text-[10px] sm:text-xs">Booked</Badge>
                     )}
                   </Button>
                 ))}
