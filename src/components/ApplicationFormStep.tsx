@@ -482,21 +482,36 @@ export const ApplicationFormStep: React.FC<ApplicationFormStepProps> = ({
                 <Label htmlFor="amount" className="text-sm font-medium">
                   Amount <span className="text-destructive ml-1">*</span>
                 </Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.amount_cents ? (formData.amount_cents / 100).toFixed(2) : ''}
-                  onChange={(e) =>
-                    handleInputChange(
-                      'amount_cents',
-                      Math.round(parseFloat(e.target.value || '0') * 100)
-                    )
-                  }
-                  placeholder="Enter amount"
-                  className={validationErrors.amount_cents ? 'border-destructive' : ''}
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input
+                    id="amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.amount_dollars ?? (formData.amount_cents ? (formData.amount_cents / 100) : '')}
+                    onChange={(e) => {
+                      const dollarValue = e.target.value;
+                      // Store as both dollar value (for display) and cents (for processing)
+                      const cents = dollarValue ? Math.round(parseFloat(dollarValue) * 100) : 0;
+                      onFormDataChange({
+                        ...formData,
+                        amount_dollars: dollarValue, // Keep raw input for smooth editing
+                        amount_cents: cents,
+                      });
+                      if (validationErrors.amount_cents) {
+                        const newErrors = { ...validationErrors };
+                        delete newErrors.amount_cents;
+                        onValidationErrorsChange(newErrors);
+                      }
+                    }}
+                    placeholder="0.00"
+                    className={`pl-7 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield] ${validationErrors.amount_cents ? 'border-destructive' : ''}`}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Enter the total amount due for this service
+                </p>
                 {validationErrors.amount_cents && (
                   <p className="text-sm text-destructive flex items-center gap-1">
                     <AlertCircle className="h-4 w-4" />
