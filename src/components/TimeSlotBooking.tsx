@@ -3,7 +3,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CalendarIcon, Clock, Info, CheckCircle } from 'lucide-react';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
@@ -168,14 +167,19 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
                     variant={selectedTime === slot.time ? "default" : "outline"}
                     disabled={slot.isBooked}
                     onClick={() => onTimeSelect(slot.time)}
-                    className="h-auto py-2 sm:py-3 px-2 sm:px-3 flex flex-col items-center text-xs sm:text-sm"
+                    className={`h-auto py-2 sm:py-3 px-2 sm:px-3 flex flex-col items-center text-xs sm:text-sm ${
+                      slot.isBooked ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : ''
+                    }`}
                   >
-                    <span className="font-semibold">{slot.time}</span>
-                    {slot.endTime && (
-                      <span className="text-[10px] sm:text-xs opacity-80">to {slot.endTime}</span>
-                    )}
-                    {slot.isBooked && (
-                      <Badge variant="secondary" className="mt-1 text-[10px] sm:text-xs">Booked</Badge>
+                    {slot.isBooked ? (
+                      <span className="font-medium text-gray-400">Reserved</span>
+                    ) : (
+                      <>
+                        <span className="font-semibold">{slot.time}</span>
+                        {slot.endTime && (
+                          <span className="text-[10px] sm:text-xs opacity-80">to {slot.endTime}</span>
+                        )}
+                      </>
                     )}
                   </Button>
                 ))}
