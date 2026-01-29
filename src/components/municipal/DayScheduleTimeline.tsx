@@ -125,16 +125,24 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
   };
 
   const getBookingPosition = (startTime: string, endTime: string | null) => {
-    // Calculate position based on dynamic interval
+    // Calculate position based on dynamic interval, accounting for grid start offset
     const slotsPerHour = 60 / baseInterval;
     const [startHour, startMin] = startTime.split(':').map(Number);
-    const startIndex = startHour * slotsPerHour + Math.floor(startMin / baseInterval);
+    
+    // Subtract operatingHours.startHour to get position relative to grid start
+    const gridOffsetSlots = operatingHours.startHour * slotsPerHour;
+    let startIndex = (startHour * slotsPerHour + Math.floor(startMin / baseInterval)) - gridOffsetSlots;
     
     let endIndex = startIndex + 1; // Default to 1 slot
     if (endTime) {
       const [endHour, endMin] = endTime.split(':').map(Number);
-      endIndex = endHour * slotsPerHour + Math.floor(endMin / baseInterval);
+      endIndex = (endHour * slotsPerHour + Math.floor(endMin / baseInterval)) - gridOffsetSlots;
     }
+    
+    // Clamp to grid bounds (handle bookings before/after visible range)
+    const maxSlots = timeSlots.length;
+    startIndex = Math.max(0, Math.min(startIndex, maxSlots - 1));
+    endIndex = Math.max(startIndex + 1, Math.min(endIndex, maxSlots));
     
     const height = (endIndex - startIndex) * slotHeight;
     const top = startIndex * slotHeight;
