@@ -91,6 +91,14 @@ Deno.serve(async (req) => {
       base_amount_cents
     });
 
+    // DEBUG: Log token details
+    Logger.info('🔑 Google Pay Token Debug (Backend):', {
+      tokenType: typeof google_pay_token,
+      tokenLength: google_pay_token?.length,
+      first100: google_pay_token?.substring?.(0, 100),
+      isString: typeof google_pay_token === 'string'
+    });
+
     // Get merchant information and user's Finix identity in parallel
     const [merchantResult, identityResult] = await Promise.all([
       supabase

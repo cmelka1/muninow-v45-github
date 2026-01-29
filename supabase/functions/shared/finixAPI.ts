@@ -88,6 +88,16 @@ export class FinixAPI {
       }
 
       Logger.info('[FinixAPI] Creating payment instrument', { type: params.type });
+      
+      // DEBUG: Log the third_party_token details
+      if (params.type === 'GOOGLE_PAY') {
+        Logger.info('[FinixAPI] Google Pay token being sent to Finix:', {
+          tokenType: typeof body.third_party_token,
+          tokenLength: body.third_party_token?.length,
+          first100: body.third_party_token?.substring?.(0, 100),
+          bodyKeys: Object.keys(body)
+        });
+      }
 
       const response = await fetch(endpoint, {
         method: 'POST',

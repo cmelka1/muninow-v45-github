@@ -254,6 +254,13 @@ export function useGooglePay(config: GooglePayConfig): UseGooglePayReturn {
 
       // Extract the payment token
       const paymentToken = paymentData.paymentMethodData.tokenizationData.token;
+      
+      // DEBUG: Log token details to understand format
+      console.log('🔑 Google Pay Token Debug:');
+      console.log('   typeof token:', typeof paymentToken);
+      console.log('   token length:', paymentToken?.length);
+      console.log('   first 100 chars:', paymentToken?.substring(0, 100));
+      console.log('   is valid JSON?:', (() => { try { JSON.parse(paymentToken); return true; } catch { return false; } })());
 
       // Send to backend Edge function
       console.log('📤 Sending payment to backend...');
