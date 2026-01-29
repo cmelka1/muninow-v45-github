@@ -5,7 +5,6 @@ import {
   CheckCircle, 
   Circle, 
   MoreHorizontal, 
-  PlayCircle,
   Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,14 +23,12 @@ import { generateICSContent, generateGoogleCalendarUrl, downloadICSFile } from '
 interface PermitInspectionsListProps {
   inspections: PermitInspection[] | undefined;
   isLoading: boolean;
-  onPerformInspection: (inspection: PermitInspection) => void;
   propertyAddress: string;
 }
 
 export const PermitInspectionsList: React.FC<PermitInspectionsListProps> = ({
   inspections,
   isLoading,
-  onPerformInspection,
   propertyAddress,
 }) => {
   const handleAddToCalendar = (inspection: PermitInspection, type: 'outlook' | 'google' | 'apple') => {
@@ -140,16 +137,25 @@ export const PermitInspectionsList: React.FC<PermitInspectionsListProps> = ({
               </div>
 
               <div className="flex items-center gap-2">
-                {inspection.status === 'scheduled' && (
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="hidden sm:flex"
-                    onClick={() => onPerformInspection(inspection)}
-                  >
-                    <PlayCircle className="h-3.5 w-3.5 mr-2" />
-                    Perform
-                  </Button>
+                {inspection.scheduled_date && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" variant="outline" className="hidden sm:flex">
+                        <Calendar className="h-3.5 w-3.5 mr-2" />
+                        Add to Calendar
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleAddToCalendar(inspection, 'outlook')}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Outlook / Apple Calendar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleAddToCalendar(inspection, 'google')}>
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Google Calendar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
                 
                 <DropdownMenu>
@@ -160,13 +166,6 @@ export const PermitInspectionsList: React.FC<PermitInspectionsListProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    {inspection.status === 'scheduled' && (
-                      <DropdownMenuItem onClick={() => onPerformInspection(inspection)}>
-                        <PlayCircle className="h-4 w-4 mr-2" />
-                        Perform Inspection
-                      </DropdownMenuItem>
-                    )}
-                    
                     {inspection.scheduled_date && (
                       <>
                         <DropdownMenuItem onClick={() => handleAddToCalendar(inspection, 'outlook')}>
