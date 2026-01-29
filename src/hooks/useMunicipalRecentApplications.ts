@@ -186,10 +186,12 @@ export const useMunicipalRecentApplications = () => {
           expires_at,
           renewal_status,
           tile_id,
-          municipal_service_tiles!inner(is_renewable, title)
+          municipal_service_tiles!inner(is_renewable, title, has_time_slots)
         `)
         .eq('customer_id', profile.customer_id)
         .neq('status', 'draft')
+        // Exclude sport reservations (has_time_slots = true) from this table
+        .neq('municipal_service_tiles.has_time_slots', true)
         .order('submitted_at', { ascending: false, nullsFirst: false })
         .limit(5);
 
