@@ -102,8 +102,16 @@ export async function processUnifiedPayment(
     // STEP 5: GET FINIX PAYMENT INSTRUMENT ID (if UUID provided)
     let finixPaymentInstrumentId = params.paymentInstrumentId;
     
-    if (['card', 'PAYMENT_CARD'].includes(params.paymentType) && params.paymentInstrumentId.length === 36) {
-      const { data: paymentInstrument } = await supabase
+    console.log('[UnifiedPaymentProcessor] STEP 5 - Payment instrument lookup:', {
+      paymentType: params.paymentType,
+      inputPaymentInstrumentId: params.paymentInstrumentId,
+      inputLength: params.paymentInstrumentId.length,
+      userId: params.userId,
+      shouldLookup: ['card', 'PAYMENT_CARD', 'ach', 'BANK_ACCOUNT'].includes(params.paymentType) && params.paymentInstrumentId.length === 36
+    });
+    
+    if (['card', 'PAYMENT_CARD', 'ach', 'BANK_ACCOUNT'].includes(params.paymentType) && params.paymentInstrumentId.length === 36) {
+      const { data: paymentInstrument, error: lookupError } = await supabase
         .from('user_payment_instruments')
         .select('finix_payment_instrument_id')
         .eq('id', params.paymentInstrumentId)
@@ -111,10 +119,27 @@ export async function processUnifiedPayment(
         .eq('enabled', true)
         .single();
 
+      console.log('[UnifiedPaymentProcessor] Payment instrument lookup result:', {
+        found: !!paymentInstrument,
+        finixId: paymentInstrument?.finix_payment_instrument_id,
+        lookupError: lookupError?.message || null
+      });
+
       if (paymentInstrument) {
         finixPaymentInstrumentId = paymentInstrument.finix_payment_instrument_id;
+      } else {
+        console.error('[UnifiedPaymentProcessor] WARNING: Payment instrument lookup failed, using raw ID:', {
+          rawId: params.paymentInstrumentId,
+          startsWithPI: params.paymentInstrumentId.startsWith('PI')
+        });
       }
     }
+    
+    console.log('[UnifiedPaymentProcessor] Final finixPaymentInstrumentId:', {
+      value: finixPaymentInstrumentId,
+      startsWithPI: finixPaymentInstrumentId.startsWith('PI'),
+      isUUID: finixPaymentInstrumentId.length === 36
+    });
 
     // STEP 6: CREATE PAYMENT TRANSACTION (calculates fees)
     const transactionResult = await createPaymentTransaction(

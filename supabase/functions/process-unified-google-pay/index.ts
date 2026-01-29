@@ -106,7 +106,8 @@ Deno.serve(async (req) => {
     ]);
 
     const { data: merchant, error: merchantError } = merchantResult;
-    const { data: userIdentity, error: identityError } = identityResult;
+    let { data: userIdentity } = identityResult;
+    const { error: identityError } = identityResult;
 
     if (merchantError || !merchant || !merchant.finix_merchant_id || !merchant.finix_identity_id) {
       Logger.error('Merchant fetch error', merchantError);
@@ -116,21 +117,63 @@ Deno.serve(async (req) => {
       );
     }
 
+    Logger.info('Merchant configured', { 
+      finixMerchantId: merchant.finix_merchant_id,
+      finixIdentityId: merchant.finix_identity_id 
+    });
+
+    // STEP 0.5: Create buyer identity on-demand if user doesn't have one
+    // Per Finix docs, Google Pay requires a buyer identity for the payment instrument
+    const finixAPI = new FinixAPI();
+    
     if (identityError || !userIdentity) {
-      Logger.error('User identity fetch error', identityError);
-      return new Response(
-        JSON.stringify({ success: false, error: 'User identity not found. Please complete payment setup first.', retryable: false }),
-        { status: 404, headers: corsHeaders }
-      );
+      Logger.info('Creating Finix buyer identity on-demand for user', { userId: user.id });
+      
+      try {
+        // Create Finix identity for the buyer
+        const newIdentity = await finixAPI.createIdentity({
+          entity: {
+            first_name: first_name || 'Unknown',
+            last_name: last_name || 'User',
+            email: user_email || user.email!
+          }
+        });
+
+        // Save to finix_identities table
+        const { error: insertError } = await supabase
+          .from('finix_identities')
+          .insert({
+            user_id: user.id,
+            finix_identity_id: newIdentity.id
+          });
+
+        if (insertError) {
+          Logger.warn('Failed to save identity to database, but proceeding with payment', insertError);
+        }
+
+        userIdentity = { finix_identity_id: newIdentity.id };
+        Logger.info('Created new Finix buyer identity', { identityId: newIdentity.id });
+        
+      } catch (identityCreateError) {
+        Logger.error('Failed to create buyer identity', identityCreateError);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Failed to create buyer identity for payment',
+            retryable: true 
+          }),
+          { status: 400, headers: corsHeaders }
+        );
+      }
     }
 
     // STEP 1: Create Finix payment instrument from Google Pay token
+    // Per Finix docs: identity must be the buyer's identity, not the merchant
     Logger.info('Creating payment instrument from Google Pay token');
     
-    const finixAPI = new FinixAPI();
     const paymentInstrument = await finixAPI.createPaymentInstrument({
       type: 'GOOGLE_PAY',
-      identity: userIdentity.finix_identity_id,
+      identity: userIdentity.finix_identity_id,  // Buyer identity (required by Finix)
       merchantIdentity: merchant.finix_identity_id,
       googlePayToken: google_pay_token,
       billingAddress: billing_address

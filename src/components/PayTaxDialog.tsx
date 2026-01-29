@@ -423,6 +423,7 @@ export const PayTaxDialog: React.FC<PayTaxDialogProps> = ({ open, onOpenChange }
             payer_city: payerAddress?.city || '',
             payer_state: payerAddress?.state || '',
             payer_zip_code: payerAddress?.zipCode || '',
+            staging_id: stagingId, // Link staged documents to this submission
           },
         }
       );

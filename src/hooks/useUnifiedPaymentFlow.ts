@@ -39,6 +39,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [serviceFee, setServiceFee] = useState<UnifiedServiceFee | null>(null);
   const [googlePayMerchantId, setGooglePayMerchantId] = useState<string | null>(null);
+  const [googlePayGoogleMerchantId, setGooglePayGoogleMerchantId] = useState<string | null>(null);
   const [lastPaymentAttempt, setLastPaymentAttempt] = useState<number | null>(null);
   const [paymentSessionId, setPaymentSessionId] = useState<string | null>(null);
   const [ongoingPaymentPromise, setOngoingPaymentPromise] = useState<Promise<PaymentResponse> | null>(null);
@@ -89,8 +90,9 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
         console.log('🔑 Merchant ID response:', data, 'error:', error);
         
         if (!error && data.success) {
-          console.log('🔑 Final merchant ID set:', data.merchant_id);
-          setGooglePayMerchantId(data.merchant_id);
+          console.log('🔑 Final merchant IDs set:', { finix: data.merchant_id, google: data.google_merchant_id });
+          setGooglePayMerchantId(data.merchant_id);  // Finix identity for tokenization
+          setGooglePayGoogleMerchantId(data.google_merchant_id || data.merchant_id);  // Google BCR2DN... for merchantInfo
         } else {
           console.warn('🔑 No merchant_id in response or error occurred');
         }
@@ -490,7 +492,10 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
 
   const handleGooglePayment = async (): Promise<PaymentResponse> => {
     console.group('💰 GOOGLE_PAY_FLOW_START');
-    console.log('Google Pay initiated with merchant ID:', googlePayMerchantId);
+    console.log('Google Pay initiated with merchant IDs:', { 
+      gatewayMerchantId: googlePayMerchantId,  // Finix identity for tokenization
+      googleMerchantId: googlePayGoogleMerchantId  // Google's BCR2DN... for merchantInfo
+    });
     
     if (isProcessingPayment || ongoingPaymentPromise) {
       console.log('⚠️ Payment already in progress - ignoring Google Pay request');
@@ -540,7 +545,7 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
           }
         }],
         merchantInfo: {
-          merchantId: googlePayMerchantId,
+          merchantId: googlePayGoogleMerchantId || googlePayMerchantId,  // Google's BCR2DN... ID
           merchantName: 'Muni Now'
         },
         transactionInfo: {
@@ -552,6 +557,8 @@ export const useUnifiedPaymentFlow = (params: UnifiedPaymentFlowParams) => {
       };
 
       console.log('Google Pay total (cents, dollars):', { totalCentsForGooglePay, totalPriceDollars });
+      console.log('🔍 FULL paymentRequest being sent to Google:', JSON.stringify(paymentRequest, null, 2));
+      console.log('🔍 merchantInfo.merchantId =', paymentRequest.merchantInfo.merchantId);
       console.log('🔄 Loading Google Pay payment data...');
       const paymentData = await paymentsClient.loadPaymentData(paymentRequest);
       console.log('✅ Google Pay data loaded successfully');

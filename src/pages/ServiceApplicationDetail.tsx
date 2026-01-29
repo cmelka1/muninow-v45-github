@@ -596,7 +596,7 @@ const ServiceApplicationDetail: React.FC = () => {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <span className="text-sm font-medium truncate">
+                                  <span className="text-sm font-medium truncate block max-w-[180px] sm:max-w-[220px] md:max-w-[280px] lg:max-w-[340px]">
                                     {smartAbbreviateFilename(doc.original_file_name || doc.file_name, 30)}
                                   </span>
                                 </TooltipTrigger>

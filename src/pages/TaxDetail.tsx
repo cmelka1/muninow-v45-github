@@ -292,7 +292,7 @@ const TaxDetail = () => {
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4" />
                           <div>
-                            <p className="font-medium text-sm">{doc.file_name}</p>
+                            <p className="font-medium text-sm truncate max-w-[180px] sm:max-w-[220px] md:max-w-[280px] lg:max-w-[340px]" title={doc.file_name}>{doc.file_name}</p>
                             <p className="text-xs text-muted-foreground">
                               {doc.document_type} • {(doc.file_size / 1024 / 1024).toFixed(2)} MB
                             </p>

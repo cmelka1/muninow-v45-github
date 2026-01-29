@@ -53,7 +53,8 @@ Deno.serve(async (req) => {
       payer_street_address,
       payer_city,
       payer_state,
-      payer_zip_code
+      payer_zip_code,
+      staging_id // For linking staged documents
     } = body;
 
     // Validate required fields
@@ -125,6 +126,21 @@ Deno.serve(async (req) => {
     }
 
     Logger.info('Tax submission created', { id: taxSubmission.id });
+
+    // Link staged documents to the tax submission if staging_id is provided
+    if (staging_id) {
+      const { error: linkError } = await supabase.rpc('confirm_staged_tax_documents', {
+        p_staging_id: staging_id,
+        p_tax_submission_id: taxSubmission.id
+      });
+
+      if (linkError) {
+        Logger.warn('Failed to link staged documents', { staging_id, error: linkError });
+        // Don't fail the entire operation - documents can be linked later
+      } else {
+        Logger.info('Linked staged documents', { staging_id, tax_submission_id: taxSubmission.id });
+      }
+    }
 
     return new Response(
       JSON.stringify({ 

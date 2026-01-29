@@ -181,6 +181,8 @@ export class FinixAPI {
       Logger.info('[FinixAPI] Creating transfer', {
         amount: params.amount,
         merchant: params.merchant,
+        source: params.source,
+        sourceStartsWithPI: params.source?.startsWith('PI'),
         idempotency_id: params.idempotency_id
       });
 
