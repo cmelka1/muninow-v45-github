@@ -28,8 +28,10 @@ const GooglePayButton: React.FC<GooglePayButtonProps> = ({
           return;
         }
 
-        // Use production in deployed environments
-        const isProduction = import.meta.env.PROD || import.meta.env.VITE_GOOGLE_PAY_ENV === 'PRODUCTION';
+        // Use explicit VITE_GOOGLE_PAY_ENV only (not PROD)
+        // This allows testing with Finix SANDBOX on deployed production builds
+        const isProduction = import.meta.env.VITE_GOOGLE_PAY_ENV === 'PRODUCTION';
+        console.log('🌍 GooglePayButton environment:', isProduction ? 'PRODUCTION' : 'TEST');
         const paymentsClient = new window.google.payments.api.PaymentsClient({
           environment: isProduction ? 'PRODUCTION' : 'TEST'
         });

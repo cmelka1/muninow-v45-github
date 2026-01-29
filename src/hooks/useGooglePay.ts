@@ -100,7 +100,10 @@ export function useGooglePay(config: GooglePayConfig): UseGooglePayReturn {
 
         // In TEST mode, allow proceeding without google_merchant_id
         // In PRODUCTION, this will cause OR_BIBED_11 error
-        const isProduction = import.meta.env.PROD || import.meta.env.VITE_GOOGLE_PAY_ENV === 'PRODUCTION';
+        // IMPORTANT: Only use explicit VITE_GOOGLE_PAY_ENV, NOT import.meta.env.PROD
+        // This allows testing with Finix SANDBOX while deployed to production
+        const isProduction = import.meta.env.VITE_GOOGLE_PAY_ENV === 'PRODUCTION';
+        console.log('🌍 Google Pay Environment:', isProduction ? 'PRODUCTION' : 'TEST');
         
         if (!data.google_merchant_id) {
           if (isProduction) {
@@ -133,10 +136,12 @@ export function useGooglePay(config: GooglePayConfig): UseGooglePayReturn {
 
         // Check if Google Pay API is available
         if (window.google?.payments?.api) {
-          const isProduction = import.meta.env.PROD || import.meta.env.VITE_GOOGLE_PAY_ENV === 'PRODUCTION';
+          // IMPORTANT: Use same explicit env var check
+          const isProduction = import.meta.env.VITE_GOOGLE_PAY_ENV === 'PRODUCTION';
           const paymentsClient = new window.google.payments.api.PaymentsClient({
             environment: isProduction ? 'PRODUCTION' : 'TEST'
           });
+          console.log('💳 PaymentsClient initialized in:', isProduction ? 'PRODUCTION' : 'TEST');
 
           const isReadyToPayRequest = {
             apiVersion: 2,
@@ -201,7 +206,9 @@ export function useGooglePay(config: GooglePayConfig): UseGooglePayReturn {
 
     try {
       // Initialize Google Pay client
-      const isProduction = import.meta.env.PROD || import.meta.env.VITE_GOOGLE_PAY_ENV === 'PRODUCTION';
+      // Initialize Google Pay client - use explicit env var only
+      const isProduction = import.meta.env.VITE_GOOGLE_PAY_ENV === 'PRODUCTION';
+      console.log('🔄 Payment request using environment:', isProduction ? 'PRODUCTION' : 'TEST');
       const paymentsClient = new window.google.payments.api.PaymentsClient({
         environment: isProduction ? 'PRODUCTION' : 'TEST'
       });
