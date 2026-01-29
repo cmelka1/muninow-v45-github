@@ -27,6 +27,12 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
   const config = tile.time_slot_config || {};
   const bookingMode = tile.booking_mode || 'time_period';
   
+  // Helper to convert HH:mm to 12-hour AM/PM format
+  const formatTime12Hour = (time24: string): string => {
+    const parsed = parse(time24, 'HH:mm', new Date());
+    return format(parsed, 'h:mm a');
+  };
+  
   // Format selected date for API query
   const dateString = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
   
@@ -175,9 +181,9 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
                       <span className="font-medium text-gray-400">Reserved</span>
                     ) : (
                       <>
-                        <span className="font-semibold">{slot.time}</span>
+                        <span className="font-semibold">{formatTime12Hour(slot.time)}</span>
                         {slot.endTime && (
-                          <span className="text-[10px] sm:text-xs opacity-80">to {slot.endTime}</span>
+                          <span className="text-[10px] sm:text-xs opacity-80">to {formatTime12Hour(slot.endTime)}</span>
                         )}
                       </>
                     )}
@@ -193,7 +199,7 @@ export const TimeSlotBooking: React.FC<TimeSlotBookingProps> = ({
         <Alert className="bg-primary/10 border-primary/20">
           <CheckCircle className="h-4 w-4" />
           <AlertDescription>
-            <strong>Selected:</strong> {format(selectedDate, 'EEEE, MMMM d, yyyy')} at {selectedTime}
+            <strong>Selected:</strong> {format(selectedDate, 'EEEE, MMMM d, yyyy')} at {formatTime12Hour(selectedTime)}
             {bookingMode === 'time_period' && (
               <span>
                 {' '}({config.slot_duration_minutes || 60} minutes)
