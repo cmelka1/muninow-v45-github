@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { MunicipalServiceTile } from '@/hooks/useMunicipalServiceTiles';
@@ -84,7 +84,7 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
   }, [facilities]);
 
   // Generate time slots based on dynamic interval - only for operating hours
-  const generateTimeSlots = () => {
+  const timeSlots = useMemo(() => {
     const slots = [];
     for (let hour = operatingHours.startHour; hour < operatingHours.endHour; hour++) {
       for (let minute = 0; minute < 60; minute += baseInterval) {
@@ -93,9 +93,7 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
       }
     }
     return slots;
-  };
-
-  const timeSlots = useMemo(() => generateTimeSlots(), [operatingHours, baseInterval]);
+  }, [operatingHours.startHour, operatingHours.endHour, baseInterval]);
 
   // Check if a slot is available based on facility operating hours and day-of-week
   const isSlotAvailable = (time: string, facility: MunicipalServiceTile) => {
@@ -124,6 +122,20 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
+  // Format time range for booking blocks
+  const formatTimeRange = (startTime: string, endTime: string | null) => {
+    const start = formatTime(startTime);
+    if (!endTime) return start;
+    const end = formatTime(endTime);
+    // Remove AM/PM from start if same as end
+    const startAmPm = startTime.split(':').map(Number)[0] >= 12 ? 'PM' : 'AM';
+    const endAmPm = endTime.split(':').map(Number)[0] >= 12 ? 'PM' : 'AM';
+    if (startAmPm === endAmPm) {
+      return `${start.replace(` ${startAmPm}`, '')} - ${end}`;
+    }
+    return `${start} - ${end}`;
+  };
+
   const getBookingPosition = (startTime: string, endTime: string | null) => {
     // Calculate position based on dynamic interval, accounting for grid start offset
     const slotsPerHour = 60 / baseInterval;
@@ -131,23 +143,50 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
     
     // Subtract operatingHours.startHour to get position relative to grid start
     const gridOffsetSlots = operatingHours.startHour * slotsPerHour;
-    let startIndex = (startHour * slotsPerHour + Math.floor(startMin / baseInterval)) - gridOffsetSlots;
+    const rawStartIndex = (startHour * slotsPerHour + Math.floor(startMin / baseInterval)) - gridOffsetSlots;
     
-    let endIndex = startIndex + 1; // Default to 1 slot
+    let rawEndIndex = rawStartIndex + 1; // Default to 1 slot
     if (endTime) {
       const [endHour, endMin] = endTime.split(':').map(Number);
-      endIndex = (endHour * slotsPerHour + Math.floor(endMin / baseInterval)) - gridOffsetSlots;
+      rawEndIndex = (endHour * slotsPerHour + Math.floor(endMin / baseInterval)) - gridOffsetSlots;
     }
     
-    // Clamp to grid bounds (handle bookings before/after visible range)
+    // Track if clamping occurred
     const maxSlots = timeSlots.length;
-    startIndex = Math.max(0, Math.min(startIndex, maxSlots - 1));
-    endIndex = Math.max(startIndex + 1, Math.min(endIndex, maxSlots));
+    const isClampedStart = rawStartIndex < 0;
+    const isClampedEnd = rawEndIndex > maxSlots;
+    const isClamped = isClampedStart || isClampedEnd;
+    
+    // Clamp to grid bounds
+    const startIndex = Math.max(0, Math.min(rawStartIndex, maxSlots - 1));
+    const endIndex = Math.max(startIndex + 1, Math.min(rawEndIndex, maxSlots));
     
     const height = (endIndex - startIndex) * slotHeight;
     const top = startIndex * slotHeight;
-    return { top, height: Math.max(height, slotHeight) };
+    return { top, height: Math.max(height, slotHeight), isClamped };
   };
+
+  // Ref for scroll container
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to current time on mount
+  useEffect(() => {
+    if (scrollRef.current && timeSlots.length > 0) {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMin = now.getMinutes();
+      
+      // Calculate current slot index
+      const slotsPerHour = 60 / baseInterval;
+      const currentSlotIndex = (currentHour - operatingHours.startHour) * slotsPerHour + Math.floor(currentMin / baseInterval);
+      
+      // Only scroll if current time is within grid range
+      if (currentSlotIndex >= 0 && currentSlotIndex < timeSlots.length) {
+        const scrollTop = Math.max(0, (currentSlotIndex * slotHeight) - 100); // 100px buffer above
+        scrollRef.current.scrollTop = scrollTop;
+      }
+    }
+  }, [timeSlots, slotHeight, operatingHours.startHour, baseInterval]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -210,6 +249,7 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
       {/* Scrollable Timeline Body */}
       <ScrollArea className="h-[500px] w-full rounded-md border">
         <div 
+          ref={scrollRef}
           className="overflow-x-auto"
           style={{
             display: 'grid',
@@ -249,9 +289,16 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
                           ? 'bg-gray-100 hover:bg-gray-200 cursor-pointer group' 
                           : isAvailable && !isValidInterval
                             ? 'bg-gray-50/50 cursor-default'  // Available but not valid interval
-                            : 'bg-gray-300 cursor-not-allowed'  // Closed hours
+                            : 'cursor-not-allowed'  // Closed hours - styled below
                       )}
-                      style={{ top: `${index * slotHeight}px`, height: `${slotHeight}px` }}
+                      style={{ 
+                        top: `${index * slotHeight}px`, 
+                        height: `${slotHeight}px`,
+                        // Striped pattern for closed hours
+                        ...(!canBook && !(isAvailable && !isValidInterval) ? {
+                          background: 'repeating-linear-gradient(45deg, #e5e7eb, #e5e7eb 4px, #f3f4f6 4px, #f3f4f6 8px)'
+                        } : {})
+                      }}
                       onClick={canBook ? () => onNewBooking(facility.id, time) : undefined}
                     >
                       {canBook && (
@@ -269,7 +316,7 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
 
                 {/* Booking blocks */}
                 {facilityBookings.map((booking) => {
-                  const { top, height } = getBookingPosition(
+                  const { top, height, isClamped } = getBookingPosition(
                     booking.booking_start_time,
                     booking.booking_end_time
                   );
@@ -285,8 +332,9 @@ export const DayScheduleTimeline: React.FC<DayScheduleTimelineProps> = ({
                       style={{ top: `${top}px`, height: `${height}px` }}
                       onClick={() => onBookingClick(booking.id)}
                     >
-                      <div className="text-xs font-medium truncate">
-                        {formatTime(booking.booking_start_time)}
+                      <div className="text-xs font-medium truncate flex items-center gap-1">
+                        {isClamped && <AlertTriangle className="h-3 w-3 text-amber-500 flex-shrink-0" />}
+                        {formatTimeRange(booking.booking_start_time, booking.booking_end_time)}
                       </div>
                       <div className="text-xs truncate">{applicantName}</div>
                       <div className="text-xs text-muted-foreground truncate capitalize">
